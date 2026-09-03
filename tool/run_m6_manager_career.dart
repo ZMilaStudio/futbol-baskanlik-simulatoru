@@ -35,6 +35,15 @@ void main(List<String> args) {
     '${report.averageStrengthImpact.toStringAsFixed(3)}',
   );
   print(
+    'Impact range: ${report.minimumStrengthImpact.toStringAsFixed(3)} '
+    'to ${report.maximumStrengthImpact.toStringAsFixed(3)}',
+  );
+  print('Negative impact club-seasons: ${report.negativeImpactClubSeasons}');
+  print(
+    'Strong positive impact club-seasons: '
+    '${report.strongPositiveImpactClubSeasons}',
+  );
+  print(
     'Average final board relationship: '
     '${report.averageFinalRelationship.toStringAsFixed(2)}',
   );
