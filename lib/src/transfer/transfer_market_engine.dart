@@ -164,9 +164,14 @@ class TransferMarketEngine {
 
           if (enableInstallments &&
               askingPrice >= const Money.fromUnits(5000000)) {
-            final wantsInstallments =
-                !regularAffordable || rng.nextDouble() < 0.27;
-            if (wantsInstallments) {
+            final acceptanceChance = regularAffordable
+                ? 0.20
+                : sellerPressureBps < 0
+                    ? 0.72
+                    : 0.48;
+            final sellerAcceptsInstallments =
+                rng.nextDouble() < acceptanceChance;
+            if (sellerAcceptsInstallments) {
               final upfrontBps = 5800 + (rng.nextDouble() * 1500).floor();
               final proposedUpfront = askingPrice.scaleBasisPoints(upfrontBps);
               final totalCommitmentCap = buyerState.cash.scaleBasisPoints(9000);
