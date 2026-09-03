@@ -32,7 +32,7 @@ class ManagerClubSeason {
   String get signature =>
       '$clubId:$managerId:$managerAge:${fitScore.toStringAsFixed(3)}:'
       '${strengthImpact.toStringAsFixed(3)}:'
-      '${relationshipBefore.toStringAsFixed(3)}>''${relationshipAfter.toStringAsFixed(3)}:'
+      '${relationshipBefore.toStringAsFixed(3)}>${relationshipAfter.toStringAsFixed(3)}:'
       '$expectedPosition>$actualPosition:$changedAfterSeason';
 }
 
