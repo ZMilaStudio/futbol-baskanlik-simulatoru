@@ -44,10 +44,6 @@ void main() {
     expect(first.seasonCount, 20);
     expect(first.signature, second.signature);
     expect(validator.validate(first), isEmpty);
-    expect(first.totalTransfers, greaterThan(0));
-    expect(first.totalTransfers, lessThan(250));
-    expect(first.totalTransferVolume, greaterThan(Money.zero));
-    expect(first.totalTransferVolume, lessThan(const Money.fromUnits(2000000000)));
     expect(first.finalPlayers.length, greaterThanOrEqualTo(88));
 
     for (final state in first.finalFinanceStates) {
@@ -64,6 +60,48 @@ void main() {
         expect(deal.fee, lessThanOrEqualTo(deal.marketValue.scaleBasisPoints(13300)));
       }
     }
+  });
+
+  test('M4 baseline avoids a frozen or hyperactive transfer market', () {
+    final report = const TransferCareerEngine().simulate(
+      clubs: m0Clubs,
+      config: const SimulationConfig(careerSeed: 20260903),
+    );
+    final totalCash = report.finalFinanceStates.fold<Money>(
+      Money.zero,
+      (sum, state) => sum + state.cash,
+    );
+    final totalDebt = report.finalFinanceStates.fold<Money>(
+      Money.zero,
+      (sum, state) => sum + state.debt,
+    );
+    final participants = <String>{};
+    for (final season in report.seasons) {
+      for (final deal in season.transfersAfterSeason) {
+        participants
+          ..add(deal.fromClubId)
+          ..add(deal.toClubId);
+      }
+    }
+
+    expect(report.totalTransfers, inInclusiveRange(15, 120));
+    expect(
+      report.totalTransferVolume,
+      inInclusiveRange(
+        const Money.fromUnits(40000000),
+        const Money.fromUnits(500000000),
+      ),
+    );
+    expect(
+      totalCash,
+      inInclusiveRange(
+        const Money.fromUnits(20000000),
+        const Money.fromUnits(500000000),
+      ),
+    );
+    expect(totalDebt, greaterThan(Money.zero));
+    expect(totalDebt, lessThan(const Money.fromUnits(400000000)));
+    expect(participants.length, greaterThanOrEqualTo(4));
   });
 
   test('different seeds produce different transfer careers', () {
