@@ -3,6 +3,7 @@ import '../player/player.dart';
 import '../world/world_career_validator.dart';
 import 'contract_career_report.dart';
 import 'contract_event.dart';
+import 'player_contract.dart';
 
 class ContractCareerValidator {
   const ContractCareerValidator({
@@ -21,7 +22,7 @@ class ContractCareerValidator {
     final finalPlayersById = {
       for (final player in report.worldReport.finalPlayers) player.id: player,
     };
-    final contractsByPlayer = <String, dynamic>{};
+    final contractsByPlayer = <String, PlayerContract>{};
     for (final contract in report.activeContracts) {
       if (contractsByPlayer.containsKey(contract.playerId)) {
         issues.add('Duplicate active contract for ${contract.playerId}.');
