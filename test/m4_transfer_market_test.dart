@@ -87,17 +87,19 @@ void main() {
     expect(report.totalTransfers, inInclusiveRange(15, 120));
     expect(
       report.totalTransferVolume,
-      inInclusiveRange(
-        const Money.fromUnits(40000000),
-        const Money.fromUnits(500000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(40000000)),
+    );
+    expect(
+      report.totalTransferVolume,
+      lessThanOrEqualTo(const Money.fromUnits(500000000)),
     );
     expect(
       totalCash,
-      inInclusiveRange(
-        const Money.fromUnits(20000000),
-        const Money.fromUnits(500000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(20000000)),
+    );
+    expect(
+      totalCash,
+      lessThanOrEqualTo(const Money.fromUnits(500000000)),
     );
     expect(totalDebt, greaterThan(Money.zero));
     expect(totalDebt, lessThan(const Money.fromUnits(400000000)));
