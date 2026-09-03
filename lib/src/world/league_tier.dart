@@ -7,12 +7,12 @@ enum LeagueTier {
   second(
     level: 2,
     displayName: 'Birlik Ligi',
-    economicScaleBps: 7600,
+    economicScaleBps: 9000,
   ),
   third(
     level: 3,
     displayName: 'Ufuk Ligi',
-    economicScaleBps: 5800,
+    economicScaleBps: 8000,
   );
 
   const LeagueTier({
