@@ -46,3 +46,6 @@ jobs:
 
       - name: Run M3 20-season economy career
         run: dart run tool/run_m3_economy_career.dart 20260903
+
+      - name: Run M4 20-season transfer career
+        run: dart run tool/run_m4_transfer_career.dart 20260903
