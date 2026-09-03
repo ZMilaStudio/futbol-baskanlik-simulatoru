@@ -100,6 +100,7 @@ class WorldCareerEngine {
             seasonReport: report,
             openingStates: openingStates,
             economicScaleBps: league.tier.economicScaleBps,
+            costScaleBps: league.tier.costScaleBps,
           ),
         );
       }
