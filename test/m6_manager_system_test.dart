@@ -33,6 +33,63 @@ void main() {
     );
   });
 
+  test('M6 manager impact supports meaningful bad and good appointments', () {
+    const player = Player(
+      id: 'p1',
+      name: 'Test Player',
+      clubId: 'club',
+      position: PlayerPosition.midfielder,
+      age: 21,
+      ability: 65,
+      potential: 82,
+      retirementAge: 36,
+      isAcademyGraduate: true,
+    );
+    const poorManager = Manager(
+      id: 'poor',
+      name: 'Poor Fit',
+      profile: ManagerProfile.starManager,
+      startAge: 45,
+      retirementAge: 70,
+      reputation: 55,
+      coaching: 35,
+      youthDevelopment: 35,
+      manManagement: 35,
+      boardCooperation: 30,
+      budgetDemand: 90,
+    );
+    const eliteManager = Manager(
+      id: 'elite',
+      name: 'Elite Fit',
+      profile: ManagerProfile.resultsFirst,
+      startAge: 45,
+      retirementAge: 70,
+      reputation: 95,
+      coaching: 95,
+      youthDevelopment: 95,
+      manManagement: 95,
+      boardCooperation: 95,
+      budgetDemand: 50,
+    );
+    const model = ManagerImpactModel();
+
+    final poorImpact = model.calculate(
+      manager: poorManager,
+      fitScore: 15,
+      boardRelationship: 5,
+      players: const [player],
+    );
+    final eliteImpact = model.calculate(
+      manager: eliteManager,
+      fitScore: 95,
+      boardRelationship: 95,
+      players: const [player],
+    );
+
+    expect(poorImpact, -2.5);
+    expect(eliteImpact, 2.5);
+  });
+
   test('M6 simulates a valid 20-season manager career', () {
     final world = const FictionalWorldFactory().build();
     final report = const ManagerWorldCareerEngine().simulate(
