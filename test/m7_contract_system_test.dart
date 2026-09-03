@@ -60,19 +60,41 @@ void main() {
     expect(report.worldReport.totalMatches, 14400);
     expect(report.initialContracts, 864);
     expect(report.youthContracts, 19 * 48);
-    expect(report.renewals, greaterThan(0));
-    expect(report.releases, greaterThan(0));
     expect(report.transferContracts, report.worldReport.totalTransfers);
     expect(
       report.activeContracts.length,
       report.worldReport.finalPlayers.length - report.finalFreeAgents,
     );
-    expect(report.finalAnnualWageBill, greaterThan(Money.zero));
+
+    // Broad regression guards: these deliberately allow later balancing work
+    // while preventing a frozen or exploding contract/free-agent economy.
+    expect(report.renewals, inInclusiveRange(1500, 7000));
+    expect(report.releases, inInclusiveRange(300, 2500));
+    expect(report.freeAgentSignings, inInclusiveRange(200, 2000));
+    expect(report.finalFreeAgents, inInclusiveRange(5, 100));
+    expect(report.worldReport.totalTransfers, inInclusiveRange(40, 300));
     expect(
       report.finalAnnualWageBill,
-      lessThan(const Money.fromUnits(2000000000)),
+      greaterThanOrEqualTo(const Money.fromUnits(200000000)),
     );
-    expect(report.finalFreeAgents, lessThan(150));
+    expect(
+      report.finalAnnualWageBill,
+      lessThanOrEqualTo(const Money.fromUnits(900000000)),
+    );
+    expect(
+      report.worldReport.finalTotalCash,
+      inInclusiveRange(
+        const Money.fromUnits(100000000),
+        const Money.fromUnits(2000000000),
+      ),
+    );
+    expect(
+      report.worldReport.finalTotalDebt,
+      inInclusiveRange(
+        const Money.fromUnits(100000000),
+        const Money.fromUnits(2000000000),
+      ),
+    );
   });
 
   test('M7 different seeds diverge', () {
