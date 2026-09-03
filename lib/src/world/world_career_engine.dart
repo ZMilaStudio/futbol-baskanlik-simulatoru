@@ -1,4 +1,3 @@
-import '../core/game_date.dart';
 import '../core/simulation_config.dart';
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
@@ -38,7 +37,6 @@ class WorldCareerEngine {
     required List<WorldLeague> leagues,
     required SimulationConfig config,
     int seasonCount = 20,
-    GameDate startDate = const GameDate(2026, 7, 1),
   }) {
     if (seasonCount <= 0) {
       throw ArgumentError.value(seasonCount, 'seasonCount', 'Must be positive.');
@@ -64,6 +62,7 @@ class WorldCareerEngine {
 
     for (var offset = 0; offset < seasonCount; offset++) {
       final seasonIndex = config.seasonIndex + offset;
+      final leaguesBeforeSeason = currentLeagues;
       final seasonPlayers = List<Player>.unmodifiable(currentPlayers);
       final currentClubs = strengthCalculator.deriveClubs(
         baseClubs: baseClubs,
@@ -76,7 +75,7 @@ class WorldCareerEngine {
       final leagueResults = <LeagueSeasonSnapshot>[];
       final financeResults = <ClubFinanceSeason>[];
 
-      for (final league in currentLeagues) {
+      for (final league in leaguesBeforeSeason) {
         final leagueClubs = league.clubIds
             .map((clubId) => clubById[clubId]!)
             .toList(growable: false);
@@ -121,11 +120,11 @@ class WorldCareerEngine {
       List<TransferDeal> transfersAfterSeason = const [];
       List<LeagueMovement> movementsAfterSeason = const [];
       var financeStatesAfterWindow = closingFinanceStates;
-      var leaguesAfterTransition = currentLeagues;
+      var leaguesAfterTransition = leaguesBeforeSeason;
 
       if (offset < seasonCount - 1) {
         final transition = _promoteAndRelegate(
-          currentLeagues: currentLeagues,
+          currentLeagues: leaguesBeforeSeason,
           leagueResults: leagueResults,
         );
         movementsAfterSeason = transition.movements;
@@ -166,18 +165,7 @@ class WorldCareerEngine {
       seasons.add(
         WorldCareerSeason(
           seasonIndex: seasonIndex,
-          leaguesBeforeSeason: currentLeagues == leaguesAfterTransition &&
-                  offset < seasonCount - 1
-              ? _reverseTransition(
-                  leaguesAfterTransition: leaguesAfterTransition,
-                  movements: movementsAfterSeason,
-                )
-              : offset == seasonCount - 1
-                  ? currentLeagues
-                  : _reverseTransition(
-                      leaguesAfterTransition: leaguesAfterTransition,
-                      movements: movementsAfterSeason,
-                    ),
+          leaguesBeforeSeason: leaguesBeforeSeason,
           clubs: currentClubs,
           players: seasonPlayers,
           leagueResults: leagueResults,
@@ -329,29 +317,6 @@ class WorldCareerEngine {
       leagues: List.unmodifiable(nextLeagues),
       movements: List.unmodifiable(movements),
     );
-  }
-
-  List<WorldLeague> _reverseTransition({
-    required List<WorldLeague> leaguesAfterTransition,
-    required List<LeagueMovement> movements,
-  }) {
-    if (movements.isEmpty) return leaguesAfterTransition;
-    final idsByTier = {
-      for (final league in leaguesAfterTransition)
-        league.tier: league.clubIds.toSet(),
-    };
-    for (final movement in movements.reversed) {
-      idsByTier[movement.to]!.remove(movement.clubId);
-      idsByTier[movement.from]!.add(movement.clubId);
-    }
-    return LeagueTier.values
-        .map(
-          (tier) => WorldLeague(
-            tier: tier,
-            clubIds: idsByTier[tier]!.toList()..sort(),
-          ),
-        )
-        .toList(growable: false);
   }
 
   List<WorldLeague> _sortedLeagues(List<WorldLeague> leagues) {
