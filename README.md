@@ -9,9 +9,10 @@ Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 - **M0 — Deterministik Mini Lig:** PASS
 - **M1 — 20 Sezon Yaşam Döngüsü:** PASS
 - **M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi:** PASS
-- **M3 — Temel Kulüp Ekonomisi:** geliştirme / CI doğrulama aşaması
+- **M3 — Temel Kulüp Ekonomisi:** PASS
+- **M4 — Basit Transfer Pazarı:** sıradaki milestone
 
-Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü ve ekonomi sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
+Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü, ekonomi ve ileride transfer sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
 
 ## M0
 
@@ -27,7 +28,8 @@ Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döng�
 
 - cihaz saatinden bağımsız `GameDate`
 - 20 sezonluk kariyer yaşam döngüsü
-- deterministik sezonlar arası kulüp gücü evrimi
+- ardışık sezon index'leri
+- deterministik kariyer
 - kariyer raporu ve validator
 
 ## M2
@@ -47,9 +49,12 @@ Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döng�
 - oyuncu kalitesinden türetilen geçici maaş yükü
 - işletme gideri ve faiz
 - borç anapara geri ödemesi
-- nakit yetersizliğinde açık `emergencyBorrowing`
+- açık `emergencyBorrowing`
 - finansal sağlık sınıfları
-- 20 sezon ekonomi kariyeri ve muhasebe validator'ı
+- muhasebe denklem validator'ı
+- 20 sezon ekonomi sanity guard'ları
+
+M3'ün ilk 20 sezon denemesi 1,017 milyar toplam nakit ve sıfır borç ürettiği için ekonomik olarak reddedildi. Düzeltilmiş baseline seed `20260903` için 20 sezon sonunda toplam nakit `124,28M`, toplam borç `104,43M`, toplam acil finansman `67,44M` ve sağlık dağılımı 2 `veryStrong` / 2 `solid` / 2 `balanced` / 2 `debtCrisis` oldu.
 
 M3'te transfer, gerçek sözleşme/maaş pazarlığı, tesis, sponsor seçimi, taraftar, UI ve APK henüz yoktur.
 
@@ -68,6 +73,12 @@ dart run tool/run_m3_economy_career.dart 20260903
 ## CI prensibi
 
 GitHub Actions yalnızca Dart bağımlılıklarını kurar, analiz/testleri ve headless simülasyon koşularını çalıştırır. APK/AAB veya büyük artifact üretilmez/yüklenmez.
+
+Son M3 kalite kapısında `dart analyze` PASS, toplam `15/15` test PASS, M0–M3 runner'ları PASS ve artifact sayısı `0`dır.
+
+## Sıradaki milestone
+
+**M4 — Basit Transfer Pazarı**: oyuncu değerleme, pozisyon ihtiyacı, alıcı maksimum fiyatı, satıcı kabul fiyatı, doğrudan bonservis, finansal bütçe kontrolü ve transferlerin kadro/ekonomiye yazılması.
 
 ## Lisans
 
