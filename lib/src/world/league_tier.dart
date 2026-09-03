@@ -9,13 +9,13 @@ enum LeagueTier {
     level: 2,
     displayName: 'Birlik Ligi',
     economicScaleBps: 9000,
-    costScaleBps: 8000,
+    costScaleBps: 8500,
   ),
   third(
     level: 3,
     displayName: 'Ufuk Ligi',
     economicScaleBps: 8000,
-    costScaleBps: 6500,
+    costScaleBps: 7500,
   );
 
   const LeagueTier({
