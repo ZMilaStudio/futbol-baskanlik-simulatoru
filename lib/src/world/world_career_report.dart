@@ -1,5 +1,6 @@
 import '../core/money.dart';
 import '../finance/club_finance_state.dart';
+import '../finance/financial_health.dart';
 import '../league/club.dart';
 import '../player/player.dart';
 import 'league_tier.dart';
@@ -61,6 +62,16 @@ class WorldCareerReport {
     return total;
   }
 
+  Money get totalEmergencyBorrowing {
+    var total = Money.zero;
+    for (final season in seasons) {
+      for (final finance in season.finances) {
+        total += finance.emergencyBorrowing;
+      }
+    }
+    return total;
+  }
+
   Money get finalTotalCash => finalFinanceStates.fold(
         Money.zero,
         (total, state) => total + state.cash,
@@ -69,6 +80,18 @@ class WorldCareerReport {
         Money.zero,
         (total, state) => total + state.debt,
       );
+
+  Map<FinancialHealth, int> get finalHealthCounts {
+    final counts = <FinancialHealth, int>{};
+    for (final finance in seasons.last.finances) {
+      counts.update(
+        finance.health,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
+    }
+    return counts;
+  }
 
   Map<String, int> get firstTierChampions {
     final counts = <String, int>{};
