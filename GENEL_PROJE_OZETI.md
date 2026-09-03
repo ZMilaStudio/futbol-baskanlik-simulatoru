@@ -4,7 +4,7 @@
 **Son güncelleme:** 03.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru`  
 **Repo görünürlüğü:** Public  
-**Aktif teknik aşama:** **M3 PASS — sıradaki milestone M4 / Basit Transfer Pazarı**  
+**Aktif teknik aşama:** **M4 PASS — sıradaki milestone M5 / 48 Kulüp + 3 Lig**  
 **Ana proje durumu:** Yan geliştirme. Kelime Avı ve Minik Dedektif gibi aktif projeleri aksatmayacak.
 
 ---
@@ -47,6 +47,7 @@ Gerçek kulüp, futbolcu, lig logosu veya lisanslı materyal kullanılmayacaktı
 12. İlk hedef UI/APK değil sağlam simülasyon çekirdeğidir.
 13. Para yoksa sistem transferi tamamen kapatmak yerine daha akıllı finansal/transfer seçenekleri üretmelidir.
 14. Uzun kariyerde evrensel refah veya evrensel çöküş kabul edilmez; denge otomatik kalite kapılarıyla izlenir.
+15. Transfer piyasası ne donmuş ne de hiperaktif olmalıdır; uzun dönem hacim ve katılım CI sanity guard'larıyla korunur.
 
 ---
 
@@ -88,6 +89,8 @@ Maç seed'i global RNG zinciri yerine maç bazında türetilir:
 
 Kararlı FNV-1a tabanlı hash ve özel xorshift32 `SeededRng` kullanılmaktadır. Dart runtime `hashCode` davranışına güvenilmez.
 
+Transfer pazarlıkları da kariyer seed'i, simulation version, sezon, alıcı ve oyuncu kimliği üzerinden deterministik türetilir.
+
 ## Oyun zamanı
 
 Cihaz saatinden bağımsız `GameDate` gerçek kodda devrededir.
@@ -109,6 +112,16 @@ Borç denklemi:
 `Kapanış Borç = Açılış Borç - Anapara Ödemesi + Yeni Borçlanma`
 
 Negatif nakit görünmez biçimde sıfırlanmaz; gerekiyorsa `emergencyBorrowing` olarak açıkça borca yazılır.
+
+## Transfer muhasebesi
+
+M4 ile bonservis yeni para yaratmadan kulüpler arasında nakit transferi olarak işlenir:
+
+`Alıcı nakit = Alıcı nakit - fee`
+
+`Satıcı nakit = Satıcı nakit + fee`
+
+Transfer sırasında borç doğrudan değişmez. Transfer sonrası bakiye bir sonraki sezonun açılış finansıdır.
 
 ## Event geçmişi
 
@@ -135,6 +148,7 @@ CI şu anda:
 - M1 20 sezon kariyeri
 - M2 20 sezon oyuncu kariyeri
 - M3 20 sezon ekonomi kariyeri
+- M4 20 sezon transfer kariyeri
 
 çalıştırır.
 
@@ -146,7 +160,7 @@ CI içinde:
 - `actions/upload-artifact` yok
 - artifact sayısı hedefi `0`
 
-Codex kredisi şu ana kadarki M0–M3 üretiminde kullanılmadı; GitHub araçları yeterli oldu.
+Codex kredisi şu ana kadarki M0–M4 üretiminde kullanılmadı; GitHub araçları yeterli oldu.
 
 ---
 
@@ -382,7 +396,160 @@ M3 kalite kapısı kapandı.
 
 ---
 
-# 10. Roadmap
+# 10. M4 — Basit Transfer Pazarı — PASS
+
+M4 ile M2 oyuncu yaşam döngüsü ve M3 kulüp ekonomisi ilk kez kapalı döngü transfer sistemiyle birbirine bağlandı.
+
+Ana parçalar:
+
+- `MarketValueModel`
+- `TransferDeal`
+- `TransferMarketEngine`
+- `TransferMarketResult`
+- `TransferCareerEngine`
+- `TransferCareerSeason`
+- `TransferCareerReport`
+- `TransferCareerValidator`
+- M4 CLI runner
+- M4 20 sezon sanity guard
+
+## Piyasa değeri
+
+Oyuncu piyasa değeri mevcut yetenek, yaş ve potansiyel farkından deterministik `Money` olarak türetilir.
+
+Kilit kural:
+
+> **Piyasa değeri ile gerçek transfer fiyatı aynı değildir.**
+
+Aynı yetenekte genç ve gelişim payı yüksek oyuncu daha değerlidir.
+
+## Kulüp ihtiyacı ve kadro sınırları
+
+M4 hedef kadro dağılımı:
+
+- kaleci `2`
+- defans `6`
+- orta saha `6`
+- forvet `4`
+
+Alıcı kulüp pozisyon açığını ve mevcut pozisyon kalitesini birlikte değerlendirir.
+
+Güvenlik sınırları:
+
+- kulüp başına transfer penceresinde en fazla `2` satın alma
+- minimum `2M` nakit rezervi
+- pencere harcama limiti mevcut nakdin en fazla `%35`i
+- satıcı kadrosu `15` oyuncunun altına indirilemez
+- pozisyon bazında satış tabanı korunur
+- aynı oyuncu aynı pencerede iki kez taşınamaz
+- self-transfer yasaktır
+
+## Pazarlık davranışı
+
+Satıcı talebi:
+
+- piyasa değeri
+- pozisyon kıtlığı
+- genç/yüksek potansiyel primi
+- kulübün finansal baskısı
+- deterministik küçük pazarlık farkı
+
+üzerinden çıkar.
+
+Finansal baskı:
+
+- nakit `<=3M` ise talep yaklaşık `%8` yumuşayabilir,
+- borç nakitten yüksekse yaklaşık `%4` yumuşayabilir.
+
+Alıcının maksimum fiyatı pozisyon açığı ve deterministik pazarlık farkıyla belirlenir.
+
+Transfer yalnız satıcı talebi alıcının maksimumuna ve gerçek ödeme kapasitesine uyuyorsa tamamlanır.
+
+## Transfer muhasebe validator'ı
+
+Her sezon doğrulanan kurallar:
+
+- aynı oyuncu bir pencerede en fazla bir kez hareket eder,
+- self-transfer yoktur,
+- bonservis pozitiftir,
+- kulüpler geçerlidir,
+- alıcının nakdi tam bonservis kadar azalır,
+- satıcının nakdi tam bonservis kadar artar,
+- transfer borcu doğrudan değiştirmez,
+- transfer sonrası nakit negatif olmaz,
+- bir sonraki sezonun açılış finansı önceki transfer sonrası finansla birebir eşleşir,
+- final finans durumu son pencere durumuyla tutarlıdır.
+
+## İlk kabul edilebilir M4 koşusu
+
+Satıcı finans baskısı eklenmeden önce ilk tam başarılı 20 sezon koşusu:
+
+- transfer `28`
+- hacim `159,03M`
+- ortalama bonservis `5,68M`
+- final nakit `110,44M`
+- final borç `76,33M`
+- validation issue `0`
+
+Teknik olarak kabul edilebilirdi; finansal baskının satıcı kararını etkilemesi için model bir adım daha geliştirildi.
+
+## Kabul edilen M4 baseline
+
+Seed `20260903` / 20 sezon, finansal baskı davranışı sonrası:
+
+- sezon `20`
+- transfer `32`
+- toplam transfer hacmi `161,68M`
+- ortalama bonservis `5,05M`
+- final toplam nakit `96,38M`
+- final toplam borç `58,61M`
+- final aktif oyuncu `148`
+- validation issue `0`
+
+Final takım güçleri:
+
+- Kuzey Yıldızı `79,30`
+- Vadişehir `74,13`
+- Demirkent `73,65`
+- Mavi Liman `68,20`
+- Çınarspor `67,79`
+- Ufukşehir `62,92`
+- Gölova `61,15`
+- Hisar Birliği `59,48`
+
+## Kalıcı M4 sanity guard
+
+Seed `20260903` / 20 sezon için geniş regresyon sınırları:
+
+- transfer sayısı `15–120`
+- toplam transfer hacmi `40M–500M`
+- final toplam nakit `20M–500M`
+- final toplam borç `>0` ve `<400M`
+- transfer piyasasına en az 4 farklı kulüp katılmalı
+- final nakit ve borç değerleri negatif olamaz
+
+Bu sınırlar nihai oyun dengesi değildir; pazarın donmasını, hiperaktiviteyi ve ekonomik patlamayı otomatik yakalamak içindir.
+
+M4 PR #5 squash merge ile `main`e alındı. Merge commit: `fda355430136a00a8b2312ae77353e32c9af5e46`.
+
+M4 kalite kapısı:
+
+- `dart analyze`: PASS
+- otomatik test: `19/19 PASS`
+- M0 regresyon: PASS
+- M1 regresyon: PASS
+- M2 regresyon: PASS
+- M3 regresyon: PASS
+- M4 20 sezon: PASS
+- M4 sanity guard: PASS
+- transfer validation issue: `0`
+- artifact: `0`
+
+M4 kalite kapısı kapandı.
+
+---
+
+# 11. Roadmap
 
 ## M0 — Deterministik Mini Lig
 **PASS**
@@ -397,34 +564,29 @@ M3 kalite kapısı kapandı.
 **PASS**
 
 ## M4 — Basit Transfer Pazarı
-**Sıradaki milestone.**
-
-İlk kontrollü kapsam:
-
-- oyuncu piyasa değeri baseline modeli
-- kulüp pozisyon ihtiyacı
-- satıcı için kabul edilebilir fiyat
-- alıcı için maksimum fiyat
-- doğrudan bonservis teklifi
-- bütçe/nakit kontrolü
-- oyuncunun bir kulüpten diğerine taşınması
-- transfer gelir/giderinin kulüp finansına yazılması
-- transfer sonrası kadro strength yeniden hesaplama
-- sezonlar arasında transfer penceresi
-- aynı seed ile aynı transfer pazarı
-- 20 sezon transfer hacmi / fiyat dağılımı / bütçe ihlali raporu
-
-M4'ün ilk sürümünde henüz kiralık, taksit, bonus, satıştan pay ve takas zorunlu değildir. Önce doğrudan bonservis sistemi mantıklı çalışmalıdır.
+**PASS**
 
 ## M5 — 48 Kulüp / 3 Lig
+**Sıradaki milestone.**
 
-Yaklaşık 48 özgün kulüp, 3 lig, yükselme/düşme, oyuncu yaşam döngüsü, ekonomi, temel transfer ve 20 sezon otomatik kariyer.
+İlk hedef:
 
-Bu nokta ilk büyük teknik başarı hedefidir.
+- yaklaşık `48` özgün hayalî kulüp
+- `3` lig
+- lig başına yaklaşık `16` kulüp
+- yükselme / düşme
+- M2 oyuncu yaşam döngüsünün tüm liglere ölçeklenmesi
+- M3 ekonomisinin 48 kulübe ölçeklenmesi
+- M4 transfer pazarının ligler arası çalışması
+- sezon takvimi ve lig kimliğinin deterministik korunması
+- 20 sezon otomatik kariyer
+- kulüp sayısı / oyuncu sayısı / finans / transfer / yükselme-düşme validator'ları
+
+M5, ilk büyük teknik başarı hedefidir: 8 kulüplük laboratuvar çekirdeğinden gerçek oyun ölçeğine ilk geçiş.
 
 ---
 
-# 11. Uzun kariyer kalite hedefleri
+# 12. Uzun kariyer kalite hedefleri
 
 İleride:
 
@@ -446,6 +608,8 @@ Bu nokta ilk büyük teknik başarı hedefidir.
 - transfer ücretleri
 - transfer sayısı
 - transfer yaşı ve pozisyon dağılımı
+- ligler arası transfer dağılımı
+- yükselme/düşme dağılımı
 - şampiyonluk dağılımı
 - büyük/küçük kulüp farkı
 - ileride taraftar güveni
@@ -456,7 +620,7 @@ Her başarısız kariyer seed ile tekrar üretilebilmelidir.
 
 ---
 
-# 12. İlk aşamada yapılmayacaklar
+# 13. İlk aşamada yapılmayacaklar
 
 - 3D maç
 - online multiplayer
@@ -471,7 +635,7 @@ Her başarısız kariyer seed ile tekrar üretilebilmelidir.
 
 ---
 
-# 13. Codex çalışma kuralı
+# 14. Codex çalışma kuralı
 
 Codex kredisi gereksiz kullanılmayacaktır.
 
@@ -479,11 +643,11 @@ Codex; büyük çok dosyalı implementasyon, büyük refactor, simülasyon/test 
 
 Basit analiz, tasarım kararı, formül konuşması ve küçük belge değişikliklerinde kullanılmaz.
 
-M0, M1, M2 ve M3 doğrudan GitHub araçlarıyla yürütüldü; Codex kredisi kullanılmadı.
+M0, M1, M2, M3 ve M4 doğrudan GitHub araçlarıyla yürütüldü; Codex kredisi kullanılmadı.
 
 ---
 
-# 14. Güncel durum
+# 15. Güncel durum
 
 **Tamamlanan:**
 
@@ -491,13 +655,28 @@ M0, M1, M2 ve M3 doğrudan GitHub araçlarıyla yürütüldü; Codex kredisi kul
 - ✅ M1 — 20 sezon kariyer yaşam döngüsü
 - ✅ M2 — oyuncu yaşam döngüsü
 - ✅ M3 — temel ekonomi
+- ✅ M4 — basit transfer pazarı
 
 **Güncel teknik kanıt:**
 
-Saf Dart çekirdeği 8 kulüp ve yaşayan oyuncu havuzuyla 20 sezon / 1.120 maçı deterministik biçimde çalıştırabiliyor; oyuncular yaşlanıyor/emekli oluyor, gençler sisteme giriyor, takım strength kadrodan türetiliyor, kulüpler sezonluk gelir/gider/borç döngüsünü yaşıyor ve muhasebe denklemleri ile uzun dönem ekonomi sanity guard'ları CI üzerinde doğrulanıyor.
+Saf Dart çekirdeği 8 kulüp ve yaşayan oyuncu havuzuyla 20 sezon / 1.120 maçı deterministik biçimde çalıştırabiliyor. Oyuncular yaşlanıyor/emekli oluyor, gençler sisteme giriyor, takım strength kadrodan türetiliyor, kulüpler gelir/gider/borç döngüsünü yaşıyor ve transfer pazarında kadro ihtiyaçları ile finansal koşullarına göre oyuncu alıp satıyor. Bonservis nakit akışı, sezonlar arası finans sürekliliği, ekonomi sanity guard'ları ve transfer pazarı sanity guard'ları CI üzerinde otomatik doğrulanıyor.
+
+**Son kabul edilen M4 kanıtı:**
+
+- seed `20260903`
+- `20` sezon
+- `32` transfer
+- `161,68M` transfer hacmi
+- `5,05M` ortalama bonservis
+- `96,38M` final nakit
+- `58,61M` final borç
+- `148` final oyuncu
+- `19/19` test PASS
+- validation issue `0`
+- artifact `0`
 
 **Sıradaki iş:**
 
-## M4 — Basit Transfer Pazarı
+## M5 — 48 Kulüp / 3 Lig
 
-M4 de Flutter UI/APK kapsamına girmeyecek. İlk hedef, kulüplerin finansal durumları ve kadro ihtiyaçlarıyla uyumlu biçimde oyuncu alıp satabildiğini 20 sezon otomatik simülasyonda kanıtlamaktır.
+M5 de Flutter UI/APK kapsamına girmeyecek. İlk hedef, mevcut M0–M4 çekirdeğini yaklaşık 48 özgün kulüp ve 3 liglik bir futbol piramidine ölçekleyip yükselme/düşme, oyuncu nüfusu, ekonomi ve transfer pazarını 20 sezon boyunca deterministik ve sürdürülebilir biçimde çalıştırmaktır.
