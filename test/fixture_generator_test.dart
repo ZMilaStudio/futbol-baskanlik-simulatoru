@@ -4,7 +4,11 @@ import 'package:test/test.dart';
 void main() {
   final clubs = List.generate(
     8,
-    (i) => Club(id: 'c$i', name: 'Club $i', strength: 60 + i),
+    (i) => Club(
+      id: 'c$i',
+      name: 'Club $i',
+      strength: (60 + i).toDouble(),
+    ),
   );
 
   test('8-club double round robin has 56 matches and balanced home/away', () {
