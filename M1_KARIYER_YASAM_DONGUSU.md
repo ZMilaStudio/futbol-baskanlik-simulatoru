@@ -1,6 +1,7 @@
 # Futbol Başkanlık Simülatörü — M1 Kariyer Yaşam Döngüsü
 
 **Milestone:** M1 — 20 Sezon Yaşam Döngüsü  
+**Durum:** **PASS** — PR #2 GitHub Actions: analyze PASS, 7/7 test PASS, M0 regresyon PASS, M1 20 sezon PASS, validation issue 0.  
 **Amaç:** M0'daki tek sezon motorunu, henüz oyuncu/transfer/ekonomi eklemeden deterministik uzun kariyer omurgasına dönüştürmek.
 
 ## Kapsam
@@ -77,5 +78,7 @@ M1 ancak GitHub Actions üzerinde aşağıdakilerin tamamı PASS olduğunda kapa
 - M0 100 sezon batch regresyon testi
 - M1 20 sezon kariyer CLI koşusu
 - sıfır validation issue
+
+Gerçek seed `20260903` koşusu: 20 sezon / 1.120 maç; şampiyonluklar Vadişehir 10, Kuzey Yıldızı 6, Demirkent 4; validation issue 0.
 
 Sonraki milestone: **M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi**.

@@ -7,7 +7,7 @@ Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 ## Teknik durum
 
 - **M0 — Deterministik Mini Lig:** PASS
-- **M1 — 20 Sezon Yaşam Döngüsü:** CI doğrulamasında
+- **M1 — 20 Sezon Yaşam Döngüsü:** PASS
 
 Flutter bağımlılığı henüz yoktur. Amaç maç, sezon ve uzun kariyer sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
 

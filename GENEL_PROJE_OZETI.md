@@ -4,7 +4,7 @@
 **Son güncelleme:** 03.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru`  
 **Repo görünürlüğü:** Public  
-**Aktif teknik aşama:** M0 PASS — sıradaki milestone M1 / 20 Sezon Yaşam Döngüsü  
+**Aktif teknik aşama:** **M1 PASS — sıradaki milestone M2 / Oyuncu Havuzu + Yaşlanma + Genç Üretimi**  
 **Ana proje durumu:** Yan geliştirme. Kelime Avı ve Minik Dedektif gibi aktif projeleri aksatmayacak.
 
 ---
@@ -25,7 +25,7 @@ Alternatif slogan:
 
 > **“Hoca gider. Futbolcu gider. Borç kalır. Başkan sensin.”**
 
-Oyuncu saha içi diziliş, antrenman ve maç içi değişikliklerle uğraşmaz. Başkan olarak ekonomi, teknik direktör, transfer politikası, borç, altyapı, tesis, sponsor, taraftar, medya, vaatler, krizler ve uzun vadeli kulüp sağlığını yönetir.
+Oyuncu saha içi diziliş, antrenman ve maç içi değişikliklerle uğraşmaz. Başkan olarak ekonomi, teknik direktör seçimi, transfer politikası, borç, altyapı, tesis, sponsor, taraftar, medya, vaatler, krizler ve uzun vadeli kulüp sağlığını yönetir.
 
 Gerçek kulüp, futbolcu, lig logosu veya lisanslı materyal kullanılmayacaktır.
 
@@ -34,40 +34,38 @@ Gerçek kulüp, futbolcu, lig logosu veya lisanslı materyal kullanılmayacaktı
 # 2. Değişmez tasarım prensipleri
 
 1. Başkan teknik direktör değildir.
-2. Mobil ekranda sade bilgi gösterilir; derin hesaplamalar arka planda çalışabilir.
-3. Taraftar bağlamı anlamalı, ekonomik gerçeklerden kopuk talepler üretmemelidir.
-4. Transfer AI yaş, kalite, potansiyel, sözleşme, ihtiyaç ve ekonomi bağlamını dikkate almalıdır.
-5. Piyasa değeri ile gerçek transfer fiyatı aynı kavram değildir.
+2. Mobil arayüz sade olacak; derin hesaplamalar arka planda çalışabilir.
+3. Taraftar ekonomik ve sportif bağlamı anlamalıdır.
+4. Transfer AI yaş, kalite, potansiyel, sözleşme, ihtiyaç ve ekonomik durumu dikkate almalıdır.
+5. Piyasa değeri ile gerçek transfer fiyatı aynı değildir.
 6. Doğru karar her zaman açık olmamalıdır.
 7. Kısa vadeli sportif başarı ile uzun vadeli kulüp sağlığı arasında gerilim yaratılmalıdır.
 8. Geçmiş açıklamalar, vaatler ve önemli kararlar unutulmamalıdır.
 9. Bazı kararların sonuçları sezonlar sonra ortaya çıkabilmelidir.
-10. Uzun kariyer mutlaka otomatik simülasyonlarla test edilmelidir.
+10. Uzun kariyer otomatik simülasyonlarla test edilmelidir.
 11. İlk sürüm gereksiz sistemlerle şişirilmemelidir.
 12. İlk hedef UI/APK değil sağlam simülasyon çekirdeğidir.
 
 ---
 
-# 3. Ana teknik mimari
+# 3. Teknik mimari
 
-Önerilen yapı:
+Temel yaklaşım: **Flutter mobil kabuk + Flutter'dan bağımsız saf Dart simülasyon çekirdeği**.
 
 ## `simulation_core`
-Saf Dart. Flutter ve Android bağımlılığı yoktur.
-
-İçerik zamanla domain modelleri, deterministic RNG, oyun tarihi, maç motoru, sezon/lig motoru, ekonomi, oyuncu yaşam döngüsü, transfer ve transfer AI, teknik direktör davranışları, taraftar, medya hafızası, vaatler, altyapı, tesis, sponsor ve kriz/olay sistemlerini kapsayacaktır.
+Saf Dart. Domain modelleri ve oyun kuralları burada bulunur. Flutter/Android API'lerine bağımlı değildir.
 
 ## `simulation_runner`
-Headless Dart/CLI test katmanı. Tek sezon, 20 sezon, 100/500/1.000 kariyer batch, seed tekrar oynatma ve denge raporları için kullanılacaktır.
+Headless Dart/CLI. Tek sezon, uzun kariyer, batch simülasyon, seed tekrar oynatma ve denge raporları için kullanılır.
 
 ## `persistence`
-Yerel, versiyonlu kayıt/yükleme; migration, otomatik kayıt ve yedek kayıt baştan düşünülür. Flutter tarafında ileride Drift/SQLite değerlendirilebilir.
+İleride yerel, versiyonlu save/load; migration, otomatik kayıt ve yedek kayıt. Flutter tarafında Drift/SQLite değerlendirilebilir.
 
 ## `application`
-Başkan eylemlerini yöneten use-case katmanı: `StartCareer`, `AdvanceWeek`, `SubmitTransferOffer`, `HireManager`, `FireManager`, `AcceptSponsor`, `MakeMediaStatement`, `SetSeasonPromise`, `UpgradeFacility` gibi.
+Başkan eylemlerini yöneten use-case katmanı: kariyer başlatma, hafta ilerletme, transfer teklifi, teknik direktör işe alma/kovma, sponsor, medya, vaat ve tesis kararları.
 
 ## `presentation`
-Flutter mobil UI. İlk aşamanın önceliği değildir.
+Flutter mobil UI. Henüz geliştirme kapsamına alınmadı.
 
 ---
 
@@ -75,25 +73,25 @@ Flutter mobil UI. İlk aşamanın önceliği değildir.
 
 ## Deterministik simülasyon
 
-Aynı simulation version, veri seti, seed ve karar dizisi aynı sonucu üretmelidir.
+Aynı `simulationVersion`, veri seti, kariyer seed'i ve karar dizisi aynı sonucu üretmelidir.
 
-Maçlar tek global RNG zinciri yerine maç bazlı seed kullanır:
+Maç seed'i global RNG zinciri yerine maç bazında türetilir:
 
 `matchSeed = hash(careerSeed, seasonIndex, fixtureId, simulationVersion)`
 
-Dart'ın varsayılan `hashCode` davranışına bağımlı kalmamak için kararlı FNV-1a tabanlı hash ve özel xorshift32 `SeededRng` kullanılmaktadır.
-
-## Para
-
-Ekonomide `double` yerine ileride integer tabanlı veya `Money` value object kullanılacaktır.
+Kararlı FNV-1a tabanlı hash ve özel xorshift32 `SeededRng` kullanılmaktadır. Dart'ın runtime `hashCode` davranışına güvenilmez.
 
 ## Oyun zamanı
 
-Telefon saatinden bağımsız `GameDate` sistemi kurulacaktır.
+M1 ile cihaz saatinden bağımsız `GameDate` gerçek kodda devreye girdi.
+
+## Para
+
+Ekonomi geldiğinde para `double` olarak tutulmayacak; integer tabanlı veya güvenli `Money` value object kullanılacak.
 
 ## Event geçmişi
 
-Transfer, teknik direktör işe alma/kovma, vaat, medya açıklaması, borç, tesis yükseltme ve önemli sportif olaylar tutulacaktır. Bu geçmiş medya, taraftar ve uzun vadeli sonuç sistemlerinde kullanılacaktır.
+İleride transfer, teknik direktör, vaat, medya, borç, tesis ve önemli sportif olaylar domain event olarak tutulacaktır.
 
 ---
 
@@ -101,8 +99,8 @@ Transfer, teknik direktör işe alma/kovma, vaat, medya açıklaması, borç, te
 
 1. Simülasyon altyapısı
 2. Sezon / lig yaşam döngüsü
-3. Kulüp ekonomisi
-4. Futbolcu yaşam döngüsü
+3. Futbolcu yaşam döngüsü
+4. Kulüp ekonomisi
 5. Maç simülasyonu
 6. Oyuncu değerleme ve maaş beklentisi
 7. Transfer pazarı
@@ -112,51 +110,40 @@ Transfer, teknik direktör işe alma/kovma, vaat, medya açıklaması, borç, te
 11. Medya hafızası ve vaatler
 12. Tesis / altyapı / sponsor / kriz
 
-Transfer AI, taraftar bağlamı ve uzun kariyer dengesi projenin en kritik kalite alanlarıdır.
+Transfer AI, taraftar bağlamı ve uzun kariyer dengesi projenin kritik kalite alanlarıdır.
 
 ---
 
-# 6. İlk büyük veri modelleri
-
-Planlanan modeller: `GameWorld`, `Career`, `Club`, `League`, `Competition`, `Fixture`, `Standing`, `Player`, `PlayerSeasonStats`, `Manager`, `Contract`, `TransferOffer`, `LoanAgreement`, `TransferWindow`, `Sponsor`, `Stadium`, `FacilityState`, `FanState`, `MediaStatement`, `Promise`, `Season`, `Match`, `FinanceLedgerSummary`, `DebtAgreement`, `Installment`, `YouthIntake`, `SimulationConfig`, `SimulationReport`, `DomainEvent`.
-
----
-
-# 7. Sistem etkileşimleri
-
-Temel ekonomi döngüsü:
+# 6. Sistem etkileşimleri
 
 `Ekonomi → transfer/maaş kapasitesi → kadro kalitesi → maç sonucu → sportif başarı → taraftar/medya/itibar → sponsor/bilet/ürün geliri → ekonomi`
 
-Altyapı:
+`Altyapı yatırımı → genç üretimi → düşük maliyetli kadro / satış geliri → ekonomi + taraftar kimliği`
 
-`altyapı yatırımı → genç üretimi → düşük maliyetli kadro / satış geliri → ekonomi + taraftar kimliği`
+`Teknik direktör seçimi → gelişim + performans + transfer talepleri → ekonomik/sportif baskı → taraftar/medya → tut/kov kararı`
 
-Teknik direktör:
+`Başkan vaadi → beklenti → sezon boyunca ölçüm → tutuldu/tutulmadı → taraftar + medya + seçim`
 
-`hoca seçimi → gelişim + performans + transfer talepleri → ekonomik/sportif baskı → taraftar/medya → tut/kov kararı`
-
-Vaat:
-
-`başkan vaadi → beklenti → sezon boyunca ölçüm → tutuldu/tutulmadı → taraftar + medya + seçim`
-
-Borçla agresif transfer:
-
-`borç → kısa vadeli kadro gücü → başarı ihtimali → gelecek taksit/maaş yükü → hareket alanı kaybı → zorunlu satış / kriz riski`
+`Borçla agresif transfer → kısa vadeli güç → başarı ihtimali → gelecek taksit/maaş yükü → hareket alanı kaybı → zorunlu satış / kriz riski`
 
 ---
 
-# 8. M0 — Deterministik Mini Lig Çekirdeği
+# 7. M0 — Deterministik Mini Lig Çekirdeği — PASS
 
-Kapsam: 8 hayalî kulüp, 1 lig, çift devre, 14 hafta, 56 maç, takım başına 7 iç + 7 deplasman, tek `strength` puanı, deterministik fixture ve match seed, Poisson gol üretimi, puan tablosu, sezon raporu, invariant validator ve 100 sezon batch testi.
+Kapsam:
 
-M0'da Flutter UI, APK, futbolcu kadroları, transfer, teknik direktör, ekonomi, taraftar, medya, sponsor, altyapı, tesis, kupa ve yükselme/düşme yoktur.
+- 8 hayalî kulüp
+- tek lig
+- çift devre / 14 hafta / 56 maç
+- takım başına 7 iç + 7 deplasman
+- tek `strength` puanı
+- deterministik fixture + maç seed'i
+- Poisson gol üretimi
+- puan tablosu
+- `SeasonReport` + `SeasonValidator`
+- 100 sezon batch testi
 
----
-
-# 9. M0 maç matematiği
-
-Baseline:
+Baseline maç modeli:
 
 `d = clamp((homeStrength + 2) - awayStrength, -30, 30)`
 
@@ -164,147 +151,231 @@ Baseline:
 
 `awayLambda = clamp(1.15 × exp(-d / 45), 0.25, 3.50)`
 
-`homeGoals ~ Poisson(homeLambda)`
+Gerçek GitHub CI regresyon sonucu (M1 PR içinde yeniden doğrulandı):
 
-`awayGoals ~ Poisson(awayLambda)`
-
-Referans güçler: `80, 76, 73, 70, 67, 64, 61, 58`.
-
-Bağımsız 1.000 sezon matematik doğrulamasında yaklaşık ev galibiyeti `%44,47`, beraberlik `%25,02`, deplasman galibiyeti `%30,50`, gol/maç `2,579` bulunmuştur. Model M0 için kontrollü ama sürprize açık kabul edilmiştir.
-
----
-
-# 10. M0 kalite kapısı
-
-M0 kalite kapısı **PASS** olarak kapanmıştır. GitHub Actions üzerinde Dart 3.13.3 ile `dart analyze` hatasız tamamlandı, 4 otomatik test geçti ve 100 sezon / 5.600 maç batch simülasyonu invariant ihlali olmadan tamamlandı.
-
-Gerçek CI sonucu:
-
-- `dart analyze`: PASS — 0 issue
-- `dart test`: PASS — 4/4 test
-- 100 sezon batch: PASS
-- 5.600 maç
+- 100 sezon: PASS
+- toplam maç: `5.600`
 - ev galibiyeti: `%45,2857`
 - beraberlik: `%24,5893`
 - deplasman galibiyeti: `%30,1250`
-- gol/maç: `2,5864`
+- ortalama gol: `2,5864`
 - şampiyonluk: Kuzey Yıldızı 49, Vadişehir 20, Demirkent 19, Mavi Liman 6, Çınarspor 4, Ufukşehir 2
 
-İlk CI çalışmasında test fixture'ındaki `int → double` analyzer hatası yakalandı; iki testte explicit `.toDouble()` ile düzeltildi. `actions/checkout` da `v5`e yükseltildi. İkinci CI tam PASS verdi.
+M0 kaynakları PR #1 üzerinden squash merge edildi. M0 kalite kapısı kapanmıştır.
 
 ---
 
-# 11. M0 kod durumu
+# 8. M1 — 20 Sezon Yaşam Döngüsü — PASS
 
-Hazır parçalar: `SimulationConfig`, `StableHash`, `SeededRng`, `Club`, `Fixture`, `FixtureGenerator`, `StandingRow`, `MatchEngine`, `MatchResult`, `PoissonSampler`, `SeasonEngine`, `SeasonReport`, `SeasonValidator`, tek sezon CLI runner, 100 sezon batch runner, fixture testi, determinism testi ve 100 sezon kabul testi.
+M1 ile tek sezon motoru gerçek kariyer omurgasına dönüştürüldü.
 
-M0 kaynakları PR #1 üzerinden squash merge ile `main` branch'ine alınmıştır. Merge commit: `19858745d3f999dee7f4ddb3e107c2a964698535`.
+Eklenen parçalar:
+
+- `GameDate`
+- `CareerEngine`
+- `CareerReport`
+- `CareerSeason`
+- `CareerValidator`
+- `ClubStrengthEvolution`
+- 20 sezon CLI runner
+- M1 otomatik testleri
+- CI içinde M0 regresyonu + M1 kariyer koşusu
+
+Varsayılan kariyer:
+
+- başlangıç: `2026-07-01`
+- sezon index: `0...19`
+- bitiş penceresi: `2046-07-01`
+- 20 sezon
+- toplam `1.120` maç
+
+## Geçici sezonlar arası takım gücü modeli
+
+M2'de oyuncu kadroları gelene kadar kulüp gücü geçici bir köprü modeliyle evrilir:
+
+- sezonluk random hareket en fazla `±1.5`
+- baseline'a geri çekilme oranı `%20`
+- baseline'dan maksimum sapma `±4.0`
+- her kulüp/sezon için deterministik seed
+- aynı kariyer seed'i aynı güç evrimini üretir
+
+Bu **nihai takım gelişim sistemi değildir**. M2 ile takım gücü oyuncu kadrosundan türetilecek ve bu geçici model kaldırılabilecek/değiştirilebilecektir.
+
+## M1 gerçek GitHub Actions sonucu
+
+PR #2: `M1: add deterministic 20-season career lifecycle`
+
+PR CI:
+
+- Dart SDK: `3.13.3 stable`
+- `dart analyze`: **PASS — No issues found**
+- `dart test`: **PASS — 7/7 test**
+- M0 100 sezon regresyonu: **PASS**
+- M1 20 sezon kariyer CLI: **PASS**
+- validation issue: **0**
+
+Seed `20260903` M1 örnek kariyeri:
+
+- pencere: `2026-07-01 → 2046-07-01`
+- sezon: `20`
+- maç: `1.120`
+- şampiyonluklar: Vadişehir `10`, Kuzey Yıldızı `6`, Demirkent `4`
+
+20. sezon sonu geçici güçler:
+
+- Kuzey Yıldızı SK: `80.55`
+- Vadişehir FK: `77.10`
+- Demirkent 1912: `74.00`
+- Mavi Liman: `69.28`
+- Çınarspor: `65.66`
+- Ufukşehir FK: `65.54`
+- Gölova SK: `61.57`
+- Hisar Birliği: `57.12`
+
+M1 testleri ayrıca:
+
+- aynı seed'in aynı 20 sezonluk şampiyon dizisini ve final güçlerini üretmesini,
+- farklı seed'lerin farklı kariyer üretmesini,
+- özel başlangıç `seasonIndex` ve `GameDate` değerlerinin doğru ilerlemesini,
+- tüm sezonlarda M0 invariant'larının korunmasını
+
+doğrulamaktadır.
+
+PR #2 squash merge ile `main` branch'ine alındı. Merge commit: `34b0c73608c536de18278c3cc98e795341da0989`.
 
 ---
 
-# 12. GitHub / CI kararı
+# 9. GitHub / CI kararı
 
-Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
+Repo **Public** kalacaktır. Önceki Private planı geçersizdir.
 
-Görünürlük: **Public**.
+Ana gerekçe GitHub Actions kullanım/kota avantajıdır.
 
-Önceki Private planı geçersizdir. Public kararının ana gerekçesi GitHub Actions kota avantajıdır.
+Repo public olsa da proje açık kaynak değildir; `LICENSE.md` içinde proprietary notice vardır.
 
-CI ilk aşamada yalnız `dart pub get`, `dart analyze`, `dart test` ve `dart run tool/run_m0_batch.dart 100` çalıştıracaktır.
+CI prensibi:
 
-M0 CI içinde APK, AAB, büyük binary veya `actions/upload-artifact` yoktur.
+- `dart pub get`
+- `dart analyze`
+- `dart test`
+- M0 100 sezon regresyonu
+- M1 20 sezon kariyer doğrulaması
 
-Repo public olsa da proje açık kaynak olarak lisanslanmayacaktır. Proprietary notice kullanılacaktır.
+CI içinde:
+
+- APK yok
+- AAB yok
+- büyük binary yok
+- `actions/upload-artifact` yok
+
+Bu yaklaşım artifact storage tüketimini baştan önler.
 
 ---
 
-# 13. 20 sezon çekirdeğine aşamalı plan
+# 10. 20 sezon çekirdeğine roadmap
 
 ## M0 — Deterministik Mini Lig
-8 kulüp / 1 lig / 1 sezon. **PASS.**
+**PASS.**
 
 ## M1 — 20 Sezon Yaşam Döngüsü
-`GameDate`, sezon index, yeni sezon oluşturma, 20 sezon batch ve season-to-season determinism.
+**PASS.**
 
-## M2 — Oyuncu Havuzu
-Yaş, pozisyon, mevcut seviye, potansiyel, maaş, sözleşme, yaşlanma, gelişim/düşüş, emeklilik ve youth intake.
+## M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi
+Sıradaki milestone.
+
+İlk hedef alanlar:
+
+- `Player` temel modeli
+- yaş / doğum tarihi
+- mevki
+- current ability
+- potential
+- maaş
+- sözleşme süresi
+- kulüp kadroları
+- sezon sonunda yaş ilerlemesi
+- gelişim / düşüş eğrisi
+- emeklilik
+- youth intake
+- kadrodan takım gücü türetme
+- 20 sezon sonunda oyuncu havuzunun tükenmemesi
+- mantıklı yaş dağılımı
 
 ## M3 — Temel Ekonomi
-Nakit, gelir, maaş, işletme gideri, temel borç yükü ve sezon finans raporu.
+Nakit, gelirler, maaşlar, işletme giderleri, temel borç ve finans raporu.
 
 ## M4 — Basit Transfer Pazarı
 Doğrudan bonservis, sözleşmesi biten oyuncu, pozisyon ihtiyacı, değerleme ve bütçe kontrolü.
 
 ## M5 — 48 Kulüp / 3 Lig
-Yaklaşık 48 özgün kulüp, 3 lig, yükselme/düşme, oyuncu yaşam döngüsü, ekonomi, temel transfer pazarı ve 20 sezon otomatik kariyer. Bu nokta ilk büyük teknik başarı kabul edilir.
+Yaklaşık 48 özgün kulüp, 3 lig, yükselme/düşme, oyuncu yaşam döngüsü, ekonomi, temel transfer ve 20 sezon otomatik kariyer. İlk büyük teknik başarı hedefidir.
 
 ---
 
-# 14. Uzun kariyer kalite hedefleri
+# 11. Uzun kariyer kalite hedefleri
 
-İleride batch testler: 20 sezon geliştirici testi, 100 kariyer × 20 sezon temel denge, 500 kariyer × 30 sezon regresyon ve 1.000 kariyer × 30 sezon büyük sürüm stres testi.
+İleride:
 
-Ölçülecek metrikler kulüp nakdi/borcu, maaş/gelir oranı, transfer ücretleri, oyuncu yaş dağılımı, genç üretimi, şampiyonluk dağılımı, büyük/küçük kulüp farkı ve ileride taraftar güveni, teknik direktör ve başkan görev süresidir.
+- 20 sezon geliştirici testi
+- 100 kariyer × 20 sezon temel denge
+- 500 kariyer × 30 sezon regresyon
+- 1.000 kariyer × 30 sezon stres testi
+
+Ölçülecek metrikler zamanla:
+
+- aktif oyuncu sayısı ve yaş dağılımı
+- genç üretimi
+- emeklilik
+- kulüp nakdi / borcu
+- maaş / gelir oranı
+- transfer ücretleri
+- şampiyonluk dağılımı
+- büyük/küçük kulüp farkı
+- taraftar güveni
+- teknik direktör ve başkan görev süresi
 
 Her başarısız kariyer seed ile tekrar üretilebilmelidir.
 
 ---
 
-# 15. İlk aşamada yapılmayacaklar
+# 12. İlk aşamada yapılmayacaklar
 
-3D maç, online multiplayer, gerçek kulüp/futbolcu, lisanslı logo, ayrıntılı saha içi taktik, Football Manager seviyesinde attribute sistemi, onlarca ülke, tam dünya piramidi, erken monetizasyon optimizasyonu, görsel polish ve APK üretme baskısı.
+- 3D maç
+- online multiplayer
+- gerçek kulüp/futbolcu
+- lisanslı logo
+- ayrıntılı saha içi taktik
+- Football Manager seviyesinde attribute sistemi
+- onlarca ülke / tam dünya futbol piramidi
+- erken monetizasyon optimizasyonu
+- görsel polish
+- APK üretme baskısı
 
 ---
 
-# 16. Codex çalışma kuralı
+# 13. Codex çalışma kuralı
 
-Codex kredisi gereksiz kullanılmayacaktır. Büyük çok dosyalı implementasyon, refactor, simülasyon runner/test harness, karmaşık hata düzeltmesi ve migration için uygundur. Basit analiz, tasarım kararı, formül konuşması ve küçük belge değişikliklerinde kullanılmaz.
+Codex kredisi gereksiz kullanılmayacaktır.
+
+Codex; büyük çok dosyalı implementasyon, büyük refactor, simülasyon/test altyapısı, karmaşık hata düzeltmesi ve migration gibi yüksek kaldıraçlı işlerde kullanılabilir.
+
+Basit analiz, tasarım kararı, formül konuşması ve küçük belge değişikliklerinde kullanılmaz.
+
+M0 ve M1 çalışmaları doğrudan GitHub araçlarıyla yürütüldü; Codex kredisi kullanılmadı.
 
 ---
 
-# 17. Güncel durum ve sıradaki iş
+# 14. Güncel durum ve sıradaki iş
 
-**Tamamlanan:**
+**Tamamlanan teknik milestone'lar:**
 
-- proje kimliği ve ana mimari,
-- sistem öncelikleri ve veri modeli taslağı,
-- sistem etkileşimleri,
-- M0 simülasyon sözleşmesi,
-- deterministik RNG/hash altyapısı,
-- fikstür + maç + puan tablosu + sezon validator,
-- fixture/determinism/100 sezon testleri,
-- hafif GitHub Actions CI,
-- PR #1 merge,
-- gerçek Dart CI doğrulaması,
-- M0 kalite kapısının kapanması.
+- ✅ M0 — Deterministik Mini Lig
+- ✅ M1 — 20 Sezon Yaşam Döngüsü
 
-**M0 sonucu: PASS.**
-
-GitHub Actions gerçek sonucu:
-
-- Dart SDK: `3.13.3 stable`
-- analyze: PASS / 0 issue
-- test: PASS / 4 test
-- 100 sezon: PASS
-- toplam maç: `5.600`
-- ev: `%45,29`
-- beraberlik: `%24,59`
-- deplasman: `%30,13`
-- ortalama gol: `2,586`
+**Güncel kanıt:** Saf Dart çekirdeği aynı kariyer seed'iyle deterministik biçimde 20 sezon / 1.120 maç çalıştırabiliyor ve tüm mevcut invariant testlerini geçiyor.
 
 **Sıradaki milestone:**
 
-## M1 — 20 Sezon Yaşam Döngüsü
+## M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi
 
-İlk kapsam:
-
-- `GameDate`,
-- sezon index ilerlemesi,
-- yeni sezon oluşturma,
-- sezonlar arası reset kuralları,
-- geçici/sade takım gücü değişimi,
-- 20 sezon arka arkaya simülasyon,
-- season-to-season determinism,
-- 20 sezon raporu ve validator.
-
-M1 de UI/APK kapsamına girmeyecek ve mevcut aktif projeleri aksatmayacak kadar küçük tutulacaktır.
+M2 de UI/APK kapsamına girmeyecek. İlk amaç, 20 sezon sonunda oyuncu nüfusunun, yaş dağılımının ve takım güçlerinin mantıklı kalabildiğini otomatik olarak kanıtlamaktır.
