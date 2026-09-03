@@ -11,72 +11,70 @@ Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 - **M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi:** PASS
 - **M3 — Temel Kulüp Ekonomisi:** PASS
 - **M4 — Basit Transfer Pazarı:** PASS
-- **M5 — 48 Kulüp / 3 Lig:** sıradaki milestone
+- **M5 — 48 Kulüp / 3 Lig:** PASS
+- **M6 — Teknik Direktör Sistemi:** sıradaki milestone
 
-Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü, ekonomi ve transfer sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
+Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü, ekonomi, transfer ve başkanlık sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
 
-## M0
+## M0–M4 kısa özet
 
-- 8 hayalî kulüp
-- 14 maç haftası / 56 maç
-- çift devreli lig
-- deterministik seed sistemi
-- Poisson tabanlı maç motoru
-- puan tablosu ve sezon validator
-- 100 sezon otomatik regresyon testi
+M0 ile 8 kulüplük deterministik lig ve maç motoru; M1 ile 20 sezon kariyer yaşam döngüsü; M2 ile oyuncu yaşlanması, emeklilik ve genç üretimi; M3 ile nakit/borç/gelir/gider ekonomisi; M4 ile doğrudan bonservisli transfer pazarı doğrulandı.
 
-## M1
+Kabul edilen M4 seed `20260903` baseline'ı 20 sezonda `32` transfer, `161,68M` transfer hacmi, `96,38M` final nakit, `58,61M` final borç ve `148` final oyuncu üretir. Validation issue `0`dır.
 
-- cihaz saatinden bağımsız `GameDate`
-- 20 sezonluk kariyer yaşam döngüsü
-- ardışık sezon index'leri
-- deterministik kariyer
-- kariyer raporu ve validator
+## M5 — 48 Kulüp / 3 Lig
 
-## M2
+M5 ile çekirdek gerçek oyun ölçeğine çıkarıldı:
 
-- 8 kulüp × 18 oyuncu = 144 başlangıç oyuncusu
-- yaş, pozisyon, mevcut seviye ve potansiyel
-- deterministik gelişim / düşüş
-- emeklilik ve genç üretimi
-- kadronun ilk 11 kalitesinden takım gücü
-- 20 sezon oyuncu nüfusu korunum testi
+- 48 özgün kurgu kulüp
+- 3 lig × 16 kulüp
+- kulüp başına 30 lig maçı
+- 240 maç/lig
+- 720 maç/dünya sezonu
+- 20 sezonda 14.400 lig maçı
+- 864 başlangıç oyuncusu
+- 3'er takım terfi/düşme
+- 19 sezon arası geçişte toplam 228 lig hareketi
+- ortak oyuncu yaşam döngüsü
+- ortak 48 kulüplük transfer pazarı
+- lig seviyesine göre gelir ve maliyet ölçekleri
+- `WorldCareerEngine`, rapor ve validator
+- 20 sezon world sanity guard'ları
 
-## M3
+Kabul edilen geçici lig ekonomi ölçekleri:
 
-- integer minor-unit tabanlı `Money`
-- kulüp nakdi ve borcu
-- merkezi, sponsor, maç günü ve başarı gelirleri
-- oyuncu kalitesinden türetilen geçici maaş yükü
-- işletme gideri ve faiz
-- borç anapara geri ödemesi
-- açık `emergencyBorrowing`
-- finansal sağlık sınıfları
-- muhasebe denklem validator'ı
-- 20 sezon ekonomi sanity guard'ları
+| Lig | Gelir | Maliyet |
+|---|---:|---:|
+| Taç Ligi | %100 | %100 |
+| Birlik Ligi | %90 | %85 |
+| Ufuk Ligi | %80 | %75 |
 
-M3'ün ilk 20 sezon denemesi 1,017 milyar toplam nakit ve sıfır borç ürettiği için ekonomik olarak reddedildi. Düzeltilmiş baseline seed `20260903` için 20 sezon sonunda toplam nakit `124,28M`, toplam borç `104,43M`, toplam acil finansman `67,44M` ve sağlık dağılımı 2 `veryStrong` / 2 `solid` / 2 `balanced` / 2 `debtCrisis` oldu.
+`BasicEconomyEngine` varsayılan olarak `%100 / %100` kaldığı için M0–M4 baseline'ları değişmedi.
 
-## M4
+### Kabul edilen M5 baseline — seed `20260903`
 
-- deterministik `MarketValueModel`
-- piyasa değeri ile gerçek bonservisin ayrılması
-- pozisyon ihtiyacına göre transfer hedefi
-- satıcı kabul fiyatı / alıcı maksimum fiyatı
-- finansal baskıda satıcı fiyat esnekliği
-- 2M minimum nakit rezervi
-- pencere başına mevcut nakdin en fazla %35'i kadar harcama
-- kulüp başına en fazla 2 satın alma
-- kadro ve pozisyon satış tabanları
-- doğrudan bonservis nakit hareketi
-- oyuncunun kulüp değiştirmesi
-- transfer sonrası takım gücünün yeniden türetilmesi
-- transfer finans sürekliliği validator'ı
-- 20 sezon transfer pazarı sanity guard'ı
+- 20 sezon
+- 14.400 maç
+- 864 başlangıç oyuncusu
+- 906 final oyuncusu
+- 228 lig hareketi
+- 71 transfer
+- `637,91M` transfer hacmi
+- `8,98M` ortalama bonservis
+- `862,25M` final toplam nakit
+- `647,04M` final toplam borç
+- `569,03M` toplam acil finansman
+- 35 farklı kulüp transfer pazarına katıldı
+- 10 farklı Taç Ligi şampiyonu
+- validation issue `0`
 
-Kabul edilen M4 baseline seed `20260903` için 20 sezonda `32` transfer, `161,68M` toplam transfer hacmi, `5,05M` ortalama bonservis, `96,38M` final toplam nakit, `58,61M` final toplam borç ve `148` final aktif oyuncu üretir. Transfer validation issue sayısı `0`dır.
+Final finansal sağlık: 16 `veryStrong`, 14 `solid`, 8 `balanced`, 10 `debtCrisis`.
 
-M4'te kiralık, taksit, bonus, takas, satıştan pay ve gerçek oyuncu sözleşmesi/maaş pazarlığı henüz yoktur.
+Final ortalama güç: Taç Ligi `72,01`, Birlik Ligi `65,54`, Ufuk Ligi `59,21`.
+
+M5 ekonomi değerleri nihai oyun dengesi değildir. Özellikle final Ufuk Ligi nakit birikiminin yüksek olması, gerçek oyuncu sözleşmesi/maaş sistemi eklendiğinde yeniden kalibre edilecek açık denge notudur.
+
+Ayrıntılar: `M5_48_KULUP_3_LIG.md`.
 
 ## Çalıştırma
 
@@ -89,17 +87,26 @@ dart run tool/run_m1_career.dart 20260903
 dart run tool/run_m2_player_career.dart 20260903
 dart run tool/run_m3_economy_career.dart 20260903
 dart run tool/run_m4_transfer_career.dart 20260903
+dart run tool/run_m5_world_career.dart 20260903
 ```
 
 ## CI prensibi
 
-GitHub Actions yalnızca Dart bağımlılıklarını kurar, analiz/testleri ve headless simülasyon koşularını çalıştırır. APK/AAB veya büyük artifact üretilmez/yüklenmez.
+GitHub Actions yalnız Dart bağımlılıklarını kurar, analiz/testleri ve headless simülasyon koşularını çalıştırır. APK/AAB veya büyük artifact üretilmez/yüklenmez.
 
-Son M4 kalite kapısında `dart analyze` PASS, toplam `19/19` test PASS, M0–M4 runner'ları PASS, M4 sanity guard PASS ve artifact sayısı `0`dır.
+Son M5 PR kalite kapısında:
+
+- `dart analyze`: PASS
+- test: `23/23 PASS`
+- M0–M5 runner'ları: PASS
+- M5 validation: `0`
+- artifact: `0`
 
 ## Sıradaki milestone
 
-**M5 — 48 Kulüp / 3 Lig**: yaklaşık 48 özgün hayalî kulüp, üç lig, yükselme/düşme ve mevcut oyuncu-ekonomi-transfer çekirdeğinin gerçek oyun ölçeğine taşınması. İlk hedef yine 20 sezon deterministik headless kariyer doğrulamasıdır.
+**M6 — Teknik Direktör Sistemi.**
+
+Amaç başkanlık kimliğinin ana ayrımını gerçek sisteme taşımaktır: teknik direktör profilleri, işe alma/kovma, bütçe ve transfer beklentileri, genç oyuncuya yaklaşım, yönetim ilişkisi ve takım performansına etkisi. Oyuncu saha içi taktik yönetmeyecek; teknik direktör özerk futbol karakteri olacak.
 
 ## Lisans
 
