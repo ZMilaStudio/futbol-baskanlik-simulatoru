@@ -8,9 +8,10 @@ Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 
 - **M0 — Deterministik Mini Lig:** PASS
 - **M1 — 20 Sezon Yaşam Döngüsü:** PASS
-- **M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi:** geliştirme / CI doğrulama aşaması
+- **M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi:** PASS
+- **Sıradaki:** M3 — Temel Kulüp Ekonomisi
 
-Flutter bağımlılığı henüz yoktur. Amaç maç, sezon ve uzun kariyer sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
+Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü ve ileride ekonomi/transfer sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
 
 ## M0
 
@@ -40,6 +41,7 @@ Flutter bağımlılığı henüz yoktur. Amaç maç, sezon ve uzun kariyer siste
 - her sezon geçişinde kulüp başına 1 genç üretimi
 - kadronun ilk 11 kalitesinden türetilen takım gücü
 - 20 sezon oyuncu nüfusu korunum testi
+- seed `20260903`: 20 sezon / 1.120 maç / 148 final oyuncu / 148 emeklilik / 152 youth intake / validation 0
 
 M2'de transfer, sözleşme, maaş, ekonomi, teknik direktör, taraftar, UI ve APK henüz yoktur.
 
