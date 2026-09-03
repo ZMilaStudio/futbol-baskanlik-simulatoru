@@ -48,6 +48,10 @@ void main() {
       'retirements=${report.totalRetirements} '
       'unique=${report.uniqueManagersUsed} '
       'impact=${report.averageStrengthImpact.toStringAsFixed(3)} '
+      'impactMin=${report.minimumStrengthImpact.toStringAsFixed(3)} '
+      'impactMax=${report.maximumStrengthImpact.toStringAsFixed(3)} '
+      'negativeImpact=${report.negativeImpactClubSeasons} '
+      'strongPositive=${report.strongPositiveImpactClubSeasons} '
       'relationship=${report.averageFinalRelationship.toStringAsFixed(2)} '
       'transfers=${report.worldReport.totalTransfers} '
       'cash=${report.worldReport.finalTotalCash} '
@@ -66,6 +70,10 @@ void main() {
     expect(report.uniqueManagersUsed, lessThanOrEqualTo(96));
     expect(report.averageStrengthImpact, greaterThan(-1.5));
     expect(report.averageStrengthImpact, lessThan(1.8));
+    expect(report.negativeImpactClubSeasons, greaterThan(0));
+    expect(report.strongPositiveImpactClubSeasons, greaterThan(0));
+    expect(report.minimumStrengthImpact, lessThan(0));
+    expect(report.maximumStrengthImpact, greaterThanOrEqualTo(1.5));
     expect(report.averageFinalRelationship, greaterThan(15));
     expect(report.averageFinalRelationship, lessThan(95));
     expect(report.worldReport.totalTransfers, greaterThanOrEqualTo(30));
