@@ -4,7 +4,7 @@
 **Son güncelleme:** 03.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru`  
 **Repo görünürlüğü:** Public  
-**Aktif teknik aşama:** **M2 PASS — sıradaki milestone M3 / Temel Kulüp Ekonomisi**  
+**Aktif teknik aşama:** **M3 PASS — sıradaki milestone M4 / Basit Transfer Pazarı**  
 **Ana proje durumu:** Yan geliştirme. Kelime Avı ve Minik Dedektif gibi aktif projeleri aksatmayacak.
 
 ---
@@ -31,7 +31,7 @@ Gerçek kulüp, futbolcu, lig logosu veya lisanslı materyal kullanılmayacaktı
 
 ---
 
-# 2. Değişmez tasarım ve teknik prensipleri
+# 2. Değişmez tasarım prensipleri
 
 1. Başkan teknik direktör değildir.
 2. Mobil arayüz sade olacak; derin hesaplamalar arka planda çalışabilir.
@@ -45,9 +45,8 @@ Gerçek kulüp, futbolcu, lig logosu veya lisanslı materyal kullanılmayacaktı
 10. Uzun kariyer otomatik simülasyonlarla test edilmelidir.
 11. İlk sürüm gereksiz sistemlerle şişirilmemelidir.
 12. İlk hedef UI/APK değil sağlam simülasyon çekirdeğidir.
-13. Aynı `simulationVersion` + veri seti + seed + karar dizisi aynı sonucu üretmelidir.
-14. Dart runtime `hashCode` davranışına güvenilmeyecek; kararlı hash/RNG kullanılacaktır.
-15. Ekonomide para geldiğinde `double` kullanılmayacak; integer tabanlı veya güvenli `Money` value object kullanılacaktır.
+13. Para yoksa sistem transferi tamamen kapatmak yerine daha akıllı finansal/transfer seçenekleri üretmelidir.
+14. Uzun kariyerde evrensel refah veya evrensel çöküş kabul edilmez; denge otomatik kalite kapılarıyla izlenir.
 
 ---
 
@@ -56,37 +55,102 @@ Gerçek kulüp, futbolcu, lig logosu veya lisanslı materyal kullanılmayacaktı
 Temel yaklaşım: **Flutter mobil kabuk + Flutter'dan bağımsız saf Dart simülasyon çekirdeği**.
 
 ## `simulation_core`
-Saf Dart domain modelleri ve oyun kuralları. Flutter/Android API bağımlılığı yok.
+
+Saf Dart. Domain modelleri ve oyun kuralları burada bulunur. Flutter/Android API'lerine bağımlı değildir.
 
 ## `simulation_runner`
-Headless Dart/CLI. Tek sezon, uzun kariyer, batch simülasyon, seed replay ve denge raporları.
+
+Headless Dart/CLI. Tek sezon, uzun kariyer, batch simülasyon, seed tekrar oynatma ve denge raporları için kullanılır.
 
 ## `persistence`
+
 İleride yerel, versiyonlu save/load; migration, otomatik kayıt ve yedek kayıt. Flutter tarafında Drift/SQLite değerlendirilebilir.
 
 ## `application`
-Başkan eylemlerini yöneten use-case katmanı: kariyer başlatma, hafta ilerletme, transfer teklifi, teknik direktör işe alma/kovma, sponsor, medya, vaat ve tesis kararları.
+
+Başkan eylemlerini yönetecek use-case katmanı: kariyer başlatma, hafta ilerletme, transfer teklifi, teknik direktör işe alma/kovma, sponsor, medya, vaat ve tesis kararları.
 
 ## `presentation`
+
 Flutter mobil UI. Henüz geliştirme kapsamına alınmadı.
 
 ---
 
-# 4. Deterministik simülasyon altyapısı
+# 4. Kritik teknik kararlar
+
+## Deterministik simülasyon
+
+Aynı `simulationVersion`, veri seti, kariyer seed'i ve karar dizisi aynı sonucu üretmelidir.
 
 Maç seed'i global RNG zinciri yerine maç bazında türetilir:
 
 `matchSeed = hash(careerSeed, seasonIndex, fixtureId, simulationVersion)`
 
-Kararlı FNV-1a tabanlı hash ve özel xorshift32 `SeededRng` kullanılmaktadır.
+Kararlı FNV-1a tabanlı hash ve özel xorshift32 `SeededRng` kullanılmaktadır. Dart runtime `hashCode` davranışına güvenilmez.
 
-M1 ile cihaz saatinden bağımsız `GameDate` gerçek kodda devreye girdi.
+## Oyun zamanı
 
-M2 ile başlangıç oyuncu üretimi, oyuncu gelişimi, emeklilik ve youth intake de career seed + simulation version + season/player/club bağlamlarından türetilen deterministik seed'lerle çalışmaktadır.
+Cihaz saatinden bağımsız `GameDate` gerçek kodda devrededir.
+
+## Para
+
+M3 ile parasal değerler `double` yerine integer minor-unit tabanlı `Money` value object ile tutulmaya başlandı. Yüzde hesapları basis-point integer aritmetik kullanır.
+
+## Muhasebe
+
+Borç anapara ödemesi gider değildir. Faiz giderdir.
+
+Nakit denklemi:
+
+`Kapanış Nakit = Açılış Nakit + Gelir - Gider - Anapara Ödemesi + Yeni Borçlanma`
+
+Borç denklemi:
+
+`Kapanış Borç = Açılış Borç - Anapara Ödemesi + Yeni Borçlanma`
+
+Negatif nakit görünmez biçimde sıfırlanmaz; gerekiyorsa `emergencyBorrowing` olarak açıkça borca yazılır.
+
+## Event geçmişi
+
+İleride transfer, teknik direktör, vaat, medya, borç, tesis ve önemli sportif olaylar domain event olarak tutulacaktır.
 
 ---
 
-# 5. M0 — Deterministik Mini Lig — PASS
+# 5. GitHub / CI çalışma kararı
+
+Repo **Public** kalacaktır. Önceki Private planı geçersizdir.
+
+Ana gerekçe GitHub Actions kullanım/kota avantajıdır.
+
+Repo public olsa da proje açık kaynak değildir; `LICENSE.md` içinde proprietary notice vardır.
+
+Tek hafif CI workflow'u kullanılır. Yeni milestone için ayrı workflow açılmaz.
+
+CI şu anda:
+
+- `dart pub get`
+- `dart analyze`
+- `dart test`
+- M0 100 sezon regresyonu
+- M1 20 sezon kariyeri
+- M2 20 sezon oyuncu kariyeri
+- M3 20 sezon ekonomi kariyeri
+
+çalıştırır.
+
+CI içinde:
+
+- APK yok
+- AAB yok
+- büyük binary yok
+- `actions/upload-artifact` yok
+- artifact sayısı hedefi `0`
+
+Codex kredisi şu ana kadarki M0–M3 üretiminde kullanılmadı; GitHub araçları yeterli oldu.
+
+---
+
+# 6. M0 — Deterministik Mini Lig — PASS
 
 Kapsam:
 
@@ -101,7 +165,7 @@ Kapsam:
 - `SeasonReport` + `SeasonValidator`
 - 100 sezon batch testi
 
-Baseline:
+Maç baseline:
 
 `d = clamp((homeStrength + 2) - awayStrength, -30, 30)`
 
@@ -111,18 +175,19 @@ Baseline:
 
 Gerçek regresyon sonucu:
 
-- 100 sezon / `5.600` maç: PASS
-- ev galibiyeti: `%45,2857`
-- beraberlik: `%24,5893`
-- deplasman galibiyeti: `%30,1250`
-- ortalama gol: `2,5864`
-- şampiyonluk: Kuzey Yıldızı 49, Vadişehir 20, Demirkent 19, Mavi Liman 6, Çınarspor 4, Ufukşehir 2
+- 100 sezon
+- 5.600 maç
+- ev galibiyeti `%45,2857`
+- beraberlik `%24,5893`
+- deplasman galibiyeti `%30,1250`
+- gol/maç `2,5864`
+- invariant issue `0`
 
-M0 kaynakları PR #1 üzerinden squash merge edildi.
+M0 kalite kapısı kapandı.
 
 ---
 
-# 6. M1 — 20 Sezon Yaşam Döngüsü — PASS
+# 7. M1 — 20 Sezon Yaşam Döngüsü — PASS
 
 Eklenen ana parçalar:
 
@@ -131,173 +196,193 @@ Eklenen ana parçalar:
 - `CareerReport`
 - `CareerSeason`
 - `CareerValidator`
-- `ClubStrengthEvolution`
-- 20 sezon CLI runner
+- geçici `ClubStrengthEvolution`
 
 Varsayılan kariyer:
 
-- başlangıç: `2026-07-01`
-- sezon index: `0...19`
-- bitiş: `2046-07-01`
-- sezon: `20`
-- toplam maç: `1.120`
+- başlangıç `2026-07-01`
+- sezon index `0...19`
+- bitiş `2046-07-01`
+- 20 sezon
+- toplam `1.120` maç
 
-M1'de oyuncular gelene kadar geçici güç köprü modeli kullanıldı: sezonluk en fazla `±1.5`, baseline'a `%20` geri çekilme ve baseline'dan maksimum `±4.0` sapma.
+Seed `20260903` örnek M1 şampiyonlukları:
 
-PR #2 CI sonucu:
+- Vadişehir `10`
+- Kuzey Yıldızı `6`
+- Demirkent `4`
 
-- Dart `3.13.3 stable`
-- `dart analyze`: PASS / 0 issue
-- `dart test`: PASS / 7 test
+M1'deki sezonlar arası strength modeli geçici köprü modelidir; M2 ile kadrodan takım gücü türetme devreye girdi.
+
+M1 kalite kapısı kapandı.
+
+---
+
+# 8. M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi — PASS
+
+Eklenen ana parçalar:
+
+- `Player`
+- pozisyon sistemi
+- deterministik başlangıç oyuncu havuzu
+- yaşlanma
+- gelişim / düşüş
+- 34–38 yaş arası emeklilik
+- genç üretimi
+- ilk 11 kalitesinden takım strength hesaplama
+- player career report / validator
+
+Başlangıç:
+
+- 8 kulüp
+- kulüp başına 18 oyuncu
+- toplam `144` oyuncu
+
+Seed `20260903` / 20 sezon gerçek sonuç:
+
+- final aktif oyuncu `148`
+- toplam emeklilik `148`
+- toplam youth intake `152`
+- aktif akademi mezunu `146`
+- final yaş ortalaması `25,84`
+- validation issue `0`
+
+Final kadrodan türetilmiş takım güçleri:
+
+- Kuzey Yıldızı `79,59`
+- Vadişehir `74,68`
+- Demirkent `73,10`
+- Mavi Liman `68,94`
+- Çınarspor `66,77`
+- Ufukşehir `63,10`
+- Gölova `60,44`
+- Hisar Birliği `58,04`
+
+M2 kalite kapısı kapandı.
+
+---
+
+# 9. M3 — Temel Kulüp Ekonomisi — PASS
+
+M3 ile M2 oyuncu/kadro kariyerinin üzerine gerçek finans yaşam döngüsü eklendi.
+
+Ana parçalar:
+
+- integer minor-unit tabanlı `Money`
+- `ClubFinanceState`
+- sezonluk finans raporu
+- `BasicEconomyEngine`
+- `EconomyCareerEngine`
+- `EconomyCareerReport`
+- `EconomyCareerValidator`
+- `FinancialHealth`
+- geçici `WageModel`
+- M3 CLI runner
+- 20 sezon ekonomi sanity guard testi
+
+## M3 gelirleri
+
+- merkezi gelir
+- sponsor geliri
+- maç günü geliri
+- lig sırasına bağlı başarı geliri
+
+Sponsor ve maç günü gelirleri mevcut takım gücüyle ölçeklenir.
+
+## M3 giderleri
+
+- oyuncu kalitesinden türetilen geçici maaş yükü
+- işletme gideri
+- borç faizi
+
+Gerçek oyuncu sözleşmesi/maaşı henüz bulunmadığı için `WageModel` geçici köprüdür.
+
+## Borç davranışı
+
+- açılış nakit/borç değerleri seed ve kulüp profiline göre deterministik oluşturulur,
+- yıllık faiz giderdir,
+- yıllık normal anapara geri ödemesi açılış borcunun `%5`idir,
+- nakit minimum seviyenin altına düşerse fark `emergencyBorrowing` olarak yeni borca eklenir.
+
+## İlk M3 denemesi — REDDEDİLDİ
+
+İlk gerçek 20 sezon CI koşusu teknik olarak PASS olmasına rağmen ekonomik olarak kabul edilmedi:
+
+- final toplam nakit `1.017,03M`
+- final toplam borç `0,00M`
+- acil finansman `0,00M`
+- 8/8 kulüp `veryStrong`
+
+Neden: ekonomi 20 yılda evrensel refah ve otomatik borç sıfırlaması üretiyordu.
+
+Uygulanan düzeltmeler:
+
+- yapısal işletme giderleri yükseltildi,
+- fazla nakdi otomatik ek borç kapatmaya dönüştüren davranış kaldırıldı,
+- finansal sağlık eşikleri sıkılaştırıldı.
+
+## Kabul edilen M3 baseline
+
+Seed `20260903` / 20 sezon:
+
+- sezon `20`
+- maç `1.120`
+- final toplam nakit `124,28M`
+- final toplam borç `104,43M`
+- toplam acil finansman `67,44M`
+- validation issue `0`
+
+Final finansal sağlık:
+
+- `veryStrong`: 2
+- `solid`: 2
+- `balanced`: 2
+- `debtCrisis`: 2
+
+Kulüp bazında final:
+
+- Kuzey Yıldızı: cash `2,91M`, debt `16,70M`, `balanced`
+- Vadişehir: cash `51,02M`, debt `8,07M`, `solid`
+- Demirkent: cash `7,35M`, debt `7,13M`, `balanced`
+- Mavi Liman: cash `2,00M`, debt `39,60M`, `debtCrisis`
+- Çınarspor: cash `15,36M`, debt `5,75M`, `solid`
+- Ufukşehir: cash `2,00M`, debt `19,28M`, `debtCrisis`
+- Gölova: cash `21,05M`, debt `3,96M`, `veryStrong`
+- Hisar Birliği: cash `22,59M`, debt `3,94M`, `veryStrong`
+
+Bu değerler nihai oyun ekonomisi değildir. M3 için amaç, karar sistemi ve transfer pazarı eklenmeden önce **çeşitli ve sürdürülebilir bir baseline** oluşturmaktır.
+
+## Kalıcı M3 sanity guard'ları
+
+20 sezon baseline için geniş alarm aralıkları CI içine eklendi:
+
+- final toplam nakit `20M–500M`
+- final toplam borç `>0` ve `<400M`
+- toplam acil finansman `<250M`
+- final sağlık dağılımında en az 2 sınıf
+- `debtCrisis` en fazla 4 kulüp
+- `veryStrong` en fazla 4 kulüp
+
+Bu eşikler nihai denge hedefi değil, ekonomik patlamayı/çöküşü otomatik yakalayan regresyon bariyerleridir.
+
+M3 PR #4 squash merge ile `main`e alındı. Merge commit: `6cacf8b8389c18ba8ab4a82e7933c36557887a5c`.
+
+M3 kalite kapısı:
+
+- `dart analyze`: PASS
+- otomatik test: `15/15 PASS`
 - M0 regresyon: PASS
-- M1 20 sezon CLI: PASS
-- validation issue: `0`
+- M1 regresyon: PASS
+- M2 regresyon: PASS
+- M3 20 sezon: PASS
+- sanity guard: PASS
+- artifact: `0`
 
-Seed `20260903` M1 şampiyonlukları: Vadişehir `10`, Kuzey Yıldızı `6`, Demirkent `4`.
-
-PR #2 squash merge commit: `34b0c73608c536de18278c3cc98e795341da0989`.
-
----
-
-# 7. M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi — PASS
-
-M2 ile gerçek oyuncu nüfusu simülasyon çekirdeğine girdi. M1 `CareerEngine` regresyon amacıyla korunmaktadır; oyuncu tabanlı uzun kariyer ayrı `PlayerCareerEngine` üzerinden çalışmaktadır.
-
-## Başlangıç oyuncu havuzu
-
-8 kulüp × 18 oyuncu = **144 oyuncu**.
-
-Kulüp başına başlangıç dağılımı:
-
-- 2 kaleci
-- 6 defans
-- 6 orta saha
-- 4 forvet
-
-Oyuncu temel alanları:
-
-- `id`
-- hayalî isim
-- kulüp
-- pozisyon
-- yaş
-- `ability`
-- `potential`
-- deterministik emeklilik yaşı
-- academy graduate bilgisi
-
-Başlangıç yaşları `17–33`, emeklilik yaşı `34–38` aralığındadır.
-
-## Oyuncu gelişimi
-
-- 16–20: potansiyel boşluğuna bağlı güçlü gelişim
-- 21–23: orta gelişim
-- 24–26: plato / küçük gelişim
-- 27–29: hafif düşüş riski
-- 30+: kademeli düşüş
-- 34+: daha belirgin düşüş
-
-`ability`, oyuncunun `potential` değerini geçemez.
-
-## Youth intake
-
-Her sezon geçişinde her kulüp 1 genç üretir. 20 sezonluk kariyerde 19 offseason vardır:
-
-`19 × 8 = 152 youth intake`
-
-Genç yaşı `16–18` aralığındadır. Kadroda belirgin pozisyon eksiği varsa o mevki önceliklenir; aksi halde ağırlıklı deterministik seçim yapılır. Nadir yüksek potansiyelli genç üretimi mümkündür.
-
-İlk denge taslağında genç seviyesini yalnız mevcut kulüp gücüne bağlamanın uzun vadede bütün ligi aşağı doğru sürükleme riski tespit edildi. Commit öncesi model değiştirildi: youth kalite tabanı kulübün **başlangıç referans gücüne** bağlandı. Böylece 20 yılda yapay lig güç çöküşü engellendi.
-
-## Kadrodan takım gücü
-
-M2 oyuncu kariyerinde M1'in geçici `ClubStrengthEvolution` modeli kullanılmaz. Takım gücü oyuncu kadrosundan türetilir.
-
-Referans ilk 11:
-
-- 1 kaleci
-- 4 defans
-- 3 orta saha
-- 3 forvet
-
-Pozisyon eksiğinde en iyi kalan oyuncular kullanılır ve küçük pozisyon dengesizliği cezası uygulanır.
-
-## M2 validator
-
-Her sezon şunları denetler:
-
-- oyuncu ID benzersizliği
-- aktif yaş ve emeklilik yaşı sınırları
-- ability/potential sınırları
-- kulüp başına minimum 11 aktif oyuncu
-- emeklilik sonrası oyuncunun havuzdan çıkması
-- youth ID çakışmaması
-- offseason oyuncu sayısı korunum denklemi
-- final sezon sonrası hayalet offseason uygulanmaması
-- M0 sezon invariant'larının korunması
-
-## M2 gerçek GitHub Actions sonucu
-
-PR #3: `M2: add deterministic player lifecycle`
-
-- Dart SDK: `3.13.3 stable`
-- `dart analyze`: **PASS — No issues found**
-- `dart test`: **PASS — 10/10 test**
-- M0 100 sezon regresyonu: **PASS**
-- M1 20 sezon kariyer regresyonu: **PASS**
-- M2 20 sezon oyuncu kariyeri: **PASS**
-- validation issue: **0**
-- artifact: **0**
-
-Seed `20260903` M2 20 sezon sonucu:
-
-- sezon: `20`
-- maç: `1.120`
-- başlangıç oyuncu: `144`
-- final aktif oyuncu: `148`
-- emeklilik: `148`
-- youth intake: `152`
-- final aktif academy graduate: `146`
-- final ortalama yaş: `25,84`
-- şampiyonluklar: Vadişehir `9`, Demirkent `6`, Kuzey Yıldızı `5`
-
-20. sezon final takım güçleri:
-
-- Kuzey Yıldızı SK: `79.59`
-- Vadişehir FK: `74.68`
-- Demirkent 1912: `73.10`
-- Mavi Liman: `68.94`
-- Çınarspor: `66.77`
-- Ufukşehir FK: `63.10`
-- Gölova SK: `60.44`
-- Hisar Birliği: `58.04`
-
-Sonuç: Oyuncu havuzu 20 sezonda tükenmiyor, yaş dağılımı sürdürülebilir kalıyor ve lig güç seviyesi topluca çökmüyor.
-
-PR #3 squash merge commit: `4b57adf40df8a04e8996f3b0910ee028a622501c`.
+M3 kalite kapısı kapandı.
 
 ---
 
-# 8. GitHub / CI kararı
-
-Repo **Public** kalacaktır. Önceki Private planı geçersizdir. Ana gerekçe GitHub Actions kullanım/kota avantajıdır.
-
-Repo açık kaynak değildir; `LICENSE.md` proprietary notice içerir.
-
-Tek mevcut Core Simulation workflow'u şu sırayı çalıştırır:
-
-- `dart pub get`
-- `dart analyze`
-- `dart test`
-- M0 100 sezon regresyonu
-- M1 20 sezon kariyer doğrulaması
-- M2 20 sezon oyuncu kariyeri
-
-CI içinde APK, AAB, büyük binary veya `actions/upload-artifact` yoktur. M2 PR koşusunda artifact listesi boş (`0`) olarak doğrulanmıştır.
-
----
-
-# 9. Roadmap
+# 10. Roadmap
 
 ## M0 — Deterministik Mini Lig
 **PASS**
@@ -308,34 +393,38 @@ CI içinde APK, AAB, büyük binary veya `actions/upload-artifact` yoktur. M2 PR
 ## M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi
 **PASS**
 
-M2'de maaş ve sözleşme özellikle eklenmedi; bunlar ekonomi/transfer bağlamı olmadan anlamsız yarım sistem oluşturacağı için sonraki aşamalara bırakıldı.
-
 ## M3 — Temel Kulüp Ekonomisi
-**Sıradaki milestone.**
-
-İlk kapsam:
-
-- güvenli para modeli (`Money` veya integer minor unit)
-- kulüp başlangıç nakdi
-- sezonluk temel gelir
-- oyuncu maaş gideri için ekonomi bağlantısına hazırlık
-- işletme gideri
-- temel borç/taksit yükü
-- sezon finans özeti
-- negatif nakit / sürdürülebilirlik invariant'ları
-- 20 sezon finans kariyeri
-
-Transfer pazarı M3'e alınmayacak.
+**PASS**
 
 ## M4 — Basit Transfer Pazarı
-Doğrudan bonservis, sözleşmesi biten oyuncu, pozisyon ihtiyacı, değerleme ve bütçe kontrolü.
+**Sıradaki milestone.**
+
+İlk kontrollü kapsam:
+
+- oyuncu piyasa değeri baseline modeli
+- kulüp pozisyon ihtiyacı
+- satıcı için kabul edilebilir fiyat
+- alıcı için maksimum fiyat
+- doğrudan bonservis teklifi
+- bütçe/nakit kontrolü
+- oyuncunun bir kulüpten diğerine taşınması
+- transfer gelir/giderinin kulüp finansına yazılması
+- transfer sonrası kadro strength yeniden hesaplama
+- sezonlar arasında transfer penceresi
+- aynı seed ile aynı transfer pazarı
+- 20 sezon transfer hacmi / fiyat dağılımı / bütçe ihlali raporu
+
+M4'ün ilk sürümünde henüz kiralık, taksit, bonus, satıştan pay ve takas zorunlu değildir. Önce doğrudan bonservis sistemi mantıklı çalışmalıdır.
 
 ## M5 — 48 Kulüp / 3 Lig
-Yaklaşık 48 özgün kulüp, 3 lig, yükselme/düşme, oyuncu yaşam döngüsü, ekonomi, temel transfer ve 20 sezon otomatik kariyer. İlk büyük teknik başarı hedefidir.
+
+Yaklaşık 48 özgün kulüp, 3 lig, yükselme/düşme, oyuncu yaşam döngüsü, ekonomi, temel transfer ve 20 sezon otomatik kariyer.
+
+Bu nokta ilk büyük teknik başarı hedefidir.
 
 ---
 
-# 10. Uzun kariyer kalite hedefleri
+# 11. Uzun kariyer kalite hedefleri
 
 İleride:
 
@@ -344,24 +433,30 @@ Yaklaşık 48 özgün kulüp, 3 lig, yükselme/düşme, oyuncu yaşam döngüsü
 - 500 kariyer × 30 sezon regresyon
 - 1.000 kariyer × 30 sezon stres testi
 
-Ölçülecek metrikler zamanla:
+Ölçülecek metrikler:
 
-- aktif oyuncu sayısı ve yaş dağılımı
-- genç üretimi / emeklilik
-- takım güç dağılımı
-- kulüp nakdi / borcu
+- aktif oyuncu sayısı
+- oyuncu yaş dağılımı
+- genç üretimi
+- emeklilik
+- kulüp nakdi
+- kulüp borcu
+- acil finansman
 - maaş / gelir oranı
 - transfer ücretleri
+- transfer sayısı
+- transfer yaşı ve pozisyon dağılımı
 - şampiyonluk dağılımı
 - büyük/küçük kulüp farkı
-- taraftar güveni
-- teknik direktör ve başkan görev süresi
+- ileride taraftar güveni
+- teknik direktör görev süresi
+- başkan görev süresi
 
 Her başarısız kariyer seed ile tekrar üretilebilmelidir.
 
 ---
 
-# 11. İlk aşamada yapılmayacaklar
+# 12. İlk aşamada yapılmayacaklar
 
 - 3D maç
 - online multiplayer
@@ -376,26 +471,33 @@ Her başarısız kariyer seed ile tekrar üretilebilmelidir.
 
 ---
 
-# 12. Codex çalışma kuralı
+# 13. Codex çalışma kuralı
 
-Codex kredisi gereksiz kullanılmayacaktır. Büyük çok dosyalı implementasyon, büyük refactor, simülasyon/test altyapısı, karmaşık hata düzeltmesi ve migration gibi yüksek kaldıraçlı işlerde kullanılabilir.
+Codex kredisi gereksiz kullanılmayacaktır.
+
+Codex; büyük çok dosyalı implementasyon, büyük refactor, simülasyon/test altyapısı, karmaşık hata düzeltmesi ve migration gibi yüksek kaldıraçlı işlerde kullanılabilir.
 
 Basit analiz, tasarım kararı, formül konuşması ve küçük belge değişikliklerinde kullanılmaz.
 
-**M0, M1 ve M2 doğrudan GitHub araçlarıyla tamamlandı; Codex kredisi kullanılmadı.**
+M0, M1, M2 ve M3 doğrudan GitHub araçlarıyla yürütüldü; Codex kredisi kullanılmadı.
 
 ---
 
-# 13. Güncel durum
+# 14. Güncel durum
 
-Tamamlanan teknik milestone'lar:
+**Tamamlanan:**
 
-- ✅ M0 — Deterministik Mini Lig
-- ✅ M1 — 20 Sezon Yaşam Döngüsü
-- ✅ M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi
+- ✅ M0 — lig / maç çekirdeği
+- ✅ M1 — 20 sezon kariyer yaşam döngüsü
+- ✅ M2 — oyuncu yaşam döngüsü
+- ✅ M3 — temel ekonomi
 
-Saf Dart çekirdeği artık aynı seed ile deterministik biçimde 20 sezon / 1.120 maç çalıştırabiliyor; oyuncular yaşlanıyor, gelişiyor, emekli oluyor, genç oyuncular sisteme giriyor ve takım gücü gerçek kadrodan türetiliyor.
+**Güncel teknik kanıt:**
 
-**Sıradaki milestone: M3 — Temel Kulüp Ekonomisi.**
+Saf Dart çekirdeği 8 kulüp ve yaşayan oyuncu havuzuyla 20 sezon / 1.120 maçı deterministik biçimde çalıştırabiliyor; oyuncular yaşlanıyor/emekli oluyor, gençler sisteme giriyor, takım strength kadrodan türetiliyor, kulüpler sezonluk gelir/gider/borç döngüsünü yaşıyor ve muhasebe denklemleri ile uzun dönem ekonomi sanity guard'ları CI üzerinde doğrulanıyor.
 
-M3 de UI/APK ve transfer pazarı kapsamına girmeyecek. İlk amaç ekonomik sistemin 20 sezon boyunca matematiksel olarak ayakta kalabildiğini ve borç/nakit invariant'larının otomatik testlerle doğrulanabildiğini kanıtlamaktır.
+**Sıradaki iş:**
+
+## M4 — Basit Transfer Pazarı
+
+M4 de Flutter UI/APK kapsamına girmeyecek. İlk hedef, kulüplerin finansal durumları ve kadro ihtiyaçlarıyla uyumlu biçimde oyuncu alıp satabildiğini 20 sezon otomatik simülasyonda kanıtlamaktır.
