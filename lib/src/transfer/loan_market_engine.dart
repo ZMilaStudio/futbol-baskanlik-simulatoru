@@ -53,7 +53,30 @@ class LoanMarketEngine {
           .where((player) => player.clubId == borrower.id)
           .toList(growable: false);
       final neededPosition = _mostNeededPosition(roster);
+      final positionPlayers = roster
+          .where((player) => player.position == neededPosition)
+          .toList(growable: false);
       final positionAverage = _positionAverage(roster, neededPosition);
+      final shortage = _targets[neededPosition]! - positionPlayers.length;
+      if (shortage <= 0 && positionAverage >= 62.0) {
+        continue;
+      }
+
+      final needRng = SeededRng(
+        StableHash.combine32([
+          careerSeed,
+          simulationVersion,
+          seasonIndex,
+          StableHash.string32(borrower.id),
+          StableHash.string32('loan-need-gate'),
+        ]),
+      );
+      final participationChance = shortage > 0
+          ? 0.78
+          : positionAverage < 58.0
+              ? 0.58
+              : 0.38;
+      if (needRng.nextDouble() >= participationChance) continue;
 
       final candidates = currentPlayers.where((player) {
         if (player.isFreeAgent || player.clubId == borrower.id) return false;
