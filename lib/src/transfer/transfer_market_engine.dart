@@ -7,6 +7,7 @@ import '../player/player.dart';
 import '../player/player_position.dart';
 import 'market_value_model.dart';
 import 'transfer_deal.dart';
+import 'transfer_installment.dart';
 import 'transfer_market_result.dart';
 
 class TransferMarketEngine {
@@ -38,6 +39,7 @@ class TransferMarketEngine {
     required int seasonIndex,
     required int simulationVersion,
     Map<String, int>? contractYearsRemainingByPlayer,
+    bool enableInstallments = false,
   }) {
     final currentPlayers = List<Player>.of(players);
     final finances = {
@@ -154,19 +156,57 @@ class TransferMarketEngine {
           final windowSpendCap = buyerState.cash.scaleBasisPoints(3500);
           final affordable = spendable.min(windowSpendCap);
 
-          if (askingPrice > maximumBid || askingPrice > affordable) {
+          if (askingPrice > maximumBid) continue;
+
+          var upfrontFee = askingPrice;
+          List<TransferInstallment> installments = const [];
+          final regularAffordable = askingPrice <= affordable;
+
+          if (enableInstallments &&
+              askingPrice >= const Money.fromUnits(5000000)) {
+            final wantsInstallments =
+                !regularAffordable || rng.nextDouble() < 0.45;
+            if (wantsInstallments) {
+              final upfrontBps = 5000 + (rng.nextDouble() * 1800).floor();
+              final proposedUpfront = askingPrice.scaleBasisPoints(upfrontBps);
+              final totalCommitmentCap = buyerState.cash.scaleBasisPoints(12000);
+              final installmentAffordable =
+                  proposedUpfront <= affordable &&
+                  askingPrice <= totalCommitmentCap;
+              if (installmentAffordable) {
+                upfrontFee = proposedUpfront;
+                final future = askingPrice - upfrontFee;
+                final firstMinor = future.minorUnits ~/ 2;
+                installments = [
+                  TransferInstallment(
+                    dueSeasonIndex: seasonIndex + 1,
+                    amount: Money.fromMinorUnits(firstMinor),
+                  ),
+                  TransferInstallment(
+                    dueSeasonIndex: seasonIndex + 2,
+                    amount: Money.fromMinorUnits(
+                      future.minorUnits - firstMinor,
+                    ),
+                  ),
+                ];
+              } else if (!regularAffordable) {
+                continue;
+              }
+            } else if (!regularAffordable) {
+              continue;
+            }
+          } else if (!regularAffordable) {
             continue;
           }
 
-          final fee = askingPrice;
           finances[buyer.id] = ClubFinanceState(
             clubId: buyer.id,
-            cash: buyerState.cash - fee,
+            cash: buyerState.cash - upfrontFee,
             debt: buyerState.debt,
           );
           finances[candidate.clubId] = ClubFinanceState(
             clubId: candidate.clubId,
-            cash: sellerState.cash + fee,
+            cash: sellerState.cash + upfrontFee,
             debt: sellerState.debt,
           );
 
@@ -182,7 +222,9 @@ class TransferMarketEngine {
             fromClubId: candidate.clubId,
             toClubId: buyer.id,
             marketValue: marketValue,
-            fee: fee,
+            fee: askingPrice,
+            upfrontFee: upfrontFee,
+            installments: installments,
           );
           deals.add(completed);
           break;
