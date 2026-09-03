@@ -128,9 +128,16 @@ class TransferMarketEngine {
                   candidate.potential - candidate.ability >= 10.0
               ? 1000
               : 0;
+          final sellerPressureBps = sellerState.cash <=
+                  const Money.fromUnits(3000000)
+              ? -800
+              : sellerState.debt > sellerState.cash
+                  ? -400
+                  : 0;
           final askBps = 9800 +
               sellerScarcityBps +
               youthPremiumBps +
+              sellerPressureBps +
               (rng.nextDouble() * 700).floor();
           final shortage =
               (buyerTarget - buyerPositionCount).clamp(0, 3).toInt();
