@@ -83,17 +83,19 @@ void main() {
     );
     expect(
       report.worldReport.finalTotalCash,
-      inInclusiveRange(
-        const Money.fromUnits(100000000),
-        const Money.fromUnits(2000000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(100000000)),
+    );
+    expect(
+      report.worldReport.finalTotalCash,
+      lessThanOrEqualTo(const Money.fromUnits(2000000000)),
     );
     expect(
       report.worldReport.finalTotalDebt,
-      inInclusiveRange(
-        const Money.fromUnits(100000000),
-        const Money.fromUnits(2000000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(100000000)),
+    );
+    expect(
+      report.worldReport.finalTotalDebt,
+      lessThanOrEqualTo(const Money.fromUnits(2000000000)),
     );
   });
 
