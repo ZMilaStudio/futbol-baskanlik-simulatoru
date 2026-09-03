@@ -165,10 +165,10 @@ class TransferMarketEngine {
           if (enableInstallments &&
               askingPrice >= const Money.fromUnits(5000000)) {
             final acceptanceChance = regularAffordable
-                ? 0.12
+                ? 0.10
                 : sellerPressureBps < 0
-                    ? 0.55
-                    : 0.30;
+                    ? 0.48
+                    : 0.25;
             final sellerAcceptsInstallments =
                 rng.nextDouble() < acceptanceChance;
             if (sellerAcceptsInstallments) {
