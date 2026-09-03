@@ -49,3 +49,6 @@ jobs:
 
       - name: Run M4 20-season transfer career
         run: dart run tool/run_m4_transfer_career.dart 20260903
+
+      - name: Run M5 20-season world career
+        run: dart run tool/run_m5_world_career.dart 20260903
