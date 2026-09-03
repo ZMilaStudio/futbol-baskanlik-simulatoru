@@ -45,7 +45,7 @@ void main() {
     );
   });
 
-  test('M5 simulates a valid 20-season 48-club world', () {
+  test('M5 simulates a valid and economically alive 20-season world', () {
     final world = const FictionalWorldFactory().build();
     const engine = WorldCareerEngine();
     const validator = WorldCareerValidator();
@@ -79,6 +79,49 @@ void main() {
         );
       }
     }
+
+    expect(report.totalTransfers, greaterThanOrEqualTo(80));
+    expect(report.totalTransfers, lessThanOrEqualTo(600));
+    expect(
+      report.totalTransferVolume,
+      greaterThanOrEqualTo(const Money.fromUnits(200000000)),
+    );
+    expect(
+      report.totalTransferVolume,
+      lessThanOrEqualTo(const Money.fromUnits(4000000000)),
+    );
+    expect(
+      report.finalTotalCash,
+      greaterThanOrEqualTo(const Money.fromUnits(150000000)),
+    );
+    expect(
+      report.finalTotalCash,
+      lessThanOrEqualTo(const Money.fromUnits(1500000000)),
+    );
+    expect(report.finalTotalDebt, greaterThan(Money.zero));
+    expect(
+      report.finalTotalDebt,
+      lessThan(const Money.fromUnits(1500000000)),
+    );
+    expect(
+      report.totalEmergencyBorrowing,
+      lessThan(const Money.fromUnits(1500000000)),
+    );
+    expect(report.finalHealthCounts.length, greaterThanOrEqualTo(2));
+    expect(
+      report.finalHealthCounts[FinancialHealth.debtCrisis] ?? 0,
+      lessThanOrEqualTo(20),
+    );
+    expect(report.firstTierChampions.length, greaterThanOrEqualTo(4));
+
+    final transferParticipants = <String>{};
+    for (final season in report.seasons) {
+      for (final deal in season.transfersAfterSeason) {
+        transferParticipants.add(deal.fromClubId);
+        transferParticipants.add(deal.toClubId);
+      }
+    }
+    expect(transferParticipants.length, greaterThanOrEqualTo(20));
   });
 
   test('M5 is deterministic and different seeds diverge', () {
