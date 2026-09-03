@@ -4,7 +4,7 @@
 **Son güncelleme:** 03.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru`  
 **Repo görünürlüğü:** Public  
-**Aktif teknik aşama:** M0 — Deterministik Mini Lig Çekirdeği  
+**Aktif teknik aşama:** M0 PASS — sıradaki milestone M1 / 20 Sezon Yaşam Döngüsü  
 **Ana proje durumu:** Yan geliştirme. Kelime Avı ve Minik Dedektif gibi aktif projeleri aksatmayacak.
 
 ---
@@ -176,9 +176,21 @@ Bağımsız 1.000 sezon matematik doğrulamasında yaklaşık ev galibiyeti `%44
 
 # 10. M0 kalite kapısı
 
-M0 ancak 8 kulüp, 56 fixture, 14 round, takım başına 7 iç + 7 deplasman, self-match olmaması, duplicate fixture olmaması, tur başına tek maç, deterministik match seed, aynı seed aynı sonuç, farklı seed davranışı, Poisson üretimi, doğru puan tablosu, sezon raporu, invariant validator ve 100 sezon batch testinin tamamı PASS olduğunda kapanır.
+M0 kalite kapısı **PASS** olarak kapanmıştır. GitHub Actions üzerinde Dart 3.13.3 ile `dart analyze` hatasız tamamlandı, 4 otomatik test geçti ve 100 sezon / 5.600 maç batch simülasyonu invariant ihlali olmadan tamamlandı.
 
-Gerçek Dart CI PASS olmadan M1'e geçilmeyecektir.
+Gerçek CI sonucu:
+
+- `dart analyze`: PASS — 0 issue
+- `dart test`: PASS — 4/4 test
+- 100 sezon batch: PASS
+- 5.600 maç
+- ev galibiyeti: `%45,2857`
+- beraberlik: `%24,5893`
+- deplasman galibiyeti: `%30,1250`
+- gol/maç: `2,5864`
+- şampiyonluk: Kuzey Yıldızı 49, Vadişehir 20, Demirkent 19, Mavi Liman 6, Çınarspor 4, Ufukşehir 2
+
+İlk CI çalışmasında test fixture'ındaki `int → double` analyzer hatası yakalandı; iki testte explicit `.toDouble()` ile düzeltildi. `actions/checkout` da `v5`e yükseltildi. İkinci CI tam PASS verdi.
 
 ---
 
@@ -186,7 +198,7 @@ Gerçek Dart CI PASS olmadan M1'e geçilmeyecektir.
 
 Hazır parçalar: `SimulationConfig`, `StableHash`, `SeededRng`, `Club`, `Fixture`, `FixtureGenerator`, `StandingRow`, `MatchEngine`, `MatchResult`, `PoissonSampler`, `SeasonEngine`, `SeasonReport`, `SeasonValidator`, tek sezon CLI runner, 100 sezon batch runner, fixture testi, determinism testi ve 100 sezon kabul testi.
 
-M0 kaynakları `m0-bootstrap` branch'ine aktarılmıştır.
+M0 kaynakları PR #1 üzerinden squash merge ile `main` branch'ine alınmıştır. Merge commit: `19858745d3f999dee7f4ddb3e107c2a964698535`.
 
 ---
 
@@ -209,7 +221,7 @@ Repo public olsa da proje açık kaynak olarak lisanslanmayacaktır. Proprietary
 # 13. 20 sezon çekirdeğine aşamalı plan
 
 ## M0 — Deterministik Mini Lig
-8 kulüp / 1 lig / 1 sezon.
+8 kulüp / 1 lig / 1 sezon. **PASS.**
 
 ## M1 — 20 Sezon Yaşam Döngüsü
 `GameDate`, sezon index, yeni sezon oluşturma, 20 sezon batch ve season-to-season determinism.
@@ -252,12 +264,47 @@ Codex kredisi gereksiz kullanılmayacaktır. Büyük çok dosyalı implementasyo
 
 # 17. Güncel durum ve sıradaki iş
 
-Tamamlanan: proje kimliği, ana mimari, sistem öncelikleri, veri modeli taslağı, sistem etkileşimleri, M0 sözleşmesi, M0 matematik baseline, M0 saf Dart çekirdeği, M0 test harness, GitHub repo, Public repo kararı ve hafif CI workflow tasarımı.
+**Tamamlanan:**
 
-Şu an: M0 kodları `m0-bootstrap` branch'inde PR/CI ile gerçek Dart doğrulamasına hazırlanmıştır.
+- proje kimliği ve ana mimari,
+- sistem öncelikleri ve veri modeli taslağı,
+- sistem etkileşimleri,
+- M0 simülasyon sözleşmesi,
+- deterministik RNG/hash altyapısı,
+- fikstür + maç + puan tablosu + sezon validator,
+- fixture/determinism/100 sezon testleri,
+- hafif GitHub Actions CI,
+- PR #1 merge,
+- gerçek Dart CI doğrulaması,
+- M0 kalite kapısının kapanması.
 
-Sıradaki kalite kapısı:
+**M0 sonucu: PASS.**
 
-> GitHub Actions üzerinde `dart analyze`, `dart test` ve 100 sezon batch PASS.
+GitHub Actions gerçek sonucu:
 
-Bu PASS olmadan M1'e geçilmeyecek.
+- Dart SDK: `3.13.3 stable`
+- analyze: PASS / 0 issue
+- test: PASS / 4 test
+- 100 sezon: PASS
+- toplam maç: `5.600`
+- ev: `%45,29`
+- beraberlik: `%24,59`
+- deplasman: `%30,13`
+- ortalama gol: `2,586`
+
+**Sıradaki milestone:**
+
+## M1 — 20 Sezon Yaşam Döngüsü
+
+İlk kapsam:
+
+- `GameDate`,
+- sezon index ilerlemesi,
+- yeni sezon oluşturma,
+- sezonlar arası reset kuralları,
+- geçici/sade takım gücü değişimi,
+- 20 sezon arka arkaya simülasyon,
+- season-to-season determinism,
+- 20 sezon raporu ve validator.
+
+M1 de UI/APK kapsamına girmeyecek ve mevcut aktif projeleri aksatmayacak kadar küçük tutulacaktır.
