@@ -20,7 +20,9 @@ class BasicEconomyEngine {
     required List<Club> clubs,
     required int careerSeed,
     required int simulationVersion,
+    int economicScaleBps = 10000,
   }) {
+    _validateScale(economicScaleBps, 'economicScaleBps');
     return List.unmodifiable(
       clubs.map((club) {
         final deltaHundredths =
@@ -45,10 +47,10 @@ class BasicEconomyEngine {
           clubId: club.id,
           cash: Money.fromUnits(
             (cashBase * cashModifierBps) ~/ 10000,
-          ),
+          ).scaleBasisPoints(economicScaleBps),
           debt: Money.fromUnits(
             (debtBase * debtModifierBps) ~/ 10000,
-          ),
+          ).scaleBasisPoints(economicScaleBps),
         );
       }),
     );
@@ -59,7 +61,11 @@ class BasicEconomyEngine {
     required List<Player> players,
     required SeasonReport seasonReport,
     required List<ClubFinanceState> openingStates,
+    int economicScaleBps = 10000,
+    int costScaleBps = 10000,
   }) {
+    _validateScale(economicScaleBps, 'economicScaleBps');
+    _validateScale(costScaleBps, 'costScaleBps');
     final clubById = {for (final club in clubs) club.id: club};
     final stateById = {
       for (final state in openingStates) state.clubId: state,
@@ -85,20 +91,23 @@ class BasicEconomyEngine {
           math.max(0, (club.strength * 100).round() - 5500);
       final squad = playersByClub[clubId] ?? const <Player>[];
 
-      const centralRevenue = Money.fromUnits(12000000);
+      final centralRevenue = const Money.fromUnits(12000000)
+          .scaleBasisPoints(economicScaleBps);
       final sponsorRevenue = Money.fromUnits(
         4000000 + strengthDeltaHundredths * 3500,
-      );
+      ).scaleBasisPoints(economicScaleBps);
       final matchdayRevenue = Money.fromUnits(
         4000000 + strengthDeltaHundredths * 2200,
-      );
-      final prizeRevenue =
-          Money.fromUnits(_prizeForPosition(positionByClub[clubId] ?? 8));
+      ).scaleBasisPoints(economicScaleBps);
+      final prizeRevenue = Money.fromUnits(
+        _prizeForPosition(positionByClub[clubId] ?? 16),
+      ).scaleBasisPoints(economicScaleBps);
 
-      final wageExpense = wageModel.annualSquadWages(squad);
+      final wageExpense =
+          wageModel.annualSquadWages(squad).scaleBasisPoints(costScaleBps);
       final operatingExpense = Money.fromUnits(
         13000000 + strengthDeltaHundredths * 3000,
-      );
+      ).scaleBasisPoints(costScaleBps);
       final interestExpense = opening.debt.scaleBasisPoints(500);
 
       final principalRepaid = opening.debt.scaleBasisPoints(500);
@@ -154,6 +163,12 @@ class BasicEconomyEngine {
     }
 
     return List.unmodifiable(results);
+  }
+
+  static void _validateScale(int scaleBps, String name) {
+    if (scaleBps <= 0) {
+      throw ArgumentError.value(scaleBps, name, 'Must be positive.');
+    }
   }
 
   static int _prizeForPosition(int position) => switch (position) {
