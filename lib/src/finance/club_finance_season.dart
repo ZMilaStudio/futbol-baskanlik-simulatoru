@@ -18,6 +18,8 @@ class ClubFinanceSeason {
     required this.closingCash,
     required this.closingDebt,
     required this.health,
+    this.transferInstallmentIncome = Money.zero,
+    this.transferInstallmentExpense = Money.zero,
   });
 
   final String clubId;
@@ -32,6 +34,8 @@ class ClubFinanceSeason {
   final Money interestExpense;
   final Money principalRepaid;
   final Money emergencyBorrowing;
+  final Money transferInstallmentIncome;
+  final Money transferInstallmentExpense;
   final Money closingCash;
   final Money closingDebt;
   final FinancialHealth health;
@@ -49,6 +53,8 @@ class ClubFinanceSeason {
       totalRevenue -
       profitAndLossExpenses -
       principalRepaid +
+      transferInstallmentIncome -
+      transferInstallmentExpense +
       emergencyBorrowing;
 
   Money get expectedClosingDebt =>
@@ -57,6 +63,7 @@ class ClubFinanceSeason {
   String get signature =>
       '$clubId|${openingCash.minorUnits}|${openingDebt.minorUnits}|'
       '${totalRevenue.minorUnits}|${profitAndLossExpenses.minorUnits}|'
-      '${principalRepaid.minorUnits}|${emergencyBorrowing.minorUnits}|'
+      '${principalRepaid.minorUnits}|${transferInstallmentIncome.minorUnits}|'
+      '${transferInstallmentExpense.minorUnits}|${emergencyBorrowing.minorUnits}|'
       '${closingCash.minorUnits}|${closingDebt.minorUnits}|${health.name}';
 }
