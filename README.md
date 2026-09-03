@@ -9,9 +9,9 @@ Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 - **M0 — Deterministik Mini Lig:** PASS
 - **M1 — 20 Sezon Yaşam Döngüsü:** PASS
 - **M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi:** PASS
-- **Sıradaki:** M3 — Temel Kulüp Ekonomisi
+- **M3 — Temel Kulüp Ekonomisi:** geliştirme / CI doğrulama aşaması
 
-Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü ve ileride ekonomi/transfer sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
+Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü ve ekonomi sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
 
 ## M0
 
@@ -27,23 +27,31 @@ Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döng�
 
 - cihaz saatinden bağımsız `GameDate`
 - 20 sezonluk kariyer yaşam döngüsü
-- ardışık sezon index'leri
 - deterministik sezonlar arası kulüp gücü evrimi
 - kariyer raporu ve validator
-- aynı seed ile aynı kariyer sonucu
 
 ## M2
 
 - 8 kulüp × 18 oyuncu = 144 başlangıç oyuncusu
 - yaş, pozisyon, mevcut seviye ve potansiyel
 - deterministik gelişim / düşüş
-- 34–38 yaş arası deterministik emeklilik
-- her sezon geçişinde kulüp başına 1 genç üretimi
-- kadronun ilk 11 kalitesinden türetilen takım gücü
+- emeklilik ve genç üretimi
+- kadronun ilk 11 kalitesinden takım gücü
 - 20 sezon oyuncu nüfusu korunum testi
-- seed `20260903`: 20 sezon / 1.120 maç / 148 final oyuncu / 148 emeklilik / 152 youth intake / validation 0
 
-M2'de transfer, sözleşme, maaş, ekonomi, teknik direktör, taraftar, UI ve APK henüz yoktur.
+## M3
+
+- integer minor-unit tabanlı `Money`
+- kulüp nakdi ve borcu
+- merkezi, sponsor, maç günü ve başarı gelirleri
+- oyuncu kalitesinden türetilen geçici maaş yükü
+- işletme gideri ve faiz
+- borç anapara geri ödemesi
+- nakit yetersizliğinde açık `emergencyBorrowing`
+- finansal sağlık sınıfları
+- 20 sezon ekonomi kariyeri ve muhasebe validator'ı
+
+M3'te transfer, gerçek sözleşme/maaş pazarlığı, tesis, sponsor seçimi, taraftar, UI ve APK henüz yoktur.
 
 ## Çalıştırma
 
@@ -54,6 +62,7 @@ dart test
 dart run tool/run_m0_batch.dart 100
 dart run tool/run_m1_career.dart 20260903
 dart run tool/run_m2_player_career.dart 20260903
+dart run tool/run_m3_economy_career.dart 20260903
 ```
 
 ## CI prensibi

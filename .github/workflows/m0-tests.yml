@@ -43,3 +43,6 @@ jobs:
 
       - name: Run M2 20-season player career
         run: dart run tool/run_m2_player_career.dart 20260903
+
+      - name: Run M3 20-season economy career
+        run: dart run tool/run_m3_economy_career.dart 20260903
