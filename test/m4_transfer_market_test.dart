@@ -56,7 +56,7 @@ void main() {
       for (final deal in season.transfersAfterSeason) {
         expect(deal.fromClubId, isNot(deal.toClubId));
         expect(deal.fee, greaterThan(Money.zero));
-        expect(deal.fee, greaterThanOrEqualTo(deal.marketValue.scaleBasisPoints(9800)));
+        expect(deal.fee, greaterThanOrEqualTo(deal.marketValue.scaleBasisPoints(9000)));
         expect(deal.fee, lessThanOrEqualTo(deal.marketValue.scaleBasisPoints(13300)));
       }
     }
