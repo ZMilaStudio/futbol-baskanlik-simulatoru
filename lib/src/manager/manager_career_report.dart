@@ -41,16 +41,38 @@ class ManagerCareerReport {
     return ids.length;
   }
 
+  Iterable<ManagerClubSeason> get _clubSeasons sync* {
+    for (final season in seasons) {
+      yield* season.clubs;
+    }
+  }
+
   double get averageStrengthImpact {
     var total = 0.0;
     var count = 0;
-    for (final season in seasons) {
-      for (final club in season.clubs) {
-        total += club.strengthImpact;
-        count++;
-      }
+    for (final club in _clubSeasons) {
+      total += club.strengthImpact;
+      count++;
     }
     return count == 0 ? 0 : total / count;
+  }
+
+  int get negativeImpactClubSeasons =>
+      _clubSeasons.where((club) => club.strengthImpact < 0).length;
+
+  int get strongPositiveImpactClubSeasons =>
+      _clubSeasons.where((club) => club.strengthImpact >= 1.5).length;
+
+  double get minimumStrengthImpact {
+    final values = _clubSeasons.map((club) => club.strengthImpact).toList();
+    if (values.isEmpty) return 0;
+    return values.reduce((a, b) => a < b ? a : b);
+  }
+
+  double get maximumStrengthImpact {
+    final values = _clubSeasons.map((club) => club.strengthImpact).toList();
+    if (values.isEmpty) return 0;
+    return values.reduce((a, b) => a > b ? a : b);
   }
 
   double get averageFinalRelationship {
