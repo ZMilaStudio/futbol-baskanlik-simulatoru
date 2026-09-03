@@ -22,7 +22,7 @@ class BasicEconomyEngine {
     required int simulationVersion,
     int economicScaleBps = 10000,
   }) {
-    _validateEconomicScale(economicScaleBps);
+    _validateScale(economicScaleBps, 'economicScaleBps');
     return List.unmodifiable(
       clubs.map((club) {
         final deltaHundredths =
@@ -62,8 +62,10 @@ class BasicEconomyEngine {
     required SeasonReport seasonReport,
     required List<ClubFinanceState> openingStates,
     int economicScaleBps = 10000,
+    int costScaleBps = 10000,
   }) {
-    _validateEconomicScale(economicScaleBps);
+    _validateScale(economicScaleBps, 'economicScaleBps');
+    _validateScale(costScaleBps, 'costScaleBps');
     final clubById = {for (final club in clubs) club.id: club};
     final stateById = {
       for (final state in openingStates) state.clubId: state,
@@ -101,10 +103,11 @@ class BasicEconomyEngine {
         _prizeForPosition(positionByClub[clubId] ?? 16),
       ).scaleBasisPoints(economicScaleBps);
 
-      final wageExpense = wageModel.annualSquadWages(squad);
+      final wageExpense =
+          wageModel.annualSquadWages(squad).scaleBasisPoints(costScaleBps);
       final operatingExpense = Money.fromUnits(
         13000000 + strengthDeltaHundredths * 3000,
-      ).scaleBasisPoints(economicScaleBps);
+      ).scaleBasisPoints(costScaleBps);
       final interestExpense = opening.debt.scaleBasisPoints(500);
 
       final principalRepaid = opening.debt.scaleBasisPoints(500);
@@ -162,13 +165,9 @@ class BasicEconomyEngine {
     return List.unmodifiable(results);
   }
 
-  static void _validateEconomicScale(int economicScaleBps) {
-    if (economicScaleBps <= 0) {
-      throw ArgumentError.value(
-        economicScaleBps,
-        'economicScaleBps',
-        'Must be positive.',
-      );
+  static void _validateScale(int scaleBps, String name) {
+    if (scaleBps <= 0) {
+      throw ArgumentError.value(scaleBps, name, 'Must be positive.');
     }
   }
 
