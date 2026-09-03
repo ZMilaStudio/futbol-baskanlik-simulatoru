@@ -15,11 +15,11 @@
 - temel işletme gideri
 - borç faizi
 - borç anapara geri ödemesi
-- yüksek nakitte sınırlı ek borç azaltımı
 - nakit yetersizliğinde açıkça kaydedilen acil finansman
 - finansal sağlık sınıflandırması
 - 20 sezon ekonomi kariyeri
 - nakit/borç denklem validator'ı
+- uzun kariyer ekonomi sanity guard'ları
 - M0, M1 ve M2 regresyonlarının korunması
 
 ## Kapsam dışı
@@ -98,8 +98,8 @@ Bu **nihai sözleşme sistemi değildir**. Sözleşme ve gerçek maaş pazarlı�
 
 - açılış borcu kulüp gücü ve kariyer seed'iyle deterministik oluşturulur,
 - yıllık faiz giderdir,
-- her sezon zorunlu anapara azaltımı yapılır,
-- nakit rezervi yüksekse kalan borca sınırlı ekstra ödeme yapılabilir,
+- her sezon açılış borcunun `%5`i kadar normal anapara geri ödemesi yapılır,
+- fazla nakdin otomatik olarak ek borç kapatmasına dönüştürülmesi **reddedildi ve kaldırıldı**,
 - sezon sonu nakit minimum güvenlik seviyesinin altına düşerse fark `emergencyBorrowing` olarak yeni borç kaydedilir.
 
 Negatif nakdi görünmez biçimde sıfırlamak yasaktır.
@@ -116,17 +116,61 @@ Negatif nakdi görünmez biçimde sıfırlamak yasaktır.
 
 Sınıflandırma kapanış nakdi, yıllık gider kapsamı, borç/gelir oranı ve acil borçlanma ihtiyacına bakar.
 
+## Denge iterasyonu
+
+İlk gerçek 20 sezon CI koşusu teknik olarak PASS verdi fakat ekonomik olarak reddedildi:
+
+- final toplam nakit: `1.017,03M`
+- final toplam borç: `0,00M`
+- acil finansman: `0,00M`
+- 8/8 kulüp: `veryStrong`
+
+Bu sonuç uzun kariyer için açık biçimde aşırı refah ürettiği için merge edilmedi.
+
+Düzeltme:
+
+- yapısal işletme giderleri yükseltildi,
+- fazla nakitle otomatik ek borç kapatma kaldırıldı,
+- finansal sağlık eşikleri sıkılaştırıldı.
+
+Kabul edilen seed `20260903` / 20 sezon baseline sonucu:
+
+- final toplam nakit: `124,28M`
+- final toplam borç: `104,43M`
+- toplam acil finansman: `67,44M`
+- `veryStrong`: 2 kulüp
+- `solid`: 2 kulüp
+- `balanced`: 2 kulüp
+- `debtCrisis`: 2 kulüp
+- validation issue: `0`
+
+Bu dağılım M3 için kusursuz nihai ekonomi olarak değil, transfer ve başkan kararları gelmeden önce **çeşitlilik üreten, evrensel refah veya evrensel çöküş yaratmayan kabul edilebilir baseline** olarak kilitlenmiştir.
+
+## Kalıcı ekonomi sanity guard'ları
+
+Seed `20260903` 20 sezon baseline için geniş alarm sınırları CI testine eklenmiştir:
+
+- final toplam nakit `20M–500M` aralığında,
+- final toplam borç `0–400M` aralığında ve sıfırdan büyük,
+- toplam acil finansman `<250M`,
+- final sağlık dağılımında en az 2 farklı sınıf,
+- `debtCrisis` kulüp sayısı en fazla 4,
+- `veryStrong` kulüp sayısı en fazla 4.
+
+Bunlar nihai denge hedefi değildir; gelecekte ekonominin yeniden patlamasını veya tüm ligin aynı sonuca sürüklenmesini yakalayan regresyon alarmlarıdır.
+
 ## Kalite kapısı
 
-M3 ancak GitHub Actions üzerinde aşağıdakilerin tamamı PASS olduğunda kapanır:
+M3 PR kalite kapısı:
 
-- `dart analyze`
-- tüm M0 + M1 + M2 + M3 testleri
-- M0 100 sezon regresyonu
-- M1 20 sezon kariyeri
-- M2 20 sezon oyuncu kariyeri
-- M3 20 sezon ekonomi kariyeri
-- sıfır finance validation issue
-- artifact sayısı 0
+- `dart analyze`: PASS
+- toplam otomatik test: `15/15 PASS`
+- M0 100 sezon regresyonu: PASS
+- M1 20 sezon kariyeri: PASS
+- M2 20 sezon oyuncu kariyeri: PASS
+- M3 20 sezon ekonomi kariyeri: PASS
+- finance validation issue: `0`
+- ekonomi sanity guard: PASS
+- artifact sayısı: `0`
 
 Sonraki milestone: **M4 — Basit Transfer Pazarı**.
