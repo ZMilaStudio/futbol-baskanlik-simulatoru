@@ -132,7 +132,8 @@ class TransferMarketEngine {
               sellerScarcityBps +
               youthPremiumBps +
               (rng.nextDouble() * 700).floor();
-          final shortage = (buyerTarget - buyerPositionCount).clamp(0, 3);
+          final shortage =
+              (buyerTarget - buyerPositionCount).clamp(0, 3).toInt();
           final maxBidBps =
               10300 + shortage * 700 + (rng.nextDouble() * 900).floor();
           final askingPrice = marketValue.scaleBasisPoints(askBps);
