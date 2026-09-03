@@ -97,14 +97,12 @@ class BasicEconomyEngine {
 
       final wageExpense = wageModel.annualSquadWages(squad);
       final operatingExpense = Money.fromUnits(
-        8000000 + strengthDeltaHundredths * 2500,
+        13000000 + strengthDeltaHundredths * 3000,
       );
       final interestExpense = opening.debt.scaleBasisPoints(500);
 
-      final mandatoryPrincipal = opening.debt.scaleBasisPoints(500);
-      final debtAfterMandatory = opening.debt - mandatoryPrincipal;
-
-      final cashAfterMandatory =
+      final principalRepaid = opening.debt.scaleBasisPoints(500);
+      final cashBeforeEmergency =
           opening.cash +
           centralRevenue +
           sponsorRevenue +
@@ -113,22 +111,7 @@ class BasicEconomyEngine {
           wageExpense -
           operatingExpense -
           interestExpense -
-          mandatoryPrincipal;
-
-      final reserveTarget = Money.fromUnits(
-        12000000 + strengthDeltaHundredths * 2000,
-      );
-
-      var extraPrincipal = Money.zero;
-      if (cashAfterMandatory > reserveTarget &&
-          debtAfterMandatory > Money.zero) {
-        final excess = cashAfterMandatory - reserveTarget;
-        extraPrincipal =
-            excess.scaleBasisPoints(3000).min(debtAfterMandatory);
-      }
-
-      final principalRepaid = mandatoryPrincipal + extraPrincipal;
-      final cashBeforeEmergency = cashAfterMandatory - extraPrincipal;
+          principalRepaid;
       final debtBeforeEmergency = opening.debt - principalRepaid;
 
       const minimumCash = Money.fromUnits(2000000);
@@ -200,16 +183,16 @@ class BasicEconomyEngine {
     final debtToRevenueBps = (debt.minorUnits * 10000) ~/ revenue;
     final cashCoverageBps = (cash.minorUnits * 10000) ~/ expenses;
 
-    if (debtToRevenueBps <= 4000 && cashCoverageBps >= 7500) {
+    if (debtToRevenueBps <= 2000 && cashCoverageBps >= 7500) {
       return FinancialHealth.veryStrong;
     }
-    if (debtToRevenueBps <= 8000 && cashCoverageBps >= 4000) {
+    if (debtToRevenueBps <= 5000 && cashCoverageBps >= 4000) {
       return FinancialHealth.solid;
     }
-    if (debtToRevenueBps <= 12000) {
+    if (debtToRevenueBps <= 9000) {
       return FinancialHealth.balanced;
     }
-    if (debtToRevenueBps <= 20000) {
+    if (debtToRevenueBps <= 15000) {
       return FinancialHealth.tight;
     }
     return FinancialHealth.debtCrisis;
