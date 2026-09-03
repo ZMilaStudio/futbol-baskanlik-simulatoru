@@ -15,6 +15,9 @@ void main(List<String> args) {
           report.totalTransferVolume.minorUnits ~/ report.totalTransfers,
         );
   final clubById = {for (final club in report.finalClubs) club.id: club};
+  final finalFinanceById = {
+    for (final state in report.finalFinanceStates) state.clubId: state,
+  };
 
   print('M5 20-season / 48-club / 3-league world career');
   print('Seed: $seed');
@@ -28,6 +31,8 @@ void main(List<String> args) {
   print('Average fee: $averageFee');
   print('Final total cash: ${report.finalTotalCash}');
   print('Final total debt: ${report.finalTotalDebt}');
+  print('Emergency borrowing: ${report.totalEmergencyBorrowing}');
+  print('Final health: ${report.finalHealthCounts}');
   print('First-tier championships:');
   final champions = report.firstTierChampions.entries.toList()
     ..sort((a, b) => b.value.compareTo(a.value));
@@ -43,9 +48,17 @@ void main(List<String> args) {
           (sum, club) => sum + club.strength,
         ) /
         leagueClubs.length;
+    var tierCash = Money.zero;
+    var tierDebt = Money.zero;
+    for (final clubId in league.clubIds) {
+      final finance = finalFinanceById[clubId]!;
+      tierCash += finance.cash;
+      tierDebt += finance.debt;
+    }
     print(
       '  ${league.name}: clubs=${league.clubIds.length}, '
-      'avgStrength=${averageStrength.toStringAsFixed(2)}',
+      'avgStrength=${averageStrength.toStringAsFixed(2)}, '
+      'cash=$tierCash, debt=$tierDebt',
     );
   }
   print('Validation issues: ${issues.length}');
