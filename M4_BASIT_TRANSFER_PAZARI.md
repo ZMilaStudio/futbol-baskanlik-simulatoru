@@ -1,7 +1,7 @@
 # Futbol Başkanlık Simülatörü — M4 Basit Transfer Pazarı
 
 **Milestone:** M4 — Basit Transfer Pazarı  
-**Durum:** Kabul edilen baseline / kalite kapısı adayı  
+**Durum:** **PASS — kalite kapısı kapandı**  
 **Amaç:** M2 oyuncu yaşam döngüsü ile M3 kulüp ekonomisini ilk kez kapalı döngüde birbirine bağlamak.
 
 ## Kapsam
@@ -167,7 +167,7 @@ Bu sınırlar ince oyun dengesi değil, transfer pazarının donmasını veya ek
 
 ## Kalite kapısı
 
-M4 ancak aşağıdakilerin tamamı PASS olduğunda kapanır:
+M4 aşağıdakilerin tamamı PASS olduğu için kapatıldı:
 
 - `dart analyze`
 - tüm M0 + M1 + M2 + M3 + M4 testleri
