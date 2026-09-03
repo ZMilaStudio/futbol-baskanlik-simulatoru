@@ -1,4 +1,4 @@
-name: M0 Core Tests
+name: Core Simulation Tests
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: m0-${{ github.workflow }}-${{ github.ref }}
+  group: core-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,5 +35,8 @@ jobs:
       - name: Run tests
         run: dart test
 
-      - name: Run 100-season batch
+      - name: Run M0 100-season batch
         run: dart run tool/run_m0_batch.dart 100
+
+      - name: Run M1 20-season career
+        run: dart run tool/run_m1_career.dart 20260903

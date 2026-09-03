@@ -1,3 +1,9 @@
+export 'src/career/career_engine.dart';
+export 'src/career/career_report.dart';
+export 'src/career/career_season.dart';
+export 'src/career/career_validator.dart';
+export 'src/career/club_strength_evolution.dart';
+export 'src/core/game_date.dart';
 export 'src/core/simulation_config.dart';
 export 'src/core/seeded_rng.dart';
 export 'src/league/club.dart';

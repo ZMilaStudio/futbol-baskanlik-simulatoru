@@ -1,20 +1,36 @@
-# Futbol Başkanlık Simülatörü — M0 Core
+# Futbol Başkanlık Simülatörü — Simulation Core
 
-ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün deterministik simülasyon çekirdeği.
+ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün deterministik, UI'dan bağımsız Dart simülasyon çekirdeği.
 
-Bu repo şu anda yalnızca **M0 — Deterministik Mini Lig Çekirdeği** aşamasını içerir. Flutter bağımlılığı yoktur; amaç simülasyon mantığını UI'dan bağımsız test etmektir.
+Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 
-## M0 hedefi
+## Teknik durum
+
+- **M0 — Deterministik Mini Lig:** PASS
+- **M1 — 20 Sezon Yaşam Döngüsü:** CI doğrulamasında
+
+Flutter bağımlılığı henüz yoktur. Amaç maç, sezon ve uzun kariyer sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
+
+## M0
 
 - 8 hayalî kulüp
-- 14 maç haftası
-- toplam 56 maç
+- 14 maç haftası / 56 maç
 - çift devreli lig
 - deterministik seed sistemi
 - Poisson tabanlı maç motoru
-- puan tablosu
-- sezon doğrulama kuralları
-- 100 sezon otomatik test
+- puan tablosu ve sezon validator
+- 100 sezon otomatik regresyon testi
+
+## M1
+
+- cihaz saatinden bağımsız `GameDate`
+- 20 sezonluk kariyer yaşam döngüsü
+- ardışık sezon index'leri
+- deterministik sezonlar arası kulüp gücü evrimi
+- kariyer raporu ve validator
+- aynı seed ile aynı kariyer sonucu
+
+M1'de oyuncu, transfer, ekonomi, teknik direktör, taraftar, UI ve APK henüz yoktur.
 
 ## Çalıştırma
 
@@ -22,13 +38,13 @@ Bu repo şu anda yalnızca **M0 — Deterministik Mini Lig Çekirdeği** aşamas
 dart pub get
 dart analyze
 dart test
-dart run tool/run_m0_simulation.dart 20260903
 dart run tool/run_m0_batch.dart 100
+dart run tool/run_m1_career.dart 20260903
 ```
 
 ## CI prensibi
 
-GitHub Actions yalnızca Dart bağımlılıklarını kurar, analiz ve testleri çalıştırır. APK/AAB veya büyük artifact üretilmez/yüklenmez.
+GitHub Actions yalnızca Dart bağımlılıklarını kurar, analiz/testleri ve headless simülasyon koşularını çalıştırır. APK/AAB veya büyük artifact üretilmez/yüklenmez.
 
 ## Lisans
 
