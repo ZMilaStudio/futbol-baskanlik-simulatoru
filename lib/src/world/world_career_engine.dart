@@ -11,6 +11,7 @@ import '../season/season_engine.dart';
 import '../transfer/transfer_deal.dart';
 import '../transfer/transfer_market_engine.dart';
 import 'league_tier.dart';
+import 'world_career_hooks.dart';
 import 'world_career_report.dart';
 import 'world_career_season.dart';
 import 'world_league.dart';
@@ -37,6 +38,7 @@ class WorldCareerEngine {
     required List<WorldLeague> leagues,
     required SimulationConfig config,
     int seasonCount = 20,
+    WorldCareerHooks hooks = const NoopWorldCareerHooks(),
   }) {
     if (seasonCount <= 0) {
       throw ArgumentError.value(seasonCount, 'seasonCount', 'Must be positive.');
@@ -62,12 +64,22 @@ class WorldCareerEngine {
 
     for (var offset = 0; offset < seasonCount; offset++) {
       final seasonIndex = config.seasonIndex + offset;
+      final hasNextSeason = offset < seasonCount - 1;
       final leaguesBeforeSeason = currentLeagues;
       final seasonPlayers = List<Player>.unmodifiable(currentPlayers);
-      final currentClubs = strengthCalculator.deriveClubs(
+      final squadClubs = strengthCalculator.deriveClubs(
         baseClubs: baseClubs,
         players: seasonPlayers,
       );
+      final currentClubs = hooks.adjustClubsForSeason(
+        seasonIndex: seasonIndex,
+        squadClubs: squadClubs,
+        players: seasonPlayers,
+        leagues: leaguesBeforeSeason,
+        financeStates: currentFinanceStates,
+      );
+      _validateHookClubs(squadClubs, currentClubs);
+
       final clubById = {for (final club in currentClubs) club.id: club};
       final financeById = {
         for (final state in currentFinanceStates) state.clubId: state,
@@ -123,17 +135,31 @@ class WorldCareerEngine {
       var financeStatesAfterWindow = closingFinanceStates;
       var leaguesAfterTransition = leaguesBeforeSeason;
 
-      if (offset < seasonCount - 1) {
+      if (hasNextSeason) {
         final transition = _promoteAndRelegate(
           currentLeagues: leaguesBeforeSeason,
           leagueResults: leagueResults,
         );
         movementsAfterSeason = transition.movements;
         leaguesAfterTransition = transition.leagues;
+      }
 
+      hooks.onSeasonCompleted(
+        seasonIndex: seasonIndex,
+        hasNextSeason: hasNextSeason,
+        squadClubs: squadClubs,
+        effectiveClubs: currentClubs,
+        players: seasonPlayers,
+        leaguesBeforeSeason: leaguesBeforeSeason,
+        leaguesForNextSeason: leaguesAfterTransition,
+        leagueResults: leagueResults,
+        finances: financeResults,
+      );
+
+      if (hasNextSeason) {
         final lifecycle = lifecycleEngine.advance(
           currentPlayers: seasonPlayers,
-          currentClubs: currentClubs,
+          currentClubs: squadClubs,
           referenceClubs: baseClubs,
           careerSeed: config.careerSeed,
           nextSeasonIndex: seasonIndex + 1,
@@ -353,6 +379,24 @@ class WorldCareerEngine {
         !clubIds.containsAll(membership) ||
         !membership.toSet().containsAll(clubIds)) {
       throw ArgumentError('League membership must contain every club once.');
+    }
+  }
+
+  void _validateHookClubs(List<Club> squadClubs, List<Club> adjustedClubs) {
+    if (adjustedClubs.length != squadClubs.length) {
+      throw StateError('World career hooks must preserve club count.');
+    }
+    final expectedIds = squadClubs.map((club) => club.id).toSet();
+    final adjustedIds = adjustedClubs.map((club) => club.id).toSet();
+    if (adjustedIds.length != adjustedClubs.length ||
+        adjustedIds.length != expectedIds.length ||
+        !adjustedIds.containsAll(expectedIds)) {
+      throw StateError('World career hooks must preserve unique club IDs.');
+    }
+    for (final club in adjustedClubs) {
+      if (!club.strength.isFinite || club.strength < 40 || club.strength > 100) {
+        throw StateError('Hook produced invalid strength for ${club.id}.');
+      }
     }
   }
 }

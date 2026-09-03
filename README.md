@@ -12,69 +12,63 @@ Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 - **M3 — Temel Kulüp Ekonomisi:** PASS
 - **M4 — Basit Transfer Pazarı:** PASS
 - **M5 — 48 Kulüp / 3 Lig:** PASS
-- **M6 — Teknik Direktör Sistemi:** sıradaki milestone
+- **M6 — Teknik Direktör Sistemi:** PASS
+- **M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi:** sıradaki milestone
 
 Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü, ekonomi, transfer ve başkanlık sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
 
-## M0–M4 kısa özet
+## M0–M5 kısa özet
 
-M0 ile 8 kulüplük deterministik lig ve maç motoru; M1 ile 20 sezon kariyer yaşam döngüsü; M2 ile oyuncu yaşlanması, emeklilik ve genç üretimi; M3 ile nakit/borç/gelir/gider ekonomisi; M4 ile doğrudan bonservisli transfer pazarı doğrulandı.
+M0 ile deterministik lig/maç motoru; M1 ile 20 sezon kariyer; M2 ile oyuncu yaşlanması, emeklilik ve genç üretimi; M3 ile nakit/borç ekonomisi; M4 ile doğrudan bonservisli transfer pazarı; M5 ile 48 kurgu kulüp ve 3 liglik dünya ölçeği doğrulandı.
 
-Kabul edilen M4 seed `20260903` baseline'ı 20 sezonda `32` transfer, `161,68M` transfer hacmi, `96,38M` final nakit, `58,61M` final borç ve `148` final oyuncu üretir. Validation issue `0`dır.
-
-## M5 — 48 Kulüp / 3 Lig
-
-M5 ile çekirdek gerçek oyun ölçeğine çıkarıldı:
-
-- 48 özgün kurgu kulüp
-- 3 lig × 16 kulüp
-- kulüp başına 30 lig maçı
-- 240 maç/lig
-- 720 maç/dünya sezonu
-- 20 sezonda 14.400 lig maçı
-- 864 başlangıç oyuncusu
-- 3'er takım terfi/düşme
-- 19 sezon arası geçişte toplam 228 lig hareketi
-- ortak oyuncu yaşam döngüsü
-- ortak 48 kulüplük transfer pazarı
-- lig seviyesine göre gelir ve maliyet ölçekleri
-- `WorldCareerEngine`, rapor ve validator
-- 20 sezon world sanity guard'ları
-
-Kabul edilen geçici lig ekonomi ölçekleri:
-
-| Lig | Gelir | Maliyet |
-|---|---:|---:|
-| Taç Ligi | %100 | %100 |
-| Birlik Ligi | %90 | %85 |
-| Ufuk Ligi | %80 | %75 |
-
-`BasicEconomyEngine` varsayılan olarak `%100 / %100` kaldığı için M0–M4 baseline'ları değişmedi.
-
-### Kabul edilen M5 baseline — seed `20260903`
-
-- 20 sezon
-- 14.400 maç
-- 864 başlangıç oyuncusu
-- 906 final oyuncusu
-- 228 lig hareketi
-- 71 transfer
-- `637,91M` transfer hacmi
-- `8,98M` ortalama bonservis
-- `862,25M` final toplam nakit
-- `647,04M` final toplam borç
-- `569,03M` toplam acil finansman
-- 35 farklı kulüp transfer pazarına katıldı
-- 10 farklı Taç Ligi şampiyonu
-- validation issue `0`
-
-Final finansal sağlık: 16 `veryStrong`, 14 `solid`, 8 `balanced`, 10 `debtCrisis`.
-
-Final ortalama güç: Taç Ligi `72,01`, Birlik Ligi `65,54`, Ufuk Ligi `59,21`.
-
-M5 ekonomi değerleri nihai oyun dengesi değildir. Özellikle final Ufuk Ligi nakit birikiminin yüksek olması, gerçek oyuncu sözleşmesi/maaş sistemi eklendiğinde yeniden kalibre edilecek açık denge notudur.
+M5 seed `20260903` baseline'ı: 20 sezon, 14.400 maç, 864 başlangıç / 906 final oyuncu, 228 lig hareketi, 71 transfer, `637,91M` transfer hacmi, `862,25M` final nakit, `647,04M` final borç ve validation `0`.
 
 Ayrıntılar: `M5_48_KULUP_3_LIG.md`.
+
+## M6 — Teknik Direktör Sistemi
+
+M6 ile başkanlık kimliğinin ilk gerçek teknik direktör katmanı eklendi:
+
+- 96 kişilik deterministik kurgu teknik direktör havuzu
+- 5 profil: `balanced`, `youthDeveloper`, `budgetBuilder`, `starManager`, `resultsFirst`
+- itibar, coaching, genç geliştirme, insan yönetimi, yönetim uyumu ve bütçe talebi
+- kulüp/kadro/lig/finans bağlamına göre teknik direktör uyumu
+- maç gücüne sınırlı `-2,5...+2,5` teknik direktör etkisi
+- sezon sonu beklenen sıra / gerçek sıra değerlendirmesi
+- yönetim ilişkisi
+- performans, yönetim kopması ve emeklilik nedeniyle görev değişimi
+- kovulan hocanın başka kulüpte yeniden çalışabilmesi
+- her kulüpte tek aktif teknik direktör ve deterministik kariyer sürekliliği
+- manager report + validator + headless runner
+
+`WorldCareerEngine` varsayılan olarak `NoopWorldCareerHooks` kullanmaya devam eder. Böylece M5 yolu ve baseline'ı manager sistemi eklenmesine rağmen değişmedi. M6 manager katmanı aynı motorun üzerine hook olarak bağlandı.
+
+### Kabul edilen M6 baseline — seed `20260903`
+
+- 20 sezon / 14.400 maç
+- manager havuzu: `96`
+- görev yapan farklı manager: `60`
+- toplam görev değişimi: `82`
+- performans nedeniyle: `51`
+- yönetim ilişkisi kopması: `29`
+- emeklilik: `2`
+- ortalama strength etkisi: `+0,922`
+- AI atamalarında etki aralığı: `-0,371...+1,977`
+- negatif etkili kulüp-sezon: `29`
+- `+1,5` ve üzeri güçlü pozitif kulüp-sezon: `77`
+- final ortalama yönetim ilişkisi: `72,22`
+- transfer: `84`
+- transfer hacmi: `777,02M`
+- final nakit: `1.048,02M`
+- final borç: `582,36M`
+- acil finansman: `473,40M`
+- manager validation issue: `0`
+
+AI çoğunlukla uygun hoca seçtiği için negatif etkiler sınırlıdır. Model doğrudan testte kötü başkanlık tercihi için `-2,5`, çok güçlü uyum için `+2,5` sınırına ulaşabilmektedir.
+
+M6'da `youthDevelopment` şimdilik uyum ve genç kadrolu takımın manager etkisinde kullanılır; bireysel oyuncu gelişim eğrisini henüz doğrudan değiştirmez. Teknik direktör maaş/sözleşmesi, transfer talebi, başka kulüpten teklif ve medya davranışı da sonraki katmanlardadır.
+
+Ayrıntılar: `M6_TEKNIK_DIREKTOR_SISTEMI.md`.
 
 ## Çalıştırma
 
@@ -88,25 +82,27 @@ dart run tool/run_m2_player_career.dart 20260903
 dart run tool/run_m3_economy_career.dart 20260903
 dart run tool/run_m4_transfer_career.dart 20260903
 dart run tool/run_m5_world_career.dart 20260903
+dart run tool/run_m6_manager_career.dart 20260903
 ```
 
 ## CI prensibi
 
 GitHub Actions yalnız Dart bağımlılıklarını kurar, analiz/testleri ve headless simülasyon koşularını çalıştırır. APK/AAB veya büyük artifact üretilmez/yüklenmez.
 
-Son M5 PR kalite kapısında:
+M6 kabul kalite kapısı:
 
 - `dart analyze`: PASS
-- test: `23/23 PASS`
-- M0–M5 runner'ları: PASS
-- M5 validation: `0`
+- otomatik test: M0–M6 PASS
+- M0–M6 headless runner zinciri: PASS
+- M5 eski baseline: korunuyor
+- M6 validation issue: `0`
 - artifact: `0`
 
 ## Sıradaki milestone
 
-**M6 — Teknik Direktör Sistemi.**
+**M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi.**
 
-Amaç başkanlık kimliğinin ana ayrımını gerçek sisteme taşımaktır: teknik direktör profilleri, işe alma/kovma, bütçe ve transfer beklentileri, genç oyuncuya yaklaşım, yönetim ilişkisi ve takım performansına etkisi. Oyuncu saha içi taktik yönetmeyecek; teknik direktör özerk futbol karakteri olacak.
+Amaç M3'teki geçici `WageModel` köprüsünü kaldırmak; oyunculara gerçek sözleşme süresi ve maaş bağlamak, sözleşme bitişi/yenileme/serbest kalma davranışını kurmak ve ekonomi ile transfer değerini gerçek kontrat verisiyle beslemektir. Bu katman tamamlanmadan taksit/kiralık/bonus gibi gelişmiş transfer yapılarının eklenmesi ertelenecektir.
 
 ## Lisans
 
