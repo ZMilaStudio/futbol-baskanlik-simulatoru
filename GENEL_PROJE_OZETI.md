@@ -1,18 +1,18 @@
 # ZMila Studio — Futbol Başkanlık Simülatörü
 ## GENEL_PROJE_OZETI
 
-**Son güncelleme:** 03.09.2026  
+**Son güncelleme:** 04.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru`  
-**Repo görünürlüğü:** Public / proprietary notice  
-**Aktif teknik aşama:** **M6 PASS — sıradaki milestone M7 / Oyuncu Sözleşmesi + Gerçek Maaş Sistemi**  
-**Ana proje durumu:** Yan geliştirme; Kelime Avı ve Minik Dedektif gibi aktif projeleri aksatmayacak.  
-**UI/APK:** Henüz başlanmadı; bilinçli olarak simülasyon çekirdeği önceliklidir.
+**Repo:** Public / proprietary notice  
+**Aktif teknik aşama:** **M7 PASS — sıradaki M8 / Gelişmiş Transfer Yapıları I: Kiralık + Taksit**  
+**Proje önceliği:** Yan geliştirme; Kelime Avı ve Minik Dedektif gibi aktif projeleri aksatmayacak.  
+**UI/APK:** Henüz başlanmadı; simülasyon çekirdeği önceliklidir.
 
 ---
 
 # 1. Proje kimliği
 
-Futbol Başkanlık Simülatörü, ZMila Studio için geliştirilecek tam kapsamlı Android mobil futbol kulübü **başkanlığı** simülasyonudur.
+Tam kapsamlı Android futbol kulübü **başkanlığı** simülasyonu.
 
 > **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 
@@ -24,178 +24,192 @@ Alternatif:
 
 > **“Hoca gider. Futbolcu gider. Borç kalır. Başkan sensin.”**
 
-Oyuncu saha içi diziliş, antrenman, duran top ve maç içi değişiklik yapmaz. Başkan olarak ekonomi, borç, teknik direktör seçimi, transfer politikası, altyapı, tesis, sponsor, taraftar, medya, vaat, kriz ve uzun vadeli kulüp sağlığını yönetir.
+Başkanın alanı: ekonomi/borç, teknik direktör, transfer politikası, bütçe/maaş, altyapı, tesis, sponsor, taraftar, medya, vaat, kriz ve uzun vadeli kulüp sağlığı.
 
-Gerçek kulüp, futbolcu, lig logosu veya lisanslı materyal kullanılmayacaktır. Dünya tamamen özgün olacaktır.
+Başkanın alanı değildir: diziliş, antrenman, duran top, maç içi değişiklik ve saha içi mikro taktik.
+
+Dünya tamamen özgün olacak; gerçek kulüp, futbolcu, lig logosu veya lisanslı materyal kullanılmayacak.
 
 ---
 
-# 2. Değişmez tasarım prensipleri
+# 2. Değişmez ürün ilkeleri
 
 1. Başkan teknik direktör değildir.
-2. Mobil arayüz sade olacak; derin sistemler arka planda çalışabilir.
-3. Başarı yalnız kupayla ölçülmez; finansal iyileşme ve sürdürülebilirlik de başarıdır.
+2. Mobil UI sade; arka plan sistemleri derin olabilir.
+3. Başarı yalnız kupa değil; finansal iyileşme ve sürdürülebilirliktir.
 4. Kısa vadeli sportif başarı ile uzun vadeli kulüp sağlığı arasında gerçek gerilim olmalıdır.
-5. Taraftar ekonomik ve sportif bağlamı anlamalıdır; imkânsız talepler üretmemelidir.
-6. Transfer AI yaş, kalite, potansiyel, sözleşme, mevki ihtiyacı, ekonomi ve oyuncu isteğini dikkate almalıdır.
+5. Taraftar ekonomik/sportif bağlamı anlamalı, imkânsız talep üretmemelidir.
+6. Transfer AI yaş, kalite, potansiyel, mevki, sözleşme, ekonomi ve oyuncu isteğini dikkate almalıdır.
 7. **Piyasa değeri ≠ satıcı talebi ≠ alıcının maksimum fiyatı.**
-8. Para yoksa transfer kapanmamalı; daha akıllı transfer yolları gerekli olmalıdır.
-9. Geçmiş açıklamalar, vaatler ve önemli kararlar unutulmamalıdır.
-10. Bazı kararların sonuçları aylar veya sezonlar sonra ortaya çıkabilmelidir.
+8. **“Paran yoksa transfer yapamazsın” değil, “paran yoksa daha akıllı transfer yapmak zorundasın.”**
+9. Geçmiş açıklamalar, vaatler ve önemli kararlar hatırlanmalıdır.
+10. Bazı sonuçlar aylar/sezonlar sonra ortaya çıkabilmelidir.
 11. Doğru karar her zaman açık olmamalıdır.
-12. İlk sürüm gereksiz sistemlerle şişirilmemelidir.
+12. V1 gereksiz sistemlerle şişirilmemelidir.
 13. Uzun kariyer otomatik simülasyonlarla test edilmelidir.
-14. Aynı seed ve karar dizisi aynı sonucu üretmelidir.
-15. Ekonomi ne evrensel refah ne de evrensel çöküş üretmelidir.
-16. Transfer piyasası ne donmuş ne de hiperaktif olmalıdır.
-17. Teknik direktör kadronun önüne geçemez; katkısı önemlidir ama sınırlıdır.
-18. UI/APK, simülasyon çekirdeği kanıtlanmadan öncelik değildir.
+14. Aynı simulation version + seed + veri + karar dizisi aynı sonucu üretmelidir.
+15. Ekonomi ne evrensel refah ne evrensel çöküş üretmelidir.
+16. Transfer piyasası ne donmuş ne hiperaktif olmalıdır.
+17. Teknik direktör önemlidir ama kadronun önüne geçemez.
+18. Sözleşme süresi transfer değerinin gerçek girdisidir.
+19. Serbest oyuncu bonservisli transferden ayrı piyasa davranışıdır.
+20. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
 
 ---
 
-# 3. Teknik mimari
+# 3. Uzun vadeli sistem vizyonu
 
-Temel yaklaşım:
+## Ekonomi
+
+Arka planda derin, mobilde anlaşılır. Nakit, borç, transfer/maaş bütçesi, oyuncu maaşı, sponsor, maç günü, mağaza, transfer, tesis, altyapı ve stadyum ekonomisi birbirini etkileyecek.
+
+Finansal sağlık kullanıcıya sade etiketlerle gösterilebilir: `Çok Güçlü / Sağlam / Dengeli / Sıkışık / Borç Krizi`.
+
+## Transfer
+
+Hedef transfer yolları:
+
+- doğrudan bonservis
+- kiralık
+- satın alma opsiyonu/zorunluluğu
+- taksit
+- performans bonusu
+- satıştan pay
+- serbest oyuncu / sözleşmesi biten
+- takas / oyuncu + para
+- maaş paylaşımı
+
+M4 direct fee, M7 gerçek kontrat + free agent. M8 ilk gelişmiş yapılar olarak **kiralık + taksit**.
+
+## Teknik direktör
+
+Özerk futbol karakteri. Uzun vadede transfer isteği, bütçe şikâyeti, zam, başka kulüp teklifi, medya açıklaması ve yönetim çatışması yaşayabilir.
+
+## Taraftar
+
+Bağlam farkındalığı imza sistemlerden biri. Borçlu kulübün taraftarı 60M yıldız yerine kaliteli kiralık isteyebilir. Güven nedenleri ayrıca saklanmalı: derbi, borç, transfer, bilet, genç, vaat, hoca vb.
+
+## Medya + vaat hafızası
+
+Başkanın eski açıklamaları/vaatleri kaydedilmeli. Hocaya kamuoyu önünde destek verip kısa süre sonra kovmak medya güvenilirliğini düşürmelidir.
+
+## Seçim
+
+Daha sonraki aşama. Sportif sonuç, finans, kulüp değeri, tesis, taraftar, vaat ve medya itibarı etkili olacak. Seçim kaybı kariyeri zorunlu olarak bitirmeyebilir.
+
+## Tesis / altyapı / sponsor / kriz
+
+Tesis adayları: altyapı, antrenman, sağlık, scouting, stadyum, kulüp mağazası. Yatırımlar dekorasyon değil gerçek fayda üretmeli.
+
+Kriz örnekleri: zam isteyen oyuncu, kaptan-hoca çatışması, sponsor ayrılığı, bilet protestosu, büyük teklif, genç oyuncunun süre isteği, hocanın yönetimi eleştirmesi, stadyum bakım sorunu, federasyon cezası, menajer baskısı.
+
+---
+
+# 4. Teknik mimari
 
 > **Flutter mobil kabuk + Flutter'dan bağımsız saf Dart simülasyon çekirdeği**
 
-- `simulation_core`: saf Dart domain ve oyun kuralları.
-- `simulation_runner`: headless Dart/CLI, seed replay, uzun kariyer ve denge raporları.
-- `persistence`: ileride versiyonlu yerel save/load, migration, autosave ve backup.
+- `simulation_core`: saf Dart domain ve kurallar.
+- `simulation_runner`: headless CLI, seed replay, batch/denge raporları.
+- `persistence`: ileride versiyonlu local save/load, migration, autosave, backup.
 - `application`: başkan use-case katmanı.
-- `presentation`: Flutter mobil UI; henüz kapsam dışı.
+- `presentation`: Flutter UI; henüz kapsam dışı.
 
 ## Determinizm
 
-Kararlı FNV-1a tabanlı hash + özel xorshift32 `SeededRng` kullanılır. Runtime `hashCode` davranışına güvenilmez. Maç, transfer ve manager kararları career seed / simulation version / sezon / entity ID'lerinden deterministik türetilir.
+Kararlı FNV-1a tabanlı hash + özel xorshift32 `SeededRng`. Runtime `hashCode` kullanılmaz. Maç, transfer, manager ve kontrat kararları career seed / simulation version / sezon / entity ID üzerinden türetilir.
 
 ## Oyun zamanı
 
-Cihaz saatinden bağımsız `GameDate` kullanılır.
+Cihaz saatinden bağımsız `GameDate`.
 
-## Para ve muhasebe
+## Para / muhasebe
 
-Para `double` değil integer minor-unit tabanlı `Money` ile tutulur.
+Para `double` değil integer minor-unit `Money`.
 
 `Kapanış Nakit = Açılış Nakit + Gelir - Gider - Anapara Ödemesi + Yeni Borçlanma`
 
 `Kapanış Borç = Açılış Borç - Anapara Ödemesi + Yeni Borçlanma`
 
-Negatif nakit sessizce sıfırlanmaz; gerektiğinde `emergencyBorrowing` olarak borca yazılır. Transfer bonservisi yeni para yaratmaz; alıcıdan satıcıya nakit taşır.
+Anapara gider değildir; faiz giderdir. Negatif nakit sessizce sıfırlanmaz, `emergencyBorrowing` yaratır. Bonservis yeni para yaratmaz; alıcıdan satıcıya nakit taşır.
 
-## World lifecycle hook
+## Hook mimarisi
 
-M6 ile `WorldCareerEngine` opsiyonel `WorldCareerHooks` kazandı. Varsayılan `NoopWorldCareerHooks` tamamen etkisizdir; M5 baseline'ı değişmez. Manager sistemi `ManagerCareerController` hook'u ile world engine'e bağlanır.
+`WorldCareerEngine` sistemleri kopyalamadan genişletilir:
 
-Bu hook yönü ileride taraftar, medya, vaat ve kriz sistemlerinin motoru kopyalamadan eklenmesi için tercih edildi.
+- `WorldCareerHooks`: manager gibi sezon/sportif lifecycle sistemleri.
+- `WorldRosterHooks`: kontrat/kadro/gerçek maaş sistemleri.
+
+Her ikisinin varsayılanı no-op. Manager + contract hook birlikte otomatik test edilmiştir. Eski milestone yolları böylece birebir regresyon baseline'ı olarak korunur.
 
 ---
 
-# 4. GitHub / CI çalışma kuralı
+# 5. GitHub / CI çalışma kuralı
 
-Repo public kalacaktır ancak açık kaynak lisansı verilmemiştir; `LICENSE.md` proprietary notice içerir.
+Repo public, açık kaynak lisansı yok; `LICENSE.md` proprietary notice içerir.
 
-Tek hafif CI workflow'u kullanılır. CI:
+Tek hafif workflow:
 
 - `dart pub get`
 - `dart analyze`
 - `dart test`
 - M0 100 sezon batch
-- M1 20 sezon kariyer
-- M2 20 sezon player kariyer
-- M3 20 sezon economy kariyer
-- M4 20 sezon transfer kariyer
-- M5 20 sezon / 48 kulüp / 3 lig world kariyer
-- M6 20 sezon manager-aware world kariyer
+- M1–M7 20 sezon headless runner'ları
 
-çalıştırır.
+APK/AAB, büyük binary ve `actions/upload-artifact` yok. Artifact hedefi `0`.
 
-APK/AAB, büyük binary ve `actions/upload-artifact` yoktur. Artifact hedefi `0`dır.
-
-Codex kredisi M0–M6 üretiminde kullanılmadı; mevcut GitHub araçları yeterli oldu. Codex yalnız büyük çok dosyalı değişiklik, ağır refactor, migration veya karmaşık hata için kullanılacaktır.
+M0–M7 üretiminde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu. Codex yalnız büyük/refactor/migration/karmaşık hata için kullanılacak.
 
 ---
 
-# 5. Milestone geçmişi
+# 6. Milestone geçmişi
 
 ## M0 — Deterministik Mini Lig — PASS
 
-- 8 kurgu kulüp
-- çift devre / 56 maç
-- deterministik fixture + maç seed'i
-- Poisson tabanlı gol motoru
-- standings + validator
-- 100 sezon regresyon
+8 kurgu kulüp, çift devre, 56 maç/sezon, Poisson maç motoru, standings/validator, 100 sezon regresyon.
 
-100 sezon baseline: 5.600 maç, ev `%45,2857`, beraberlik `%24,5893`, deplasman `%30,1250`, gol/maç `2,5864`, invariant issue `0`.
+100 sezon baseline: 5.600 maç; ev `%45,2857`, beraberlik `%24,5893`, deplasman `%30,1250`, gol/maç `2,5864`, invariant `0`.
 
 ## M1 — 20 Sezon Yaşam Döngüsü — PASS
 
-- `GameDate`
-- `CareerEngine`
-- 20 sezon / 1.120 maç
-- deterministik sezon geçişi
-
-Seed `20260903`: Vadişehir 10, Kuzey Yıldızı 6, Demirkent 4 şampiyonluk.
+`GameDate`, 20 sezon, 1.120 maç, deterministik geçiş. Seed `20260903`: Vadişehir 10, Kuzey Yıldızı 6, Demirkent 4 şampiyonluk.
 
 ## M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi — PASS
 
-Başlangıç 144 oyuncu. Seed `20260903` / 20 sezon: final 148 oyuncu, 148 emeklilik, 152 youth intake, 146 aktif akademi mezunu, yaş ortalaması `25,84`, validation `0`.
+Seed `20260903`: başlangıç 144, final 148 oyuncu, 148 emeklilik, 152 youth intake, 146 aktif akademi mezunu, yaş ortalaması `25,84`, validation `0`.
 
 ## M3 — Temel Kulüp Ekonomisi — PASS
 
-İlk koşu ekonomik olarak REDDEDİLDİ: `1.017,03M` nakit, `0` borç, 8/8 `veryStrong`.
+İlk deneme REDDEDİLDİ: `1.017,03M` nakit, `0` borç, 8/8 veryStrong → evrensel refah.
 
-Kabul baseline: cash `124,28M`, debt `104,43M`, emergency `67,44M`, sağlık dağılımı 2 `veryStrong` / 2 `solid` / 2 `balanced` / 2 `debtCrisis`, validation `0`.
+Kabul baseline: cash `124,28M`, debt `104,43M`, emergency `67,44M`, 2 veryStrong / 2 solid / 2 balanced / 2 debtCrisis, validation `0`.
 
-M3 ile integer `Money`, gelir/gider, borç/faiz ve acil finansman devreye girdi. `WageModel` hâlâ geçici köprüdür.
+Integer `Money`, gelir/gider, borç/faiz ve emergency borrowing bu aşamada geldi. `WageModel`, M7'ye kadar geçici maaş köprüsüydü.
 
 ## M4 — Basit Transfer Pazarı — PASS
 
-- market value modeli
-- mevki ihtiyacı
-- satıcı talebi / alıcı maksimumu
-- finans baskısında satıcı esnekliği
-- minimum 2M rezerv
-- pencere harcama limiti `%35`
-- kulüp başına en fazla 2 alım
-- kadro/pozisyon satış tabanları
-- doğrudan bonservis nakit korunumu
+Market value, mevki ihtiyacı, satıcı talebi/alıcı maksimumu, finans baskısı, 2M rezerv, `%35` pencere harcama sınırı, max 2 alım, kadro/pozisyon satış tabanları, nakit korunumu.
 
-Seed `20260903`: 32 transfer, `161,68M` hacim, `5,05M` ortalama ücret, cash `96,38M`, debt `58,61M`, final 148 oyuncu, validation `0`.
-
-Kiralık, taksit, bonus, takas, satıştan pay ve gerçek kontrat henüz yoktur.
+Seed `20260903`: 32 transfer, `161,68M` hacim, `5,05M` ortalama bonservis, cash `96,38M`, debt `58,61M`, final 148 oyuncu, validation `0`.
 
 ## M5 — 48 Kulüp / 3 Lig — PASS
 
-İlk büyük ölçek hedefi.
-
-- 48 özgün kurgu kulüp
-- Taç / Birlik / Ufuk ligleri
-- 3 × 16 kulüp
-- 30 maç/kulüp
-- 720 maç/world season
-- 20 sezonda 14.400 maç
-- 864 başlangıç oyuncusu
-- her lig sınırında 3 terfi / 3 düşme
-- 19 geçişte 228 lig hareketi
-- ortak 48 kulüplük transfer pazarı
+48 özgün kurgu kulüp; Taç/Birlik/Ufuk, 3×16, 30 maç/kulüp, 720 maç/world season, 14.400 maç/20 sezon, 864 başlangıç oyuncusu, 3'er terfi/düşme, 19 geçişte 228 lig hareketi.
 
 Geçici ekonomi ölçekleri:
 
-- Taç: gelir `%100`, maliyet `%100`
-- Birlik: `%90 / %85`
-- Ufuk: `%80 / %75`
+- Taç `%100 / %100`
+- Birlik `%90 / %85`
+- Ufuk `%80 / %75`
 
 ### Reddedilen M5 kalibrasyonları
 
 1. 2 transfer / `3.966,16M` borç → alt lig borç ölüm sarmalı.
-2. 7 transfer / `2.268,60M` borç / 34 debtCrisis → hâlâ çöküş.
-3. 158 transfer / `1.909,01M` nakit → karşı uçta aşırı servet.
+2. 7 transfer / `2.268,60M` borç / 34 debtCrisis → çöküş devam etti.
+3. 158 transfer / `1.909,01M` nakit → aşırı servet.
 
 ### Kabul M5 baseline — seed `20260903`
 
-- 20 sezon / 14.400 maç
 - final oyuncu `906`
 - lig hareketi `228`
 - transfer `71`
@@ -208,202 +222,184 @@ Geçici ekonomi ölçekleri:
 - 10 farklı Taç Ligi şampiyonu
 - validation `0`
 
-Açık denge notu: Ufuk Ligi final nakit birikimi üst liglerden yüksektir. Bu nihai ekonomi kabulü değildir; gerçek maaş/sözleşme sistemi geldiğinde yeniden kalibre edilecektir.
+Açık not: Ufuk Ligi final nakit birikimi yüksek; nihai ekonomi kabulü değildir. Maaş/bütçe/sponsor sistemleri geliştikçe yeniden kalibre edilecek.
 
 Ayrıntı: `M5_48_KULUP_3_LIG.md`.
 
 ## M6 — Teknik Direktör Sistemi — PASS
 
-M6 başkanlık kimliğini ilk kez yaşayan manager sistemiyle güçlendirdi.
-
-### Domain
-
-96 deterministik manager; profiller:
-
-- `balanced`
-- `youthDeveloper`
-- `budgetBuilder`
-- `starManager`
-- `resultsFirst`
+96 deterministik manager; profiller `balanced`, `youthDeveloper`, `budgetBuilder`, `starManager`, `resultsFirst`.
 
 Alanlar: yaş/emeklilik, reputation, coaching, youthDevelopment, manManagement, boardCooperation, budgetDemand.
 
-### Uyum ve sportif etki
+`ManagerFitModel` kulüp finansı, lig, kadro yaşı/potansiyeli ve strength'i değerlendirir. `ManagerImpactModel` kesin `-2,5...+2,5`; yalnız maç strength'ine uygulanır. Doğrudan test kötü seçim `-2,5`, elit uyum `+2,5` üretir.
 
-`ManagerFitModel` manager profilini kulüp finansı, lig seviyesi, kadro yaşı/potansiyeli ve takım gücüyle eşleştirir.
+Görev değişimi: performans / board breakdown / emeklilik. Kovulan hoca başka kulüpte çalışabilir; emekli atanamaz.
 
-`ManagerImpactModel` coaching + man management + fit + board relationship + genç oyuncu oranı/youthDevelopment etkisini toplar ve kesin `-2,5...+2,5` aralığına sınırlar.
+### M6 baseline — seed `20260903`
 
-Manager bonusu yalnız maç strength'ine uygulanır. Oyuncu lifecycle ve transfer market ham kadro gücünü kullanır.
-
-### Görev yaşam döngüsü
-
-Her sezonda beklenen sıra ham kadro gücünden hesaplanır; gerçek lig sırasıyla karşılaştırılır. Yönetim ilişkisi güncellenir.
-
-Görev değişimi nedenleri:
-
-- performans
-- yönetim ilişkisi kopması
-- emeklilik
-
-Kovulan manager başka kulüpte yeniden çalışabilir. Emekli manager yeniden atanamaz. Aynı sezonda her kulüpte ve her manager için tek aktif görev vardır.
-
-### M6 kabul baseline — seed `20260903`
-
-- 20 sezon / 14.400 maç
 - manager pool `96`
-- görev yapan farklı manager `60`
-- toplam değişim `82`
-- performance `51`
-- board breakdown `29`
-- retirement `2`
-- ortalama strength etkisi `+0,922`
-- AI atamalarında min/max `-0,371 / +1,977`
-- negatif manager etkili kulüp-sezon `29 / 960`
-- `+1,5` üzeri güçlü pozitif kulüp-sezon `77 / 960`
-- final ortalama board relationship `72,22`
-- transfer `84`
-- transfer hacmi `777,02M`
-- final cash `1.048,02M`
-- final debt `582,36M`
-- emergency `473,40M`
-- manager validation `0`
+- görev yapan `60`
+- değişim `82` = 51 performance + 29 board breakdown + 2 retirement
+- ortalama etki `+0,922`
+- AI min/max `-0,371 / +1,977`
+- negatif kulüp-sezon `29 / 960`
+- `+1,5` üzeri pozitif `77 / 960`
+- final board relationship `72,22`
+- transfer `84`, hacim `777,02M`
+- cash `1.048,02M`, debt `582,36M`, emergency `473,40M`
+- validation `0`
 
-Doğrudan impact testi başkanın çok kötü tercihi için `-2,5`, çok güçlü uyum için `+2,5` üretildiğini garanti eder. AI çoğunlukla uygun manager seçtiği için gerçek kariyerde negatif örnekler daha sınırlıdır.
+M5 no-op baseline aynı CI'da birebir korunur.
 
-M5 no-op yolu aynı CI'da eski `71 transfer / 862,25M cash / 647,04M debt` baseline'ını birebir korudu.
-
-### M6 açık sınırlar
-
-Henüz yok:
-
-- manager maaşı / sözleşmesi
-- başka kulüpten manager teklifi
-- zam talebi
-- spesifik transfer talebi
-- medya açıklaması
-- taraftar tepkisi
-- manager youthDevelopment'ın bireysel player development hızına doğrudan etkisi
+M6 açık: manager maaşı/kontratı, başka kulüp teklifi, zam, spesifik transfer talebi, medya, taraftar etkisi ve youthDevelopment'ın bireysel gelişime doğrudan etkisi henüz yok.
 
 Ayrıntı: `M6_TEKNIK_DIREKTOR_SISTEMI.md`.
 
----
+## M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi — PASS
 
-# 6. Sıradaki teknik yol
+### Domain ve lifecycle
 
-## M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi
+`PlayerContract`: player ID, club ID, başlangıç/bitiş sezonu, yıllık `Money` maaş.
 
-Öncelik budur. Nedenleri:
+- 864 başlangıç oyuncusuna deterministik kontrat.
+- Her youth intake için ilk profesyonel kontrat.
+- Biten kontratta yenileme veya release.
+- Release oyuncu `Player.freeAgentClubId = '__free_agent__'` durumuna geçer; `clubId` nullable yapılmadı.
+- Free agent kontratsız ve maaşsızdır; normal bonservis havuzuna girmez; ayrı imza adımında mevki ihtiyacı + yaş/kalite + affordability ile kulüp bulabilir.
+- Bonservis transferinden sonra oyuncuya alıcı kulüpte yeni 3–5 yıllık kontrat yazılır.
 
-- M3 `WageModel` geçicidir.
-- M5 alt lig ekonomi kalibrasyonu gerçek maaşlar olmadan nihai değildir.
-- Transfer fiyatının sözleşme bitişine gerçek tepki vermesi gerekir.
-- Serbest oyuncu ve sözleşme yenileme gelişmiş transfer pazarının temelidir.
+### Gerçek maaş
 
-M7 ilk kapsam:
+M7 aktifken ekonomi gerçek kontrat maaşlarını toplar. Contract hook yoksa eski `WageModel` yolu aynen korunur; M0–M6 baseline değişmez.
 
-- `PlayerContract`
-- başlangıç sözleşme üretimi
-- gerçek oyuncu maaşı
-- contract end season/date
-- sözleşme bitişi
-- temel yenileme kararı
-- serbest oyuncu durumu
-- maaş yükünün ekonomiye doğrudan bağlanması
-- market value'da contract length etkisi
-- 20 sezon contract/population/economy validator
+### Kontrat süresi ve market value
 
-M7'de henüz kiralık/taksit/bonus/takas yapılmayacak.
+Opsiyonel ilk katsayılar:
 
-## Sonraki sıra
+- 0 yıl `%25`
+- 1 yıl `%70`
+- 2 yıl `%90`
+- 3 yıl `%103`
+- 4 yıl `%110`
+- 5+ yıl `%115`
 
-M8: gelişmiş transfer yapıları — kiralık, taksit, bonus, satıştan pay, opsiyon/obligation.  
-M9: context-aware taraftar güveni ve beklenti sistemi.  
-M10: medya hafızası + başkan açıklamaları.  
-M11: başkan vaatleri.  
-M12: tesis / altyapı yatırımları / sponsor / kriz-event katmanları.  
-Daha sonra seçim sistemi ve başkan kariyeri genişletilecek.
+Kontrat süresi verilmezse eski M4–M6 value davranışı aynıdır.
 
-Bu sıralama gerektiğinde yeni test verilerine göre değişebilir.
+### M7 kabul baseline — seed `20260903`
 
----
+- 20 sezon / `14.400` maç
+- başlangıç kontratı `864`
+- final aktif kontrat `874`
+- renewal `3.757`
+- release `1.143`
+- free-agent signing `776`
+- final free agent `32`
+- youth contract `912`
+- transfer sonrası kontrat `103`
+- final yıllık toplam maaş `491,27M`
+- ortalama final yıllık maaş `562.091`
+- bonservis transferi `103`
+- transfer hacmi `868,67M`
+- final cash `1.060,80M`
+- final debt `554,81M`
+- emergency `428,76M`
+- validation `0`
 
-# 7. Uzun kariyer kalite hedefleri
+### Geniş regresyon guard'ları
 
-Mevcut her milestone en az 20 sezon deterministic headless kariyerle doğrulanır.
+Nihai denge değil, sistemin donmasını/patlamasını önleyen sınırlar:
 
-İleride kalite seviyeleri:
+- renewal `1.500–7.000`
+- release `300–2.500`
+- free-agent signing `200–2.000`
+- final free agent `5–100`
+- bonservis transferi `40–300`
+- final yıllık maaş `200M–900M`
+- final cash `100M–2B`
+- final debt `100M–2B`
 
-- 20 sezon geliştirici testi
-- 100 kariyer × 20 sezon temel denge
-- 500 kariyer × 30 sezon regresyon
-- 1.000 kariyer × 30 sezon stres
+M7 kalite kapısı: `dart analyze` PASS, **31/31 test PASS**, M0–M7 runner PASS, same-seed replay PASS, different-seed divergence PASS, manager+contract coexistence PASS, artifact `0`.
 
-Ölçümler:
+M5 seed baseline M7 CI'da yine birebir `71 transfer / 637,91M / 862,25M cash / 647,04M debt / 569,03M emergency / validation 0` kaldı. M6 baseline da değişmedi.
 
-- aktif oyuncu ve yaş dağılımı
-- emeklilik / youth intake
-- nakit / borç / emergency financing
-- maaş/gelir oranı
-- transfer sayısı, hacmi, yaş/mevki dağılımı
-- contract length vs fiyat
-- lig hareketleri ve şampiyon çeşitliliği
-- manager görev süresi/değişimi
-- ileride fan trust, promise success ve president tenure
+M7 kapsam dışı: signing bonus, performans bonusu, release clause, oyuncu temsilcisi, etkileşimli maaş pazarlığı, loan, installment, satın alma opsiyonu/zorunluluğu, sell-on, takas, maaş paylaşımı, Flutter UI/APK.
 
-Her hata seed ile tekrar üretilebilir olmalıdır.
-
----
-
-# 8. Save / persistence yönü
-
-Save sistemi sonradan rastgele eklenmeyecek. Hedef metadata:
-
-- `saveVersion`
-- `gameVersion`
-- `simulationVersion`
-- `dataVersion`
-- `careerSeed`
-- `currentGameDate`
-- integrity/checksum
-- migration history
-
-Minimum: aktif autosave + önceki autosave backup + manuel save + migration desteği.
+Ayrıntı: `M7_OYUNCU_SOZLESMESI_MAAS.md`.
 
 ---
 
-# 9. İlk sürümde özellikle yapılmayacaklar
+# 7. Uzun kariyer kalite hedefi
 
-- 3D maç
-- online multiplayer
-- gerçek kulüp/futbolcu/logo
-- saha içi taktik mikro yönetimi
-- FM seviyesinde onlarca attribute
-- 20 ülkelik dünya piramidi
-- erken görsel polish
-- UI uğruna simülasyon testlerini erteleme
-- pay-to-win ekonomi
+- geliştirici: 20 sezon
+- temel denge: 100 kariyer × 20 sezon
+- regresyon: 500 × 30 sezon
+- büyük sürüm stres: 1000 × 30 sezon
 
----
+İzlenecekler: oyuncu sayısı/yaş, emeklilik/youth, cash/debt, wage/revenue, transfer ücret/hacim, renewal/release/free-agent, title dağılımı, terfi yaşam oranı, büyük-küçük farkı, manager tenure; ileride taraftar/vaat/başkan tenure.
 
-# 10. Monetizasyon yönü
-
-Daha sonra yeniden değerlendirilecek. Pay-to-win olmayacak. Adaylar: tek seferlik premium, reklam kaldırma, opsiyonel ödüllü reklam veya kozmetik kulüp temaları. Oyun ekonomisi IAP baskısı için bozulmayacaktır.
+Her başarısız kariyer seed ile replay edilebilmelidir.
 
 ---
 
-# 11. Güncel durum
+# 8. Save/load yönü
 
-**Tamamlanan çekirdek:**
+Aday metadata: `saveVersion`, `gameVersion`, `simulationVersion`, `dataVersion`, `careerSeed`, current `GameDate`, checksum/integrity, migration history.
 
-- ✅ M0 lig/maç
-- ✅ M1 uzun sezon yaşam döngüsü
-- ✅ M2 oyuncu yaşam döngüsü
-- ✅ M3 ekonomi
-- ✅ M4 basit transfer
-- ✅ M5 48 kulüp / 3 lig / terfi-düşme
-- ✅ M6 teknik direktör sistemi
+Minimum: aktif autosave + önceki autosave yedeği + manuel save + migration. Persistence domain modellerinin birebir kopyası olmak zorunda değildir.
 
-Saf Dart çekirdeği şu anda 48 kulüp, 3 lig, yaşayan oyuncu havuzu, ekonomi, transfer pazarı, terfi/düşme ve yaşayan teknik direktör havuzunu **20 sezon / 14.400 maç** boyunca deterministik çalıştırabiliyor.
+---
 
-**Sıradaki iş:** M7 oyuncu sözleşmeleri ve gerçek maaş sistemi. Flutter UI/APK hâlâ kapsam dışıdır.
+# 9. Açık teknik / denge notları
+
+1. Ufuk Ligi yüksek final nakit birikimi takip edilmeli.
+2. Gerçek oyuncu maaşı var; resmi kulüp `wageBudget` sistemi henüz yok.
+3. Free-agent AI şu an basit ihtiyac/affordability modelidir; oyuncu tercihi, itibar ve rekabetçi teklifler ileride gerekir.
+4. Kontrat yenileme şu an AI kararı; başkan use-case/UI yok.
+5. Manager maaşı/kontratı oyuncu kontratından ayrı ve henüz yok.
+6. Transfer hâlâ direct-fee ağırlıklı; M8 loan + installment.
+7. Kontrat market-value katsayıları ilk kalibrasyondur, nihai değildir.
+8. Sponsor, taraftar, medya, vaat, tesis ve kriz çekirdeğe bağlanmadı.
+9. Flutter UI/APK bilinçli olarak başlamadı.
+
+---
+
+# 10. Sıradaki milestone — M8
+
+## Gelişmiş Transfer Yapıları I: Kiralık + Taksit
+
+Amaç ana transfer felsefesini gerçekleştirmeye başlamak:
+
+> **Paran yoksa daha akıllı transfer yapmak zorundasın.**
+
+### Kiralık
+
+- sezonluk `LoanAgreement`
+- parent club kimliği
+- loan club kadrosunda oynama
+- basit loan fee
+- basit wage sharing
+- sezon sonunda güvenli dönüş
+
+### Taksitli bonservis
+
+- upfront ödeme
+- future installment obligations
+- toplam bedel
+- alıcı için gelecek sezon nakit yükü
+- satıcı için gelecek tahsilat
+- ekonomi raporunda açık yükümlülük
+
+M8'e şimdilik alınmayacak: satın alma opsiyonu/zorunluluğu, performans bonusu, sell-on, takas, oyuncu+para. Önce loan + installment 20 sezon ve uzun kariyer testlerinde kanıtlanacak.
+
+---
+
+# 11. Çalışma disiplini
+
+- Büyük değişiklik: branch + PR + CI.
+- Kullanıcı mikro test operatörü yapılmaz.
+- Mümkün olan en büyük mantıklı iş tek döngüde tamamlanır.
+- Codex kredisi minimum tutulur.
+- Canlı `main` eski sohbet notlarından üstündür.
+- Önemli karar/test/reddedilen deneme/açık sorun/sıradaki iş bu dosyaya yazılır.
+- Yeni karar eskiyle çelişirse yeni karar geçerlidir; önemli tarihçe korunur, gereksiz tekrar temizlenir.

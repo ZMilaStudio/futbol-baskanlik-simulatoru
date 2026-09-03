@@ -37,6 +37,7 @@ class TransferMarketEngine {
     required int careerSeed,
     required int seasonIndex,
     required int simulationVersion,
+    Map<String, int>? contractYearsRemainingByPlayer,
   }) {
     final currentPlayers = List<Player>.of(players);
     final finances = {
@@ -66,6 +67,7 @@ class TransferMarketEngine {
         final buyerPositionAverage = _positionAverage(buyerRoster, position);
 
         final candidates = currentPlayers.where((player) {
+          if (player.isFreeAgent) return false;
           if (player.clubId == buyer.id) return false;
           if (player.position != position) return false;
           if (player.age > 33) return false;
@@ -96,7 +98,11 @@ class TransferMarketEngine {
           final sellerState = finances[candidate.clubId];
           if (sellerState == null) continue;
 
-          final marketValue = marketValueModel.value(candidate);
+          final marketValue = marketValueModel.value(
+            candidate,
+            contractYearsRemaining:
+                contractYearsRemainingByPlayer?[candidate.id],
+          );
           final sellerRoster = currentPlayers
               .where((player) => player.clubId == candidate.clubId)
               .toList(growable: false);

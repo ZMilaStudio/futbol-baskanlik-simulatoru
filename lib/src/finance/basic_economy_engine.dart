@@ -63,6 +63,7 @@ class BasicEconomyEngine {
     required List<ClubFinanceState> openingStates,
     int economicScaleBps = 10000,
     int costScaleBps = 10000,
+    Map<String, Money>? annualWagesByClub,
   }) {
     _validateScale(economicScaleBps, 'economicScaleBps');
     _validateScale(costScaleBps, 'costScaleBps');
@@ -103,8 +104,10 @@ class BasicEconomyEngine {
         _prizeForPosition(positionByClub[clubId] ?? 16),
       ).scaleBasisPoints(economicScaleBps);
 
-      final wageExpense =
-          wageModel.annualSquadWages(squad).scaleBasisPoints(costScaleBps);
+      final wageExpense = annualWagesByClub == null
+          ? wageModel.annualSquadWages(squad).scaleBasisPoints(costScaleBps)
+          : annualWagesByClub[clubId] ??
+              (throw StateError('Missing contract wage total for $clubId.'));
       final operatingExpense = Money.fromUnits(
         13000000 + strengthDeltaHundredths * 3000,
       ).scaleBasisPoints(costScaleBps);

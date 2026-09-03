@@ -13,6 +13,8 @@ class Player {
     required this.isAcademyGraduate,
   });
 
+  static const String freeAgentClubId = '__free_agent__';
+
   final String id;
   final String name;
   final String clubId;
@@ -22,6 +24,8 @@ class Player {
   final double potential;
   final int retirementAge;
   final bool isAcademyGraduate;
+
+  bool get isFreeAgent => clubId == freeAgentClubId;
 
   Player copyWith({
     String? clubId,
