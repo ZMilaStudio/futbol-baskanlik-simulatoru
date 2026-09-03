@@ -52,3 +52,6 @@ jobs:
 
       - name: Run M5 20-season world career
         run: dart run tool/run_m5_world_career.dart 20260903
+
+      - name: Run M6 20-season manager career
+        run: dart run tool/run_m6_manager_career.dart 20260903
