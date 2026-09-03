@@ -15,6 +15,7 @@ import 'world_career_hooks.dart';
 import 'world_career_report.dart';
 import 'world_career_season.dart';
 import 'world_league.dart';
+import 'world_roster_hooks.dart';
 
 class WorldCareerEngine {
   const WorldCareerEngine({
@@ -39,6 +40,7 @@ class WorldCareerEngine {
     required SimulationConfig config,
     int seasonCount = 20,
     WorldCareerHooks hooks = const NoopWorldCareerHooks(),
+    WorldRosterHooks rosterHooks = const NoopWorldRosterHooks(),
   }) {
     if (seasonCount <= 0) {
       throw ArgumentError.value(seasonCount, 'seasonCount', 'Must be positive.');
@@ -80,6 +82,13 @@ class WorldCareerEngine {
       );
       _validateHookClubs(squadClubs, currentClubs);
 
+      final annualWagesByClub = rosterHooks.annualWagesByClub(
+        seasonIndex: seasonIndex,
+        players: seasonPlayers,
+        clubs: squadClubs,
+        leagues: leaguesBeforeSeason,
+        financeStates: currentFinanceStates,
+      );
       final clubById = {for (final club in currentClubs) club.id: club};
       final financeById = {
         for (final state in currentFinanceStates) state.clubId: state,
@@ -113,6 +122,7 @@ class WorldCareerEngine {
             openingStates: openingStates,
             economicScaleBps: league.tier.economicScaleBps,
             costScaleBps: league.tier.costScaleBps,
+            annualWagesByClub: annualWagesByClub,
           ),
         );
       }
@@ -168,17 +178,43 @@ class WorldCareerEngine {
         retiredAfterSeason = lifecycle.retiredPlayers;
         youthIntakeAfterSeason = lifecycle.youthIntake;
 
+        final preparedPlayers = rosterHooks.prepareNextSeasonPlayers(
+          seasonIndex: seasonIndex,
+          nextSeasonIndex: seasonIndex + 1,
+          activePlayers: lifecycle.activePlayers,
+          retiredPlayers: lifecycle.retiredPlayers,
+          youthIntake: lifecycle.youthIntake,
+          clubs: squadClubs,
+          leaguesForNextSeason: leaguesAfterTransition,
+          financeStates: closingFinanceStates,
+        );
         final postLifecycleClubs = strengthCalculator.deriveClubs(
           baseClubs: baseClubs,
-          players: lifecycle.activePlayers,
+          players: preparedPlayers,
+        );
+        final contractYearsRemaining =
+            rosterHooks.contractYearsRemainingForTransfer(
+          nextSeasonIndex: seasonIndex + 1,
+          players: preparedPlayers,
         );
         final market = transferMarketEngine.simulateWindow(
           clubs: postLifecycleClubs,
-          players: lifecycle.activePlayers,
+          players: preparedPlayers,
           financeStates: closingFinanceStates,
           careerSeed: config.careerSeed,
           seasonIndex: seasonIndex,
           simulationVersion: config.simulationVersion,
+          contractYearsRemainingByPlayer: contractYearsRemaining,
+        );
+        rosterHooks.onTransferWindowCompleted(
+          seasonIndex: seasonIndex,
+          nextSeasonIndex: seasonIndex + 1,
+          playersBeforeWindow: preparedPlayers,
+          playersAfterWindow: market.players,
+          transfers: market.deals,
+          clubs: postLifecycleClubs,
+          leaguesForNextSeason: leaguesAfterTransition,
+          financeStates: market.financeStates,
         );
         currentPlayers = market.players;
         currentFinanceStates = market.financeStates;
