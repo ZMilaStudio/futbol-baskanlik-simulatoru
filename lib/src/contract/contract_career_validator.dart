@@ -12,9 +12,20 @@ class ContractCareerValidator {
   final WorldCareerValidator worldValidator;
 
   List<String> validate(ContractCareerReport report) {
-    final issues = <String>[
-      ...worldValidator.validate(report.worldReport),
-    ];
+    final allowedFreeAgentIssues = <String>{};
+    for (final season in report.worldReport.seasons) {
+      for (final player in season.players) {
+        if (player.isFreeAgent) {
+          allowedFreeAgentIssues.add(
+            'Season ${season.seasonIndex} player ${player.id} has unknown club.',
+          );
+        }
+      }
+    }
+    final issues = worldValidator
+        .validate(report.worldReport)
+        .where((issue) => !allowedFreeAgentIssues.contains(issue))
+        .toList();
     if (report.worldReport.seasons.isEmpty) return issues;
 
     final finalSeasonIndex = report.worldReport.seasons.last.seasonIndex;
