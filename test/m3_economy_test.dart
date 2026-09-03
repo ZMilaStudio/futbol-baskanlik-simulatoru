@@ -40,6 +40,27 @@ void main() {
     }
   });
 
+  test('M3 20-season baseline avoids universal prosperity or collapse', () {
+    final report = const EconomyCareerEngine().simulate(
+      clubs: m0Clubs,
+      config: const SimulationConfig(careerSeed: 20260903),
+    );
+
+    expect(report.finalTotalCash, greaterThan(const Money.fromUnits(20000000)));
+    expect(report.finalTotalCash, lessThan(const Money.fromUnits(500000000)));
+    expect(report.finalTotalDebt, greaterThan(Money.zero));
+    expect(report.finalTotalDebt, lessThan(const Money.fromUnits(400000000)));
+    expect(
+      report.totalEmergencyBorrowing,
+      lessThan(const Money.fromUnits(250000000)),
+    );
+
+    final health = report.finalHealthDistribution;
+    expect(health.length, greaterThanOrEqualTo(2));
+    expect(health[FinancialHealth.debtCrisis] ?? 0, lessThanOrEqualTo(4));
+    expect(health[FinancialHealth.veryStrong] ?? 0, lessThanOrEqualTo(4));
+  });
+
   test('different career seeds produce different finance evolution', () {
     const engine = EconomyCareerEngine();
     final a = engine.simulate(
