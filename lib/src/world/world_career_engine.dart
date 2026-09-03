@@ -2,6 +2,7 @@ import '../core/simulation_config.dart';
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
+import '../finance/transfer_cash_movement.dart';
 import '../league/club.dart';
 import '../player/player.dart';
 import '../player/player_lifecycle_engine.dart';
@@ -14,8 +15,10 @@ import 'league_tier.dart';
 import 'world_career_hooks.dart';
 import 'world_career_report.dart';
 import 'world_career_season.dart';
+import 'world_finance_hooks.dart';
 import 'world_league.dart';
 import 'world_roster_hooks.dart';
+import 'world_transfer_hooks.dart';
 
 class WorldCareerEngine {
   const WorldCareerEngine({
@@ -41,6 +44,9 @@ class WorldCareerEngine {
     int seasonCount = 20,
     WorldCareerHooks hooks = const NoopWorldCareerHooks(),
     WorldRosterHooks rosterHooks = const NoopWorldRosterHooks(),
+    WorldFinanceHooks financeHooks = const NoopWorldFinanceHooks(),
+    WorldTransferHooks transferHooks = const NoopWorldTransferHooks(),
+    bool enableTransferInstallments = false,
   }) {
     if (seasonCount <= 0) {
       throw ArgumentError.value(seasonCount, 'seasonCount', 'Must be positive.');
@@ -89,6 +95,12 @@ class WorldCareerEngine {
         leagues: leaguesBeforeSeason,
         financeStates: currentFinanceStates,
       );
+      final financeFlows = financeHooks.flowsForSeason(
+        seasonIndex: seasonIndex,
+        clubs: squadClubs,
+        leagues: leaguesBeforeSeason,
+        openingFinanceStates: currentFinanceStates,
+      );
       final clubById = {for (final club in currentClubs) club.id: club};
       final financeById = {
         for (final state in currentFinanceStates) state.clubId: state,
@@ -123,6 +135,10 @@ class WorldCareerEngine {
             economicScaleBps: league.tier.economicScaleBps,
             costScaleBps: league.tier.costScaleBps,
             annualWagesByClub: annualWagesByClub,
+            transferInstallmentIncomeByClub:
+                financeFlows.transferInstallmentIncomeByClub,
+            transferInstallmentExpenseByClub:
+                financeFlows.transferInstallmentExpenseByClub,
           ),
         );
       }
@@ -141,6 +157,7 @@ class WorldCareerEngine {
       List<Player> retiredAfterSeason = const [];
       List<Player> youthIntakeAfterSeason = const [];
       List<TransferDeal> transfersAfterSeason = const [];
+      List<TransferCashMovement> cashMovementsAfterWindow = const [];
       List<LeagueMovement> movementsAfterSeason = const [];
       var financeStatesAfterWindow = closingFinanceStates;
       var leaguesAfterTransition = leaguesBeforeSeason;
@@ -205,6 +222,7 @@ class WorldCareerEngine {
           seasonIndex: seasonIndex,
           simulationVersion: config.simulationVersion,
           contractYearsRemainingByPlayer: contractYearsRemaining,
+          enableInstallments: enableTransferInstallments,
         );
         rosterHooks.onTransferWindowCompleted(
           seasonIndex: seasonIndex,
@@ -216,9 +234,19 @@ class WorldCareerEngine {
           leaguesForNextSeason: leaguesAfterTransition,
           financeStates: market.financeStates,
         );
-        currentPlayers = market.players;
-        currentFinanceStates = market.financeStates;
-        financeStatesAfterWindow = market.financeStates;
+        final postTransfer = transferHooks.afterPermanentTransfers(
+          seasonIndex: seasonIndex,
+          nextSeasonIndex: seasonIndex + 1,
+          players: market.players,
+          financeStates: market.financeStates,
+          permanentTransfers: market.deals,
+          clubs: postLifecycleClubs,
+          leaguesForNextSeason: leaguesAfterTransition,
+        );
+        currentPlayers = postTransfer.players;
+        currentFinanceStates = postTransfer.financeStates;
+        financeStatesAfterWindow = postTransfer.financeStates;
+        cashMovementsAfterWindow = postTransfer.cashMovements;
         transfersAfterSeason = market.deals;
         currentLeagues = leaguesAfterTransition;
       } else {
@@ -239,6 +267,7 @@ class WorldCareerEngine {
           financeStatesAfterWindow: financeStatesAfterWindow,
           movementsAfterSeason: movementsAfterSeason,
           leaguesAfterTransition: leaguesAfterTransition,
+          cashMovementsAfterWindow: cashMovementsAfterWindow,
         ),
       );
     }
