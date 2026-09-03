@@ -94,20 +94,25 @@ class ManagerPoolGenerator {
         case ManagerProfile.balanced:
           coaching += 3;
           boardCooperation += 5;
+          break;
         case ManagerProfile.youthDeveloper:
           youth += 12;
           budgetDemand -= 6;
+          break;
         case ManagerProfile.budgetBuilder:
           boardCooperation += 8;
           budgetDemand -= 18;
+          break;
         case ManagerProfile.starManager:
           reputation += 12;
           coaching += 8;
           budgetDemand += 14;
+          break;
         case ManagerProfile.resultsFirst:
           coaching += 10;
           manManagement += 5;
           boardCooperation -= 4;
+          break;
       }
 
       managers.add(
@@ -118,12 +123,12 @@ class ManagerPoolGenerator {
           profile: profile,
           startAge: startAge,
           retirementAge: retirementAge,
-          reputation: reputation.clamp(35, 95),
-          coaching: coaching.clamp(35, 95),
-          youthDevelopment: youth.clamp(35, 95),
-          manManagement: manManagement.clamp(35, 95),
-          boardCooperation: boardCooperation.clamp(25, 95),
-          budgetDemand: budgetDemand.clamp(15, 95),
+          reputation: reputation.clamp(35, 95).toInt(),
+          coaching: coaching.clamp(35, 95).toInt(),
+          youthDevelopment: youth.clamp(35, 95).toInt(),
+          manManagement: manManagement.clamp(35, 95).toInt(),
+          boardCooperation: boardCooperation.clamp(25, 95).toInt(),
+          budgetDemand: budgetDemand.clamp(15, 95).toInt(),
         ),
       );
     }
