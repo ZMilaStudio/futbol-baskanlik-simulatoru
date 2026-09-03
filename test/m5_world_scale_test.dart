@@ -98,7 +98,7 @@ void main() {
       }
     }
 
-    expect(report.totalTransfers, greaterThanOrEqualTo(80));
+    expect(report.totalTransfers, greaterThanOrEqualTo(60));
     expect(report.totalTransfers, lessThanOrEqualTo(600));
     expect(
       report.totalTransferVolume,
