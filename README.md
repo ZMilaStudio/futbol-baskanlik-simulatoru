@@ -2,7 +2,7 @@
 
 ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün deterministik, UI'dan bağımsız Dart simülasyon çekirdeği.
 
-Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
+> **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 
 ## Teknik durum
 
@@ -13,62 +13,96 @@ Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 - **M4 — Basit Transfer Pazarı:** PASS
 - **M5 — 48 Kulüp / 3 Lig:** PASS
 - **M6 — Teknik Direktör Sistemi:** PASS
-- **M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi:** sıradaki milestone
+- **M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi:** PASS
+- **M8 — Gelişmiş Transfer Yapıları I / Kiralık + Taksit:** sıradaki milestone
 
-Flutter bağımlılığı henüz yoktur. Amaç maç, sezon, oyuncu yaşam döngüsü, ekonomi, transfer ve başkanlık sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
+Flutter bağımlılığı henüz yoktur. Öncelik, başkanlık simülasyonunun uzun kariyer boyunca sağlam çalışan çekirdeğini mobil arayüzden önce otomatik testlerle kanıtlamaktır.
 
-## M0–M5 kısa özet
+## Dünya ölçeği
 
-M0 ile deterministik lig/maç motoru; M1 ile 20 sezon kariyer; M2 ile oyuncu yaşlanması, emeklilik ve genç üretimi; M3 ile nakit/borç ekonomisi; M4 ile doğrudan bonservisli transfer pazarı; M5 ile 48 kurgu kulüp ve 3 liglik dünya ölçeği doğrulandı.
+M5 ile çekirdek ilk gerçek oyun ölçeğine çıktı:
 
-M5 seed `20260903` baseline'ı: 20 sezon, 14.400 maç, 864 başlangıç / 906 final oyuncu, 228 lig hareketi, 71 transfer, `637,91M` transfer hacmi, `862,25M` final nakit, `647,04M` final borç ve validation `0`.
+- 48 özgün kurgu kulüp
+- 3 lig × 16 kulüp
+- 720 lig maçı / dünya sezonu
+- 14.400 maç / 20 sezon
+- 864 başlangıç oyuncusu
+- terfi/düşme
+- ortak ekonomi ve transfer pazarı
 
-Ayrıntılar: `M5_48_KULUP_3_LIG.md`.
+Seed `20260903` M5 baseline: 71 transfer, `637,91M` transfer hacmi, `862,25M` final nakit, `647,04M` final borç, validation `0`.
+
+Ayrıntı: `M5_48_KULUP_3_LIG.md`.
 
 ## M6 — Teknik Direktör Sistemi
 
-M6 ile başkanlık kimliğinin ilk gerçek teknik direktör katmanı eklendi:
+M6, başkanın saha içini yönetmek yerine doğru teknik direktörü seçmesi fikrini gerçek sisteme taşıdı.
 
-- 96 kişilik deterministik kurgu teknik direktör havuzu
-- 5 profil: `balanced`, `youthDeveloper`, `budgetBuilder`, `starManager`, `resultsFirst`
-- itibar, coaching, genç geliştirme, insan yönetimi, yönetim uyumu ve bütçe talebi
-- kulüp/kadro/lig/finans bağlamına göre teknik direktör uyumu
-- maç gücüne sınırlı `-2,5...+2,5` teknik direktör etkisi
-- sezon sonu beklenen sıra / gerçek sıra değerlendirmesi
+- 96 deterministik teknik direktör
+- 5 profil
+- coaching / youth development / man management / board cooperation / budget demand
+- kulüp-kadro-lig-finans bağlamına göre uyum
+- maç gücüne sınırlı `-2,5...+2,5` etki
 - yönetim ilişkisi
-- performans, yönetim kopması ve emeklilik nedeniyle görev değişimi
+- performans / yönetim kopması / emeklilik nedeniyle görev değişimi
 - kovulan hocanın başka kulüpte yeniden çalışabilmesi
-- her kulüpte tek aktif teknik direktör ve deterministik kariyer sürekliliği
-- manager report + validator + headless runner
 
-`WorldCareerEngine` varsayılan olarak `NoopWorldCareerHooks` kullanmaya devam eder. Böylece M5 yolu ve baseline'ı manager sistemi eklenmesine rağmen değişmedi. M6 manager katmanı aynı motorun üzerine hook olarak bağlandı.
+Seed `20260903`: 82 görev değişimi, 60 farklı hoca, ortalama etki `+0,922`, final ortalama board relationship `72,22`, validation `0`.
 
-### Kabul edilen M6 baseline — seed `20260903`
+Ayrıntı: `M6_TEKNIK_DIREKTOR_SISTEMI.md`.
+
+## M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi
+
+M7 ile geçici maaş tahmini yerine gerçek oyuncu kontratları devreye girdi.
+
+- oyuncu bazlı başlangıç/bitiş sezonu
+- gerçek yıllık maaş
+- kontrat bitişinde yenileme veya serbest kalma
+- serbest oyuncu havuzu ve mevki ihtiyacına göre imza
+- youth intake için ilk profesyonel kontrat
+- transfer sonrası yeni kontrat
+- kontrat süresinin piyasa değerine etkisi
+- normal bonservis pazarında free-agent ayrımı
+- manager ve contract sistemlerinin aynı world engine'de bağımsız hook'larla birlikte çalışması
+
+### M7 kabul baseline — seed `20260903`
 
 - 20 sezon / 14.400 maç
-- manager havuzu: `96`
-- görev yapan farklı manager: `60`
-- toplam görev değişimi: `82`
-- performans nedeniyle: `51`
-- yönetim ilişkisi kopması: `29`
-- emeklilik: `2`
-- ortalama strength etkisi: `+0,922`
-- AI atamalarında etki aralığı: `-0,371...+1,977`
-- negatif etkili kulüp-sezon: `29`
-- `+1,5` ve üzeri güçlü pozitif kulüp-sezon: `77`
-- final ortalama yönetim ilişkisi: `72,22`
-- transfer: `84`
-- transfer hacmi: `777,02M`
-- final nakit: `1.048,02M`
-- final borç: `582,36M`
-- acil finansman: `473,40M`
-- manager validation issue: `0`
+- başlangıç kontratı `864`
+- final aktif kontrat `874`
+- yenileme `3.757`
+- release `1.143`
+- free-agent signing `776`
+- final free agent `32`
+- youth contract `912`
+- transfer sonrası kontrat `103`
+- final toplam yıllık maaş `491,27M`
+- ortalama final yıllık maaş `562.091`
+- bonservis transferi `103`
+- transfer hacmi `868,67M`
+- final nakit `1.060,80M`
+- final borç `554,81M`
+- emergency borrowing `428,76M`
+- validation `0`
 
-AI çoğunlukla uygun hoca seçtiği için negatif etkiler sınırlıdır. Model doğrudan testte kötü başkanlık tercihi için `-2,5`, çok güçlü uyum için `+2,5` sınırına ulaşabilmektedir.
+M7 sayıları nihai oyun ekonomisi değildir; CI'da geniş regresyon bantları kullanılır. Amaç sözleşme/free-agent pazarının ne donması ne de patlamasıdır.
 
-M6'da `youthDevelopment` şimdilik uyum ve genç kadrolu takımın manager etkisinde kullanılır; bireysel oyuncu gelişim eğrisini henüz doğrudan değiştirmez. Teknik direktör maaş/sözleşmesi, transfer talebi, başka kulüpten teklif ve medya davranışı da sonraki katmanlardadır.
+Ayrıntı: `M7_OYUNCU_SOZLESMESI_MAAS.md`.
 
-Ayrıntılar: `M6_TEKNIK_DIREKTOR_SISTEMI.md`.
+## Mimari
+
+Temel yön:
+
+**Flutter mobil kabuk + saf Dart simülasyon çekirdeği + headless test runner.**
+
+`WorldCareerEngine` iki bağımsız genişleme noktası kullanır:
+
+- `WorldCareerHooks`: teknik direktör gibi sezon/sportif lifecycle sistemleri
+- `WorldRosterHooks`: kontrat, kadro ve gerçek maaş gibi roster/economy sistemleri
+
+Her ikisinin varsayılanı no-op'tur. Bu sayede eski milestone baseline'ları yeni sistemler eklendiğinde de regresyon testi olarak korunur.
+
+Deterministik RNG, cihaz saatinden bağımsız `GameDate` ve integer minor-unit `Money` temel teknik kurallardır.
 
 ## Çalıştırma
 
@@ -83,26 +117,27 @@ dart run tool/run_m3_economy_career.dart 20260903
 dart run tool/run_m4_transfer_career.dart 20260903
 dart run tool/run_m5_world_career.dart 20260903
 dart run tool/run_m6_manager_career.dart 20260903
+dart run tool/run_m7_contract_career.dart 20260903
 ```
 
 ## CI prensibi
 
-GitHub Actions yalnız Dart bağımlılıklarını kurar, analiz/testleri ve headless simülasyon koşularını çalıştırır. APK/AAB veya büyük artifact üretilmez/yüklenmez.
+Tek hafif GitHub Actions workflow'u kullanılır. CI:
 
-M6 kabul kalite kapısı:
+- `dart analyze`
+- tüm otomatik testler
+- M0 100 sezon batch
+- M1–M7 20 sezon headless runner'ları
 
-- `dart analyze`: PASS
-- otomatik test: M0–M6 PASS
-- M0–M6 headless runner zinciri: PASS
-- M5 eski baseline: korunuyor
-- M6 validation issue: `0`
-- artifact: `0`
+çalıştırır.
+
+APK/AAB, büyük binary veya `actions/upload-artifact` yoktur. Artifact hedefi `0`dır.
 
 ## Sıradaki milestone
 
-**M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi.**
+**M8 — Gelişmiş Transfer Yapıları I: Kiralık + Taksit.**
 
-Amaç M3'teki geçici `WageModel` köprüsünü kaldırmak; oyunculara gerçek sözleşme süresi ve maaş bağlamak, sözleşme bitişi/yenileme/serbest kalma davranışını kurmak ve ekonomi ile transfer değerini gerçek kontrat verisiyle beslemektir. Bu katman tamamlanmadan taksit/kiralık/bonus gibi gelişmiş transfer yapılarının eklenmesi ertelenecektir.
+Amaç nakdi sınırlı veya borçlu kulüpler için transfer pazarını kapatmak yerine daha akıllı finansman yolları açmaktır. İlk aşamada yalnız kiralık ve taksitli bonservis eklenecek; satın alma opsiyonu, satıştan pay, bonus, takas ve maaş paylaşımı sonraki katmanlarda değerlendirilecek.
 
 ## Lisans
 
