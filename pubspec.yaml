@@ -1,0 +1,10 @@
+name: futbol_baskanlik_m0
+description: ZMila Studio Futbol Baskanlik Simulator M0 deterministic simulation core.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dev_dependencies:
+  test: ^1.25.0
