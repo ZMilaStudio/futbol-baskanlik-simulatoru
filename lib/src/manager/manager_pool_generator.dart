@@ -78,7 +78,7 @@ class ManagerPoolGenerator {
       ]);
       final rng = SeededRng(seed);
       final profile = ManagerProfile.values[
-        (rng.nextDouble() * ManagerProfile.values.length).floor(),
+        (rng.nextDouble() * ManagerProfile.values.length).floor()
       ];
       final startAge = _range(rng, 34, 52);
       final retirementAge = _range(rng, 66, 73);
