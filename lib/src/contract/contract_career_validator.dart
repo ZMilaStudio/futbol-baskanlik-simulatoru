@@ -1,5 +1,4 @@
 import '../core/money.dart';
-import '../player/player.dart';
 import '../world/world_career_validator.dart';
 import 'contract_career_report.dart';
 import 'contract_event.dart';
