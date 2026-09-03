@@ -55,3 +55,6 @@ jobs:
 
       - name: Run M6 20-season manager career
         run: dart run tool/run_m6_manager_career.dart 20260903
+
+      - name: Run M7 20-season contract career
+        run: dart run tool/run_m7_contract_career.dart 20260903
