@@ -8,6 +8,7 @@ Temel oyun kimliği: **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 
 - **M0 — Deterministik Mini Lig:** PASS
 - **M1 — 20 Sezon Yaşam Döngüsü:** PASS
+- **M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi:** geliştirme / CI doğrulama aşaması
 
 Flutter bağımlılığı henüz yoktur. Amaç maç, sezon ve uzun kariyer sistemlerini mobil arayüzden önce otomatik testlerle doğrulamaktır.
 
@@ -30,7 +31,17 @@ Flutter bağımlılığı henüz yoktur. Amaç maç, sezon ve uzun kariyer siste
 - kariyer raporu ve validator
 - aynı seed ile aynı kariyer sonucu
 
-M1'de oyuncu, transfer, ekonomi, teknik direktör, taraftar, UI ve APK henüz yoktur.
+## M2
+
+- 8 kulüp × 18 oyuncu = 144 başlangıç oyuncusu
+- yaş, pozisyon, mevcut seviye ve potansiyel
+- deterministik gelişim / düşüş
+- 34–38 yaş arası deterministik emeklilik
+- her sezon geçişinde kulüp başına 1 genç üretimi
+- kadronun ilk 11 kalitesinden türetilen takım gücü
+- 20 sezon oyuncu nüfusu korunum testi
+
+M2'de transfer, sözleşme, maaş, ekonomi, teknik direktör, taraftar, UI ve APK henüz yoktur.
 
 ## Çalıştırma
 
@@ -40,6 +51,7 @@ dart analyze
 dart test
 dart run tool/run_m0_batch.dart 100
 dart run tool/run_m1_career.dart 20260903
+dart run tool/run_m2_player_career.dart 20260903
 ```
 
 ## CI prensibi
