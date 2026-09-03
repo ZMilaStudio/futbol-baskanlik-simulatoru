@@ -4,7 +4,11 @@ import 'package:test/test.dart';
 void main() {
   final clubs = List.generate(
     8,
-    (i) => Club(id: 'c$i', name: 'Club $i', strength: 58 + i * 3),
+    (i) => Club(
+      id: 'c$i',
+      name: 'Club $i',
+      strength: (58 + i * 3).toDouble(),
+    ),
   );
 
   test('same seed produces same season', () {
