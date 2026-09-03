@@ -57,6 +57,24 @@ void main() {
       config: config,
     );
 
+    final transferParticipants = <String>{};
+    for (final season in report.seasons) {
+      for (final deal in season.transfersAfterSeason) {
+        transferParticipants.add(deal.fromClubId);
+        transferParticipants.add(deal.toClubId);
+      }
+    }
+    print(
+      'M5_BALANCE transfers=${report.totalTransfers} '
+      'volume=${report.totalTransferVolume} '
+      'cash=${report.finalTotalCash} '
+      'debt=${report.finalTotalDebt} '
+      'emergency=${report.totalEmergencyBorrowing} '
+      'health=${report.finalHealthCounts} '
+      'participants=${transferParticipants.length} '
+      'champions=${report.firstTierChampions.length}',
+    );
+
     expect(report.seasonCount, 20);
     expect(report.initialClubCount, 48);
     expect(report.initialPlayerCount, 864);
@@ -113,14 +131,6 @@ void main() {
       lessThanOrEqualTo(20),
     );
     expect(report.firstTierChampions.length, greaterThanOrEqualTo(4));
-
-    final transferParticipants = <String>{};
-    for (final season in report.seasons) {
-      for (final deal in season.transfersAfterSeason) {
-        transferParticipants.add(deal.fromClubId);
-        transferParticipants.add(deal.toClubId);
-      }
-    }
     expect(transferParticipants.length, greaterThanOrEqualTo(20));
   });
 
