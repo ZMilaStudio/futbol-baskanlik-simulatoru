@@ -1,7 +1,7 @@
 # Futbol Başkanlık Simülatörü — M5 / 48 Kulüp / 3 Lig
 
 **Milestone:** M5 — 48 Kulüp / 3 Lig  
-**Durum:** **PASS adayı — PR kalite kapısı geçti**  
+**Durum:** **PASS — kalite kapısı kapandı**  
 **Amaç:** M0–M4 ile kanıtlanan lig, oyuncu yaşam döngüsü, ekonomi ve transfer sistemlerini ilk kez gerçek oyun ölçeğine taşımak.
 
 ## Dünya ölçeği
@@ -202,7 +202,7 @@ Transfer alt sınırı ilk başta veriye dayanmadan `80` seçilmişti. Kabul edi
 
 ## Kalite kapısı
 
-PR üzerindeki son doğrulama:
+M5 aşağıdaki doğrulamalarla kapatıldı:
 
 - `dart analyze`: PASS
 - otomatik test: `23/23 PASS`
@@ -214,6 +214,8 @@ PR üzerindeki son doğrulama:
 - M5 20 sezon / 48 kulüp / 3 lig: PASS
 - M5 validation issue: `0`
 - artifact: `0`
+
+PR #6 squash merge ile `main`e alındı. Merge commit: `0b83168b89159565b497379a9bf95774875778d2`.
 
 ## M5'in önemi
 
