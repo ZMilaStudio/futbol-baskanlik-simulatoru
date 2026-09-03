@@ -10,6 +10,7 @@ import '../player/team_strength_calculator.dart';
 import '../season/season_engine.dart';
 import 'transfer_career_report.dart';
 import 'transfer_career_season.dart';
+import 'transfer_deal.dart';
 import 'transfer_market_engine.dart';
 
 class TransferCareerEngine {
@@ -58,9 +59,10 @@ class TransferCareerEngine {
 
     for (var offset = 0; offset < seasonCount; offset++) {
       final seasonIndex = config.seasonIndex + offset;
+      final seasonPlayers = List<Player>.unmodifiable(currentPlayers);
       final currentClubs = strengthCalculator.deriveClubs(
         baseClubs: clubs,
-        players: currentPlayers,
+        players: seasonPlayers,
       );
       final seasonReport = seasonEngine.simulate(
         clubs: currentClubs,
@@ -68,7 +70,7 @@ class TransferCareerEngine {
       );
       final financeResults = economyEngine.simulateSeason(
         clubs: currentClubs,
-        players: currentPlayers,
+        players: seasonPlayers,
         seasonReport: seasonReport,
         openingStates: currentFinanceStates,
       );
@@ -84,12 +86,12 @@ class TransferCareerEngine {
 
       List<Player> retiredAfterSeason = const [];
       List<Player> youthIntakeAfterSeason = const [];
-      var transfersAfterSeason = const <dynamic>[];
+      List<TransferDeal> transfersAfterSeason = const [];
       var financeStatesAfterWindow = closingFinanceStates;
 
       if (offset < seasonCount - 1) {
         final transition = lifecycleEngine.advance(
-          currentPlayers: currentPlayers,
+          currentPlayers: seasonPlayers,
           currentClubs: currentClubs,
           referenceClubs: clubs,
           careerSeed: config.careerSeed,
@@ -123,17 +125,12 @@ class TransferCareerEngine {
         TransferCareerSeason(
           seasonIndex: seasonIndex,
           clubs: currentClubs,
-          players: offset < seasonCount - 1
-              ? _seasonPlayersBeforeTransition(
-                  currentPlayers: currentPlayers,
-                  originalSeasonPlayers: null,
-                )
-              : currentPlayers,
+          players: seasonPlayers,
           report: seasonReport,
           finances: financeResults,
           retiredAfterSeason: retiredAfterSeason,
           youthIntakeAfterSeason: youthIntakeAfterSeason,
-          transfersAfterSeason: transfersAfterSeason.cast(),
+          transfersAfterSeason: transfersAfterSeason,
           financeStatesAfterWindow: financeStatesAfterWindow,
         ),
       );
@@ -154,9 +151,4 @@ class TransferCareerEngine {
       finalClubs: finalClubs,
     );
   }
-
-  List<Player> _seasonPlayersBeforeTransition({
-    required List<Player> currentPlayers,
-    required List<Player>? originalSeasonPlayers,
-  }) => originalSeasonPlayers ?? currentPlayers;
 }
