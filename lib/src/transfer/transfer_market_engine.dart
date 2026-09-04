@@ -14,9 +14,11 @@ import 'transfer_market_result.dart';
 class TransferMarketEngine {
   const TransferMarketEngine({
     this.marketValueModel = const MarketValueModel(),
+    this.budgetPolicyProvider,
   });
 
   final MarketValueModel marketValueModel;
+  final TransferBudgetPolicyProvider? budgetPolicyProvider;
 
   static const Map<PlayerPosition, int> _squadTargets = {
     PlayerPosition.goalkeeper: 2,
@@ -55,8 +57,9 @@ class TransferMarketEngine {
       ..sort((a, b) => a.id.compareTo(b.id));
 
     for (final buyer in orderedClubs) {
-      final budgetPolicy =
-          budgetPoliciesByClub?[buyer.id] ?? TransferBudgetPolicy.neutral;
+      final budgetPolicy = budgetPoliciesByClub?[buyer.id] ??
+          budgetPolicyProvider?.call(buyer.id, seasonIndex + 1) ??
+          TransferBudgetPolicy.neutral;
       for (var slot = 0; slot < 2; slot++) {
         final buyerState = finances[buyer.id];
         if (buyerState == null) {
