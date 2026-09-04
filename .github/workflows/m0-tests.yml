@@ -82,3 +82,6 @@ jobs:
 
       - name: Run M15 20-season president tenure career
         run: dart run tool/run_m15_president_tenure_career.dart 20260903
+
+      - name: Run M16 20-season president reputation career
+        run: dart run tool/run_m16_president_reputation_career.dart 20260903
