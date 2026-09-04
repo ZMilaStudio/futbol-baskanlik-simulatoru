@@ -154,5 +154,5 @@ void main() {
     );
     expect(report.uniqueFinalPresidents, inInclusiveRange(120, 150));
     expect(report.worldChanged, isTrue);
-  });
+  }, tags: 'canonical-feedback');
 }
