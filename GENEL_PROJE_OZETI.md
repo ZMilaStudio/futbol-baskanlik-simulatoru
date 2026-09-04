@@ -3,7 +3,7 @@
 
 **Son güncelleme:** 04.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru` — Public / proprietary notice  
-**Aktif teknik aşama:** **M18 PASS adayı — PR #19 final kalite kapısında; sıradaki M19 / Başkan Sabrı + Seçim Geri Besleme Döngüsü**  
+**Aktif teknik aşama:** **M18 PASS ve main'e merge — sıradaki M19 / Başkan Sabrı + Seçim Geri Besleme Döngüsü**  
 **Proje önceliği:** Yan geliştirme; aktif ana projeleri aksatmayacak.  
 **UI/APK:** Bilinçli olarak başlanmadı; önce simülasyon çekirdeği.
 
@@ -11,7 +11,9 @@
 
 # 1. Proje kimliği
 
-Tam kapsamlı Android futbol kulübü **başkanlığı** simülasyonu. Oyuncu teknik direktör değil kulüp başkanıdır. Ana satış fikri: **“Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.”**
+Tam kapsamlı Android futbol kulübü **başkanlığı** simülasyonu. Oyuncu teknik direktör değil kulüp başkanıdır.
+
+> **“Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.”**
 
 Başkanın alanı ekonomi/borç, teknik direktör seçimi, transfer politikası, sözleşme/maaş, taraftar, medya, vaat, seçim; ileride tesis, sponsor ve krizlerdir. Diziliş/antrenman/maç içi taktik teknik direktörün alanıdır. Dünya tamamen özgün/lisanssız olacaktır.
 
@@ -47,9 +49,18 @@ Kalıcı ilkeler:
 
 **Flutter mobil kabuk + Flutter'dan bağımsız saf Dart simülasyon çekirdeği.**
 
-Deterministik RNG/stable hash, cihaz saatinden bağımsız `GameDate`, integer minor-unit `Money`, headless runner, seed replay, uzun kariyer validator ve balance guard kullanılır.
+Temel teknik yapı:
 
-M13 manager+advanced transfer+promise+media tek world üretir. M14 seçim, M15 tenure/turnover, M16 incumbent'a bağlı ardışık kişisel reputasyon state ekler. M17 gerçek president zincirini management profile ile etiketler.
+- deterministik RNG + stable hash,
+- cihaz saatinden bağımsız `GameDate`,
+- integer minor-unit `Money`,
+- headless runner,
+- seed replay,
+- uzun kariyer validator + balance guard,
+- ileride versiyonlu save/load/migration,
+- en son Flutter presentation.
+
+M13 manager + advanced transfer + promise + media dünyasını üretir. M14 seçim, M15 president tenure/turnover, M16 incumbent'a bağlı kişisel reputasyon, M17 management profile ekler.
 
 M17 trait'leri:
 
@@ -59,26 +70,35 @@ M17 trait'leri:
 - `youthOrientation`
 - `managerPatience`
 
-M17 arketipleri: balanced, prudentBuilder, ambitiousSpender, youthArchitect, patientPlanner, interventionist.
+M17 arketipleri: `balanced`, `prudentBuilder`, `ambitiousSpender`, `youthArchitect`, `patientPlanner`, `interventionist`.
 
-M18 ilk gerçek profile-feedback katmanıdır. Döngüsel bağımlılık nedeniyle iki geçişlidir:
+M18 ilk gerçek profile-feedback katmanıdır. Döngüsel bağımlılığı kontrollü kırmak için iki geçişlidir:
 
 1. canonical M17 → president / turnover / management-profile timeline,
 2. aynı seed advanced-world replay → incumbent `managerPatience` ile gerçek manager dismissal kararları.
 
-`managerPatience=60` neutral referanstır ve eski M6/M13 dismissal eşiklerini birebir korur. M18'in değişen dünyasından seçimler henüz yeniden hesaplanmaz; bu sınır M19'da kaldırılacak.
+`managerPatience=60` neutral referanstır ve eski M6/M13 dismissal eşiklerini birebir korur. M18'in değişen dünyasından seçimler henüz yeniden hesaplanmaz; bu ara sınır M19'da kaldırılacak.
 
 ---
 
 # 3. GitHub / CI disiplini
 
-Tek hafif workflow: `dart pub get` + `dart analyze` + tüm testler + M0 100 sezon + M1–M18 20 sezon runner zinciri.
+Tek hafif workflow:
 
-APK/AAB, büyük binary veya `actions/upload-artifact` yok. Artifact hedefi `0`. M0–M18 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu.
+- `dart pub get`
+- `dart analyze`
+- tüm testler
+- M0 100 sezon batch
+- M1–M18 20 sezon headless runner zinciri
 
-M17 PR #18 squash merge: `0003e6463e3cbc7052d407cc45c2594be8d861db`.
+APK/AAB, büyük binary veya `actions/upload-artifact` yok. Artifact hedefi `0`.
 
-M18 branch: `m18-president-manager-patience`. PR: **#19**.
+M0–M18 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu. Codex yalnız büyük refactor/migration/karmaşık hata için kullanılacak.
+
+Son merge'ler:
+
+- M17 PR #18 → `0003e6463e3cbc7052d407cc45c2594be8d861db`
+- M18 PR #19 → `d1ca4de859c528470785f98a10baa4db8259d4ce`
 
 ---
 
@@ -86,15 +106,15 @@ M18 branch: `m18-president-manager-patience`. PR: **#19**.
 
 ## M0–M8 — Temel dünya / ekonomi / oyuncu / transfer / manager / kontrat — PASS
 
-- M0: 8 kulüp, 100 sezon, invariant 0.
+- M0: 8 kulüp, 100 sezon, 5.600 maç, invariant `0`.
 - M1: deterministik 20 sezon yaşam döngüsü.
 - M2: player ageing/retirement/youth intake.
-- M3: ekonomi; evrensel-refah ilk modeli reddedildi.
-- M4: temel transfer piyasası.
-- M5: 48 kulüp / 3 lig / 14.400 maç / terfi-düşme.
-- M6: manager profili ve değişimleri; seed baseline `82` manager change.
-- M7: kontrat/maaş/free agent.
-- M8: 140 kalıcı, 68 taksitli, 478 kiralık; validation 0.
+- M3: ekonomi; ilk evrensel-refah modeli reddedildi. Kabul cash `124,28M`, debt `104,43M`, emergency `67,44M`.
+- M4: temel transfer; 32 transfer, `161,68M` hacim.
+- M5: 48 kulüp / 3 lig / 14.400 maç / terfi-düşme; 71 transfer, cash `862,25M`, debt `647,04M`. Ufuk Ligi yüksek nakit birikimi açık denge notudur.
+- M6: manager profili/değişimi; 82 değişim, 80 dismissal, 2 retirement, avg impact `+0,922`.
+- M7: kontrat/maaş/free agent; 874 final kontrat, 3.757 renewal, 1.143 release, 776 free signing.
+- M8: 140 kalıcı, 68 taksitli, 478 kiralık; validation `0`.
 
 ## M9–M13 — Taraftar / medya / vaat reputasyonu — PASS
 
@@ -102,11 +122,11 @@ M18 branch: `m18-president-manager-patience`. PR: **#19**.
 - M10: 556 statement, 22 contradiction, avg credibility `75,52`.
 - M11: 960 vaat; 435 fulfilled / 169 partial / 356 broken, avg `54,84`.
 - M12: promise → fan; final overall `65,31`, identity avg `61,83`.
-- M13: promise → media; 452 positive / 154 neutral / 354 negative; final credibility `72,38`; canonical advanced-world manager changes `81`, transfers `173`.
+- M13: promise → media; 452 positive / 154 neutral / 354 negative; final credibility `72,38`. Canonical M13 advanced-world baseline manager changes `81`, transfers `173`.
 
 ## M14 — Başkanlık Seçimi — PASS
 
-Seed `20260903`: 240 seçim, 158 reelected, 82 lost, rate `%65,8`, avg approval `63,24`, challenger `60,08`, validation 0.
+Seed `20260903`: 240 seçim, 158 reelected, 82 lost, rate `%65,8`, avg approval `63,24`, challenger `60,08`, validation `0`.
 
 ## M15 — Başkanlık Görev Süresi + Devir — PASS
 
@@ -118,16 +138,24 @@ Açık denge notu: M15 baseline'da bir kulüp 5/5 seçimde turnover yaşadı; ç
 
 Başkan değişiminde sporting/financial/transfer trust korunur; identity ve media `%25 eski + %75 nötr` ile normalleştirilir. Sezon → reputasyon → election → turnover → handover → sonraki sezon sırası ardışık state olarak çalışır.
 
-Kabul: elections `240`, reelected `161`, lost/turnover `79`, unique `127`, media avg `72,42` range `59–93`, identity avg `65,00` range `56–81`, validation 0.
+Kabul seed `20260903`:
+
+- elections `240`
+- reelected `161`
+- lost / turnover `79 / 79`
+- unique presidents `127`
+- media avg `72,42`, range `59–93`
+- identity avg `65,00`, range `56–81`
+- validation `0`
 
 ## M17 — Başkan Profili + Yönetim Felsefesi — PASS
 
-M16'nın `127` benzersiz başkanı deterministic management profile alır. Profil M16 davranışını değiştirmez.
+M16'nın `127` benzersiz başkanı deterministic management profile alır. Profil bu milestone'da M16 davranışını değiştirmez.
 
 Kabul seed `20260903`:
 
 - profiles `127`
-- 6/6 arketip aktif: `23 / 25 / 24 / 15 / 18 / 22`
+- 6/6 arketip aktif: youthArchitect `23`, interventionist `25`, prudentBuilder `24`, patientPlanner `15`, balanced `18`, ambitiousSpender `22`
 - financial avg `60,48`, range `28–90`
 - risk avg `54,98`, range `20–90`
 - transfer avg `56,54`, range `29–90`
@@ -141,16 +169,16 @@ Kabul seed `20260903`:
 
 Ayrıntı: `M17_BASKAN_PROFILI_YONETIM_FELSEFESI.md`.
 
-## M18 — Başkan Sabrı → Teknik Direktör Karar Eşiği I — PASS ADAYI
+## M18 — Başkan Sabrı → Teknik Direktör Karar Eşiği I — PASS
 
 M17'nin `managerPatience` trait'i gerçek `ManagerCareerController` dismissal kararlarına bağlandı. Neutral `60`, eski dismissal mantığını birebir korur; düşük sabır daha erken, yüksek sabır daha geç değişime gider. Retirement etkilenmez.
 
-İlk seed `20260903` kabul baseline'ı:
+Kabul seed `20260903`:
 
 - manager decision snapshot `960`
 - baseline manager changes `81`
 - patience-aware manager changes `88`
-- change delta `+7`
+- manager change delta `+7`
 - dismissal decision differences `93`
 - downstream manager identity differences `446 / 960`
 - final assignment differences `37 / 48`
@@ -165,13 +193,28 @@ M17'nin `managerPatience` trait'i gerçek `ManagerCareerController` dismissal ka
 - world changed `true`
 - validation `0`
 - analyzer PASS
-- `70` test PASS
+- sıkı `70` test PASS
 - M0–M18 runner zinciri PASS
-- ilk CI artifact `0`
+- artifact `0`
 
-İlk model kabul edildi. Toplam manager change yalnız `%8,6` artarken düşük/yüksek sabır dismissal kültürü güçlü biçimde ayrıştı. `446` identity farkı 446 kovma değildir; `93` farklı kararın downstream manager zincirine yayılmasıdır. Transfer sayısındaki yaklaşık `%11,6` düşüş ikincil world-path etkisi olarak kabul edildi ve guard'a alındı.
+İlk model doğrudan kabul edildi. Toplam manager change yalnız `%8,6` artarken düşük/yüksek sabır dismissal kültürü güçlü biçimde ayrıştı. `446` identity farkı 446 kovma değildir; `93` farklı kararın downstream manager zincirine yayılmasıdır. Transfer sayısındaki yaklaşık `%11,6` düşüş ikincil manager/world-path etkisi olarak kabul edildi ve guard'a alındı.
 
-Kabul guard'ları: influenced manager changes `80–100`, decision differences `60–130`, manager identity differences `300–600`, final assignments `25–45`, low dismissal rate `0,10–0,22`, high `0,03–0,10`, rate farkı en az `0,05`, influenced transfer `120–200`, baseline transfer sapması en fazla `50`.
+Kabul guard'ları:
+
+- influenced manager changes `80–100`
+- manager change delta `-5..20`
+- decision differences `60–130`
+- manager identity differences `300–600`
+- final assignment differences `25–45`
+- low-patience club-seasons `180–280`
+- high-patience club-seasons `250–360`
+- low dismissal rate `0,10–0,22`
+- high dismissal rate `0,03–0,10`
+- low/high rate farkı en az `0,05`
+- avg dismissal patience `45–56`
+- avg retained patience `57–65`
+- influenced transfers `120–200`
+- baseline transfer sapması en fazla `50`
 
 Ayrıntı: `M18_BASKAN_SABRI_TEKNIK_DIREKTOR_KARAR_ESIGI.md`.
 
@@ -194,7 +237,7 @@ Her başarısız kariyer seed ile replay edilebilmelidir.
 
 Aday metadata: `saveVersion`, `gameVersion`, `simulationVersion`, `dataVersion`, `careerSeed`, current `GameDate`, checksum/integrity, migration history.
 
-Kalıcı state adayları: installment/active loans, `FanState`, `MediaState`, aktif vaat/kompakt history, `PresidentTenureState`, president ID, election/turnover history, kişisel reputasyon state. Management profile president ID+seed'den deterministik yeniden üretilebilir. M19 sonrası birleşik kariyerde current president + manager assignment + reputasyon state birlikte persist edilmelidir.
+Kalıcı state adayları: installment/active loans, `FanState`, `MediaState`, aktif vaat + kompakt history, `PresidentTenureState`, president ID, election/turnover history ve kişisel reputasyon state. Management profile president ID+seed'den deterministik yeniden üretilebilir. M19 sonrası birleşik kariyerde current president + manager assignment + reputasyon state birlikte persist edilmelidir.
 
 ---
 
@@ -209,7 +252,7 @@ Kalıcı state adayları: installment/active loans, `FanState`, `MediaState`, ak
 7. Medya serbest metin/çok yıllı konu ağı değildir.
 8. AI kulüp sezon başına bir resmi vaat kullanır.
 9. M16 handover V1 `%25 eski + %75 nötr`; çoklu-seed stres testinde izlenecek.
-10. M17'nin diğer dört trait'i henüz gerçek AI davranışına bağlı değildir.
+10. M17'nin `financialDiscipline`, `riskAppetite`, `transferAmbition`, `youthOrientation` trait'leri henüz gerçek AI davranışına bağlı değildir.
 11. **M18 iki geçişlidir; patience-aware değişen world henüz seçim/reputation zincirine geri beslenmez.**
 12. M18'de transfer `173→153`; manager-path kaynaklı ikincil etki guard altında izlenecek.
 13. Sponsor, tesis ve kriz çekirdeğe bağlanmadı.
@@ -235,9 +278,9 @@ Amaç:
 - `president → manager → world → reputasyon → election → president` geri besleme döngüsünü tek deterministic kariyer engine'inde kapatmak,
 - iki geçişli M18 yaklaşımını birleşik state'e geçirmek,
 - eski M6–M18 baseline'larını regresyon olarak korumak,
-- yeni M19 için ayrı denge/election/manager baseline'ı üretmek.
+- yeni M19 için ayrı manager/election/reputation denge baseline'ı üretmek.
 
-M19 tamamlanmadan `financialDiscipline`, `transferAmbition`, `riskAppetite` veya `youthOrientation` trait'leri gerçek AI'a bağlanmayacak; önce manager feedback döngüsü mimari olarak doğru kapatılacak.
+M19 tamamlanmadan `financialDiscipline`, `transferAmbition`, `riskAppetite` veya `youthOrientation` trait'leri gerçek AI'a bağlanmayacak. Önce manager feedback döngüsü mimari olarak doğru kapatılacak.
 
 ---
 
