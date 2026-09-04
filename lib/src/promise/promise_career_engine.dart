@@ -1,5 +1,6 @@
 import '../core/simulation_config.dart';
 import '../league/club.dart';
+import '../transfer/advanced_transfer_career_report.dart';
 import '../transfer/advanced_transfer_world_career_engine.dart';
 import '../world/world_career_hooks.dart';
 import '../world/world_career_season.dart';
@@ -35,6 +36,16 @@ class PromiseCareerEngine {
       seasonCount: seasonCount,
       hooks: hooks,
     );
+    return simulateFromAdvancedReport(
+      advancedReport: advancedReport,
+      config: config,
+    );
+  }
+
+  PromiseCareerReport simulateFromAdvancedReport({
+    required AdvancedTransferCareerReport advancedReport,
+    required SimulationConfig config,
+  }) {
     final snapshots = <PromiseSeasonSnapshot>[];
 
     for (final season in advancedReport.worldReport.seasons) {
