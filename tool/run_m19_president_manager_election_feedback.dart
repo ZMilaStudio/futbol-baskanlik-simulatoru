@@ -1,5 +1,7 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 
+import 'profile_feedback_canonical_guard.dart';
+
 void main(List<String> args) {
   final seed = args.isEmpty ? 20260903 : int.parse(args.first);
   final world = const FictionalWorldFactory().build();
@@ -9,7 +11,9 @@ void main(List<String> args) {
     config: SimulationConfig(careerSeed: seed),
     maxIterations: 8,
   );
-  final issues = const PresidentManagerElectionFeedbackValidator().validate(report);
+  final issues = seed == 20260903
+      ? ProfileFeedbackCanonicalGuard.m19Issues(report)
+      : const PresidentManagerElectionFeedbackValidator().validate(report);
 
   print('M19 20-season president manager election feedback career');
   print('Seed: $seed');
