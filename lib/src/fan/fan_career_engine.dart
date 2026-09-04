@@ -12,6 +12,11 @@ import 'fan_season_context.dart';
 import 'fan_season_snapshot.dart';
 import 'fan_state.dart';
 import 'fan_trust_engine.dart';
+import 'fan_trust_reason.dart';
+
+typedef FanExtraReasonProvider = Iterable<FanTrustReason> Function(
+  FanSeasonContext context,
+);
 
 class FanCareerEngine {
   const FanCareerEngine({
@@ -30,6 +35,7 @@ class FanCareerEngine {
     required SimulationConfig config,
     int seasonCount = 20,
     WorldCareerHooks hooks = const NoopWorldCareerHooks(),
+    FanExtraReasonProvider? extraReasonProvider,
   }) {
     final advancedReport = advancedEngine.simulate(
       clubs: clubs,
@@ -38,16 +44,31 @@ class FanCareerEngine {
       seasonCount: seasonCount,
       hooks: hooks,
     );
+    return simulateFromAdvancedReport(
+      advancedReport: advancedReport,
+      extraReasonProvider: extraReasonProvider,
+    );
+  }
+
+  FanCareerReport simulateFromAdvancedReport({
+    required AdvancedTransferCareerReport advancedReport,
+    FanExtraReasonProvider? extraReasonProvider,
+  }) {
     final worldReport = advancedReport.worldReport;
+    final clubIds = worldReport.initialLeagues
+        .expand((league) => league.clubIds)
+        .toSet()
+        .toList()
+      ..sort();
     final states = {
-      for (final club in clubs) club.id: FanState.initial(club.id),
+      for (final clubId in clubIds) clubId: FanState.initial(clubId),
     };
     final snapshots = <FanSeasonSnapshot>[];
     final lastSeasonIndex = worldReport.seasons.last.seasonIndex;
 
     for (final season in worldReport.seasons) {
-      final clubIds = season.clubs.map((club) => club.id).toList()..sort();
-      for (final clubId in clubIds) {
+      final seasonClubIds = season.clubs.map((club) => club.id).toList()..sort();
+      for (final clubId in seasonClubIds) {
         final context = _buildContext(
           advancedReport: advancedReport,
           season: season,
@@ -55,10 +76,13 @@ class FanCareerEngine {
           lastSeasonIndex: lastSeasonIndex,
         );
         final expectation = expectationEngine.generate(context);
-        final reasons = trustEngine.evaluate(
-          context: context,
-          expectation: expectation,
-        );
+        final reasons = <FanTrustReason>[
+          ...trustEngine.evaluate(
+            context: context,
+            expectation: expectation,
+          ),
+          if (extraReasonProvider != null) ...extraReasonProvider(context),
+        ];
         final nextState = states[clubId]!.apply(reasons);
         states[clubId] = nextState;
         snapshots.add(FanSeasonSnapshot(

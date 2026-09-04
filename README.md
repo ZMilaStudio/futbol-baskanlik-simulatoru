@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — Simulation Core
 
-ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün deterministik, UI'dan bağımsız Dart simülasyon çekirdeği.
+ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol kulübü başkanlığı simülasyon çekirdeği.
 
 > **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 
@@ -13,13 +13,14 @@ ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün determini
 - **M4 — Basit Transfer Pazarı:** PASS
 - **M5 — 48 Kulüp / 3 Lig:** PASS
 - **M6 — Teknik Direktör Sistemi:** PASS
-- **M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi:** PASS
-- **M8 — Gelişmiş Transfer Yapıları I / Kiralık + Taksit:** PASS
-- **M9 — Taraftar Beklentisi + Güven Çekirdeği:** PASS
+- **M7 — Oyuncu Sözleşmesi + Gerçek Maaş:** PASS
+- **M8 — Kiralık + Taksit:** PASS
+- **M9 — Taraftar Beklentisi + Güven:** PASS
 - **M10 — Medya Hafızası + Başkan Açıklamaları:** PASS
-- **M11 — Başkan Vaatleri + Takip Çekirdeği:** PASS
+- **M11 — Başkan Vaatleri + Takip:** PASS
+- **M12 — Vaat Sonuçları → Taraftar Güveni:** PASS
 
-Flutter bağımlılığı henüz yoktur. Öncelik, başkanlık simülasyonunun uzun kariyer boyunca sağlam çalışan çekirdeğini mobil arayüzden önce otomatik testlerle kanıtlamaktır.
+Flutter bağımlılığı henüz yoktur. Öncelik, uzun kariyerde çalışan başkanlık simülasyonunu mobil arayüzden önce headless otomatik testlerle kanıtlamaktır.
 
 ## Dünya ölçeği
 
@@ -31,137 +32,46 @@ Flutter bağımlılığı henüz yoktur. Öncelik, başkanlık simülasyonunun u
 - terfi/düşme
 - ortak ekonomi, kontrat ve transfer pazarı
 
-M5 seed `20260903` no-op baseline: 71 transfer, `637,91M` transfer hacmi, `862,25M` final nakit, `647,04M` final borç, validation `0`.
+## Önemli tamamlanan katmanlar
 
-Ayrıntı: `M5_48_KULUP_3_LIG.md`.
+### M6 — Teknik direktör
+96 deterministik manager, 5 profil, kulüp/kadro/lig/finans uyumu, sınırlı maç gücü etkisi, board relationship ve görev değişimleri. Seed `20260903`: 82 değişim, 60 farklı manager, validation `0`.
 
-## M6 — Teknik Direktör Sistemi
+### M7 — Sözleşme + maaş
+Gerçek yıllık maaş, kontrat süresi, renewal/release, free-agent, youth ve transfer kontratları. Seed `20260903`: 874 final kontrat, 3.757 renewal, 1.143 release, 776 free signing, final wage bill `491,27M`.
 
-Başkan saha içini yönetmez; doğru teknik direktörü seçer.
+### M8 — Kiralık + taksit
+Parent club kontratını koruyan sezonluk kiralık; loan fee + maaş paylaşımı; upfront + gelecek taksit yükümlülükleri. Seed `20260903`: 140 kalıcı transfer, 68 taksitli, 478 kiralık, final cash `1.017,61M`, debt `378,97M`.
 
-- 96 deterministik teknik direktör
-- 5 profil
-- coaching / youth development / man management / board cooperation / budget demand
-- kulüp-kadro-lig-finans bağlamına göre uyum
-- maç gücüne sınırlı `-2,5...+2,5` etki
-- yönetim ilişkisi
-- performans / yönetim kopması / emeklilik nedeniyle görev değişimi
-- kovulan hocanın başka kulüpte yeniden çalışabilmesi
+### M9 — Taraftar
+Sporting / financial / transfer / identity boyutları, bağlamsal beklentiler ve neden hafızası. Seed `20260903`: 960 snapshot, avg trust `64,88`, final aralık `44–75`.
 
-Seed `20260903`: 82 görev değişimi, 60 farklı hoca, ortalama etki `+0,922`, final ortalama board relationship `72,22`, validation `0`.
+### M10 — Medya hafızası
+Başkan açıklaması sonraki yönetim eylemiyle consistency/contradiction olarak çözülür. Güçlü destek verip hocayı değiştirmek credibility cezası üretir. Seed `20260903`: 556 statement, 22 contradiction, avg credibility `75,52`.
 
-Ayrıntı: `M6_TEKNIK_DIREKTOR_SISTEMI.md`.
+### M11 — Başkan vaatleri
+Sezon başı bilgiden ölçülebilir vaat üretimi; fulfilled / partial / broken sezon sonu çözümlemesi. Seed `20260903`: 960 vaat, 435 fulfilled, 169 partial, 356 broken, avg score `54,84`.
 
-## M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi
+### M12 — Vaat → taraftar güveni
+M9 ve M11 aynı `AdvancedTransferCareerReport` üzerinde birleşir; dünya iki kez simüle edilmez. Her vaat identity trust, finans vaatleri ayrıca financial trust nedeni üretir.
 
-- gerçek yıllık oyuncu maaşı
-- başlangıç/bitiş sezonlu kontrat
-- yenileme veya serbest kalma
-- free-agent havuzu ve mevki ihtiyacına göre imza
-- youth intake ilk profesyonel kontratı
-- transfer sonrası yeni kontrat
-- kontrat süresinin piyasa değerine etkisi
+Seed `20260903`: 1.065 promise reason; M9 baseline trust `64,88` → M12 `65,31`; identity avg `61,83`, aralık `38–88`; validation `0`.
 
-Seed `20260903`: 874 final aktif kontrat, 3.757 yenileme, 1.143 release, 776 free-agent signing, 32 final free agent, `491,27M` final yıllık maaş, 103 bonservis transferi, `1.060,80M` cash, `554,81M` debt, validation `0`.
-
-Ayrıntı: `M7_OYUNCU_SOZLESMESI_MAAS.md`.
-
-## M8 — Kiralık + Taksit
-
-> **Paran yoksa transfer yapamazsın değil; paran yoksa daha akıllı transfer yapmak zorundasın.**
-
-- sezonluk `LoanAgreement`
-- parent club kontratının korunması
-- loan fee + `%45–80` maaş paylaşımı
-- sezon sonunda otomatik dönüş
-- upfront + iki gelecek sezon transfer taksiti
-- banka borcundan ayrı `TransferInstallmentObligation`
-- vadesinde gerçek alıcı/satıcı nakit akışı
-- satıcı ekonomisine bağlı taksit kabulü
-- bağlamsal kiralık ihtiyacı
-
-Seed `20260903`: 140 kalıcı transfer, 68 taksitli, 478 kiralık, `234,79M` taksit taahhüdü, `113,15M` loan fee, final cash `1.017,61M`, debt `378,97M`, validation `0`.
-
-Ayrıntı: `M8_KIRALIK_TAKSIT.md`.
-
-## M9 — Taraftar Beklentisi + Güven
-
-M9 taraftarı rastgele mutluluk sayacı yerine kulüp bağlamını okuyan bir domain'e dönüştürür.
-
-- `FanState`: sporting / financial / transfer / identity
-- ağırlıklı 0–100 overall trust
-- 48×20 = 960 kulüp-sezon context snapshot
-- lig sırası ve terfi/düşme
-- takım gücü
-- financial health, cash/debt, emergency borrowing
-- permanent transfer / installment / loan davranışı
-- 7 aktif bağlamsal beklenti tipi + final `none`
-- neden kodlu güven değişimleri
-- çok sezonluk hafıza
-- deterministic replay + validator + headless runner
-
-Temel imza davranışı: aynı borç krizi bağlamında akıllı kiralık transfer güvenini `+4`, aşırı harcama/taksit yükü `-4` etkileyebilir.
-
-Seed `20260903`: fan snapshot `960`, ortalama trust `64,88`, final trust `44–75`, trust reason `2.143`, validation `0`.
-
-Ayrıntı: `M9_TARAFTAR_GUVEN.md`.
-
-## M10 — Medya Hafızası + Başkan Açıklamaları
-
-M10 başkanın açıklamalarını sonraki yönetim eylemiyle birlikte hatırlayan ilk medya çekirdeğidir.
-
-- `MediaStatement` ve `MediaState`
-- `managerFuture` konusu
-- strong support / measured support / pressure / no comment
-- deterministic açıklama üretimi
-- 0–100 media credibility
-- consistency / contradiction çözümlemesi
-- neden kodlu credibility değişimi
-- 48 kulüp × 20 sezon hafıza
-
-İmza davranışı: credibility `60` iken **“hocanın arkasındayız”** deyip hocayı değiştirmek `-10`; pressure açıklaması yapıp ardından değiştirmek `+3` üretir.
-
-İlk model `847/960` kulüp-sezonda açıklama ürettiği için reddedildi. Kabul seed `20260903`: statement `556`, contradiction `22`, strong-support contradiction `9`, consistent `385`, final credibility ortalama `75,52`, aralık `49–87`, boundary `0`, validation `0`.
-
-Ayrıntı: `M10_MEDYA_HAFIZASI.md`.
-
-## M11 — Başkan Vaatleri + Takip
-
-M11 vaatleri sezon sonunda unutulan metinler yerine ölçülebilir taahhütlere dönüştürür.
-
-- sezon başı `PresidentPromiseContext`
-- sezon sonu `PresidentPromiseOutcome`
-- fulfilled / partial / broken çözümlemesi
-- borç azaltma
-- finansı istikrara alma
-- üst yarı
-- kümede kalma
-- terfi
-- şampiyonluk yarışı
-- vaat üretiminde yalnız sezon başı bilgi; sezon sonu verisi kullanılmaz
-- deterministic promise history
-- 48×20 = 960 yıllık AI başkan vaadi
-
-Seed `20260903`: `960` vaat, `435` fulfilled, `169` partial, `356` broken, ortalama score `54,84`; finansal vaat `105`, sportif vaat `855`; altı vaat tipinin tamamı aktif, validation `0`.
-
-Ayrıntı: `M11_BASKAN_VAATLERI.md`.
+Ayrıntı: `M12_VAAT_TARAFTAR_GUVENI.md`.
 
 ## Mimari
 
-Temel yön:
-
 **Flutter mobil kabuk + saf Dart simülasyon çekirdeği + headless test runner.**
 
-`WorldCareerEngine` kopyalanmadan no-op varsayılanlı hook'larla genişletilir:
+`WorldCareerEngine` no-op varsayılanlı hook'larla genişletilir. M9–M12 gibi gözlemsel/itibar katmanları mümkün olduğunda aynı alt dünya raporunu paylaşır; aynı katman için dünya yeniden simüle edilmez.
 
-- `WorldCareerHooks`: teknik direktör gibi sezon/sportif lifecycle,
-- `WorldRosterHooks`: kontrat/kadro/gerçek maaş,
-- `WorldFinanceHooks`: transfer taksiti gibi sezon içi ek finans akışları,
-- `WorldTransferHooks`: kiralık gibi transfer penceresi sonrası ek hareketler.
+Temel teknik kurallar:
 
-M9–M11 ilk sürümlerinde alt sistem raporları gözlemsel kaynak olarak kullanılır; taraftar, medya ve vaat henüz dünya sonucunu geri beslemez. Önce bağlam/hafıza doğruluğu kanıtlanır.
-
-Deterministik RNG, cihaz saatinden bağımsız `GameDate` ve integer minor-unit `Money` temel teknik kurallardır.
+- deterministik seed/replay,
+- cihaz saatinden bağımsız `GameDate`,
+- integer minor-unit `Money`,
+- banka borcundan ayrı transfer taksit yükümlülüğü,
+- uzun kariyer invariant + denge guard'ları.
 
 ## Çalıştırma
 
@@ -170,35 +80,23 @@ dart pub get
 dart analyze
 dart test
 dart run tool/run_m0_batch.dart 100
-dart run tool/run_m1_career.dart 20260903
-dart run tool/run_m2_player_career.dart 20260903
-dart run tool/run_m3_economy_career.dart 20260903
-dart run tool/run_m4_transfer_career.dart 20260903
 dart run tool/run_m5_world_career.dart 20260903
-dart run tool/run_m6_manager_career.dart 20260903
-dart run tool/run_m7_contract_career.dart 20260903
 dart run tool/run_m8_advanced_transfer_career.dart 20260903
 dart run tool/run_m9_fan_career.dart 20260903
 dart run tool/run_m10_media_career.dart 20260903
 dart run tool/run_m11_promise_career.dart 20260903
+dart run tool/run_m12_promise_fan_career.dart 20260903
 ```
 
 ## CI prensibi
 
-Tek hafif GitHub Actions workflow'u kullanılır:
-
-- `dart analyze`
-- tüm otomatik testler
-- M0 100 sezon batch
-- M1–M11 20 sezon headless runner'ları
-
-APK/AAB, büyük binary veya `actions/upload-artifact` yoktur. Artifact hedefi `0`dır.
+Tek hafif workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M12 20 sezon runner zinciri. APK/AAB, büyük binary ve `actions/upload-artifact` yoktur; artifact hedefi `0`dır.
 
 ## Sıradaki milestone
 
-**M12 — Vaat Sonuçlarının Taraftar Güvenine Etkisi.**
+**M13 — Vaat Sonuçlarının Medya Güvenilirliğine Etkisi.**
 
-İlk hedef M11 vaat sonuçlarını M9 taraftar hafızasına bağlamak ve özellikle nötr bırakılmış `identityTrust` boyutuna tutulmuş/bozulmuş sözlerden neden kodlu gerçek sinyal vermektir.
+Amaç, resmi vaat sonucunu M10 medya hafızasına bağlamak; tutulmayan vaatlerin başkan credibility'sini düşürmesi, tutulan zor vaatlerin ise sınırlı biçimde güçlendirmesidir. Seçim sistemi bundan sonra fan trust + media credibility + promise history temelinde kurulabilir.
 
 ## Lisans
 
