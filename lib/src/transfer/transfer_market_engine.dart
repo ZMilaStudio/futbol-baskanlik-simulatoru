@@ -11,17 +11,20 @@ import 'transfer_budget_policy.dart';
 import 'transfer_deal.dart';
 import 'transfer_installment.dart';
 import 'transfer_market_result.dart';
+import 'transfer_negotiation_policy.dart';
 
 class TransferMarketEngine {
   const TransferMarketEngine({
     this.marketValueModel = const MarketValueModel(),
     this.budgetPolicyProvider,
     this.activityPolicyProvider,
+    this.negotiationPolicyProvider,
   });
 
   final MarketValueModel marketValueModel;
   final TransferBudgetPolicyProvider? budgetPolicyProvider;
   final TransferActivityPolicyProvider? activityPolicyProvider;
+  final TransferNegotiationPolicyProvider? negotiationPolicyProvider;
 
   static const Map<PlayerPosition, int> _squadTargets = {
     PlayerPosition.goalkeeper: 2,
@@ -48,6 +51,7 @@ class TransferMarketEngine {
     bool enableInstallments = false,
     Map<String, TransferBudgetPolicy>? budgetPoliciesByClub,
     Map<String, TransferActivityPolicy>? activityPoliciesByClub,
+    Map<String, TransferNegotiationPolicy>? negotiationPoliciesByClub,
   }) {
     final currentPlayers = List<Player>.of(players);
     final finances = {
@@ -67,6 +71,9 @@ class TransferMarketEngine {
       final activityPolicy = activityPoliciesByClub?[buyer.id] ??
           activityPolicyProvider?.call(buyer.id, seasonIndex + 1) ??
           TransferActivityPolicy.neutral;
+      final negotiationPolicy = negotiationPoliciesByClub?[buyer.id] ??
+          negotiationPolicyProvider?.call(buyer.id, seasonIndex + 1) ??
+          TransferNegotiationPolicy.neutral;
       for (var slot = 0; slot < activityPolicy.maxDealsPerWindow; slot++) {
         final buyerState = finances[buyer.id];
         if (buyerState == null) {
@@ -162,8 +169,10 @@ class TransferMarketEngine {
               (rng.nextDouble() * 700).floor();
           final shortage =
               (buyerTarget - buyerPositionCount).clamp(0, 3).toInt();
-          final maxBidBps =
-              10300 + shortage * 700 + (rng.nextDouble() * 900).floor();
+          final maxBidBps = 10300 +
+              shortage * 700 +
+              (rng.nextDouble() * 900).floor() +
+              negotiationPolicy.maxBidAdjustmentBps;
           final askingPrice = marketValue.scaleBasisPoints(askBps);
           final maximumBid = marketValue.scaleBasisPoints(maxBidBps);
           final windowSpendCap =

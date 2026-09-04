@@ -12,6 +12,7 @@ class PresidentManagerPatienceState {
     required this.managerPatience,
     required this.financialDiscipline,
     required this.transferAmbition,
+    required this.riskAppetite,
   });
 
   final String clubId;
@@ -21,6 +22,7 @@ class PresidentManagerPatienceState {
   final int managerPatience;
   final int financialDiscipline;
   final int transferAmbition;
+  final int riskAppetite;
 
   String get signature =>
       '$clubId:s$seasonIndex:$presidentId:${archetype.name}:'
@@ -126,6 +128,7 @@ class PresidentManagerPatienceTimeline {
       managerPatience: profile.managerPatience,
       financialDiscipline: profile.financialDiscipline,
       transferAmbition: profile.transferAmbition,
+      riskAppetite: profile.riskAppetite,
     );
   }
 
@@ -137,4 +140,7 @@ class PresidentManagerPatienceTimeline {
 
   int transferAmbitionFor(String clubId, int seasonIndex) =>
       resolve(clubId, seasonIndex).transferAmbition;
+
+  int riskAppetiteFor(String clubId, int seasonIndex) =>
+      resolve(clubId, seasonIndex).riskAppetite;
 }

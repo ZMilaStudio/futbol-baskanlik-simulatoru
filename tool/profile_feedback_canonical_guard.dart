@@ -175,6 +175,67 @@ class ProfileFeedbackCanonicalGuard {
     return issues;
   }
 
+  static List<String> m23Issues(
+    PresidentRiskAppetiteFeedbackReport report,
+  ) {
+    final issues = <String>[
+      ...const PresidentRiskAppetiteFeedbackValidator().validate(report),
+    ];
+
+    void require(bool condition, String message) {
+      if (!condition) issues.add('M23 canonical: $message');
+    }
+
+    require(report.baselineReport.careerSeed == 20260903, 'seed changed.');
+    require(report.iterationCount >= 3 && report.iterationCount <= 7,
+        'iteration count outside 3..7.');
+    require(report.finalReport.totalElections == 240, 'election count changed.');
+    require(report.baselineReelections == 150, 'baseline reelections changed.');
+    require(report.baselineLosses == 90, 'baseline losses changed.');
+    require(report.baselineManagerChanges == 80, 'baseline manager count changed.');
+    require(report.baselineTransfers == 161, 'baseline transfer count changed.');
+    require(!report.iterations.last.timelineChanged,
+        'final timeline must be stable.');
+    require(report.iterations.last.electionOutcomeDifferences == 0,
+        'final election difference must be zero.');
+    require(report.electionOutcomeDifferences >= 20 &&
+        report.electionOutcomeDifferences <= 75,
+        'election difference outside 20..75.');
+    require(report.finalReelections >= 140 && report.finalReelections <= 170,
+        'final reelections outside 140..170.');
+    require(report.finalLosses >= 70 && report.finalLosses <= 100,
+        'final losses outside 70..100.');
+    require(report.finalManagerChanges >= 70 && report.finalManagerChanges <= 100,
+        'final manager changes outside 70..100.');
+    require(report.managerChangeDelta.abs() <= 20,
+        'manager delta magnitude exceeds 20.');
+    require(report.finalTransfers >= 115 && report.finalTransfers <= 165,
+        'final transfers outside 115..165.');
+    require(report.transferDelta.abs() >= 10 && report.transferDelta.abs() <= 55,
+        'transfer delta magnitude outside 10..55.');
+    require(_moneyBetween(report.finalTransferVolume, 1000000000, 1450000000),
+        'transfer volume outside 1.00B..1.45B.');
+    require(report.transferVolumeDelta.minorUnits.abs() <=
+        const Money.fromUnits(400000000).minorUnits,
+        'transfer volume delta exceeds 400M.');
+    require(report.finalInstallmentDeals >= 50 && report.finalInstallmentDeals <= 85,
+        'installment deals outside 50..85.');
+    require(_moneyBetween(report.finalInstallmentCommitment, 170000000, 300000000),
+        'installment commitment outside 170M..300M.');
+    require(_moneyBetween(report.finalCash, 1000000000, 1400000000),
+        'final cash outside 1.00B..1.40B.');
+    require(_moneyBetween(report.finalDebt, 280000000, 480000000),
+        'final debt outside 280M..480M.');
+    require(_moneyBetween(report.finalEmergencyBorrowing, 100000000, 260000000),
+        'emergency borrowing outside 100M..260M.');
+    require(report.uniqueFinalPresidents >= 115 &&
+        report.uniqueFinalPresidents <= 150,
+        'unique presidents outside 115..150.');
+    require(report.worldChanged, 'world must change.');
+
+    return issues;
+  }
+
   static bool _moneyBetween(Money value, int minUnits, int maxUnits) {
     final min = Money.fromUnits(minUnits).minorUnits;
     final max = Money.fromUnits(maxUnits).minorUnits;
