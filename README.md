@@ -6,18 +6,19 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Güncel durum
 
-**M0–M23 tamamlandı ve `main` üzerinde doğrulandı.** Sıradaki aktif davranış milestone'u: **M24 — Başkan Altyapı Yönelimi I**.
+**M0–M24 tamamlandı ve `main` üzerinde doğrulandı.** Sıradaki aktif milestone: **M25 — Save/Load + Kayıt Versiyonlama I**.
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
 - M9–M13: taraftar, medya ve vaat reputasyonu
-- M14–M17: seçim, başkan kimliği/görev süresi, itibar handover, yönetim profili
+- M14–M17: seçim, başkan kimliği/görev süresi, reputasyon handover, yönetim profili
 - M18: `managerPatience` → teknik direktör görev güvenliği
 - M19: manager/world → reputasyon → seçim fixed-point feedback
 - M20: `financialDiscipline` → transfer affordability/bütçe sınırları
 - M21: `transferAmbition` → transfer aktivite slotları
-- M22: canonical profile-feedback CI/orchestration optimizasyonu
-- **M23: `riskAppetite` → transfer pazarlık / maksimum teklif tavanı — PASS**
+- M22: canonical feedback CI/orchestration optimizasyonu
+- M23: `riskAppetite` → buyer max-bid pazarlık tavanı
+- **M24: `youthOrientation` → transfer candidate genç/potansiyel tercihi — PASS**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -29,11 +30,11 @@ Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalı�
 - 14.400 maç / 20 sezon
 - 864 başlangıç oyuncusu
 - terfi/düşme
-- ortak ekonomi, kontrat ve transfer pazarı
+- ekonomi, kontrat, transfer, manager, reputasyon ve seçim zinciri
 
 ## Başkan yönetim profili
 
-M17 her başkana tutarlı bir arketip ve beş trait bağlar:
+M17 her başkana 6 arketip ve 5 trait bağlar:
 
 - `financialDiscipline`
 - `riskAppetite`
@@ -43,68 +44,73 @@ M17 her başkana tutarlı bir arketip ve beş trait bağlar:
 
 Arketipler: `balanced`, `prudentBuilder`, `ambitiousSpender`, `youthArchitect`, `patientPlanner`, `interventionist`.
 
-Gerçek davranışa bağlanan trait'ler:
+**M24 itibarıyla beş trait'in tamamının en az bir gerçek ve izole karar etkisi vardır:**
 
-- `managerPatience` — M18
-- `financialDiscipline` — M20
-- `transferAmbition` — M21
-- `riskAppetite` — M23
+| Trait | İlk gerçek etki |
+|---|---|
+| `managerPatience` | teknik direktör dismissal eşikleri |
+| `financialDiscipline` | transfer rezerv/harcama/taahhüt sınırları |
+| `transferAmbition` | pencere başına tamamlanmış transfer slotu |
+| `riskAppetite` | buyer max-bid pazarlık tavanı |
+| `youthOrientation` | candidate score içindeki gençlik/potansiyel sinyali |
 
-Henüz davranışa bağlanmayan:
+Her trait ilk bağlandığında tek karar noktasına etki eder. Neutral değer `60`, ilgili eski davranışı birebir korur.
 
-- `youthOrientation`
+## Transfer profile politikaları
 
-## Transfer davranışındaki trait ayrımı
+### M20 — Financial discipline
 
-Başkan profili transfer pazarında birbirine karıştırılmayan üç ayrı karar alanını kontrol eder:
-
-- **M20 / financialDiscipline:** ne kadarını karşılayabilir, ne kadar rezerv bırakır?
-- **M21 / transferAmbition:** pencere başına kaç tamamlanmış transfer kovalar?
-- **M23 / riskAppetite:** affordability içinde bir oyuncu için ne kadar yukarı çıkmaya razıdır?
-
-### M20 neutral mali disiplin
-
-`financialDiscipline=60`:
+Neutral `60`:
 
 - reserve cash `2,0M`
 - window spend cap `%35`
 - installment commitment cap `%90`
 
-### M21 transfer hırsı
+### M21 — Transfer ambition
 
-- `<45` → `1` tamamlanmış transfer slotu
+- `<45` → `1` transfer slotu
 - `45..74` → `2` slot
 - `>=75` → `3` slot
 
-Neutral `60` eski sabit `2` slot davranışını korur.
+Neutral `60` → eski `2` slot.
 
-### M23 risk iştahı
-
-`PresidentRiskAppetiteNegotiationPolicy`:
+### M23 — Risk appetite
 
 - trait clamp `20..90`
-- adjustment = `(riskAppetite - 60) × 20 bps`
+- max-bid adjustment = `(riskAppetite - 60) × 20 bps`
 - clamp `-800..+600 bps`
+- neutral `60` → `0 bps`
 
-Örnek:
+Seller ask, shortlist ve affordability değiştirilmez.
 
-- risk `20` → max-bid `-800 bps`
-- risk `60` → `0 bps` / eski davranış
-- risk `90` → `+600 bps`
+### M24 — Youth orientation
 
-M23 yalnız buyer max-bid ceiling'i değiştirir. Seller ask, shortlist, pozisyon ihtiyacı, transfer slotu, affordability, installment acceptance ve candidate scoring değişmez.
+Youth signal ölçeği:
 
-Transfer penceresi sonraki sezonun kadrosunu kurduğu için M20/M21/M23 policy'leri `seasonIndex + 1` tarihinde görevdeki başkanı okur.
+- `20` → `%60`
+- `60` → `%100` / neutral
+- `90` → `%130`
+
+Youth signal yalnız candidate score içindeki gelişim payı + yaş bonusunu ölçekler. Budget, slot, max-bid, seller ask, taksit ve shortlist büyüklüğü değiştirilmez.
+
+Doğrudan causal testte aynı buyer/seller dünyasında:
+
+- düşük yönelim hazır 27 yaş / 79 ability oyuncuyu,
+- yüksek yönelim 20 yaş / 72 ability / 92 potential oyuncuyu
+
+ilk transfer adayı olarak seçer.
+
+Transfer penceresi sonraki sezonun kadrosunu kurduğu için profile transfer politikaları `seasonIndex + 1` tarihinde görevdeki başkanı okur.
 
 ## Fixed-point feedback
 
-M19'dan itibaren president timeline ile world karşılıklı geri beslenir:
+M19'dan itibaren zincir:
 
 `president timeline → profile traits → manager/transfer/world → promise/fan/media/reputation → election/turnover → president timeline`
 
-Timeline sabitlenirse convergence, eski bir timeline tekrar oluşursa cycle kabul edilir. Varsayılan maksimum iterasyon `8`.
+Timeline sabitlenirse convergence; eski timeline tekrar oluşursa cycle kabul edilir. Varsayılan maksimum iterasyon `8`.
 
-Bu literal tek-geçişli sezon orkestratörü değildir; aynı seed üzerinde tarihsel olarak self-consistent deterministik replay çözümüdür. Provider yalnız ilgili sezonda yürürlükteki başkanı uygular; gelecekteki başkan geçmişe sızmaz.
+Bu literal tek-geçişli sezon orkestratörü değildir; aynı seed üzerinde tarihsel olarak self-consistent deterministik replay çözümüdür. Gelecekteki başkan geçmiş sezona sızmaz.
 
 ## Canonical profile-feedback baselinelar
 
@@ -115,66 +121,64 @@ Seed `20260903`, 20 sezon:
 | M19 | 4 | `160/80` | 84 | 168 | — |
 | M20 | 5 | `158/82` | 83 | 153 | `1.387,32M` |
 | M21 | 4 | `150/90` | 80 | 161 | `1.461,55M` |
-| **M23** | **5** | **`156/84`** | **85** | **133** | **`1.201,05M`** |
+| M23 | 5 | `156/84` | 85 | 133 | `1.201,05M` |
+| **M24** | **4** | **`159/81`** | **86** | **157** | **`1.417,94M`** |
 
-M23 ayrıca:
+M24 ayrıca:
 
-- election differences `44`
-- installment deals `66`
-- installment commitment `230,59M`
-- final cash `1.195,96M`
-- final debt `381,94M`
-- emergency borrowing `189,81M`
-- unique final presidents `132`
+- election outcome differences `49`
+- installment deals `79`
+- installment commitment `261,26M`
+- final cash `1.217,05M`
+- final debt `347,57M`
+- emergency borrowing `144,39M`
+- unique final presidents `129`
 - validation `0`
 
-M23 iteration path:
+M24 iteration path:
 
-`91/148/156-84 → 88/147/157-83 → 82/140/159-81 → 85/133/156-84 → stable 85/133/156-84`
+`91/141/156-84 → 88/154/155-85 → 86/157/159-81 → stable 86/157/159-81`
 
 Sıra: `manager changes / transfers / reelected-lost`.
 
-Aggregate transfer veya borç yönü `riskAppetite` için causal ürün kuralı değildir. Doğrudan invariant yalnız şudur:
+Aggregate transfer/hacim/borç yönü `youthOrientation` için causal ürün kuralı değildir. Causal invariant candidate preference yönüdür.
 
-> **low risk max-bid < neutral max-bid < high risk max-bid**
+## Canonical CI orchestration
 
-## M22 CI/orchestration optimizasyonu
-
-M22, aynı M19/M20/M21 canonical 20-sezon dünyalarının test ve runner katmanlarında tekrar tekrar çözülmesini kaldırdı.
+M22 aynı nested full-career dünyalarının tekrar tekrar çözülmesini kaldırdı:
 
 - ortak `tool/profile_feedback_canonical_guard.dart`
 - full canonical testler `canonical-feedback` tag'li
-- normal test turu: `dart test --exclude-tags canonical-feedback`
-- tek en yeni profile-feedback runner nested önceki baselineları doğrular
+- normal test turu `dart test --exclude-tags canonical-feedback`
+- en yeni profile-feedback runner nested önceki canonical guard'ları tek çözümde doğrular
 - artifact üretimi yok
+- timeout `5 dk`
 
-M21 final CI yaklaşık `6:10` iken M22 final güvenli koşusu yaklaşık `2:51` oldu. Timeout tekrar `5 dk`.
+M24 runner: `tool/run_m24_president_youth_orientation_feedback.dart`.
 
-M23 aynı yapıyı genişletti: tek M23 canonical runner nested M19, M20, M21 ve M23 guard'larını birlikte doğrular.
+## M24 kalite sonucu
 
-## M23 kalite sonucu
+PR #25 squash merge:
 
-PR #24 squash merge:
+`cfdca8f63dfa6c91fd2432031e0e2c34a8101a06`
 
-`17142c39bfeed20fce931e8810f30ba4ba98a322`
-
-Final PR CI `33920702055`:
+Final PR CI `33923631356`:
 
 - analyzer PASS
-- `78` non-canonical/hızlı test PASS
+- normal/non-canonical tests PASS
+- doğrudan candidate-selection causal testi PASS
 - M0–M18 runner PASS
-- birleşik M19–M23 canonical runner PASS
-- nested M19 `160/80`
-- nested M20 `158/82`
-- nested M21 `150/90`
-- M23 `5 iterasyon / 156-84 / 85 manager / 133 transfer`
+- combined M19–M24 canonical runner PASS
+- nested M19/M20/M21/M23 guard'ları PASS
 - validation `0`
 - artifact `0`
+- 5 dakikalık timeout altında PASS
 
 Ayrıntı:
 
 - `M22_PROFILE_FEEDBACK_ORKESTRASYON_I.md`
 - `M23_BASKAN_RISK_ISTAHI_TRANSFER_PAZARLIK_DAVRANISI.md`
+- `M24_BASKAN_ALTYAPI_YONELIMI_TRANSFER_GENCLIK_TERCIHI.md`
 
 ## Mimari kurallar
 
@@ -187,7 +191,7 @@ Ayrıntı:
 - uzun kariyer invariant + balance guard
 - feedback döngülerinde convergence/cycle kontrolü
 - neutral trait regresyonu
-- her trait yalnız tek karar noktasına bağlanır
+- her trait ilk bağlantıda tek karar noktasına bağlanır
 - duplicate canonical full-career hesapları büyütülmez
 - APK/AAB/actions artifact üretilmez
 
@@ -197,18 +201,26 @@ Ayrıntı:
 dart pub get
 dart analyze
 dart test --exclude-tags canonical-feedback
-dart run tool/run_m23_president_risk_appetite_feedback.dart 20260903
+dart run tool/run_m24_president_youth_orientation_feedback.dart 20260903
 ```
 
-Tek M23 canonical runner nested M19–M23 guard'larını birlikte doğrular.
+## Sıradaki milestone — M25
 
-## Sıradaki milestone — M24
+**Save/Load + Kayıt Versiyonlama I**.
 
-**Başkan Altyapı Yönelimi → Genç Oyuncu / Transfer Tercihi I**.
+Başkan profilindeki beş trait artık gerçek davranışa bağlandığı için yeni davranış katmanlarını üst üste eklemek yerine uzun kariyerin kritik teknik riskine geçiyoruz.
 
-İlk bağlantı tek kontrol noktasında tutulmalı. Önerilen en temiz başlangıç: `youthOrientation` yalnız transfer candidate scoring içindeki genç/potansiyel ağırlığını değiştirsin.
+İlk hedef:
 
-İlk sürümde aynı anda academy üretim kalitesi, genç oyuncu sayısı ve transfer AI hedefleri birlikte değiştirilmemeli. Neutral `youthOrientation=60` mevcut M23 dünyasını birebir korumalı ve M22'nin duplicate-free canonical orchestration yapısı genişletilmelidir.
+- UI/Flutter bağımsız saf Dart save snapshot formatı,
+- açık `saveVersion`,
+- deterministic serialize/deserialize,
+- checksum/signature doğrulaması,
+- bozuk veya desteklenmeyen save'i güvenli reddetme,
+- en az bir migration fixture altyapısı,
+- save→load sonrası aynı kariyer devamının kesintisiz replay ile aynı sonucu vermesi.
+
+İlk sürüm cihaz dosya sistemi veya cloud save içermez; önce format ve migration sözleşmesi kanıtlanır.
 
 ## Lisans
 
