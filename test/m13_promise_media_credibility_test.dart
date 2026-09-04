@@ -20,8 +20,6 @@ void main() {
               type: type,
             ),
             status: status,
-            // The impact engine consumes promise type + status. Use existing
-            // M11 resolution reasons instead of inventing generic enum values.
             reason: status == PromiseStatus.fulfilled
                 ? PromiseResolutionReason.topHalfMet
                 : status == PromiseStatus.partial
@@ -84,15 +82,24 @@ void main() {
     expect(issues, isEmpty);
     expect(report.seasonCount, 20);
     expect(report.promiseChanges, 960);
-    expect(report.positivePromiseChanges, greaterThan(250));
-    expect(report.neutralPromiseChanges, greaterThan(50));
-    expect(report.negativePromiseChanges, greaterThan(200));
-    expect(report.baselineMediaReport.averageFinalCredibility, inInclusiveRange(40, 90));
-    expect(report.averageFinalCredibility, inInclusiveRange(30, 90));
-    expect(report.averageCredibilityDelta, inInclusiveRange(-20, 10));
-    expect(report.minimumFinalCredibility, inInclusiveRange(0, 70));
-    expect(report.maximumFinalCredibility, inInclusiveRange(60, 100));
-    expect(report.boundaryClubs, lessThanOrEqualTo(10));
+    expect(
+      report.positivePromiseChanges +
+          report.neutralPromiseChanges +
+          report.negativePromiseChanges,
+      report.promiseChanges,
+    );
+    expect(report.positivePromiseChanges, inInclusiveRange(350, 550));
+    expect(report.neutralPromiseChanges, inInclusiveRange(100, 250));
+    expect(report.negativePromiseChanges, inInclusiveRange(280, 450));
+    expect(report.baselineMediaReport.totalStatements, inInclusiveRange(400, 700));
+    expect(report.baselineMediaReport.totalContradictions, inInclusiveRange(10, 80));
+    expect(report.managerReport.totalManagerChanges, inInclusiveRange(50, 120));
+    expect(report.baselineMediaReport.averageFinalCredibility, inInclusiveRange(65, 82));
+    expect(report.averageFinalCredibility, inInclusiveRange(62, 80));
+    expect(report.averageCredibilityDelta, inInclusiveRange(-8, 3));
+    expect(report.minimumFinalCredibility, inInclusiveRange(20, 55));
+    expect(report.maximumFinalCredibility, inInclusiveRange(82, 96));
+    expect(report.boundaryClubs, lessThanOrEqualTo(2));
   });
 
   test('M13 is deterministic and all reputation layers share the same world', () {
