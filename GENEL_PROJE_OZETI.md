@@ -3,7 +3,7 @@
 
 **Son güncelleme:** 04.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru` — Public / proprietary notice  
-**Aktif teknik aşama:** **M19 PASS adayı — PR #20 final kalite kapısında; sıradaki M20 adayı / Başkan Mali Disiplini → Transfer Bütçe Davranışı I**  
+**Aktif teknik aşama:** **M19 PASS ve main'e merge — sıradaki M20 / Başkan Mali Disiplini → Transfer Bütçe Davranışı I**  
 **Proje önceliği:** Yan geliştirme; aktif ana projeleri aksatmayacak.  
 **UI/APK:** Bilinçli olarak başlanmadı; önce simülasyon çekirdeği.
 
@@ -127,10 +127,10 @@ Son merge'ler:
 - M17 PR #18 → `0003e6463e3cbc7052d407cc45c2594be8d861db`
 - M18 PR #19 → `d1ca4de859c528470785f98a10baa4db8259d4ce`
 - M18 sonrası canonical docs/main → `1cbd3da04816e4f6d29b2db367e7992451832367`
-- M19 branch: `m19-president-manager-election-feedback`
-- M19 PR: **#20**
+- M19 PR #20 → `183749baab40403b381003c527ce62fad946a9a6`
 
 M18 merge-sonrası main güvenlik CI `33894772996`: PASS, artifact `0`.
+M19 final PR CI `33911708201`: analyzer PASS, `73` test PASS, M0–M19 runner PASS, artifact `0`.
 
 ---
 
@@ -222,11 +222,11 @@ Kabul guard'ları: manager changes `80–100`, delta `-5..20`, decision diff `60
 
 Ayrıntı: `M18_BASKAN_SABRI_TEKNIK_DIREKTOR_KARAR_ESIGI.md`.
 
-## M19 — Başkan Sabrı + Seçim Geri Besleme Döngüsü — PASS ADAYI
+## M19 — Başkan Sabrı + Seçim Geri Besleme Döngüsü — PASS
 
-M18'in değişen world'ü fan/media/promise/reputasyon ve seçimlere geri bağlandı. İlk büyük sezon-motoru refactor'u yerine fixed-point replay seçildi; canonical seed temiz yakınsadığı için bu yaklaşım kabul edildi.
+M18'in değişen world'ü fan/media/promise/reputasyon ve seçimlere geri bağlandı. İlk büyük sezon-motoru refactor'u yerine fixed-point replay seçildi; canonical seed temiz yakınsadığı ve temsilî çoklu-seed testi geçtiği için yaklaşım kabul edildi.
 
-Seed `20260903` ilk kabul baseline'ı:
+Seed `20260903` kabul baseline'ı:
 
 - iterations `4`
 - converged `true`
@@ -241,10 +241,6 @@ Seed `20260903` ilk kabul baseline'ı:
 - unique final presidents `128`
 - world changed `true`
 - validation `0`
-- analyzer PASS
-- ilk M19 CI'da toplam `72` test PASS
-- M0–M18 runner zinciri PASS
-- artifact `0`
 
 Iteration path:
 
@@ -269,7 +265,17 @@ Canonical guard'lar:
 - unique final presidents `110–145`,
 - world değişmeli.
 
-Ek convergence güvenliği: seed `19011`, `19012`, `19013` için 8 sezon / max 8 iteration testi eklendi; final CI bu seed'lerin de cycle olmadan yakınsamasını zorunlu tutacak.
+Ek convergence güvenliği: seed `19011`, `19012`, `19013` için 8 sezon / max 8 iteration testlerinin tamamı cycle olmadan yakınsadı.
+
+Final kalite:
+
+- analyzer PASS
+- `73` test PASS
+- M0–M19 runner zinciri PASS
+- bağımsız M19 runner aynı `4` iterasyonlu fixed point'i üretti
+- validation `0`
+- artifact `0`
+- PR #20 squash merge `183749baab40403b381003c527ce62fad946a9a6`
 
 Ayrıntı: `M19_BASKAN_SABRI_SECIM_GERI_BESLEME_DONGUSU.md`.
 
@@ -311,14 +317,14 @@ Fixed-point M19 headless kariyer çözümü için bütün timeline yeniden üret
 9. M16 handover V1 `%25 eski + %75 nötr`; çoklu-seed stres testinde izlenecek.
 10. M17'nin `financialDiscipline`, `riskAppetite`, `transferAmbition`, `youthOrientation` trait'leri henüz gerçek AI davranışına bağlı değildir.
 11. M18 iki-geçişli seçim borcu M19'da fixed-point feedback ile kapandı; ancak bu literal incremental sezon orkestratörü değildir.
-12. M19 canonical seed 4 iterasyonda yakınsadı; çoklu-seed convergence oranı ileride 100+ kariyerde ölçülmeli.
+12. M19 canonical seed 4 iterasyonda; temsilî 3 seed de 8 sezon içinde yakınsadı. 100+ kariyerde convergence oranı ileride ölçülmeli.
 13. Sponsor, tesis ve kriz çekirdeğe bağlanmadı.
 14. Kullanıcı seçim kaybı sonrası game-over/başka kulüp kariyeri yok.
 15. Flutter UI/APK bilinçli olarak başlamadı.
 
 ---
 
-# 8. Sıradaki milestone adayı — M20
+# 8. Sıradaki milestone — M20
 
 ## Başkan Mali Disiplini → Transfer Bütçe Davranışı I
 
@@ -326,14 +332,14 @@ Amaç:
 
 > **Mali disiplinli ve savurgan başkan aynı kasa/borç koşulunda aynı transfer harcama sınırına sahip olmamalı.**
 
-İlk kapsam adayı:
+İlk kapsam:
 
 - yalnız `financialDiscipline` gerçek harcama/borç toleransına bağlanacak,
 - `transferAmbition` ve `riskAppetite` aynı milestone'a eklenmeyecek,
 - neutral profile eski advanced-transfer davranışını koruyacak,
 - düşük mali disiplin daha yüksek harcama/borç toleransı, yüksek disiplin daha sert bütçe sınırı üretecek,
 - transfer piyasası donmayacak veya hiperaktif olmayacak,
-- feedback world/election zincirine M19 mimarisi üzerinden yansıyacak,
+- transfer etkisi M19 feedback world/election zincirine yansıyacak,
 - ekonomi ve transfer dengesi ayrı guard'larla ölçülecek.
 
 ---
