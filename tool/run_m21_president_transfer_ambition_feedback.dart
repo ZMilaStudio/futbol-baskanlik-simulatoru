@@ -1,5 +1,7 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 
+import 'profile_feedback_canonical_guard.dart';
+
 void main(List<String> args) {
   final seed = args.isEmpty ? 20260903 : int.parse(args.first);
   final world = const FictionalWorldFactory().build();
@@ -8,7 +10,16 @@ void main(List<String> args) {
     leagues: world.leagues,
     config: SimulationConfig(careerSeed: seed),
   );
-  final issues = const PresidentTransferAmbitionFeedbackValidator().validate(report);
+
+  final issues = seed == 20260903
+      ? <String>[
+          ...ProfileFeedbackCanonicalGuard.m19Issues(
+            report.m20Baseline.m19Baseline,
+          ),
+          ...ProfileFeedbackCanonicalGuard.m20Issues(report.m20Baseline),
+          ...ProfileFeedbackCanonicalGuard.m21Issues(report),
+        ]
+      : const PresidentTransferAmbitionFeedbackValidator().validate(report);
 
   print('M21 20-season president transfer ambition feedback career');
   print('Seed: $seed');
@@ -61,6 +72,15 @@ void main(List<String> args) {
   );
   print('Unique final presidents: ${report.uniqueFinalPresidents}');
   print('World changed: ${report.worldChanged}');
+  if (seed == 20260903) {
+    print(
+      'Nested canonical baselines: '
+      'M19=${report.m20Baseline.m19Baseline.finalReelections}/'
+      '${report.m20Baseline.m19Baseline.finalLosses}, '
+      'M20=${report.m20Baseline.finalReelections}/'
+      '${report.m20Baseline.finalLosses}',
+    );
+  }
   print('Iteration path:');
   for (final item in report.iterations) {
     print(
@@ -78,6 +98,6 @@ void main(List<String> args) {
   }
 
   if (issues.isNotEmpty) {
-    throw StateError('M21 validation failed.');
+    throw StateError('M19-M21 canonical validation failed.');
   }
 }
