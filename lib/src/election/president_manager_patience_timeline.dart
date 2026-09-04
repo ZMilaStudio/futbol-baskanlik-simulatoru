@@ -1,5 +1,6 @@
 import 'president_management_career_report.dart';
 import 'president_management_profile.dart';
+import 'president_reputation_career_report.dart';
 import 'president_tenure.dart';
 
 class PresidentManagerPatienceState {
@@ -37,12 +38,49 @@ class PresidentManagerPatienceTimeline {
   factory PresidentManagerPatienceTimeline.fromReport(
     PresidentManagementCareerReport report,
   ) {
+    return PresidentManagerPatienceTimeline._fromParts(
+      reputationReport: report.sourceReport,
+      profileByPresident: {
+        for (final profile in report.profiles) profile.presidentId: profile,
+      },
+    );
+  }
+
+  factory PresidentManagerPatienceTimeline.fromReputationReport(
+    PresidentReputationCareerReport report, {
+    PresidentManagementProfileGenerator profileGenerator =
+        const PresidentManagementProfileGenerator(),
+  }) {
+    final presidents = <String, PresidentProfile>{
+      for (final state in report.initialTenureStates)
+        state.president.id: state.president,
+      for (final turnover in report.turnovers)
+        turnover.incoming.id: turnover.incoming,
+    };
+    final profiles = <String, PresidentManagementProfile>{};
+    for (final president in presidents.values) {
+      profiles[president.id] = profileGenerator.generate(
+        president: president,
+        careerSeed: report.careerSeed,
+        simulationVersion: report.simulationVersion,
+      );
+    }
+    return PresidentManagerPatienceTimeline._fromParts(
+      reputationReport: report,
+      profileByPresident: profiles,
+    );
+  }
+
+  factory PresidentManagerPatienceTimeline._fromParts({
+    required PresidentReputationCareerReport reputationReport,
+    required Map<String, PresidentManagementProfile> profileByPresident,
+  }) {
     final initialPresidentByClub = <String, PresidentProfile>{
-      for (final state in report.sourceReport.initialTenureStates)
+      for (final state in reputationReport.initialTenureStates)
         state.clubId: state.president,
     };
     final turnoversByClub = <String, List<PresidentTurnoverEvent>>{};
-    for (final turnover in report.sourceReport.turnovers) {
+    for (final turnover in reputationReport.turnovers) {
       turnoversByClub.putIfAbsent(turnover.clubId, () => []).add(turnover);
     }
     for (final turnovers in turnoversByClub.values) {
@@ -50,9 +88,6 @@ class PresidentManagerPatienceTimeline {
         (a, b) => a.effectiveSeasonIndex.compareTo(b.effectiveSeasonIndex),
       );
     }
-    final profileByPresident = <String, PresidentManagementProfile>{
-      for (final profile in report.profiles) profile.presidentId: profile,
-    };
     return PresidentManagerPatienceTimeline._(
       initialPresidentByClub: initialPresidentByClub,
       turnoversByClub: turnoversByClub,
