@@ -98,15 +98,15 @@ void main() {
       report.promiseReasonCount,
       report.promiseReport.totalPromises + report.promiseReport.financialPromises,
     );
-    expect(report.positivePromiseReasons, greaterThan(300));
-    expect(report.negativePromiseReasons, greaterThan(250));
-    expect(report.baselineFanReport.averageFinalTrust, inInclusiveRange(50, 75));
-    expect(report.fanReport.averageFinalTrust, inInclusiveRange(45, 80));
-    expect(report.averageFinalOverallTrustDelta, inInclusiveRange(-5, 5));
-    expect(report.averageFinalIdentityTrust, inInclusiveRange(40, 80));
-    expect(report.minimumFinalIdentityTrust, inInclusiveRange(20, 65));
-    expect(report.maximumFinalIdentityTrust, inInclusiveRange(60, 95));
-    expect(report.averageFinalIdentityTrustDelta, inInclusiveRange(-10, 15));
+    expect(report.positivePromiseReasons, inInclusiveRange(600, 750));
+    expect(report.negativePromiseReasons, inInclusiveRange(330, 450));
+    expect(report.baselineFanReport.averageFinalTrust, inInclusiveRange(60, 70));
+    expect(report.fanReport.averageFinalTrust, inInclusiveRange(60, 70));
+    expect(report.averageFinalOverallTrustDelta, inInclusiveRange(-2, 3));
+    expect(report.averageFinalIdentityTrust, inInclusiveRange(55, 70));
+    expect(report.minimumFinalIdentityTrust, inInclusiveRange(25, 50));
+    expect(report.maximumFinalIdentityTrust, inInclusiveRange(80, 95));
+    expect(report.averageFinalIdentityTrustDelta, inInclusiveRange(-3, 6));
   });
 
   test('M12 is deterministic and does not resimulate different worlds per layer', () {
