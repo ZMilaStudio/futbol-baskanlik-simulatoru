@@ -29,18 +29,18 @@ Başkanın ana sorumlulukları:
 - medya açıklamaları ve hafıza
 - başkan vaatleri
 - başkanlık seçimleri ve görev süresi
-- altyapı/tesis/sponsor/kriz sistemleri ilerleyen aşamalarda
+- ilerleyen aşamalarda altyapı, tesis, sponsor ve krizler
 - uzun vadeli kulüp sağlığı
 
-Football Manager benzeri maç içi taktik yönetimi yapılmayacak. Oyuncu diziliş, antrenman, dakika bazlı oyuncu değişikliği veya duran top planlamaz.
+Football Manager benzeri maç içi taktik yönetimi yapılmaz. Oyuncu diziliş, antrenman, dakika bazlı oyuncu değişikliği veya duran top planlamaz.
 
-Gerçek kulüp/futbolcu/lisanslı materyal kullanılmayacak.
+Gerçek kulüp, futbolcu, logo veya lisanslı materyal kullanılmaz.
 
 ## 2. Geliştirme stratejisi
 
-Futbol Başkanlık Simülatörü diğer aktif ZMila Studio projelerini aksatmadan küçük ama sağlam altyapı milestone'larıyla ilerletilir.
+Futbol Başkanlık Simülatörü diğer aktif ZMila Studio projelerini aksatmadan sağlam altyapı milestone'larıyla ilerletilir.
 
-Şu aşamada görsel ekran/APK ana hedef değildir.
+Şu aşamada görsel ekran veya APK ana hedef değildir.
 
 > **Önce sağlam, deterministik, uzun kariyerde otomatik test edilebilir simülasyon çekirdeği.**
 
@@ -48,25 +48,41 @@ Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
 
 Repo public tutulur; kaynak kod açık kaynak lisansı altında değildir (`LICENSE.md`).
 
-Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işlerinde gerekirse kullanılır; çekirdek milestone'ların önemli bölümü doğrudan GitHub araçlarıyla yürütülmüştür.
+Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işlerinde gerekirse kullanılır; çekirdek milestone'ların önemli bölümü doğrudan GitHub araçlarıyla yürütülür.
 
 ## 3. Güncel teknik durum
 
-**M0–M25 PASS. M25 PR #26 final kalite kapısındadır; davranış ve runner kanıtları yeşildir.**
+**M0–M25 PASS ve `main` üzerindedir.**
 
-M24 squash merge:
+M25 PR #26 squash merge:
 
-`cfdca8f63dfa6c91fd2432031e0e2c34a8101a06`
+`c46d5fc99655476f389de82d861ce7a5e6a93aec`
 
-M25 doğrulanmış PR CI:
+M25 final PR HEAD CI:
 
-`33925868414`
+`33926527304` — PASS
 
-Aktif sıradaki milestone:
+M25 merge sonrası `main` CI:
+
+`33929524537` — PASS
+
+Bu `main` koşusunda:
+
+- analyzer PASS
+- normal/non-canonical testler PASS
+- M0–M18 runner zinciri PASS
+- combined M19–M24 canonical profile feedback PASS
+- M25 save/load continuation PASS
+- artifact `0`
+- timeout `5 dk` altında PASS
+
+Aktif milestone:
 
 > **M26 — World Save Snapshot I**
 
-M25 merge tamamlandığında bu bölüm gerçek squash merge SHA ile güncellenecektir.
+Aktif branch:
+
+`m26-world-save-snapshot`
 
 ## 4. Teknik mimari
 
@@ -79,7 +95,7 @@ M25 merge tamamlandığında bu bölüm gerçek squash merge SHA ile güncellene
 - profile feedback için deterministic fixed-point replay
 - convergence/cycle kontrolü
 - neutral trait regresyonu
-- `CareerCheckpoint` tabanlı sezon-sınırı save/resume
+- M25 `CareerCheckpoint` tabanlı sezon-sınırı save/resume
 - `saveVersion=1` + canonical JSON + corruption checksum
 - explicit save failure kodları + migration fixture altyapısı
 - APK/AAB üretmeyen core CI
@@ -122,6 +138,8 @@ Canonical kariyer seed'i:
 19. Save format sürümü açık olmalı; desteklenmeyen future version güvenli reddedilmelidir.
 20. Migration yolu fixture/test olmadan kabul edilmez.
 21. Checksum veri bozulma kontrolüdür; kriptografik güvenlik garantisi gibi sunulmaz.
+22. Save snapshot yalnız sahibi olduğu runtime state'i serileştirir; farklı controller/hook katmanlarının state'i tek milestone'a zorla yığılmaz.
+23. Eski public simülasyon API'sinin davranışı save/checkpoint eklenirken sessizce değiştirilmez.
 
 ## 6. Milestone geçmişi
 
@@ -150,7 +168,7 @@ Canonical kariyer seed'i:
 - nakit/borç/financial health
 - emergency borrowing
 
-Universal prosperity veya universal collapse yaratan denemeler reddedildi.
+Universal prosperity veya universal collapse yaratan kalibrasyonlar reddedildi.
 
 ### M4 — Transfer pazarı — PASS
 
@@ -205,13 +223,6 @@ Canonical 20 sezon:
 - upfront + gelecek taksit
 - transfer taksiti banka borcundan ayrı yükümlülük
 
-Reddedilen ilk dengeler:
-
-- 183 permanent / 146 taksitli + 755 loan
-- taksit oranı 145/189
-- 108/147
-- 86/156
-
 Kabul baseline:
 
 - 140 permanent transfer
@@ -222,13 +233,15 @@ Kabul baseline:
 - loan fees `113,15M`
 - validation `0`
 
+Aşırı kiralık/taksit üreten ilk kalibrasyonlar reddedildi.
+
 ### M9 — Taraftar beklentisi + güven — PASS
 
 - bağlamsal expectation
 - sporting / financial / transfer / identity trust
 - neden kodları
 
-İlk model `46..68` aralığında fazla sıkıştığı için reddedildi.
+İlk `46..68` trust bandı fazla sıkışık olduğu için reddedildi.
 
 Kabul:
 
@@ -245,7 +258,7 @@ Kabul:
 - credibility
 - açıklama → sonraki manager kararı çelişkisi
 
-İlk model 960 club-season'ın 847'sinde açıklama ürettiği için reddedildi.
+İlk modelin 960 club-season'ın 847'sinde açıklama üretmesi fazla yüksek bulundu.
 
 Kabul:
 
@@ -366,8 +379,6 @@ Canonical:
 - high patience `%6,2`
 - final assignment differences `37/48`
 
-M18 iki-geçişli reference timeline kullandı; election feedback M19'da kapatıldı.
-
 ### M19 — Manager/world ↔ seçim fixed-point — PASS
 
 Zincir:
@@ -427,31 +438,21 @@ Canonical:
 - debt `330,25M`
 - emergency `123,89M`
 
-M21 sonrası CI nested fixed-point tekrarları nedeniyle yaklaşık 6:10'a yükseldi; timeout geçici 7 dakikaya çıktı.
-
 ### M22 — Profile Feedback Orchestration I — PASS
 
 Davranış değiştirmeyen performans/refactor milestone'u.
 
-Sorun:
-
-M19/M20/M21 canonical full-career hesapları test ve ayrı runner'larda tekrar çözülüyordu.
-
-Çözüm:
-
 - ortak `tool/profile_feedback_canonical_guard.dart`
 - full canonical testler `canonical-feedback` tag
 - normal test `dart test --exclude-tags canonical-feedback`
-- tek en yeni profile-feedback runner nested önceki raporları doğrular
-- ayrı duplicate canonical runner tekrarları kaldırıldı
-
-M21 baseline birebir korundu.
+- tek en yeni profile-feedback runner nested eski canonical guard'ları doğrular
+- duplicate canonical runner tekrarları kaldırıldı
 
 PR #23 merge:
 
 `4ec358cf7131087176426ba5767ab4e4e65a36b3`
 
-Final güvenli CI yaklaşık `2:51`; timeout tekrar `5 dk`.
+CI süresi M21 sonrası yaklaşık `6:10` seviyesinden güvenli olarak yaklaşık `2:51` seviyesine indirildi; timeout tekrar `5 dk` oldu.
 
 ### M23 — Risk appetite → transfer pazarlık tavanı — PASS
 
@@ -484,7 +485,7 @@ Canonical:
 - emergency `189,81M`
 - validation `0`
 
-Causal invariant yalnız:
+Doğrudan causal invariant:
 
 > low risk max-bid < neutral max-bid < high risk max-bid
 
@@ -505,33 +506,16 @@ Youth signal:
 - yaş `<=23` → `+4`
 - yaş `>=31` → `-4`
 
-M24 yalnız bu signal'i candidate scoring içinde ölçekler.
+M24 yalnız candidate scoring içindeki bu signal'i ölçekler. Budget, transfer slotu, buyer max-bid, seller ask, installment acceptance, shortlist, pozisyon ihtiyacı, market value ve youth intake üretimi değişmez.
 
-Değişmeyenler:
+Doğrudan causal testte düşük yönelim `27 yaş / 79 ability` hazır oyuncuyu; yüksek yönelim `20 yaş / 72 ability / 92 potential` genç adayı ilk sıraya alır.
 
-- budget/affordability
-- transfer slotu
-- buyer max-bid
-- seller ask
-- installment acceptance
-- shortlist büyüklüğü
-- pozisyon ihtiyacı
-- market value
-- youth intake üretim miktarı/kalitesi
-
-Neutral `60` eski advanced-world signature'ını birebir korur.
-
-Doğrudan causal test:
-
-Aynı gerçek transfer penceresinde düşük yönelim daha hazır `27 yaş / 79 ability` oyuncuyu; yüksek yönelim `20 yaş / 72 ability / 92 potential` oyuncuyu ilk aday olarak seçer.
-
-Canonical M24 — seed `20260903`:
+Canonical seed `20260903`:
 
 - convergence `4`
 - cycle `false`
 - elections `240`
 - reelected/lost `156/84 → 159/81`
-- election differences `49`
 - manager `85→86`
 - transfers `133→157`
 - volume `1.201,05M → 1.417,94M`
@@ -540,30 +524,13 @@ Canonical M24 — seed `20260903`:
 - cash `1.195,96M → 1.217,05M`
 - debt `381,94M → 347,57M`
 - emergency `189,81M → 144,39M`
-- unique presidents `129`
-- world changed `true`
 - validation `0`
-
-Iteration path:
-
-`91/141/156-84 → 88/154/155-85 → 86/157/159-81 → stable 86/157/159-81`
 
 PR #25 squash merge:
 
 `cfdca8f63dfa6c91fd2432031e0e2c34a8101a06`
 
-Final PR CI `33923631356`:
-
-- analyzer PASS
-- normal/non-canonical tests PASS
-- direct candidate-selection causal test PASS
-- M0–M18 runner PASS
-- combined M19–M24 canonical runner PASS
-- nested M19/M20/M21/M23 guards PASS
-- artifact `0`
-- 5 dakikalık timeout altında PASS
-
-Aggregate transfer/hacim/borç yönü M24 için causal ürün invariant'ı sayılmaz.
+Final PR CI `33923631356` PASS; artifact `0`.
 
 ### M25 — Save/Load + Kayıt Versiyonlama I — PASS
 
@@ -595,22 +562,9 @@ Taşınan state:
 - baseline club strengths
 - next-season club state
 
-Canonical seed `20260903` kabul testi:
+Canonical seed `20260903`:
 
-`20 sezon kesintisiz` ile `8 sezon → save → load → 12 sezon resume` karşılaştırılır.
-
-Karşılaştırma fixture/match seviyesindedir:
-
-- season index/seed
-- champion
-- club strengths
-- fixture skorları
-- expected goals
-- match seed
-- final report clubs
-- next checkpoint clubs
-
-Sonuçların tamamı birebir eşittir.
+`20 sezon kesintisiz` ile `8 sezon → save → load → 12 sezon resume` fixture/match seviyesinde birebir eşittir.
 
 M25 runner kabul çıktısı:
 
@@ -624,21 +578,19 @@ M25 runner kabul çıktısı:
 - next checkpoint clubs match `true`
 - legacy fixture `v0 → v1`
 
-Doğrulanmış runner CI `33925868414`:
+PR #26 squash merge:
 
-- analyzer PASS
-- `87` normal/non-canonical test PASS
-- 6 M25 save/load testi PASS
-- M0–M18 runner PASS
-- combined M19–M24 canonical runner PASS
-- M25 save/load runner PASS
-- M24 canonical baseline değişmedi
-- artifact `0`
-- timeout `5 dk` içinde PASS
+`c46d5fc99655476f389de82d861ce7a5e6a93aec`
+
+Final branch CI `33926527304`: PASS.
+
+Merge sonrası main CI `33929524537`: PASS.
+
+Her iki doğrulamada da artifact `0`; M24 canonical baseline değişmedi.
 
 Checksum yalnız accidental corruption detection içindir; kriptografik güvenlik/anti-cheat değildir.
 
-**M25 tam M24 world save değildir.** Player/economy/contracts/loans/installments/manager/president state'in tam snapshot'ı M26 ve devam milestone'larına bırakılmıştır.
+**M25 tam world save değildir.** Tam dünya state'i M26 ve controller/hook-owned advanced state sonraki milestone'larda ele alınır.
 
 Ayrıntı:
 
@@ -711,41 +663,68 @@ Kurallar:
 - 847 medya açıklaması/960 club-season — M10'da fazla yüksek bulundu
 - başkan profilinin beş trait'ini aynı milestone'da dünyaya bağlama — causal izlenebilirlik için reddedildi
 - aggregate world sonucu tek trait'in causal yönüymüş gibi yorumlama — yasaklandı
-- M25 içinde tam advanced world save kapsamını tek seferde çözmek — migration/kapsam riskini gereksiz büyüteceği için ertelendi
+- M25 içinde tam advanced world save kapsamını tek seferde çözmek — migration/kapsam riskini gereksiz büyüttüğü için ertelendi
 - checksum'u kriptografik güvenlik/anti-cheat gibi sunmak — reddedildi
+- M26 içine kontrat + loan/installment + manager + president state'in tamamını zorla koymak — state sahipliği farklı controller/hook katmanlarında olduğu için reddedildi
 
 ## 11. Açık teknik sınırlar / borçlar
 
 - Current M19+ çözümü literal tek-pass sezon orkestratörü değil; fixed-point replay'dir.
-- M25 save yalnız temel `CareerEngine` sezon-sınırı state'ini kapsar; tam advanced world snapshot henüz yok.
-- Player/economy/contracts/loan/installment/manager/president state'in save kapsamı M26+ konusudur.
+- M25 save yalnız temel `CareerEngine` sezon-sınırı state'ini kapsar.
+- M26 core `WorldCareerEngine` state'ini kapsayacaktır; contract/loan/installment/manager/president runtime state ayrı takip milestone'larında ele alınacaktır.
 - Gerçek cihaz dosya sistemi ve cloud save daha sonra.
 - Otomatik save/yedek save slot politikası henüz platform katmanına bağlanmadı.
 - Altyapı tesis yatırımının youth intake kalitesine etkisi henüz yok.
 - Sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı.
 - Seçim kaybında kullanıcı kariyerinin game-over / başka kulübe geçiş UX'i henüz yok.
 
-## 12. M26 — sıradaki milestone
+## 12. M26 — aktif milestone
 
 ### World Save Snapshot I
 
-Amaç M25'in doğrulanmış format/sürüm/migration temelini gerçek sezon-sınırı dünya state'ine genişletmektir.
+Amaç M25'in doğrulanmış format/sürüm/migration temelini `WorldCareerEngine`'in gerçekten sahip olduğu sezon-sınırı dünya state'ine genişletmektir.
 
-İlk öncelik adayları:
+M26 snapshot kapsamı:
 
-1. league/club assignment
-2. club finance state
-3. player roster/lifecycle state
-4. player contracts
-5. transfer installment obligations
-6. active loan agreements
-7. manager assignment
+1. orijinal `SimulationConfig`
+2. tamamlanan sezon sayısı / next season index
+3. 48 temel kulüp kimliği ve baseline strength
+4. 3 ligde next-season club assignment
+5. next-season player roster/lifecycle state
+6. next-season club finance state
 
-President/reputation/election timeline aynı milestone'a aşırı kapsam yaratırsa ayrı M27 takip milestone'una bırakılabilir.
+M26'da **özellikle ayrı tutulacak** hook/controller-owned state:
+
+- player contracts
+- transfer installment obligations
+- active loan agreements
+- manager pool/assignments
+- fan/media/promise memory
+- president/reputation/election timeline
+
+Bunlar world checkpoint çekirdeği kanıtlandıktan sonra M27+ runtime snapshot katmanlarına eklenecek.
+
+### Kritik offseason semantiği
+
+Mevcut eski `WorldCareerEngine.simulate()` davranışında istenen segmentin son sezonundan sonra offseason geçişi çalıştırılmaz; çünkü `hasNextSeason` yalnız aynı çağrı içinde sonraki sezon varsa `true` olur.
+
+Bu davranış M0–M24 baseline'larının parçasıdır ve **değiştirilmeyecektir**.
+
+Yeni M26 checkpoint yolu ise gerçek bir “next-season opening state” üretmek için segmentin son sezonundan sonra da gerekli:
+
+- promotion/relegation
+- player lifecycle
+- youth intake/retirement
+- transfer window
+- finance window state
+
+geçişini hazırlamalıdır.
+
+Bu nedenle M26 yeni checkpoint/resume API'si ile eski `simulate()` API'sinin semantiğini birbirinden ayıracak; eski public davranış sessizce değiştirilmeyecektir.
 
 M26 kabul kuralı:
 
-> **world save → load → devam, aynı seed'deki kesintisiz world simülasyonuyla birebir deterministic sonuç üretmelidir.**
+> **20 sezonluk checkpoint-capable world koşusu ile `8 sezon → world save → load → 12 sezon resume` aynı seed'de sezon, oyuncu, lig ve finans state'i seviyesinde birebir deterministic sonuç üretmelidir.**
 
 M26 ilk aşamada yine şunları kapsamayacak:
 
@@ -756,23 +735,14 @@ M26 ilk aşamada yine şunları kapsamayacak:
 - save slot UI
 - encryption/anti-cheat
 
-Önce gerçek world state snapshot sözleşmesi.
+Önce gerçek core world state snapshot sözleşmesi.
 
-## 13. Ana uzun vadeli teknik hedef
+## 13. Sonraki teknik yön
 
-UI'dan bağımsız çekirdeğin:
+M26 PASS sonrası doğal takip:
 
-- 48 kulüp
-- 3 lig
-- oyuncu yaşam döngüsü
-- ekonomi
-- manager
-- kontrat
-- transfer/loan/installment
-- taraftar/media/promise
-- seçim/başkan profili
-- versioned save/load + migration
+> **M27 — Advanced World Runtime Snapshot I**
 
-ile **20–30 sezonu deterministik ve migration-safe biçimde** sürdürebilmesi.
+İlk adaylar contract + installment/loan + manager controller state'idir. President/reputation/election state kapsam büyüklüğüne göre M27 veya ayrı M28'e bırakılabilir.
 
-Sonrasında 100/500/1000 kariyer batch QA genişletilecek.
+Uzun vadeli hedef, 20–30 sezonluk kariyerin tüm kritik state'iyle deterministic ve migration-safe biçimde kaydedilip devam ettirilebilmesidir. Sonrasında 100/500/1000 kariyer batch QA genişletilecektir.
