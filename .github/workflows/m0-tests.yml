@@ -88,3 +88,6 @@ jobs:
 
       - name: Run M17 20-season president management profile career
         run: dart run tool/run_m17_president_management_career.dart 20260903
+
+      - name: Run M18 20-season president manager patience career
+        run: dart run tool/run_m18_president_manager_patience_career.dart 20260903
