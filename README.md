@@ -16,6 +16,7 @@ ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün determini
 - **M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi:** PASS
 - **M8 — Gelişmiş Transfer Yapıları I / Kiralık + Taksit:** PASS
 - **M9 — Taraftar Beklentisi + Güven Çekirdeği:** PASS
+- **M10 — Medya Hafızası + Başkan Açıklamaları:** PASS
 
 Flutter bağımlılığı henüz yoktur. Öncelik, başkanlık simülasyonunun uzun kariyer boyunca sağlam çalışan çekirdeğini mobil arayüzden önce otomatik testlerle kanıtlamaktır.
 
@@ -103,22 +104,29 @@ M9 taraftarı rastgele mutluluk sayacı yerine kulüp bağlamını okuyan bir do
 
 Temel imza davranışı: aynı borç krizi bağlamında akıllı kiralık transfer güvenini `+4`, aşırı harcama/taksit yükü `-4` etkileyebilir.
 
-### M9 kabul baseline — seed `20260903`
-
-- 20 sezon / 14.400 maç
-- fan snapshot `960`
-- final fan state `48`
-- ortalama trust `64,88`
-- final trust aralığı `44–75`
-- boundary `0`
-- trust reason `2.143`
-- smart-loan expectation `9`
-- financial-discipline expectation `58`
-- validation `0`
-
-İlk teknik PASS `46–68` aralığında kaldığı için reddedildi; yıllık 60'a dönüş geçmişi fazla siliyordu. Kabul modelinde hafıza korunarak aralık 31 puana çıktı.
+Seed `20260903`: fan snapshot `960`, ortalama trust `64,88`, final trust `44–75`, trust reason `2.143`, validation `0`.
 
 Ayrıntı: `M9_TARAFTAR_GUVEN.md`.
+
+## M10 — Medya Hafızası + Başkan Açıklamaları
+
+M10 başkanın açıklamalarını sonraki yönetim eylemiyle birlikte hatırlayan ilk medya çekirdeğidir.
+
+- `MediaStatement` ve `MediaState`
+- `managerFuture` konusu
+- strong support / measured support / pressure / no comment
+- deterministic açıklama üretimi
+- 0–100 media credibility
+- consistency / contradiction çözümlemesi
+- neden kodlu credibility değişimi
+- 48 kulüp × 20 sezon hafıza
+- headless runner + validator
+
+İmza davranışı: credibility `60` iken **“hocanın arkasındayız”** deyip hocayı değiştirmek `-10`; pressure açıklaması yapıp ardından değiştirmek `+3` üretir.
+
+İlk model `847/960` kulüp-sezonda açıklama ürettiği için reddedildi. Kabul seed `20260903`: statement `556`, contradiction `22`, strong-support contradiction `9`, consistent `385`, final credibility ortalama `75,52`, aralık `49–87`, boundary `0`, validation `0`.
+
+Ayrıntı: `M10_MEDYA_HAFIZASI.md`.
 
 ## Mimari
 
@@ -133,7 +141,7 @@ Temel yön:
 - `WorldFinanceHooks`: transfer taksiti gibi sezon içi ek finans akışları,
 - `WorldTransferHooks`: kiralık gibi transfer penceresi sonrası ek hareketler.
 
-M9 ilk sürümde M8 raporunu gözlemsel context olarak kullanır; taraftar henüz ekonomi veya maç motorunu geri beslemez. Önce bağlam doğruluğu kanıtlanır.
+M9 ve M10 ilk sürümlerinde alt sistem raporlarını gözlemsel kaynak olarak kullanır; taraftar ve medya henüz maç/ekonomiyi geri beslemez. Önce bağlam ve hafıza doğruluğu kanıtlanır.
 
 Deterministik RNG, cihaz saatinden bağımsız `GameDate` ve integer minor-unit `Money` temel teknik kurallardır.
 
@@ -153,6 +161,7 @@ dart run tool/run_m6_manager_career.dart 20260903
 dart run tool/run_m7_contract_career.dart 20260903
 dart run tool/run_m8_advanced_transfer_career.dart 20260903
 dart run tool/run_m9_fan_career.dart 20260903
+dart run tool/run_m10_media_career.dart 20260903
 ```
 
 ## CI prensibi
@@ -162,15 +171,15 @@ Tek hafif GitHub Actions workflow'u kullanılır:
 - `dart analyze`
 - tüm otomatik testler
 - M0 100 sezon batch
-- M1–M9 20 sezon headless runner'ları
+- M1–M10 20 sezon headless runner'ları
 
 APK/AAB, büyük binary veya `actions/upload-artifact` yoktur. Artifact hedefi `0`dır.
 
 ## Sıradaki milestone
 
-**M10 — Medya Hafızası + Başkan Açıklamaları Çekirdeği.**
+**M11 — Başkan Vaatleri + Takip Çekirdeği.**
 
-İlk hedef açıklamayı yalnız anlık metin seçimi yapmak değil; başkanın geçmiş sözlerini saklamak ve sonraki davranışla çelişki/uyum tespit edebilen deterministik bir medya güvenilirlik sistemi kurmaktır. İlk M10'da vaat/election ve Flutter UI yine kapsam dışı kalacaktır.
+İlk hedef; sezon başında verilen ölçülebilir vaatleri kaydetmek, sezon boyunca ilerlemeyi takip etmek, gerçekleşti / başarısız / kısmen ilerledi şeklinde çözmek ve daha sonra taraftar ile medya hafızasına bağlanabilecek deterministik promise history üretmektir.
 
 ## Lisans
 
