@@ -45,9 +45,42 @@ void main() {
     expect(issues, isEmpty);
     expect(report.converged, isTrue);
     expect(report.cycleDetected, isFalse);
-    expect(report.iterationCount, inInclusiveRange(1, 8));
+    expect(report.iterationCount, inInclusiveRange(2, 6));
     expect(report.finalReport.totalElections, 240);
+    expect(report.baselineReelections, 161);
+    expect(report.baselineLosses, 79);
+    expect(report.baselineManagerChanges, 81);
+    expect(report.baselineTransfers, 173);
+    expect(report.iterations.first.managerChanges, 88);
+    expect(report.iterations.first.transfers, 153);
+    expect(report.iterations.last.timelineChanged, isFalse);
+    expect(report.iterations.last.electionOutcomeDifferences, 0);
+    expect(report.electionOutcomeDifferences, inInclusiveRange(25, 90));
+    expect(report.finalReelections, inInclusiveRange(140, 175));
+    expect(report.finalLosses, inInclusiveRange(65, 100));
+    expect(report.finalManagerChanges, inInclusiveRange(75, 100));
+    expect(report.managerChangeDelta.abs(), lessThanOrEqualTo(25));
+    expect(report.finalTransfers, inInclusiveRange(130, 210));
+    expect(report.transferDelta.abs(), lessThanOrEqualTo(60));
+    expect(report.uniqueFinalPresidents, inInclusiveRange(110, 145));
     expect(report.worldChanged, isTrue);
+  });
+
+  test('M19 feedback converges across representative career seeds', () {
+    final world = const FictionalWorldFactory().build();
+    const engine = PresidentManagerElectionFeedbackEngine();
+    for (final seed in const [19011, 19012, 19013]) {
+      final report = engine.simulate(
+        clubs: world.clubs,
+        leagues: world.leagues,
+        config: SimulationConfig(careerSeed: seed),
+        seasonCount: 8,
+        maxIterations: 8,
+      );
+      expect(report.converged, isTrue, reason: 'seed=$seed');
+      expect(report.cycleDetected, isFalse, reason: 'seed=$seed');
+      expect(report.iterationCount, inInclusiveRange(1, 8), reason: 'seed=$seed');
+    }
   });
 
   test('M19 feedback is deterministic and seed-sensitive', () {
