@@ -157,6 +157,7 @@ void main() {
       config: const SimulationConfig(careerSeed: 20260903),
     );
     final issues = const PromiseCareerValidator().validate(report);
+    final types = report.typeDistribution;
 
     print(
       'M11_BALANCE promises=${report.totalPromises} '
@@ -166,23 +167,43 @@ void main() {
       'avg=${report.averageScore.toStringAsFixed(2)} '
       'financial=${report.financialPromises} '
       'sporting=${report.sportingPromises} '
-      'types=${report.typeDistribution}',
+      'types=$types',
     );
 
     expect(issues, isEmpty);
     expect(report.seasonCount, 20);
     expect(report.totalPromises, 960);
-    expect(report.typeDistribution.length, greaterThanOrEqualTo(5));
-    expect(report.financialPromises, greaterThanOrEqualTo(20));
-    expect(report.financialPromises, lessThanOrEqualTo(600));
-    expect(report.fulfilledPromises, greaterThanOrEqualTo(100));
-    expect(report.fulfilledPromises, lessThanOrEqualTo(800));
-    expect(report.partialPromises, greaterThanOrEqualTo(10));
-    expect(report.partialPromises, lessThanOrEqualTo(500));
-    expect(report.brokenPromises, greaterThanOrEqualTo(50));
-    expect(report.brokenPromises, lessThanOrEqualTo(800));
-    expect(report.averageScore, greaterThan(20));
-    expect(report.averageScore, lessThan(90));
+    expect(types.length, PresidentPromiseType.values.length);
+    expect(report.financialPromises, inInclusiveRange(60, 200));
+    expect(report.sportingPromises, inInclusiveRange(760, 900));
+    expect(report.fulfilledPromises, inInclusiveRange(300, 600));
+    expect(report.partialPromises, inInclusiveRange(100, 300));
+    expect(report.brokenPromises, inInclusiveRange(250, 500));
+    expect(report.averageScore, inInclusiveRange(45, 65));
+    expect(
+      types[PresidentPromiseType.challengeTitle],
+      inInclusiveRange(30, 100),
+    );
+    expect(
+      types[PresidentPromiseType.finishTopHalf],
+      inInclusiveRange(250, 500),
+    );
+    expect(
+      types[PresidentPromiseType.avoidRelegation],
+      inInclusiveRange(150, 300),
+    );
+    expect(
+      types[PresidentPromiseType.earnPromotion],
+      inInclusiveRange(120, 250),
+    );
+    expect(
+      types[PresidentPromiseType.reduceDebt],
+      inInclusiveRange(30, 120),
+    );
+    expect(
+      types[PresidentPromiseType.stabilizeFinances],
+      inInclusiveRange(20, 100),
+    );
   });
 
   test('M11 is deterministic and observational over advanced transfer world', () {
