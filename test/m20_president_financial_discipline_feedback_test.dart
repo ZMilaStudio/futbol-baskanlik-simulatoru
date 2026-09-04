@@ -1,8 +1,4 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
-import 'package:futbol_baskanlik_m0/src/election/president_financial_discipline_feedback_engine.dart';
-import 'package:futbol_baskanlik_m0/src/election/president_financial_discipline_feedback_validator.dart';
-import 'package:futbol_baskanlik_m0/src/election/president_financial_discipline_transfer_policy.dart';
-import 'package:futbol_baskanlik_m0/src/transfer/transfer_budget_policy.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -123,42 +119,48 @@ void main() {
     expect(report.transferDelta.abs(), lessThanOrEqualTo(50));
     expect(
       report.finalTransferVolume,
-      inInclusiveRange(
-        const Money.fromUnits(1100000000),
-        const Money.fromUnits(1700000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(1100000000)),
     );
-    expect(report.transferVolumeDelta.minorUnits.abs(), lessThanOrEqualTo(
-      const Money.fromUnits(400000000).minorUnits,
-    ));
+    expect(
+      report.finalTransferVolume,
+      lessThanOrEqualTo(const Money.fromUnits(1700000000)),
+    );
+    expect(
+      report.transferVolumeDelta.minorUnits.abs(),
+      lessThanOrEqualTo(const Money.fromUnits(400000000).minorUnits),
+    );
     expect(report.finalInstallmentDeals, inInclusiveRange(60, 100));
     expect(
       report.finalInstallmentCommitment,
-      inInclusiveRange(
-        const Money.fromUnits(200000000),
-        const Money.fromUnits(360000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(200000000)),
+    );
+    expect(
+      report.finalInstallmentCommitment,
+      lessThanOrEqualTo(const Money.fromUnits(360000000)),
     );
     expect(
       report.finalCash,
-      inInclusiveRange(
-        const Money.fromUnits(900000000),
-        const Money.fromUnits(1500000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(900000000)),
+    );
+    expect(
+      report.finalCash,
+      lessThanOrEqualTo(const Money.fromUnits(1500000000)),
     );
     expect(
       report.finalDebt,
-      inInclusiveRange(
-        const Money.fromUnits(250000000),
-        const Money.fromUnits(500000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(250000000)),
+    );
+    expect(
+      report.finalDebt,
+      lessThanOrEqualTo(const Money.fromUnits(500000000)),
     );
     expect(
       report.finalEmergencyBorrowing,
-      inInclusiveRange(
-        const Money.fromUnits(80000000),
-        const Money.fromUnits(250000000),
-      ),
+      greaterThanOrEqualTo(const Money.fromUnits(80000000)),
+    );
+    expect(
+      report.finalEmergencyBorrowing,
+      lessThanOrEqualTo(const Money.fromUnits(250000000)),
     );
     expect(report.uniqueFinalPresidents, inInclusiveRange(110, 145));
     expect(report.worldChanged, isTrue);
