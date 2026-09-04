@@ -10,7 +10,6 @@ import 'president_management_profile.dart';
 import 'president_manager_election_feedback_report.dart';
 import 'president_manager_patience_timeline.dart';
 import 'president_reputation_career_engine.dart';
-import 'president_reputation_career_report.dart';
 
 class PresidentManagerElectionFeedbackEngine {
   const PresidentManagerElectionFeedbackEngine({
