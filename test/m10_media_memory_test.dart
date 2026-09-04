@@ -32,6 +32,11 @@ void main() {
       statement: pressure,
       managerChanged: true,
     );
+    final honoredBacking = engine.evaluate(
+      state: state,
+      statement: backing,
+      managerChanged: false,
+    );
 
     expect(contradiction.reason, MediaCredibilityReason.supportBroken);
     expect(contradiction.resolution, MediaResolution.contradiction);
@@ -42,6 +47,11 @@ void main() {
     expect(consistent.resolution, MediaResolution.consistent);
     expect(consistent.delta, 3);
     expect(consistent.after, 63);
+
+    expect(honoredBacking.reason, MediaCredibilityReason.supportHonored);
+    expect(honoredBacking.resolution, MediaResolution.consistent);
+    expect(honoredBacking.delta, 2);
+    expect(honoredBacking.after, 62);
   });
 
   test('M10 simulates a valid 20-season media memory', () {
@@ -69,18 +79,22 @@ void main() {
     expect(report.seasonCount, 20);
     expect(report.seasons.every((season) => season.clubs.length == 48), isTrue);
     expect(report.finalStates.length, 48);
-    expect(report.totalStatements, greaterThanOrEqualTo(150));
-    expect(report.totalStatements, lessThanOrEqualTo(800));
-    expect(report.totalContradictions, greaterThanOrEqualTo(5));
-    expect(report.totalContradictions, lessThanOrEqualTo(150));
-    expect(report.strongSupportContradictions, greaterThan(0));
-    expect(report.totalConsistentStatements, greaterThan(50));
-    expect(report.stanceDistribution.length, greaterThanOrEqualTo(3));
-    expect(report.averageFinalCredibility, greaterThan(35));
-    expect(report.averageFinalCredibility, lessThan(90));
-    expect(report.minimumFinalCredibility, greaterThan(5));
-    expect(report.maximumFinalCredibility, lessThan(95));
-    expect(report.boundaryClubs, lessThanOrEqualTo(3));
+    expect(report.totalStatements, greaterThanOrEqualTo(300));
+    expect(report.totalStatements, lessThanOrEqualTo(700));
+    expect(report.totalContradictions, greaterThanOrEqualTo(10));
+    expect(report.totalContradictions, lessThanOrEqualTo(80));
+    expect(report.strongSupportContradictions, greaterThanOrEqualTo(3));
+    expect(report.strongSupportContradictions, lessThanOrEqualTo(50));
+    expect(report.totalConsistentStatements, greaterThanOrEqualTo(200));
+    expect(report.totalConsistentStatements, lessThanOrEqualTo(550));
+    expect(report.stanceDistribution.length, 4);
+    expect(report.averageFinalCredibility, greaterThan(55));
+    expect(report.averageFinalCredibility, lessThan(82));
+    expect(report.minimumFinalCredibility, greaterThanOrEqualTo(25));
+    expect(report.minimumFinalCredibility, lessThanOrEqualTo(60));
+    expect(report.maximumFinalCredibility, greaterThanOrEqualTo(75));
+    expect(report.maximumFinalCredibility, lessThanOrEqualTo(92));
+    expect(report.boundaryClubs, lessThanOrEqualTo(2));
   });
 
   test('M10 is deterministic and observational over manager simulation', () {
