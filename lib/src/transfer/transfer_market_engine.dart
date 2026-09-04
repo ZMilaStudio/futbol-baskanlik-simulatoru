@@ -12,6 +12,7 @@ import 'transfer_deal.dart';
 import 'transfer_installment.dart';
 import 'transfer_market_result.dart';
 import 'transfer_negotiation_policy.dart';
+import 'transfer_youth_preference_policy.dart';
 
 class TransferMarketEngine {
   const TransferMarketEngine({
@@ -19,12 +20,14 @@ class TransferMarketEngine {
     this.budgetPolicyProvider,
     this.activityPolicyProvider,
     this.negotiationPolicyProvider,
+    this.youthPreferencePolicyProvider,
   });
 
   final MarketValueModel marketValueModel;
   final TransferBudgetPolicyProvider? budgetPolicyProvider;
   final TransferActivityPolicyProvider? activityPolicyProvider;
   final TransferNegotiationPolicyProvider? negotiationPolicyProvider;
+  final TransferYouthPreferencePolicyProvider? youthPreferencePolicyProvider;
 
   static const Map<PlayerPosition, int> _squadTargets = {
     PlayerPosition.goalkeeper: 2,
@@ -52,6 +55,7 @@ class TransferMarketEngine {
     Map<String, TransferBudgetPolicy>? budgetPoliciesByClub,
     Map<String, TransferActivityPolicy>? activityPoliciesByClub,
     Map<String, TransferNegotiationPolicy>? negotiationPoliciesByClub,
+    Map<String, TransferYouthPreferencePolicy>? youthPreferencePoliciesByClub,
   }) {
     final currentPlayers = List<Player>.of(players);
     final finances = {
@@ -74,6 +78,9 @@ class TransferMarketEngine {
       final negotiationPolicy = negotiationPoliciesByClub?[buyer.id] ??
           negotiationPolicyProvider?.call(buyer.id, seasonIndex + 1) ??
           TransferNegotiationPolicy.neutral;
+      final youthPreferencePolicy = youthPreferencePoliciesByClub?[buyer.id] ??
+          youthPreferencePolicyProvider?.call(buyer.id, seasonIndex + 1) ??
+          TransferYouthPreferencePolicy.neutral;
       for (var slot = 0; slot < activityPolicy.maxDealsPerWindow; slot++) {
         final buyerState = finances[buyer.id];
         if (buyerState == null) {
@@ -108,8 +115,18 @@ class TransferMarketEngine {
         }).toList();
 
         candidates.sort((a, b) {
-          final aScore = _candidateScore(a, careerSeed, seasonIndex);
-          final bScore = _candidateScore(b, careerSeed, seasonIndex);
+          final aScore = _candidateScore(
+            a,
+            careerSeed,
+            seasonIndex,
+            youthPreferencePolicy,
+          );
+          final bScore = _candidateScore(
+            b,
+            careerSeed,
+            seasonIndex,
+            youthPreferencePolicy,
+          );
           final scoreCompare = bScore.compareTo(aScore);
           return scoreCompare != 0 ? scoreCompare : a.id.compareTo(b.id);
         });
@@ -300,9 +317,15 @@ class TransferMarketEngine {
     return total / players.length;
   }
 
-  double _candidateScore(Player player, int careerSeed, int seasonIndex) {
+  double _candidateScore(
+    Player player,
+    int careerSeed,
+    int seasonIndex,
+    TransferYouthPreferencePolicy youthPreferencePolicy,
+  ) {
     final upside = (player.potential - player.ability).clamp(0.0, 20.0);
     final ageBonus = player.age <= 23 ? 4.0 : player.age >= 31 ? -4.0 : 0.0;
+    final youthSignal = upside * 0.25 + ageBonus;
     final noise = (StableHash.combine32([
               careerSeed,
               seasonIndex,
@@ -311,6 +334,8 @@ class TransferMarketEngine {
             ]) &
             0xffff) /
         65535.0;
-    return player.ability + upside * 0.25 + ageBonus + noise;
+    return player.ability +
+        youthPreferencePolicy.applyYouthSignal(youthSignal) +
+        noise;
   }
 }

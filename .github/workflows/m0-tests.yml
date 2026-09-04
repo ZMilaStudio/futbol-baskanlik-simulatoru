@@ -92,5 +92,5 @@ jobs:
       - name: Run M18 20-season president manager patience career
         run: dart run tool/run_m18_president_manager_patience_career.dart 20260903
 
-      - name: Run M19-M23 canonical profile feedback career
-        run: dart run tool/run_m23_president_risk_appetite_feedback.dart 20260903
+      - name: Run M19-M24 canonical profile feedback career
+        run: dart run tool/run_m24_president_youth_orientation_feedback.dart 20260903
