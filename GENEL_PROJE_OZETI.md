@@ -3,7 +3,7 @@
 
 **Son güncelleme:** 04.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru` — Public / proprietary notice  
-**Aktif teknik aşama:** **M19 PASS ve main'e merge — sıradaki M20 / Başkan Mali Disiplini → Transfer Bütçe Davranışı I**  
+**Aktif teknik aşama:** **M20 PASS ve main'e merge — sıradaki M21 / Başkan Transfer Hırsı → Transfer Aktivitesi I**  
 **Proje önceliği:** Yan geliştirme; aktif ana projeleri aksatmayacak.  
 **UI/APK:** Bilinçli olarak başlanmadı; önce simülasyon çekirdeği.
 
@@ -41,7 +41,8 @@ Kalıcı ilkeler:
 20. Başkan profil etkileri sisteme tek tek bağlanmalı; bütün AI aynı anda değiştirilmemelidir.
 21. Her yeni davranış etkisi eski canonical milestone'ları neutral/regresyon modunda bozmamalıdır.
 22. Geri besleme döngüsü varsa convergence/cycle açıkça test edilmelidir.
-23. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
+23. Profil trait'i davranışa bağlanırken **trait'in doğrudan kontrol ettiği karar eşiği** ile aggregate dünya sonucu birbirine karıştırılmamalıdır.
+24. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
 
 ---
 
@@ -67,7 +68,8 @@ Başkanlık zinciri:
 - M16: incumbent'a bağlı kişisel reputasyon + handover,
 - M17: management profile,
 - M18: `managerPatience` gerçek manager dismissal kararlarına bağlanır,
-- M19: patience-aware world reputasyon ve seçimlere geri beslenir.
+- M19: patience-aware world reputasyon ve seçimlere geri beslenir,
+- M20: `financialDiscipline` gerçek transfer affordability/bütçe sınırlarına bağlanır ve aynı feedback zincirine girer.
 
 M17 trait'leri:
 
@@ -90,13 +92,13 @@ M18 iki geçişliydi:
 
 ## M19 feedback mimarisi
 
-M19 bu borcu deterministik **fixed-point replay** ile kapatır:
+M19 bu borcu deterministik **fixed-point replay** ile kapattı:
 
 `president timeline → managerPatience → manager/world → promise/fan/media/reputasyon → election/turnover → president timeline`
 
 Timeline değişirse aynı seed ile yeniden replay edilir. Timeline sabitlenirse convergence; daha önce görülen timeline tekrar oluşursa cycle kabul edilir. Varsayılan maksimum iterasyon `8`.
 
-Fixed-point hesaplama bütün timeline'ı iteratif çözer ama `patienceProvider(clubId, seasonIndex)` yalnız o sezonda yürürlükteki başkanı uygular; gelecekteki başkanın trait'i geçmişe sızmaz. Bu bir literal tek-geçişli sezon orkestratörü değil, tarihsel olarak self-consistent equilibrium/replay çözümüdür.
+Fixed-point hesaplama bütün timeline'ı iteratif çözer ama `patienceProvider(clubId, seasonIndex)` yalnız o sezonda yürürlükteki başkanı uygular; gelecekteki başkanın trait'i geçmişe sızmaz. Bu literal tek-geçişli sezon orkestratörü değil, tarihsel olarak self-consistent equilibrium/replay çözümüdür.
 
 M19 için mevcut motorlar yeniden kullanılabilir hale getirildi:
 
@@ -104,7 +106,50 @@ M19 için mevcut motorlar yeniden kullanılabilir hale getirildi:
 - `PresidentReputationCareerEngine.simulateFromSourceReport(...)`
 - `PresidentManagerPatienceTimeline.fromReputationReport(...)`
 
-Eski `simulate()` yolları korunur ve bu replay fonksiyonlarına delege eder; M13–M18 canonical baseline'ları değişmedi.
+Eski `simulate()` yolları korunur ve replay fonksiyonlarına delege eder; M13–M18 canonical baseline'ları değişmedi.
+
+## M20 mali disiplin mimarisi
+
+M20, M19 final feedback çözümünü baseline alır ve timeline'dan aynı anda iki profile trait'i okur:
+
+- `managerPatience` → manager dismissal eşikleri,
+- `financialDiscipline` → transfer bütçe/affordability eşikleri.
+
+Yeni `TransferBudgetPolicy` üç gerçek sınır taşır:
+
+- `reserveCash`,
+- `windowSpendCapBps`,
+- `totalCommitmentCapBps`.
+
+Neutral `financialDiscipline=60` eski davranışı birebir korur:
+
+- reserve `2,0M`,
+- window cap `%35`,
+- installment commitment cap `%90`.
+
+Trait `20..90` clamp edilir. `d = discipline - 60`:
+
+- reserve = `2.000.000 + d × 30.000`,
+- window cap = `3500 - d × 25` bps, clamp `2500..4700`,
+- commitment cap = `9000 - d × 50` bps, clamp `7000..11500`.
+
+Örnek uçlar:
+
+- discipline `20` → `0,8M / %45 / %110`,
+- discipline `60` → `2,0M / %35 / %90`,
+- discipline `90` → `2,9M / %27,5 / %75`.
+
+Transfer penceresi `seasonIndex + 1` başkanını kullanır; seçim sonrası gelen başkan kendi ilk yaz transfer bütçesini kontrol eder.
+
+M20 bilinçli olarak şunları değiştirmez:
+
+- aday sıralaması,
+- pozisyon ihtiyacı,
+- seller ask,
+- buyer max bid,
+- `transferAmbition`,
+- `riskAppetite`,
+- `youthOrientation`.
 
 ---
 
@@ -116,11 +161,11 @@ Tek hafif workflow:
 - `dart analyze`
 - tüm testler
 - M0 100 sezon batch
-- M1–M19 20 sezon headless runner zinciri
+- M1–M20 20 sezon headless runner zinciri
 
 APK/AAB, büyük binary veya `actions/upload-artifact` yok. Artifact hedefi `0`.
 
-M0–M19 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu.
+M0–M20 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu.
 
 Son merge'ler:
 
@@ -128,9 +173,14 @@ Son merge'ler:
 - M18 PR #19 → `d1ca4de859c528470785f98a10baa4db8259d4ce`
 - M18 sonrası canonical docs/main → `1cbd3da04816e4f6d29b2db367e7992451832367`
 - M19 PR #20 → `183749baab40403b381003c527ce62fad946a9a6`
+- M20 PR #21 → `b5f2c9488556855972b1be93f37dcb3114981d2e`
 
 M18 merge-sonrası main güvenlik CI `33894772996`: PASS, artifact `0`.
 M19 final PR CI `33911708201`: analyzer PASS, `73` test PASS, M0–M19 runner PASS, artifact `0`.
+M20 ilk ölçüm CI `33913165685`: analyzer PASS, `75` test PASS, M0–M19 runner PASS; canonical M20 baseline üretildi.
+M20 final PR CI `33914123377`: analyzer PASS, `76` test PASS, M0–M20 runner PASS, artifact `0`. Toplam süre yaklaşık `4 dk 15 sn`; 5 dakikalık timeout korunabilir.
+
+M20 final kaliteye giderken bir ara CI (`33913975481`) yalnız test matcher tipinden kırıldı: `inInclusiveRange` `Money` kabul etmedi. Model veya katsayı değiştirilmedi; Money guard'ları `greaterThanOrEqualTo` / `lessThanOrEqualTo` ile düzeltildi ve gereksiz internal importlar temizlendi.
 
 ---
 
@@ -279,6 +329,92 @@ Final kalite:
 
 Ayrıntı: `M19_BASKAN_SABRI_SECIM_GERI_BESLEME_DONGUSU.md`.
 
+## M20 — Başkan Mali Disiplini → Transfer Bütçe Davranışı I — PASS
+
+M19'un yakınsamış final president/world timeline'ı baseline alınır. `financialDiscipline` yalnız transfer affordability sınırlarına bağlandı; candidate selection ve teklif hırsı değiştirilmedi.
+
+Neutral regresyon:
+
+- `financialDiscipline=60` → eski `2M / %35 / %90` transfer bütçesi,
+- provider ile neutral çalışan 4 sezonluk advanced world signature'ı provider olmayan eski world ile birebir aynı,
+- M0–M19 canonical runner sonuçları korunuyor.
+
+Seed `20260903` M19 baseline:
+
+- reelected/lost `160 / 80`
+- manager changes `84`
+- transfers `168`
+- transfer volume `1.562,93M`
+- installment deals `81`
+- installment commitment `278,90M`
+- final cash `1.191,15M`
+- final debt `347,04M`
+- emergency borrowing `148,22M`
+
+M20 final:
+
+- iterations `5`
+- converged `true`
+- cycle `false`
+- elections `240`
+- reelected/lost `158 / 82`
+- M19/M20 election outcome difference `52 / 240`
+- manager changes `83`
+- transfers `153`
+- transfer volume `1.387,32M`
+- installment deals `80`
+- installment commitment `279,65M`
+- final cash `1.226,59M`
+- final debt `363,58M`
+- emergency borrowing `159,05M`
+- unique final presidents `130`
+- world changed `true`
+- validation `0`
+
+Iteration path:
+
+1. `manager=98`, `transfer=158`, volume `1.461,45M`, `157/83`, diff `53`
+2. `manager=88`, `transfer=150`, volume `1.401,56M`, `157/83`, diff `34`
+3. `manager=84`, `transfer=160`, volume `1.466,16M`, `156/84`, diff `27`
+4. `manager=83`, `transfer=153`, volume `1.387,32M`, `158/82`, diff `12`
+5. `manager=83`, `transfer=153`, volume `1.387,32M`, `158/82`, diff `0`, timeline sabit
+
+Canonical aggregate sonuçta transfer sayısı `168 → 153`, hacim yaklaşık `%11,2` düştü. Manager değişimi `84 → 83` ile hemen hemen sabit kaldı.
+
+Final cash artarken final debt ve emergency borrowing de hafif yükseldi. Bu **mali disiplin borcu artırıyor** sonucu değildir. M20 dünyasında düşük ve yüksek disiplinli başkanlar birlikte vardır; transfer patikasındaki değişiklik sportif sonuçları, lig geçişlerini, vaatleri, seçimleri ve sonraki başkanları değiştirir. M20'nin kabul kriteri evrensel borç düşüşü değil, profile trait'in doğrudan bütçe sınırlarını doğru ve monotonic biçimde değiştirmesi + aggregate dünyanın sağlıklı kalmasıdır.
+
+Canonical guard'lar:
+
+- convergence zorunlu, cycle yasak,
+- iteration `3–7`,
+- son tur stable ve election diff `0`,
+- M19 baseline `160/80`, manager `84`, transfer `168`,
+- final election diff `25–90`,
+- final reelections `140–175`, losses `65–100`,
+- final manager changes `70–105`, delta mutlak `≤25`,
+- final transfers `130–190`, delta mutlak `≤50`,
+- transfer volume `1,10B–1,70B`, baseline sapması mutlak `≤400M`,
+- installment deals `60–100`,
+- installment commitment `200M–360M`,
+- final cash `900M–1,50B`,
+- final debt `250M–500M`,
+- emergency borrowing `80M–250M`,
+- unique final presidents `110–145`,
+- world signature değişmeli.
+
+Final kalite:
+
+- analyzer PASS
+- `76` test PASS
+- neutral-world signature regresyonu PASS
+- M0–M20 runner zinciri PASS
+- bağımsız M20 runner aynı `5` iterasyonlu fixed point'i üretti
+- validation `0`
+- artifact `0`
+- PR #21 squash merge `b5f2c9488556855972b1be93f37dcb3114981d2e`
+
+Ayrıntı: `M20_BASKAN_MALI_DISIPLIN_TRANSFER_BUTCE_DAVRANISI.md`.
+
 ---
 
 # 5. Uzun kariyer kalite hedefi
@@ -300,14 +436,14 @@ Aday metadata: `saveVersion`, `gameVersion`, `simulationVersion`, `dataVersion`,
 
 Kalıcı state adayları: installment/active loans, `FanState`, `MediaState`, aktif vaat + kompakt history, `PresidentTenureState`, president ID, election/turnover history, manager assignment ve kişisel reputasyon state. Management profile president ID+seed'den deterministik yeniden üretilebilir.
 
-Fixed-point M19 headless kariyer çözümü için bütün timeline yeniden üretilebilir. Gerçek interactive save/load aşamasında incremental season orchestration gereksinimi yeniden değerlendirilecek.
+Fixed-point M20 headless kariyer çözümü için bütün timeline yeniden üretilebilir. Gerçek interactive save/load aşamasında incremental season orchestration gereksinimi yeniden değerlendirilecek.
 
 ---
 
 # 7. Açık teknik / denge notları
 
 1. Ufuk Ligi yüksek final nakit birikimi takip edilmeli.
-2. Resmî `wageBudget` yok.
+2. Resmî ayrı `wageBudget` hâlâ yok; M20 yalnız transfer affordability sınırlarını ekledi.
 3. Free-agent AI basittir.
 4. Manager maaşı/kontratı, başka kulüp teklifi ve spesifik transfer talebi yok.
 5. Satın alma opsiyonu, bonus, sell-on ve takas yok.
@@ -315,32 +451,37 @@ Fixed-point M19 headless kariyer çözümü için bütün timeline yeniden üret
 7. Medya serbest metin/çok yıllı konu ağı değildir.
 8. AI kulüp sezon başına bir resmi vaat kullanır.
 9. M16 handover V1 `%25 eski + %75 nötr`; çoklu-seed stres testinde izlenecek.
-10. M17'nin `financialDiscipline`, `riskAppetite`, `transferAmbition`, `youthOrientation` trait'leri henüz gerçek AI davranışına bağlı değildir.
-11. M18 iki-geçişli seçim borcu M19'da fixed-point feedback ile kapandı; ancak bu literal incremental sezon orkestratörü değildir.
-12. M19 canonical seed 4 iterasyonda; temsilî 3 seed de 8 sezon içinde yakınsadı. 100+ kariyerde convergence oranı ileride ölçülmeli.
-13. Sponsor, tesis ve kriz çekirdeğe bağlanmadı.
-14. Kullanıcı seçim kaybı sonrası game-over/başka kulüp kariyeri yok.
-15. Flutter UI/APK bilinçli olarak başlamadı.
+10. M17'nin `managerPatience` ve `financialDiscipline` trait'leri gerçek davranışa bağlıdır. `riskAppetite`, `transferAmbition`, `youthOrientation` henüz gerçek AI davranışına bağlı değildir.
+11. M18 iki-geçişli seçim borcu M19'da fixed-point feedback ile kapandı; M20 aynı fixed-point yaklaşımını ikinci profile trait'iyle genişletti. Bu hâlâ literal incremental sezon orkestratörü değildir.
+12. M19 canonical seed 4 iterasyonda; temsilî 3 seed de 8 sezon içinde yakınsadı. M20 canonical seed 5 iterasyonda yakınsadı. 100+ kariyerde convergence oranı ileride ölçülmeli.
+13. M20 canonical dünyada transfer hacmi düşerken debt/emergency hafif yükseldi; aggregate finans sonucu trait'in doğrudan causal yönü olarak yorumlanmamalı.
+14. Sponsor, tesis ve kriz çekirdeğe bağlanmadı.
+15. Kullanıcı seçim kaybı sonrası game-over/başka kulüp kariyeri yok.
+16. Flutter UI/APK bilinçli olarak başlamadı.
 
 ---
 
-# 8. Sıradaki milestone — M20
+# 8. Sıradaki milestone — M21
 
-## Başkan Mali Disiplini → Transfer Bütçe Davranışı I
+## Başkan Transfer Hırsı → Transfer Aktivitesi I
 
 Amaç:
 
-> **Mali disiplinli ve savurgan başkan aynı kasa/borç koşulunda aynı transfer harcama sınırına sahip olmamalı.**
+> **Transferde iddialı başkan ile temkinli başkan aynı bütçe sınırına sahip olsa bile aynı transfer aktivitesini göstermemeli.**
 
 İlk kapsam:
 
-- yalnız `financialDiscipline` gerçek harcama/borç toleransına bağlanacak,
-- `transferAmbition` ve `riskAppetite` aynı milestone'a eklenmeyecek,
-- neutral profile eski advanced-transfer davranışını koruyacak,
-- düşük mali disiplin daha yüksek harcama/borç toleransı, yüksek disiplin daha sert bütçe sınırı üretecek,
+- yalnız `transferAmbition` gerçek transfer arama/aktivite seviyesine bağlanacak,
+- `financialDiscipline` M20 bütçe sınırlarını aynen koruyacak,
+- `riskAppetite` M21'e eklenmeyecek,
+- neutral ambition eski transfer aktivitesini birebir koruyacak,
+- düşük ambition daha az pencere/slot/aday araması; yüksek ambition daha aktif arama üretecek,
+- affordability ile activity birbirine karıştırılmayacak,
 - transfer piyasası donmayacak veya hiperaktif olmayacak,
-- transfer etkisi M19 feedback world/election zincirine yansıyacak,
-- ekonomi ve transfer dengesi ayrı guard'larla ölçülecek.
+- M20/M21 farkı transfer count, attempted offers, volume ve downstream election/world guard'larıyla ölçülecek,
+- feedback convergence/cycle güvenliği korunacak.
+
+M21 tasarımında ilk incelenecek karar noktaları: buyer başına transfer slot sayısı (`2`) ve candidate shortlist (`take(8)`). Hangi eşiklerin trait'e bağlanacağı, neutral davranış ve piyasa hiperaktivitesi riski birlikte değerlendirilerek seçilecek.
 
 ---
 
