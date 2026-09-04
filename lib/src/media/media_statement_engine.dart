@@ -28,15 +28,19 @@ class MediaStatementEngine {
     final comfortable = clubSeason.relationshipAfter >= 72 &&
         clubSeason.actualPosition <= clubSeason.expectedPosition + 1;
 
-    final eventRoll = rng.nextDouble();
-    if (!underPressure && !comfortable && eventRoll >= 0.30) {
+    final eventChance = underPressure
+        ? 0.78
+        : comfortable
+            ? 0.55
+            : 0.22;
+    if (rng.nextDouble() >= eventChance) {
       return null;
     }
 
     final stanceRoll = rng.nextDouble();
     final MediaStance stance;
     if (comfortable) {
-      stance = stanceRoll < 0.72
+      stance = stanceRoll < 0.68
           ? MediaStance.strongSupport
           : MediaStance.measuredSupport;
     } else if (underPressure) {
@@ -49,9 +53,9 @@ class MediaStatementEngine {
       } else {
         stance = MediaStance.noComment;
       }
-    } else if (stanceRoll < 0.28) {
+    } else if (stanceRoll < 0.25) {
       stance = MediaStance.strongSupport;
-    } else if (stanceRoll < 0.74) {
+    } else if (stanceRoll < 0.72) {
       stance = MediaStance.measuredSupport;
     } else {
       stance = MediaStance.noComment;
