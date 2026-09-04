@@ -97,3 +97,6 @@ jobs:
 
       - name: Run M25 save/load continuation
         run: dart run tool/run_m25_save_load.dart 20260903
+
+      - name: Run M26 world save continuation
+        run: dart run tool/run_m26_world_save.dart 20260903
