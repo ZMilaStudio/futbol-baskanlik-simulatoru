@@ -3,8 +3,8 @@
 
 **Son güncelleme:** 04.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru`  
-**Repo durumu:** Public / proprietary notice  
-**Aktif teknik aşama:** **M9 PASS — sıradaki M10 / Medya Hafızası + Başkan Açıklamaları**  
+**Repo:** Public / proprietary notice  
+**Aktif teknik aşama:** **M10 PASS — sıradaki M11 / Başkan Vaatleri + Takip Çekirdeği**  
 **Proje önceliği:** Yan geliştirme; Kelime Avı ve Minik Dedektif gibi aktif projeleri aksatmayacak.  
 **UI/APK:** Henüz başlanmadı; simülasyon çekirdeği önceliklidir.
 
@@ -39,7 +39,7 @@ Dünya tamamen özgün olacak; gerçek kulüp, futbolcu, lig logosu veya lisansl
 3. Başarı yalnız kupa değil; finansal iyileşme ve sürdürülebilirliktir.
 4. Kısa vadeli sportif başarı ile uzun vadeli kulüp sağlığı arasında gerçek gerilim olmalıdır.
 5. Taraftar ekonomik/sportif bağlamı anlamalı, imkânsız talep üretmemelidir.
-6. Transfer AI yaş, kalite, potansiyel, mevki, sözleşme, ekonomi ve oyuncu isteğini dikkate almalıdır.
+6. Transfer AI yaş, kalite, potansiyel, mevki, sözleşme ve ekonomi bağlamını dikkate almalıdır.
 7. **Piyasa değeri ≠ satıcı talebi ≠ alıcının maksimum fiyatı.**
 8. **“Paran yoksa transfer yapamazsın” değil, “paran yoksa daha akıllı transfer yapmak zorundasın.”**
 9. Geçmiş açıklamalar, vaatler ve önemli kararlar hatırlanmalıdır.
@@ -56,10 +56,12 @@ Dünya tamamen özgün olacak; gerçek kulüp, futbolcu, lig logosu veya lisansl
 20. Taksit banka borcu değildir; ayrı gelecek transfer yükümlülüğüdür.
 21. Kiralıkta kalıcı kontrat parent club'da korunur.
 22. Gelişmiş transfer yapıları seçenek olmalı, otomatik varsayılan olmamalıdır.
-23. Taraftar güveni tek sayıdan ibaret değildir; alt boyut + neden hafızası taşır.
+23. Taraftar güveni alt boyut + neden hafızası taşır.
 24. Taraftar beklentisi kulübün ekonomik/sportif bağlamına göre değişmelidir.
-25. Taraftar güven geçmişi her sezon otomatik olarak nötre sıfırlanmamalıdır.
-26. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
+25. Taraftar geçmişi her sezon otomatik nötre sıfırlanmamalıdır.
+26. Medya başkanın geçmiş açıklamasını sonraki eylemle birlikte değerlendirmelidir.
+27. Açıklama yalnız dekoratif metin değil, sonraki olayda çözülen hafıza kaydı olmalıdır.
+28. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
 
 ---
 
@@ -67,55 +69,39 @@ Dünya tamamen özgün olacak; gerçek kulüp, futbolcu, lig logosu veya lisansl
 
 ## Ekonomi
 
-Arka planda derin, mobilde anlaşılır. Nakit, borç, transfer/maaş bütçesi, oyuncu maaşı, sponsor, maç günü, mağaza, transfer, tesis, altyapı ve stadyum ekonomisi birbirini etkileyecek.
-
-Finansal sağlık kullanıcıya sade etiketlerle gösterilebilir: `Çok Güçlü / Sağlam / Dengeli / Sıkışık / Borç Krizi`.
+Nakit, borç, transfer/maaş bütçesi, oyuncu maaşı, sponsor, maç günü, mağaza, transfer, tesis, altyapı ve stadyum ekonomisi birbirini etkileyecek. Mobilde sade finansal sağlık etiketleri kullanılabilir: `Çok Güçlü / Sağlam / Dengeli / Sıkışık / Borç Krizi`.
 
 ## Transfer
 
-Hedef yollar:
+Uzun vadeli yollar: doğrudan bonservis, kiralık, satın alma opsiyonu/zorunluluğu, taksit, performans bonusu, satıştan pay, free agent, takas, oyuncu+para ve maaş paylaşımı.
 
-- doğrudan bonservis
-- kiralık
-- satın alma opsiyonu/zorunluluğu
-- taksit
-- performans bonusu
-- satıştan pay
-- serbest oyuncu / sözleşmesi biten
-- takas / oyuncu + para
-- maaş paylaşımı
-
-Tamamlanan transfer katmanları: M4 direct fee, M7 gerçek kontrat/free-agent, M8 kiralık+taksit.
+Tamamlanan katmanlar: M4 direct fee; M7 kontrat/free-agent; M8 kiralık+taksit.
 
 ## Teknik direktör
 
-Özerk futbol karakteridir. Uzun vadede transfer isteği, bütçe şikâyeti, zam, başka kulüp teklifi, medya açıklaması ve yönetim çatışması yaşayabilir.
+Özerk karakterdir. Uzun vadede transfer isteği, bütçe şikâyeti, zam, başka kulüp teklifi, medya açıklaması ve yönetim çatışması yaşayabilir.
 
 ## Taraftar
 
-M9 ile ilk bağlamsal çekirdek tamamlandı. Borçlu/zayıf kulüp pahalı yıldız yerine akıllı kiralık veya finans disiplini beklentisi üretebilir. Güven sporting / financial / transfer / identity boyutlarında saklanır ve her değişiklik neden kodu taşır. M9'da taraftar henüz seyirci/gelir/sponsor tarafını geri beslemez.
+M9 bağlamsal çekirdeği tamamlandı. Borçlu/zayıf kulüp pahalı yıldız yerine akıllı kiralık veya finans disiplini beklentisi üretebilir. `sporting / financial / transfer / identity` güven boyutları ve neden hafızası vardır. Henüz seyirci/gelir/sponsor tarafını geri beslemez.
 
-## Medya + vaat hafızası
+## Medya
 
-Başkanın eski açıklamaları/vaatleri kaydedilmeli. Hocaya kamuoyu önünde destek verip kısa süre sonra kovmak medya güvenilirliğini düşürmelidir.
+M10 ilk medya hafızasını tamamladı. Teknik direktörün geleceği hakkında başkan açıklaması kaydedilir ve aynı sezon sonundaki yönetim eylemiyle consistency/contradiction olarak çözülür. Güçlü destek verip hocayı değiştirmek ciddi credibility cezası yaratır. Medya henüz ekonomi/taraftarı geri beslemez.
 
-## Seçim
+## Vaat / seçim
 
-Daha sonraki aşama. Sportif sonuç, finans, kulüp değeri, tesis, taraftar, vaat ve medya itibarı etkili olacak. Seçim kaybı kariyeri zorunlu olarak bitirmeyebilir.
+Başkan vaatleri ölçülebilir hedefler olarak saklanacak; gerçekleşti/başarısız/kısmi ilerleme durumuna çözülecek ve daha sonra taraftar/media/seçim sistemlerini etkileyecek. Seçim daha sonraki aşamadır.
 
 ## Tesis / altyapı / sponsor / kriz
 
-Tesis adayları: altyapı, antrenman, sağlık, scouting, stadyum, kulüp mağazası. Yatırımlar dekorasyon değil gerçek fayda üretmeli.
-
-Kriz örnekleri: zam isteyen oyuncu, kaptan-hoca çatışması, sponsor ayrılığı, bilet protestosu, büyük teklif, genç oyuncunun süre isteği, hocanın yönetimi eleştirmesi, stadyum bakım sorunu, federasyon cezası, menajer baskısı.
+Tesis adayları: altyapı, antrenman, sağlık, scouting, stadyum, kulüp mağazası. Yatırımlar dekorasyon değil gerçek fayda üretmeli. Krizler oyuncu zam talebi, hoca/yönetim çatışması, sponsor ayrılığı, bilet protestosu, büyük teklif, genç oyuncunun süre isteği, stadyum bakım problemi ve federasyon cezası gibi bağlamsal olaylardan doğabilir.
 
 ---
 
 # 4. Teknik mimari
 
 > **Flutter mobil kabuk + Flutter'dan bağımsız saf Dart simülasyon çekirdeği**
-
-Katman yönü:
 
 - `simulation_core`: saf Dart domain ve kurallar.
 - `simulation_runner`: headless CLI, seed replay, batch/denge raporları.
@@ -125,7 +111,7 @@ Katman yönü:
 
 ## Determinizm
 
-Kararlı FNV-1a tabanlı hash + özel xorshift32 `SeededRng`. Runtime `hashCode` kullanılmaz. Maç, transfer, manager, kontrat ve bağlı sistemler career seed / simulation version / sezon / entity ID üzerinden türetilir. M9 fan lifecycle same-seed replay ile ayrıca doğrulanır.
+Kararlı FNV-1a hash + özel xorshift32 `SeededRng`. Runtime `hashCode` kullanılmaz. Maç, transfer, manager, kontrat, fan ve media kararları seed / simulation version / sezon / entity ID üzerinden deterministik türetilir.
 
 ## Oyun zamanı
 
@@ -139,18 +125,18 @@ Para `double` değil integer minor-unit `Money`.
 
 `Kapanış Borç = Açılış Borç - Anapara Ödemesi + Yeni Borçlanma`
 
-Anapara gider değildir; faiz giderdir. Negatif nakit sessizce sıfırlanmaz, `emergencyBorrowing` yaratır. Bonservis ve loan fee yeni para yaratmaz; kulüpler arasında taşınır. Transfer taksiti banka borcundan ayrı yükümlülüktür.
+Anapara gider değildir; faiz giderdir. Negatif nakit `emergencyBorrowing` yaratır. Bonservis/loan fee yeni para yaratmaz. Transfer taksiti banka borcundan ayrı yükümlülüktür.
 
-## Hook / katmanlama yönü
+## Katmanlama / hook yönü
 
-`WorldCareerEngine` sistemleri kopyalamadan genişletilir:
+`WorldCareerEngine` kopyalanmadan no-op varsayılanlı hook'larla genişletilir:
 
 - `WorldCareerHooks`: manager gibi sezon/sportif lifecycle.
 - `WorldRosterHooks`: kontrat/kadro/gerçek maaş.
 - `WorldFinanceHooks`: taksit gibi sezon içi ek finans hareketleri.
 - `WorldTransferHooks`: kiralık gibi transfer penceresi sonrası hareketler.
 
-Varsayılanlar no-op. M9 ilk sürümde M8 advanced report'u gözlemsel kaynak olarak işler; taraftar simülasyon sonucunu henüz değiştirmez. Böylece fan context doğruluğu ekonomik geri beslemeden ayrı test edilir.
+M9 ve M10 ilk sürümlerde alt sistem raporlarını gözlemsel kaynak olarak kullanır; fan/media çekirdeği henüz dünya sonucunu geri beslemez. Önce bağlam ve hafıza doğruluğu bağımsız kanıtlanır.
 
 ---
 
@@ -164,11 +150,11 @@ Tek hafif workflow:
 - `dart analyze`
 - `dart test`
 - M0 100 sezon batch
-- M1–M9 20 sezon headless runner'ları
+- M1–M10 20 sezon headless runner'ları
 
 APK/AAB, büyük binary ve `actions/upload-artifact` yok. Artifact hedefi `0`.
 
-M0–M9 üretiminde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu. Codex yalnız büyük/refactor/migration/karmaşık hata için kullanılacak.
+M0–M10 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu. Codex yalnız büyük refactor/migration/karmaşık hata için kullanılacak.
 
 ---
 
@@ -176,162 +162,85 @@ M0–M9 üretiminde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu
 
 ## M0 — Deterministik Mini Lig — PASS
 
-8 kurgu kulüp, çift devre, 56 maç/sezon, Poisson maç motoru, standings/validator, 100 sezon regresyon.
-
-100 sezon baseline: 5.600 maç; ev `%45,2857`, beraberlik `%24,5893`, deplasman `%30,1250`, gol/maç `2,5864`, invariant `0`.
+8 kulüp, 56 maç/sezon, Poisson motoru. 100 sezon: 5.600 maç; ev `%45,2857`, beraberlik `%24,5893`, deplasman `%30,1250`, gol/maç `2,5864`, invariant `0`.
 
 ## M1 — 20 Sezon Yaşam Döngüsü — PASS
 
-`GameDate`, 20 sezon, 1.120 maç, deterministik geçiş. Seed `20260903`: Vadişehir 10, Kuzey Yıldızı 6, Demirkent 4 şampiyonluk.
+`GameDate`, 20 sezon, 1.120 maç. Seed `20260903`: Vadişehir 10, Kuzey Yıldızı 6, Demirkent 4 şampiyonluk.
 
 ## M2 — Oyuncu Havuzu + Yaşlanma + Genç Üretimi — PASS
 
-Seed `20260903`: başlangıç 144, final 148 oyuncu, 148 emeklilik, 152 youth intake, 146 aktif akademi mezunu, yaş ortalaması `25,84`, validation `0`.
+Başlangıç 144, final 148; 148 emeklilik, 152 youth intake, yaş ortalaması `25,84`, validation `0`.
 
 ## M3 — Temel Kulüp Ekonomisi — PASS
 
-İlk deneme REDDEDİLDİ: `1.017,03M` nakit, `0` borç, 8/8 veryStrong → evrensel refah.
-
-Kabul baseline: cash `124,28M`, debt `104,43M`, emergency `67,44M`, 2 veryStrong / 2 solid / 2 balanced / 2 debtCrisis, validation `0`.
+Reddedilen ilk deneme: `1.017,03M` nakit, `0` borç, 8/8 veryStrong. Kabul: cash `124,28M`, debt `104,43M`, emergency `67,44M`, dengeli sağlık dağılımı, validation `0`.
 
 ## M4 — Basit Transfer Pazarı — PASS
 
-Market value, mevki ihtiyacı, satıcı talebi/alıcı maksimumu, finans baskısı, 2M rezerv, `%35` pencere harcama sınırı, max 2 alım, kadro/pozisyon satış tabanları, nakit korunumu.
-
-Seed `20260903`: 32 transfer, `161,68M` hacim, `5,05M` ortalama bonservis, cash `96,38M`, debt `58,61M`, final 148 oyuncu, validation `0`.
+Seed `20260903`: 32 transfer, `161,68M` hacim, `5,05M` ortalama fee, cash `96,38M`, debt `58,61M`, validation `0`.
 
 ## M5 — 48 Kulüp / 3 Lig — PASS
 
-48 kurgu kulüp; Taç/Birlik/Ufuk, 3×16, 720 maç/world season, 14.400 maç/20 sezon, 864 başlangıç oyuncusu, 3'er terfi/düşme.
-
-Reddedilen kalibrasyonlar: 2 transfer + `3.966,16M` borç; 7 transfer + `2.268,60M` borç; ardından 158 transfer + `1.909,01M` nakit. Üçü de reddedildi.
+48 kulüp, 3×16 lig, 720 maç/world season, 14.400 maç/20 sezon, 864 başlangıç oyuncusu, 3'er terfi/düşme. Reddedilen denemeler: 2 transfer + `3.966,16M` borç; 7 transfer + `2.268,60M` borç; 158 transfer + `1.909,01M` nakit.
 
 Kabul seed `20260903`: final oyuncu `906`, lig hareketi `228`, transfer `71`, hacim `637,91M`, cash `862,25M`, debt `647,04M`, emergency `569,03M`, 35 transfer katılımcısı, 10 farklı Taç Ligi şampiyonu, validation `0`.
 
-Açık not: Ufuk Ligi final nakit birikimi yüksek; nihai ekonomi değildir.
+Açık: Ufuk Ligi final nakit birikimi yüksek.
 
 Ayrıntı: `M5_48_KULUP_3_LIG.md`.
 
 ## M6 — Teknik Direktör Sistemi — PASS
 
-96 deterministik manager; `balanced`, `youthDeveloper`, `budgetBuilder`, `starManager`, `resultsFirst` profilleri. Kulüp-finans-kadro-lig fit modeli, `-2,5...+2,5` maç strength etkisi, board relationship, performans/board breakdown/emeklilik görev değişimleri.
+96 manager, 5 profil, fit modeli, `-2,5...+2,5` strength etkisi, board relationship ve görev değişimi.
 
-Seed `20260903`: 60 farklı manager, 82 değişim, ortalama etki `+0,922`, final board relationship `72,22`, transfer `84`, cash `1.048,02M`, debt `582,36M`, emergency `473,40M`, validation `0`.
+Seed `20260903`: 60 farklı manager, 82 değişim, ortalama etki `+0,922`, relationship `72,22`, cash `1.048,02M`, debt `582,36M`, validation `0`.
 
-Açık: manager maaşı/kontratı, başka kulüp teklifi, zam, spesifik transfer talebi, medya etkisi yok.
+Açık: manager maaşı/kontratı, başka kulüp teklifi, zam ve spesifik transfer talebi yok.
 
 Ayrıntı: `M6_TEKNIK_DIREKTOR_SISTEMI.md`.
 
-## M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi — PASS
+## M7 — Oyuncu Sözleşmesi + Gerçek Maaş — PASS
 
-`PlayerContract`, gerçek yıllık maaş, yenileme/release, free-agent havuzu, youth ilk kontratı, transfer sonrası yeni kontrat ve kontrat süresinin market value etkisi.
+`PlayerContract`, gerçek maaş, renewal/release, free-agent, youth kontratı, transfer kontratı, kontrat süresi market-value etkisi.
 
-Seed `20260903`: aktif final kontrat `874`, renewal `3.757`, release `1.143`, free-agent signing `776`, final free agent `32`, youth contract `912`, transfer contract `103`, final wage bill `491,27M`, ortalama maaş `562.091`, transfer `103`, cash `1.060,80M`, debt `554,81M`, emergency `428,76M`, validation `0`.
-
-CI geniş guard: renewal 1.500–7.000; release 300–2.500; free signing 200–2.000; final free agent 5–100; bonservis 40–300; wage 200M–900M; cash/debt 100M–2B.
+Seed `20260903`: final kontrat `874`, renewal `3.757`, release `1.143`, free signing `776`, final free agent `32`, wage bill `491,27M`, transfer `103`, cash `1.060,80M`, debt `554,81M`, validation `0`.
 
 Ayrıntı: `M7_OYUNCU_SOZLESMESI_MAAS.md`.
 
-## M8 — Gelişmiş Transfer Yapıları I / Kiralık + Taksit — PASS
+## M8 — Kiralık + Taksit — PASS
 
-### Taksit
+Sezonluk loan, parent kontrat, loan fee, `%45–80` maaş paylaşımı, sezon sonu dönüş, upfront + iki sezon taksit, banka borcundan ayrı installment obligation.
 
-- `TransferInstallment` / `TransferInstallmentObligation`.
-- upfront + iki gelecek sezon taksiti.
-- `upfront + taksitler = toplam fee` invariantı.
-- taksit banka borcundan ayrı.
-- vadesinde alıcıdan satıcıya gerçek nakit akışı.
-- 5M altı bonserviste taksit yok.
-- upfront yaklaşık `%58–73`.
-- satıcı ekonomisi taksit kabulünü etkiler.
+Reddedilen denemeler: `146/183`, `145/189`, `108/147`, `86/156` taksit oranları; gelişmiş yapılar varsayılan davranışa dönüştüğü için reddedildi.
 
-### Kiralık
-
-- sezonluk `LoanAgreement`.
-- parent club kontratı korunur.
-- borrower kadrosunda oynar, sezon sonunda otomatik döner.
-- loan fee `100K–1,5M` aralığında ve finans kapasitesiyle sınırlı.
-- loan club maaş payı `%45–80`.
-- borrower mevki/kalite ihtiyacı olmadan otomatik kiralama yapmaz.
-- parent club mevki fazlalığı ve kadro tabanı korunur.
-
-### Reddedilen M8 denge denemeleri
-
-1. `183` kalıcı / `146` taksit / `755` kiralık → iki yapı da varsayılan davranış.
-2. `189` kalıcı / `145` taksit / `482` kiralık → kiralık düzeldi, taksit aşırı.
-3. `147` kalıcı / `108` taksit / `462` kiralık → taksit hâlâ çoğunluk.
-4. `156` kalıcı / `86` taksit / `491` kiralık → taksit `%55`, ürün kriterini kaçırdı.
-
-### M8 kabul baseline — seed `20260903`
-
-- 20 sezon / `14.400` maç
-- kalıcı transfer `140`
-- taksitli `68` (`%48,6`)
-- taksit taahhüdü `234,79M`
-- ödenmiş `232,77M`
-- açık `2,02M`
-- kiralık `478`
-- final aktif kiralık `32`
-- loan fee `113,15M`
-- ortalama borrower maaş payı `%62,18`
-- cash `1.017,61M`
-- debt `378,97M`
-- emergency `185,61M`
-- validation `0`
-
-CI geniş M8 guard'ları: kalıcı 80–260; taksit 20–120 ve kalıcıların yarısından az; kiralık 250–700; aktif loan 5–48; wage share 4500–8000 bps; installment commitment 50M–600M; outstanding <=100M; loan fees 40M–250M; cash 300M–2B; debt 100M–1,2B.
+Kabul seed `20260903`: kalıcı `140`, taksitli `68`, taksit taahhüdü `234,79M`, ödenmiş `232,77M`, açık `2,02M`, kiralık `478`, aktif loan `32`, loan fee `113,15M`, borrower wage share `%62,18`, cash `1.017,61M`, debt `378,97M`, validation `0`.
 
 Ayrıntı: `M8_KIRALIK_TAKSIT.md`.
 
-## M9 — Taraftar Beklentisi + Güven Çekirdeği — PASS
+## M9 — Taraftar Beklentisi + Güven — PASS
 
-### Domain
+`FanState`: sporting/financial/transfer/identity. Bağlamsal beklenti ve neden hafızası. Aynı borç krizinde akıllı kiralık `+4`, aşırı harcama+taksit `-4` transfer trust etkisi.
 
-- `FanState`: sporting / financial / transfer / identity.
-- overall trust ağırlıkları `%35 / %30 / %25 / %10`.
-- `FanSeasonContext` gerçek world/finance/transfer/loan verisinden oluşur.
-- `FanExpectationEngine` bağlamsal beklenti üretir.
-- `FanTrustEngine` neden kodlu güven değişimi üretir.
-- `FanCareerReport` ve `FanCareerValidator` 48×20 sezonu takip eder.
+Reddedilen ilk model: avg `61,06`, aralık `46–68`; yıllık 60'a dönüş geçmişi fazla siliyordu.
 
-### İmza davranışı
-
-Borç krizi + sportif zayıflık durumunda `smartLoanReinforcement` üretilebilir. Aynı kriz bağlamında:
-
-- akıllı kiralık → `used_smart_loan`, transfer trust `+4`,
-- yüksek harcama + 2 taksit → `overspent_in_financial_stress`, transfer trust `-4`.
-
-### Reddedilen M9 kalibrasyonu
-
-İlk teknik PASS:
-
-- avg trust `61,06`
-- aralık `46–68`
-- boundary `0`
-
-Her sezon bütün güven boyutlarını 60'a doğru çeken mean reversion 20 yıllık geçmişi fazla siliyordu. **Reddedildi.**
-
-### M9 kabul baseline — seed `20260903`
-
-- snapshot `960`
-- final fan state `48`
-- avg trust `64,88`
-- min `44`
-- max `75`
-- spread `31`
-- boundary `0`
-- trust reason `2.143`
-- smart-loan expectation `9`
-- financial-discipline expectation `58`
-- validation `0`
-
-Expectation dağılımı: measured improvement `465`; strengthen squad `108`; rebuild after relegation `99`; prepare for higher tier `111`; ambitious reinforcement `62`; smart loan `9`; financial discipline `58`; none `48`.
-
-Kabul modelinde mean reversion yalnız `>75` ve `<45` dış bantlarında yumuşak birer puan çalışır; 45–75 aralığındaki geçmiş otomatik silinmez.
-
-CI geniş M9 guard'ları: avg 50–75; min 25–60; max 65–90; spread >=25; boundary <=2; reasons 1.500–3.000; smart-loan 5–100; financial-discipline 20–180; en az 7 expectation tipi; final `none=48`; measured improvement 250–650.
+Kabul seed `20260903`: snapshot `960`, avg trust `64,88`, aralık `44–75`, spread `31`, boundary `0`, reason `2.143`, smart-loan `9`, financial-discipline `58`, validation `0`.
 
 Ayrıntı: `M9_TARAFTAR_GUVEN.md`.
+
+## M10 — Medya Hafızası + Başkan Açıklamaları — PASS
+
+`MediaStatement`, `MediaState`, `MediaCredibilityChange`, deterministic statement engine, consistency/contradiction çözümlemesi, 20 sezon media report/validator.
+
+İmza davranışı: credibility `60` iken strong support verip manager değiştirmek `-10`; pressure açıklaması sonrası değişim `+3`; güçlü desteği tutmak `+2`.
+
+Reddedilen ilk model: statement `847/960`, contradiction `42`, consistent `624`, avg credibility `79,31`, aralık `31–91`. Açıklama neredeyse her kulüp/sezon otomatik olduğu için reddedildi.
+
+Kabul seed `20260903`: statement `556`, contradiction `22`, strong-support contradiction `9`, consistent `385`, stance dağılımı strong `230` / measured `155` / pressure `121` / no-comment `50`, avg credibility `75,52`, aralık `49–87`, boundary `0`, manager change `82`, validation `0`.
+
+CI guard: statement `300–700`, contradiction `10–80`, strong-broken `3–50`, consistent `200–550`, dört stance tipi, avg credibility `55–82`, min `25–60`, max `75–92`, boundary `<=2`.
+
+Ayrıntı: `M10_MEDYA_HAFIZASI.md`.
 
 ---
 
@@ -340,9 +249,9 @@ Ayrıntı: `M9_TARAFTAR_GUVEN.md`.
 - geliştirici: 20 sezon
 - temel denge: 100 kariyer × 20 sezon
 - regresyon: 500 × 30 sezon
-- büyük sürüm stres: 1000 × 30 sezon
+- büyük sürüm stres: 1.000 × 30 sezon
 
-İzlenecekler: oyuncu sayısı/yaş, emeklilik/youth, cash/debt, wage/revenue, transfer ücret/hacim/yapısı, future installments, loan volume, title dağılımı, terfi yaşam oranı, büyük-küçük farkı, manager tenure, fan trust dağılımı/expectation mix; ileride medya/vaat/başkan tenure.
+İzlenecekler: oyuncu sayısı/yaş, emeklilik/youth, cash/debt, wage/revenue, transfer yapısı, installments, loans, şampiyonluk, terfi, manager tenure, fan trust/expectation mix, media credibility/contradiction; ileride promise/election/başkan tenure.
 
 Her başarısız kariyer seed ile replay edilebilmelidir.
 
@@ -352,49 +261,49 @@ Her başarısız kariyer seed ile replay edilebilmelidir.
 
 Aday metadata: `saveVersion`, `gameVersion`, `simulationVersion`, `dataVersion`, `careerSeed`, current `GameDate`, checksum/integrity, migration history.
 
-Minimum: aktif autosave + önceki autosave yedeği + manuel save + migration. Persistence domain modellerinin birebir kopyası olmak zorunda değildir.
+Minimum: autosave + önceki autosave yedeği + manuel save + migration.
 
-Kalıcı state tasarımında M8 gelecek taksit yükümlülükleri/aktif kiralıkları ve M9 `FanState` güven boyutlarını saklamak gerekir. Tam fan snapshot geçmişinin save'e gömülmesi zorunlu değildir; önemli neden geçmişi ayrı kompakt event/history modeliyle ele alınabilir.
+Kalıcı state: M8 installment/active loans, M9 `FanState`, M10 `MediaState` ve çözülmemiş önemli açıklamalar. Tam sezon snapshot geçmişlerinin save'e gömülmesi zorunlu değildir; kompakt history/event modeli kullanılabilir.
 
 ---
 
 # 9. Açık teknik / denge notları
 
 1. Ufuk Ligi yüksek final nakit birikimi takip edilmeli.
-2. Gerçek oyuncu maaşı var; resmi kulüp `wageBudget` sistemi henüz yok.
-3. Free-agent AI basit ihtiyaç/affordability modelidir; oyuncu tercihi, itibar ve rekabetçi teklifler ileride gerekir.
-4. Kontrat yenileme AI kararı; başkan use-case/UI yok.
-5. Manager maaşı/kontratı henüz yok.
-6. Taksit ve kiralık ilk kalibrasyondur; nihai oranlar değildir.
-7. Satın alma opsiyonu/zorunluluğu, bonus, sell-on ve takas yok.
-8. M9 taraftar güveni henüz seyirci, bilet, mağaza, sponsor veya protestoyu etkilemez.
-9. `identityTrust` M9'da nötrdür; gerçek kimlik sinyali gelmeden yapay puan üretilmez.
-10. Sponsor, medya, vaat, tesis ve kriz çekirdeğe bağlanmadı.
-11. Flutter UI/APK bilinçli olarak başlamadı.
+2. Resmî kulüp `wageBudget` sistemi henüz yok.
+3. Free-agent AI basit ihtiyaç/affordability modelidir; oyuncu tercihi/itibar/rekabet gerekir.
+4. Manager maaşı/kontratı, başka kulüp teklifi ve spesifik transfer talebi yok.
+5. Taksit/kiralık ilk kalibrasyondur; satın alma opsiyonu, bonus, sell-on ve takas yok.
+6. M9 taraftar güveni henüz seyirci/bilet/mağaza/sponsor/protestoyu etkilemez.
+7. `identityTrust` M9'da nötrdür.
+8. M10 medya yalnız `managerFuture` konusunu ve aynı sezon çözümlemesini kapsar; serbest metin, çok yıllı medya hikâyesi ve ekonomik/fan geri besleme yok.
+9. Sponsor, vaat, tesis ve kriz henüz çekirdeğe bağlanmadı.
+10. Flutter UI/APK bilinçli olarak başlamadı.
 
 ---
 
-# 10. Sıradaki milestone — M10
+# 10. Sıradaki milestone — M11
 
-## Medya Hafızası + Başkan Açıklamaları Çekirdeği
+## Başkan Vaatleri + Takip Çekirdeği
 
-Amaç projenin diğer imza farkını kanıtlamak:
+Amaç:
 
-> **Medya başkanın dün söylediğini unutmayacak.**
+> **Başkan verdiği sözü sezon sonunda unutamayacak.**
 
-İlk M10 kapsamı:
+İlk M11 kapsamı:
 
-- `MediaStatement` domain modeli,
-- konu/target/stance/season bilgisi,
-- kamuya açık başkan desteği/eleştirisi gibi deterministik açıklama senaryoları,
-- geçmiş açıklama ile sonraki yönetim davranışının uyum/çelişki kontrolü,
-- 0–100 `mediaCredibility`,
-- neden kodlu credibility değişimi,
-- örneğin teknik direktöre güçlü destek verip kısa sürede kovmanın güvenilirlik cezası,
-- açıklamanın hemen değil sonraki olayda çözümlenebilmesi,
-- same-seed replay ve 20 sezon credibility dağılım guard'ı.
+- `Promise` / `PromiseType` domain modeli,
+- ölçülebilir sezon hedefleri,
+- örneğin borcu azaltma, lig hedefi, genç oyuncu kullanımı, transfer harcama disiplini gibi deterministic promise türleri,
+- başlangıç baseline + hedef + deadline,
+- sezon boyunca progress,
+- `fulfilled / failed / partial` çözümlemesi,
+- neden/sonuç kaydı,
+- aynı seed replay,
+- 20 sezon promise completion dağılımı,
+- ilk aşamada fan/media puanını değiştirmeden gözlemsel doğrulama.
 
-M10 ilk aşamada başkan vaat sistemi, seçim ve Flutter UI içermez. Vaatler ayrı milestone olarak ele alınacaktır.
+M11 seçim, Flutter UI ve serbest metin vaat içermez. Vaatlerin taraftar/media geri beslemesi sonraki katmanda bağlanacaktır.
 
 ---
 
