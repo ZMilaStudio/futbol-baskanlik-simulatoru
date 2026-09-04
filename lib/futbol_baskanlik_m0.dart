@@ -166,6 +166,7 @@ export 'src/world/world_career_hooks.dart';
 export 'src/world/world_career_report.dart';
 export 'src/world/world_career_season.dart';
 export 'src/world/world_career_simulation_result.dart';
+export 'src/world/world_career_validator.dart';
 export 'src/world/world_checkpoint.dart';
 export 'src/world/world_finance_hooks.dart';
 export 'src/world/world_league.dart';
