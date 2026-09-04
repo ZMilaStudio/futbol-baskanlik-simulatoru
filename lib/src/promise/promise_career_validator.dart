@@ -65,26 +65,32 @@ class PromiseCareerValidator {
               promise.targetDebtReductionBps == null) {
             issues.add('Invalid debt-reduction promise context: ${promise.id}.');
           }
+          break;
         case PresidentPromiseType.stabilizeFinances:
           if (!context.financialStress) {
             issues.add('Invalid financial-stability context: ${promise.id}.');
           }
+          break;
         case PresidentPromiseType.finishTopHalf:
           if (promise.targetLeaguePosition != context.leagueSize ~/ 2) {
             issues.add('Invalid top-half target: ${promise.id}.');
           }
+          break;
         case PresidentPromiseType.avoidRelegation:
           if (context.expectedPosition < context.leagueSize - 3) {
             issues.add('Avoid-relegation promise is not context-aware: ${promise.id}.');
           }
+          break;
         case PresidentPromiseType.earnPromotion:
           if (context.tier == LeagueTier.first || context.expectedPosition > 5) {
             issues.add('Promotion promise is not context-aware: ${promise.id}.');
           }
+          break;
         case PresidentPromiseType.challengeTitle:
           if (context.tier != LeagueTier.first || context.expectedPosition > 3) {
             issues.add('Title promise is not context-aware: ${promise.id}.');
           }
+          break;
       }
     }
 
