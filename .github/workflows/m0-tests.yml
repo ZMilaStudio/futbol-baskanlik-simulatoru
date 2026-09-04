@@ -73,3 +73,6 @@ jobs:
 
       - name: Run M12 20-season promise fan career
         run: dart run tool/run_m12_promise_fan_career.dart 20260903
+
+      - name: Run M13 20-season promise media career
+        run: dart run tool/run_m13_promise_media_career.dart 20260903
