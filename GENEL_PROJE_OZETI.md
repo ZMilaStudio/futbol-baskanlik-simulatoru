@@ -3,7 +3,7 @@
 
 **Son güncelleme:** 04.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru` — Public / proprietary notice  
-**Aktif teknik aşama:** **M21 PASS ve main'e merge — sıradaki M22 / Profile Feedback Orchestration I**  
+**Aktif teknik aşama:** **M22 PASS ve main'e merge — sıradaki M23 / Başkan Risk İştahı → Transfer Pazarlık Davranışı I**  
 **Proje önceliği:** Yan geliştirme; aktif ana projeleri aksatmayacak.  
 **UI/APK:** Bilinçli olarak başlanmadı; önce simülasyon çekirdeği.
 
@@ -43,7 +43,8 @@ Kalıcı ilkeler:
 22. Geri besleme döngüsü varsa convergence/cycle açıkça test edilmelidir.
 23. Profil trait'i davranışa bağlanırken **trait'in doğrudan kontrol ettiği karar eşiği** ile aggregate dünya sonucu birbirine karıştırılmamalıdır.
 24. Yeni trait eklemek, aynı full-career fixed-point baseline'ını katman katman gereksiz tekrar çözerek CI maliyetini sınırsız büyütmemelidir.
-25. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
+25. Canonical guard kapsamı korunurken duplicate full-career hesaplar tek nested rapordan yeniden kullanılmalıdır.
+26. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
 
 ---
 
@@ -71,12 +72,13 @@ Başkanlık zinciri:
 - M18: `managerPatience` gerçek manager dismissal kararlarına bağlanır,
 - M19: patience-aware world reputasyon ve seçimlere geri beslenir,
 - M20: `financialDiscipline` gerçek transfer affordability/bütçe sınırlarına bağlanır,
-- M21: `transferAmbition` gerçek transfer aktivite slotlarına bağlanır.
+- M21: `transferAmbition` gerçek transfer aktivite slotlarına bağlanır,
+- M22: M19–M21 canonical profile-feedback doğrulamasını tek-pass nested orchestration ile ölçeklenebilir hale getirir; oyun davranışını değiştirmez.
 
 M17 trait'leri:
 
 - `financialDiscipline` — **bağlı / M20**
-- `riskAppetite` — henüz bağlı değil
+- `riskAppetite` — henüz bağlı değil; **M23 adayı**
 - `transferAmbition` — **bağlı / M21**
 - `youthOrientation` — henüz bağlı değil
 - `managerPatience` — **bağlı / M18**
@@ -94,7 +96,7 @@ M18 iki geçişliydi:
 
 ## M19 feedback mimarisi
 
-M19 bu borcu deterministik **fixed-point replay** ile kapattı:
+M19 deterministik **fixed-point replay** ile feedback döngüsünü kapattı:
 
 `president timeline → managerPatience → manager/world → promise/fan/media/reputasyon → election/turnover → president timeline`
 
@@ -117,7 +119,7 @@ M20, M19 final feedback çözümünü baseline alır ve timeline'dan aynı anda 
 - `managerPatience` → manager dismissal eşikleri,
 - `financialDiscipline` → transfer bütçe/affordability eşikleri.
 
-Yeni `TransferBudgetPolicy` üç gerçek sınır taşır:
+`TransferBudgetPolicy` üç gerçek sınır taşır:
 
 - `reserveCash`,
 - `windowSpendCapBps`,
@@ -167,21 +169,55 @@ M21 feedback zinciri:
 
 `M20 final president timeline → patience + discipline + ambition → advanced world → promise/fan/media/reputation → election → new president timeline → fixed point`.
 
+## M22 profile-feedback orkestrasyonu
+
+M22 **davranış değiştirmeyen** teknik ölçeklenebilirlik milestone'udur.
+
+Sorun: M21 sonunda aynı canonical 20 sezonluk M19/M20/M21 zincirleri hem `dart test` içinde hem bağımsız runner'larda tekrar tekrar çözülüyor, CI `6:10` seviyesine çıkıyordu.
+
+Temel gözlem:
+
+- `PresidentTransferAmbitionFeedbackReport` zaten `m20Baseline` taşır,
+- `PresidentFinancialDisciplineFeedbackReport` zaten `m19Baseline` taşır.
+
+Dolayısıyla tek canonical M21 çözümü aynı anda M19, M20 ve M21 kanıtını taşır.
+
+M22 uygulaması:
+
+- `tool/profile_feedback_canonical_guard.dart` eklendi,
+- M19/M20/M21 canonical denge guard'ları ortaklaştırıldı,
+- M19 ve M20 runner canonical seed'de aynı guard'ları kullanır,
+- M21 runner canonical seed'de tek simülasyondan:
+  - `report.m20Baseline.m19Baseline` → M19,
+  - `report.m20Baseline` → M20,
+  - `report` → M21
+  doğrular,
+- üç pahalı full-career canonical test `canonical-feedback` tag'i aldı,
+- normal test turu `dart test --exclude-tags canonical-feedback`,
+- hızlı policy, neutral-regression, determinism ve M19 multi-seed convergence testleri normal test turunda kaldı,
+- ayrı M19/M20 canonical CI runner tekrarları kaldırıldı,
+- tek `Run M19-M21 canonical profile feedback career` adımı kaldı.
+
+M22 canonical davranış invariant'ı:
+
+> **Aynı seed aynı M19/M20/M21 dünyasını üretir; yalnız gereksiz tekrar çözümü kaldırılır.**
+
 ---
 
 # 3. GitHub / CI disiplini
 
-Tek workflow:
+Tek hafif workflow:
 
 - `dart pub get`
 - `dart analyze`
-- tüm testler
+- `dart test --exclude-tags canonical-feedback`
 - M0 100 sezon batch
-- M1–M21 20 sezon headless runner zinciri
+- M1–M18 20 sezon headless runner zinciri
+- tek M19–M21 canonical profile-feedback runner
 
-APK/AAB, büyük binary veya `actions/upload-artifact` yok. Artifact hedefi `0`.
+APK/AAB, büyük binary veya `actions/upload-artifact` yok. Artifact hedefi `0`. Timeout tekrar `5 dk`.
 
-M0–M21 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu.
+M0–M22 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu.
 
 Son merge'ler:
 
@@ -191,17 +227,22 @@ Son merge'ler:
 - M19 PR #20 → `183749baab40403b381003c527ce62fad946a9a6`
 - M20 PR #21 → `b5f2c9488556855972b1be93f37dcb3114981d2e`
 - M21 PR #22 → `d24670a5ea9dfa51ee32f7fe0bdda894e0972856`
+- M22 PR #23 → `4ec358cf7131087176426ba5767ab4e4e65a36b3`
 
-M18 merge-sonrası main güvenlik CI `33894772996`: PASS, artifact `0`.
-M19 final PR CI `33911708201`: analyzer PASS, `73` test PASS, M0–M19 runner PASS, artifact `0`.
-M20 ilk ölçüm CI `33913165685`: analyzer PASS, `75` test PASS, M0–M19 runner PASS; canonical M20 baseline üretildi.
-M20 final PR CI `33914123377`: analyzer PASS, `76` test PASS, M0–M20 runner PASS, artifact `0`, yaklaşık `4 dk 15 sn`.
-M20 final kaliteye giderken ara CI `33913975481` yalnız test matcher tipinden kırıldı; model/katsayı değişmeden Money matcher'ları düzeltildi.
-M20 merge sonrası main güvenlik CI `33914763660`: PASS, M0–M20 runner zinciri korunuyor.
-M21 ilk ölçüm CI `33915601227`: analyzer PASS, `79` test PASS, M0–M20 runner PASS; canonical M21 baseline üretildi.
-M21 final PR CI `33916301967`: analyzer PASS, `79` test PASS, M0–M21 runner PASS, artifact `0`, yaklaşık `6 dk 10 sn`.
+CI geçmişi:
 
-M21 ile 5 dakikalık timeout fiilen yetersiz kaldığı için workflow timeout'u `7` dakikaya çıkarıldı. Bu yükseltme yeni trait'ler için sınırsız süre artırma politikası değildir; M22'nin ana nedeni bu tekrar maliyetini düşürmektir.
+- M18 merge-sonrası main `33894772996`: PASS, artifact `0`.
+- M19 final PR `33911708201`: analyzer PASS, `73` test PASS, M0–M19 runner PASS, artifact `0`.
+- M20 ilk ölçüm `33913165685`: analyzer PASS, `75` test PASS, M0–M19 runner PASS; canonical M20 baseline üretildi.
+- M20 final PR `33914123377`: analyzer PASS, `76` test PASS, M0–M20 runner PASS, artifact `0`, yaklaşık `4:15`.
+- M20 ara CI `33913975481`: yalnız Money test matcher tipinden kırıldı; model/katsayı değiştirilmeden matcher düzeltildi.
+- M20 merge sonrası main `33914763660`: PASS.
+- M21 ilk ölçüm `33915601227`: analyzer PASS, `79` test PASS, M0–M20 runner PASS; canonical M21 baseline üretildi.
+- M21 final PR `33916301967`: analyzer PASS, `79` test PASS, M0–M21 runner PASS, artifact `0`, yaklaşık `6:10`; timeout `7 dk`ya çıkarıldı.
+- M22 ilk ölçüm `33917924101`: analyzer PASS, `76` hızlı/non-duplicate test PASS, M0–M18 PASS, birleşik M19–M21 canonical PASS, artifact `0`, yaklaşık `2:06`.
+- M22 final PR `33918259144`: `5 dk` timeout altında analyzer + `76` hızlı test + M0–M18 + birleşik M19–M21 canonical PASS, artifact `0`.
+
+M22 ile M21 finaline göre yaklaşık `4:04`, yani yaklaşık `%66` CI süre kazanımı sağlandı. Bu kazanç test/guard kalitesini azaltarak değil, aynı full-career raporların duplicate çözümünü kaldırarak elde edildi.
 
 ---
 
@@ -429,6 +470,38 @@ Final kalite:
 
 Ayrıntı: `M21_BASKAN_TRANSFER_HIRSI_TRANSFER_AKTIVITESI.md`.
 
+## M22 — Profile Feedback Orchestration I — PASS
+
+M22 yeni oyun davranışı eklemez. M19/M20/M21 canonical full-career doğrulamasındaki duplicate hesapları tek nested M21 çözümünde birleştirir.
+
+İlk ölçüm CI `33917924101`:
+
+- analyzer PASS,
+- `76` hızlı/non-duplicate test PASS,
+- M0–M18 runner PASS,
+- birleşik M19–M21 canonical runner PASS,
+- nested M19 final `160/80`,
+- nested M20 final `158/82`, manager `83`, transfer `153`,
+- M21 final **birebir korunur**: `4 iterasyon / 150-90 / 80 manager / 161 transfer`,
+- M21 volume `1.461,55M`, installment `73 / 247,61M`, cash/debt/emergency `1.180,63M / 330,25M / 123,89M`, unique presidents `138`,
+- validation `0`, artifact `0`,
+- toplam süre yaklaşık `2:06`.
+
+M21 final `6:10` → M22 `2:06`: yaklaşık `4:04` / `%66` kazanım. Timeout `7 → 5 dk` geri indirildi.
+
+Final kalite:
+
+- final PR CI `33918259144` PASS,
+- `5 dk` timeout altında analyzer PASS,
+- `76` hızlı/non-duplicate test PASS,
+- M0–M18 runner PASS,
+- birleşik M19–M21 canonical runner PASS,
+- artifact `0`,
+- simülasyon davranışı/canonical sonuç değişmedi,
+- PR #23 squash merge `4ec358cf7131087176426ba5767ab4e4e65a36b3`.
+
+Ayrıntı: `M22_PROFILE_FEEDBACK_ORKESTRASYON_I.md`.
+
 ---
 
 # 5. Uzun kariyer kalite hedefi
@@ -450,7 +523,7 @@ Aday metadata: `saveVersion`, `gameVersion`, `simulationVersion`, `dataVersion`,
 
 Kalıcı state adayları: installment/active loans, `FanState`, `MediaState`, aktif vaat + kompakt history, `PresidentTenureState`, president ID, election/turnover history, manager assignment ve kişisel reputasyon state. Management profile president ID+seed'den deterministik yeniden üretilebilir.
 
-Fixed-point M21 headless kariyer çözümü için bütün timeline yeniden üretilebilir. Gerçek interactive save/load aşamasında incremental season orchestration gereksinimi yeniden değerlendirilecek.
+Fixed-point M21 headless kariyer çözümü için bütün timeline yeniden üretilebilir. M22 yalnız test/CI tekrarını azaltır; gerçek interactive save/load için incremental season orchestration gereksinimi hâlâ ayrıca değerlendirilecektir.
 
 ---
 
@@ -469,49 +542,57 @@ Fixed-point M21 headless kariyer çözümü için bütün timeline yeniden üret
 11. M18 iki-geçişli seçim borcu M19'da fixed-point feedback ile kapandı; M20 ve M21 bu yaklaşımı yeni trait'lerle genişletti. Bu hâlâ literal incremental sezon orkestratörü değildir.
 12. M19 canonical seed `4`, M20 `5`, M21 `4` iterasyonda yakınsadı. M19 için temsilî 3 kısa seed de yakınsadı; M20/M21 için geniş çoklu-seed convergence testi ileride yapılmalı.
 13. M20/M21 aggregate finans sonuçları trait'in doğrudan causal yönü olarak yorumlanmamalıdır; doğrudan policy invariant'ları ayrı test edilir.
-14. M21 final CI `6:10` ile nested fixed-point tekrar maliyetini görünür hale getirdi. M22'den önce yeni trait eklemek teknik borcu büyütür.
-15. Sponsor, tesis ve kriz çekirdeğe bağlanmadı.
-16. Kullanıcı seçim kaybı sonrası game-over/başka kulüp kariyeri yok.
-17. Flutter UI/APK bilinçli olarak başlamadı.
+14. M21 final CI `6:10` ile duplicate full-career maliyetini görünür hale getirdi; M22 bu tekrarı kaldırıp aynı canonical sonucu `2:06` seviyesinde doğruladı.
+15. M22 CI optimizasyonudur; engine içindeki historical fixed-point nesting tamamen kaldırılmış değildir. Yeni trait'ler yine mevcut feedback yapısına dikkatle eklenmelidir.
+16. Sponsor, tesis ve kriz çekirdeğe bağlanmadı.
+17. Kullanıcı seçim kaybı sonrası game-over/başka kulüp kariyeri yok.
+18. Flutter UI/APK bilinçli olarak başlamadı.
 
 ---
 
-# 8. Sıradaki milestone — M22
+# 8. Sıradaki milestone — M23
 
-## Profile Feedback Orchestration I / Performans Refactor
+## Başkan Risk İştahı → Transfer Pazarlık Davranışı I
 
 Amaç:
 
-> **Davranışı değiştirmeden aynı M21 dünyasını daha az tekrar hesapla.**
+> **Aynı bütçe ve aynı transfer aktivitesine sahip iki başkandan riskli olanı, pazarlıkta daha yüksek fiyat eşiğine çıkabilmeli; temkinli olan daha erken vazgeçmeli.**
 
-Neden şimdi:
+Trait ayrımı kesin:
 
-- M19 fixed-point kendi baseline'ını çözüyor,
-- M20 önce M19'u çözüp sonra kendi fixed-point'ini çözüyor,
-- M21 önce M20'yi (dolayısıyla M19'u) çözüp sonra kendi fixed-point'ini çözüyor,
-- test + bağımsız runner bu full-career zincirlerini yeniden çalıştırıyor,
-- final CI `4:15` (M20) → `6:10` (M21) seviyesine çıktı.
+- `financialDiscipline` = **ne kadarını karşılayabilir / ne kadar rezerv bırakır**,
+- `transferAmbition` = **kaç transfer slotu kovalar**,
+- `riskAppetite` = **mevcut affordability içinde pazarlıkta ne kadar yukarı çıkmaya razı olur**,
+- `youthOrientation` = M23'e bağlanmayacak.
 
 İlk kapsam:
 
-- ortak profile-feedback orchestration/replay katmanı tasarla,
-- converged baseline/report'un üst katmana doğrudan verilebilmesini sağla,
-- M19/M20/M21 public eski yollarını geriye uyumlu tut,
-- aynı canonical world'ü gereksiz tekrar solve eden nested çağrıları azalt,
-- M21 davranış katsayılarına dokunma,
-- canonical M21 sonucu **birebir** korunmalı:
-  - iterations `4`,
-  - reelected/lost `150/90`,
-  - manager `80`,
-  - transfers `161`,
-  - volume `1.461,55M`,
-  - installment `73 / 247,61M`,
-  - cash/debt/emergency `1.180,63M / 330,25M / 123,89M`,
-- M0–M21 bütün eski test/runner signature'ları korunmalı,
-- artifact `0`,
-- CI süresinde ölçülebilir anlamlı düşüş hedeflenmeli; kalite/test kapsamı azaltılarak hız kazanılmayacak.
+- yalnız `riskAppetite` gerçek transfer teklif/pazarlık tavanına bağlanacak,
+- ilk aday karar noktası mevcut `buyer max bid` / `maxBidBps`,
+- neutral `riskAppetite=60` mevcut teklif davranışını birebir korumalı,
+- düşük risk daha düşük bid ceiling, yüksek risk daha yüksek bid ceiling üretmeli,
+- teklif tavanı affordability/bütçeyi aşmak için arka kapı olmayacak,
+- M20 reserve/window/commitment sınırları aynen korunacak,
+- M21 `1/2/3` slot mantığı aynen korunacak,
+- seller ask değişmeyecek,
+- candidate shortlist `8` değişmeyecek,
+- pozisyon ihtiyacı değişmeyecek,
+- oyuncu yaş/potential tercihleri değişmeyecek,
+- `youthOrientation` eklenmeyecek,
+- neutral provider yolu eski advanced-world signature'ını birebir korumalı,
+- doğrudan causal invariant: **low-risk max bid < neutral max bid < high-risk max bid**,
+- aggregate transfer sayısı/hacmi kontrollü kalmalı; piyasa hiperaktif olmamalı,
+- feedback convergence/cycle güvenliği korunmalı.
 
-M22 bir oyun-balance milestone'u değildir; **teknik ölçeklenebilirlik kapısıdır**. M22 sonrasında sıradaki davranış trait'i adayı `riskAppetite` olacaktır.
+M23 CI kuralı:
+
+- M22'nin birleşik canonical profile-feedback doğrulaması genişletilecek,
+- M19/M20/M21 için yeniden ayrı full-career koşular eklenmeyecek,
+- duplicate canonical test/runner geri getirilmeyecek,
+- artifact `0`,
+- 5 dakikalık CI hedefi korunacak; gerekirse önce tekrar maliyeti optimize edilecek, timeout körlemesine artırılmayacak.
+
+Önerilen branch: `m23-president-risk-appetite-negotiation`.
 
 ---
 
