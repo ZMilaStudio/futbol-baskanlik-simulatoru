@@ -33,7 +33,7 @@ jobs:
         run: dart analyze
 
       - name: Run tests
-        run: dart test
+        run: dart test --exclude-tags canonical-feedback
 
       - name: Run M0 100-season batch
         run: dart run tool/run_m0_batch.dart 100
@@ -92,11 +92,5 @@ jobs:
       - name: Run M18 20-season president manager patience career
         run: dart run tool/run_m18_president_manager_patience_career.dart 20260903
 
-      - name: Run M19 20-season president manager election feedback career
-        run: dart run tool/run_m19_president_manager_election_feedback.dart 20260903
-
-      - name: Run M20 20-season president financial discipline feedback career
-        run: dart run tool/run_m20_president_financial_discipline_feedback.dart 20260903
-
-      - name: Run M21 20-season president transfer ambition feedback career
+      - name: Run M19-M21 canonical profile feedback career
         run: dart run tool/run_m21_president_transfer_ambition_feedback.dart 20260903
