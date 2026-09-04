@@ -1,0 +1,1 @@
+{"checksum":"69ef6b9c","format":"zmila-fbs-career","payload":{"baseline":{"alpha":70.0,"beta":65.0},"clubs":[{"id":"alpha","name":"Alpha FK","strength":70.5},{"id":"beta","name":"Beta SK","strength":64.75}],"completed":2,"initialSeason":3,"seed":77,"simVersion":1,"start":"2030-07-01"},"saveVersion":0}
