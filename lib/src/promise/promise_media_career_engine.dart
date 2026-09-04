@@ -5,6 +5,7 @@ import '../manager/manager_career_report.dart';
 import '../media/media_career_engine.dart';
 import '../media/media_credibility_engine.dart';
 import '../media/media_state.dart';
+import '../transfer/advanced_transfer_career_report.dart';
 import '../transfer/advanced_transfer_world_career_engine.dart';
 import '../world/world_league.dart';
 import 'promise_career_engine.dart';
@@ -51,6 +52,22 @@ class PromiseMediaCareerEngine {
       seasons: managerController.seasons,
       finalAssignments: managerController.finalAssignments,
     );
+    return simulateFromAdvancedReport(
+      advancedReport: advancedReport,
+      managerReport: managerReport,
+      config: config,
+    );
+  }
+
+  PromiseMediaCareerReport simulateFromAdvancedReport({
+    required AdvancedTransferCareerReport advancedReport,
+    required ManagerCareerReport managerReport,
+    required SimulationConfig config,
+  }) {
+    if (managerReport.worldReport.signature != advancedReport.worldReport.signature) {
+      throw ArgumentError('Manager report must belong to the supplied advanced world.');
+    }
+
     final baselineMediaReport = mediaEngine.fromManagerReport(
       managerReport: managerReport,
       config: config,
