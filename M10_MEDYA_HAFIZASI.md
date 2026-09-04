@@ -1,7 +1,7 @@
 # Futbol Başkanlık Simülatörü — M10 Medya Hafızası + Başkan Açıklamaları
 
 **Milestone:** M10 — Medya Hafızası + Başkan Açıklamaları Çekirdeği  
-**Durum:** PASS adayı — kabul baseline CI ile doğrulandı; final kapanış commit'i bekleniyor.
+**Durum:** **PASS — kalite kapısı kapandı.**
 
 ## Amaç
 
@@ -34,7 +34,7 @@ Aynı başlangıç credibility `60` iken:
 
 - **“Hocanın arkasındayız”** (`strongSupport`) denip hoca değiştirilirse `supportBroken`, contradiction ve `-10` credibility oluşur.
 - **“Sonuçların düzelmesini bekliyoruz / herkes performansından sorumludur”** çizgisindeki pressure açıklamasından sonra hoca değiştirilirse `pressureFollowedByChange`, consistent ve `+3` credibility oluşur.
-- güçlü destek verilip hoca tutulursa küçük pozitif güvenilirlik katkısı oluşur.
+- güçlü destek verilip hoca tutulursa `supportHonored`, consistent ve `+2` oluşur.
 
 Bu, açıklamanın yalnız dekoratif metin değil sonraki yönetim kararına bağlı hafıza kaydı olduğunu kanıtlar.
 
@@ -86,7 +86,7 @@ M10 media katmanı aynı seed'de deterministic replay üretir ve manager-only si
 
 ## Kalite kapısı
 
-Geniş regresyon guard hedefleri:
+Geniş regresyon guard'ları:
 
 - statement `300–700`
 - contradiction `10–80`
