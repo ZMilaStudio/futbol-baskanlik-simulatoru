@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Teknik durum
 
-M0–M18 tamamlandı. **M19 — Başkan Sabrı + Seçim Geri Besleme Döngüsü** PASS adayıdır ve PR #20 kalite kapısındadır.
+**M0–M19 tamamlandı ve otomatik regresyon zincirinde tutuluyor.** Sıradaki aktif milestone: **M20 — Başkan Mali Disiplini → Transfer Bütçe Davranışı I.**
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -16,7 +16,7 @@ M0–M18 tamamlandı. **M19 — Başkan Sabrı + Seçim Geri Besleme Döngüsü*
 - M16: başkan devrinde kişisel itibar handover
 - M17: başkan yönetim profili + 6 arketip / 5 trait
 - M18: `managerPatience` → gerçek teknik direktör dismissal kararları
-- **M19: patience-aware world → reputasyon → seçim → yeni president timeline fixed-point feedback**
+- **M19: patience-aware world → reputasyon → seçim → yeni president timeline fixed-point feedback — PASS**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -55,7 +55,7 @@ M19, M18'in iki-geçişli teknik borcunu fixed-point replay ile kapatır:
 
 Daha önce görülen timeline tekrar oluşursa cycle sayılır ve validator başarısız olur. Varsayılan maksimum iterasyon `8`.
 
-Seed `20260903` M19 ilk kabul sonucu:
+Seed `20260903` M19 kabul sonucu:
 
 - `4` iterasyonda convergence
 - cycle `false`
@@ -75,6 +75,15 @@ Iteration path:
 Sıra: `manager changes / transfers / reelected-lost`.
 
 Bu çözüm literal tek-geçişli sezon orkestratörü değildir; final dünya ve final president timeline'ın birbirini üreten deterministik, tarihsel olarak self-consistent fixed point'idir. Gelecek başkanın trait'i geçmiş sezona uygulanmaz.
+
+M19 final kalite:
+
+- analyzer PASS
+- `73` test PASS
+- temsilî seed `19011`, `19012`, `19013` convergence PASS
+- M0–M19 runner zinciri PASS
+- artifact `0`
+- PR #20 squash merge: `183749baab40403b381003c527ce62fad946a9a6`
 
 Ayrıntılar:
 
@@ -110,7 +119,7 @@ dart run tool/run_m19_president_manager_election_feedback.dart 20260903
 
 Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M19 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
 
-## Sıradaki milestone adayı
+## Sıradaki milestone
 
 **M20 — Başkan Mali Disiplini → Transfer Bütçe Davranışı I.**
 
