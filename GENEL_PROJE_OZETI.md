@@ -6,11 +6,11 @@ Son güncelleme: 5 Eylül 2026
 
 ZMila Studio için geliştirilen tam kapsamlı Android mobil futbol kulübü başkanlığı simülasyonu.
 
-Ana kimlik değişmez:
+Değişmez ana kimlik:
 
 > **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 
-Satış fikri:
+Ana satış fikri:
 
 > **Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.**
 
@@ -18,48 +18,66 @@ Alternatif slogan:
 
 > **Hoca gider. Futbolcu gider. Borç kalır. Başkan sensin.**
 
-Oyuncunun ana karar alanları:
+Başkanın ana sorumlulukları:
 
-- kulüp ekonomisi ve borç
-- teknik direktör seçimi/görev güvenliği
+- ekonomi, nakit ve borç
+- teknik direktör seçimi ve görev güvenliği
 - transfer stratejisi
-- altyapı ve tesisler
-- sponsorlar
-- taraftar beklentisi/güveni
+- sözleşme/maaş politikası
+- kiralık/taksit seçenekleri
+- taraftar beklentisi ve güveni
 - medya açıklamaları ve hafıza
 - başkan vaatleri
-- başkanlık seçimleri
-- krizler ve uzun vadeli kulüp sağlığı
+- başkanlık seçimleri ve görev süresi
+- altyapı/tesis/sponsor/kriz sistemleri ilerleyen aşamalarda
+- uzun vadeli kulüp sağlığı
 
-Football Manager benzeri maç içi teknik direktörlük yapılmayacak. Oyuncu diziliş, antrenman, 63. dakika değişiklikleri veya duran top taktiğiyle uğraşmayacak.
+Football Manager benzeri maç içi taktik yönetimi yapılmayacak. Oyuncu diziliş, antrenman, dakika bazlı oyuncu değişikliği veya duran top planlamaz.
 
 Gerçek kulüp/futbolcu/lisanslı materyal kullanılmayacak.
 
 ## 2. Geliştirme stratejisi
 
-Bu proje uzun süre ana aktif proje olmayacak; Kelime Avı / Minik Dedektif gibi mevcut aktif projeleri aksatmayacak küçük ama sağlam altyapı ilerlemeleri yapılacak.
+Futbol Başkanlık Simülatörü diğer aktif ZMila Studio projelerini aksatmadan küçük ama sağlam altyapı milestone'larıyla ilerletilir.
 
-Şu an görsel ekran veya APK hedefi yoktur. Öncelik:
+Şu aşamada görsel ekran/APK ana hedef değildir.
 
-> **Sağlam, deterministik ve uzun kariyerde otomatik test edilebilir simülasyon çekirdeği.**
+> **Önce sağlam, deterministik, uzun kariyerde otomatik test edilebilir simülasyon çekirdeği.**
 
 Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
 
 Repo public tutulur; kaynak kod açık kaynak lisansı altında değildir (`LICENSE.md`).
 
-Codex kredisi gereksiz kullanılmaz. Büyük/refactor/test altyapısı gibi işlerde gerekirse kullanılır; şimdiye kadarki M0–M23 akışı GitHub araçlarıyla yürütüldü.
+Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işlerinde gerekirse kullanılır; çekirdek milestone'ların önemli bölümü doğrudan GitHub araçlarıyla yürütülmüştür.
 
-## 3. Teknik mimari
+## 3. Güncel teknik durum
 
-- Saf Dart simülasyon çekirdeği
+**M0–M24 PASS ve `main` üzerinde.**
+
+M24 squash merge:
+
+`cfdca8f63dfa6c91fd2432031e0e2c34a8101a06`
+
+M24 sonrası dokümantasyon HEAD'i bu özet güncellemesiyle yenilenmiştir.
+
+Aktif sıradaki milestone:
+
+> **M25 — Save/Load + Kayıt Versiyonlama I**
+
+## 4. Teknik mimari
+
+- saf Dart simülasyon çekirdeği
 - Flutter mobil kabuk daha sonra
-- Deterministik seed/replay
-- Cihaz saatinden bağımsız `GameDate`
-- Integer minor-unit `Money`
-- Headless runner + invariant/balance testleri
-- Save/load ve migration daha sonraki milestone, fakat veri modeli sürüm uyumu baştan düşünülüyor
+- deterministik seed/replay
+- cihaz saatinden bağımsız `GameDate`
+- integer minor-unit `Money`
+- headless runner + invariant/balance guard
+- profile feedback için deterministic fixed-point replay
+- convergence/cycle kontrolü
+- neutral trait regresyonu
+- kayıt formatı/migration M25'ten itibaren doğrudan ele alınacak
 - APK/AAB üretmeyen core CI
-- `actions/upload-artifact` yok, artifact hedefi `0`
+- `actions/upload-artifact` yok; artifact hedefi `0`
 
 Dünya ölçeği:
 
@@ -69,55 +87,60 @@ Dünya ölçeği:
 - 14.400 maç / 20 sezon
 - 864 başlangıç oyuncusu
 - terfi/düşme
-- ekonomi, kontrat, transfer, manager, reputasyon ve seçim zinciri
+- ekonomi, oyuncu yaşam döngüsü, kontrat, transfer, manager, taraftar, medya, vaat, seçim ve başkan profili
 
-Canonical kariyer seed'i: `20260903`.
+Canonical kariyer seed'i:
 
-## 4. Kalıcı tasarım prensipleri
+`20260903`
+
+## 5. Kalıcı tasarım ve mühendislik kuralları
 
 1. Başkan teknik direktör değildir.
-2. Mobil arayüz sade, arka plan sistemi derin olabilir.
+2. Mobil UI sade, arka plan sistemi derin olabilir.
 3. Oyuncuya gereksiz sayı bombardımanı yapılmaz.
-4. Taraftar bağlamı anlar; ekonomik gerçekliği yok saymaz.
-5. Transfer AI gerçekçi ve alternatif finansman yollarını kullanabilir.
-6. Doğru karar her zaman açık değildir.
-7. Kısa vadeli sportif başarı ile uzun vadeli mali sağlık arasında gerilim vardır.
-8. Geçmiş açıklamalar/vaatler unutulmaz.
-9. Sonuçlar aylar/sezonlar sonra dönebilir.
+4. Taraftar bağlamı ve ekonomik gerçekliği anlamalıdır.
+5. Transfer AI farklı finansman/karar yolları kullanabilir.
+6. Doğru karar her zaman açık olmamalıdır.
+7. Kısa vadeli sportif başarı ile uzun vadeli mali sağlık arasında gerilim olmalıdır.
+8. Geçmiş açıklamalar ve vaatler unutulmamalıdır.
+9. Karar sonuçları aylar/sezonlar sonra geri dönebilir.
 10. Uzun kariyer otomatik test edilir.
 11. İlk sürüm gereksiz kapsamla şişirilmez.
-12. Bir başkan trait'i ilk bağlandığında yalnız tek karar noktasına etki eder; causal yön izole tutulur.
+12. Bir başkan trait'i ilk davranış bağlantısında yalnız tek karar noktasına etki eder.
 13. Neutral trait değeri eski davranışı birebir korumalıdır.
 14. Feedback döngülerinde convergence/cycle kontrolü zorunludur.
-15. Duplicate full-career canonical hesapları büyütülmez.
+15. Aynı canonical full-career hesaplar CI içinde gereksiz tekrar edilmez.
+16. Aggregate metrik yönü, izole trait'in causal ürünüymüş gibi yorumlanmaz; causal invariant doğrudan test edilir.
+17. Canlı GitHub durumu eski sohbet notlarından üstündür.
 
-## 5. Milestone geçmişi
+## 6. Milestone geçmişi
 
 ### M0 — Deterministik sezon çekirdeği — PASS
 
-- temel lig/fixture/match simulation
+- lig/fixture/match simülasyonu
 - deterministic replay
 - 100 sezon batch invariant testi
 
 ### M1 — 20 sezon kariyer — PASS
 
-- sezon takvimi ve ardışık kariyer
+- ardışık sezon kariyeri
 - custom başlangıç sezonu/tarih desteği
 
 ### M2 — Oyuncu yaşam döngüsü — PASS
 
-- yaşlanma/emeklilik
+- yaşlanma
+- emeklilik
 - genç oyuncu üretimi
-- uzun vadede kadro devamlılığı
+- uzun vadeli kadro devamlılığı
 
 ### M3 — Ekonomi — PASS
 
 - exact `Money`
 - sezon gelir/gider akışı
-- borç/cash/financial health
+- nakit/borç/financial health
 - emergency borrowing
 
-Denge denemelerinde universal prosperity/collapse yaratacak ayarlar reddedildi. Ekonomi tek yönlü zenginleşme veya kitlesel batış üretmeyecek şekilde guardlandı.
+Universal prosperity veya universal collapse yaratan denemeler reddedildi.
 
 ### M4 — Transfer pazarı — PASS
 
@@ -126,23 +149,24 @@ Denge denemelerinde universal prosperity/collapse yaratacak ayarlar reddedildi. 
 - pozisyon ihtiyacı
 - teklif/ask pazarlığı
 
+Donmuş veya hiperaktif transfer pazarı üreten kalibrasyonlar reddedildi.
+
 ### M5 — 48 kulüp / 3 lig dünya — PASS
 
-- 48 kulüp, 3×16 lig
+- 48 kulüp
+- 3×16 lig
 - 20 sezon world simulation
-- lig hareketleri
-- ekonomi/transfer ölçeklenmesi
-
-Denge kalibrasyonlarında donmuş veya hiperaktif pazar üreten denemeler reddedildi.
+- terfi/düşme
+- ortak ekonomi/transfer ölçeği
 
 ### M6 — Teknik direktör sistemi — PASS
 
 - deterministik manager pool
 - manager profilleri
-- performans / board breakdown / emeklilik değişimleri
-- manager impact gerçek dünya gücünü etkiler
+- performance / board breakdown / retirement değişimleri
+- manager impact gerçek kulüp gücünü etkiler
 
-Eski kabul baseline'ında yaklaşık 82 manager değişimi; sistem hem negatif hem güçlü pozitif manager impact üretebilir.
+Canonical eski baseline yaklaşık 82 manager değişimi; negatif ve güçlü pozitif manager etkileri birlikte oluşur.
 
 ### M7 — Oyuncu sözleşmesi + gerçek maaş — PASS
 
@@ -153,6 +177,7 @@ Eski kabul baseline'ında yaklaşık 82 manager değişimi; sistem hem negatif h
 - contract term market value etkisi
 
 Canonical 20 sezon:
+
 - active final contracts `874`
 - renewals `3757`
 - releases `1143`
@@ -167,93 +192,106 @@ Canonical 20 sezon:
 - maaş paylaşımı
 - parent contract korunumu
 - sezon sonu otomatik dönüş
-- upfront + iki sezon transfer taksiti
-- transfer installment banka borcundan ayrı yükümlülük
+- upfront + gelecek taksit
+- transfer taksiti banka borcundan ayrı yükümlülük
 
-İlk denemeler aşırıydı ve reddedildi:
-- 183 transfer / 146 taksitli + 755 kiralık
-- 145/189, 108/147 ve 86/156 gibi taksit oranları da yüksek bulundu
+Reddedilen ilk dengeler:
+
+- 183 permanent / 146 taksitli + 755 loan
+- taksit oranı 145/189
+- 108/147
+- 86/156
 
 Kabul baseline:
+
 - 140 permanent transfer
 - 68 installment deal
 - 478 loan
-- final active loan 32
+- final active loans `32`
 - installment commitment `234,79M`
-- loan fee `113,15M`
+- loan fees `113,15M`
 - validation `0`
 
 ### M9 — Taraftar beklentisi + güven — PASS
 
-- context-aware fan expectation
-- sporting/financial/transfer/identity trust
+- bağlamsal expectation
+- sporting / financial / transfer / identity trust
 - neden kodları
-- finans ve sportif bağlama göre beklenti
 
-İlk güven modeli `46–68` aralığında fazla sıkıştığı için reddedildi. Mean reversion yumuşatıldı.
+İlk model `46..68` aralığında fazla sıkıştığı için reddedildi.
 
 Kabul:
+
 - 960 club-season snapshot
 - avg trust `64,88`
 - range `44..75`
-- boundary 0
+- boundary `0`
 - 2143 trust reason
 
 ### M10 — Medya hafızası — PASS
 
 - `MediaStatement`
-- stance ve credibility
+- stance
+- credibility
 - açıklama → sonraki manager kararı çelişkisi
 
-İlk model 960 kulüp-sezonun 847'sinde açıklama ürettiği için reddedildi. Kabul baseline:
-- 556 statement
-- 22 contradiction
-- 9 strong-support→dismiss contradiction
-- credibility avg `75,52`, range `49..87`
+İlk model 960 club-season'ın 847'sinde açıklama ürettiği için reddedildi.
+
+Kabul:
+
+- statements `556`
+- contradictions `22`
+- strong-support→dismiss `9`
+- credibility avg `75,52`
+- range `49..87`
 
 ### M11 — Başkan vaatleri — PASS
 
-- preseason context ile ölçülebilir vaat üretimi
+- preseason bağlamdan ölçülebilir vaat
 - fulfilled / partial / broken resolver
-- gelecekteki sezon sonucuna bakarak vaat üretme yasak
+- vaat üretirken sezon sonu geleceğini okuma yasak
 
 Canonical:
-- 960 vaat
-- fulfilled 435
-- partial 169
-- broken 356
+
+- promises `960`
+- fulfilled `435`
+- partial `169`
+- broken `356`
 - avg score `54,84`
 
 ### M12 — Vaat → taraftar güveni — PASS
 
 - tek advanced-world raporu paylaşılır
-- promise sonucu identity trust'a, finans vaatleri financial trust'a kontrollü etki eder
-- M9 baseline tekrar simüle edilmez
-
-Canonical overall trust etkisi küçük tutuldu; identity trust tarihçe ayrıştırması sağlar.
+- promise sonucu identity trust'a kontrollü etki eder
+- finans vaatleri ayrıca financial trust'a etki eder
+- overall fan trust yeni katman tarafından ele geçirilmez
 
 ### M13 — Vaat → medya güvenilirliği — PASS
 
 - manager + advanced transfer + promise + media aynı world
-- fulfilled/partial/broken medya credibility etkisi
+- fulfilled/partial/broken credibility etkisi
 
 Canonical:
-- positive 452 / neutral 154 / negative 354
-- statements 560
-- contradictions 28
+
+- positive `452`
+- neutral `154`
+- negative `354`
+- statements `560`
+- contradictions `28`
 - credibility `74,88 → 72,38`
 
 ### M14 — Başkanlık seçimi I — PASS
 
 - 4 sezonda bir deterministik seçim
 - fan overall/identity + media credibility + promise sicili
-- ilk sürüm gözlemsel, kariyeri kesmez
+- ilk sürüm gözlemsel
 
 Canonical:
-- 240 seçim
-- 158 reelected / 82 lost
+
+- elections `240`
+- reelected/lost `158/82`
 - approval avg `63,24`
-- competitive 72
+- competitive `72`
 
 ### M15 — Başkan görev süresi + devir — PASS
 
@@ -262,31 +300,25 @@ Canonical:
 - turnover history
 
 Canonical:
-- 82 loss = 82 gerçek devir
-- unique presidents 130
+
+- 82 loss = 82 turnover
+- unique presidents `130`
 - avg outgoing tenure `6,93`
 
-Bir kulübün 5/5 seçim kaybetmesi gözlendi; M15'te seçim modelini değiştirmemek için özellikle düzeltilmedi, takip notu olarak bırakıldı.
+Bir kulübün 5/5 seçim kaybetmesi gözlendi; M15'te seçim modelini değiştirmemek için özellikle düzeltilmedi.
 
 ### M16 — Başkan devrinde kişisel itibar — PASS
 
-Başkan değişiminde club-level sporting/financial/transfer trust korunur; kişisel identity/media reputasyonu yeni başkan için kontrollü nötre yaklaşır.
+Başkan değişiminde kurumsal sporting/financial/transfer trust korunur; kişisel identity/media reputasyonu kontrollü nötre yaklaşır.
 
-Handover policy: yaklaşık `%25 geçmiş + %75 neutral`.
+Handover yaklaşık `%25 geçmiş + %75 neutral`.
 
 Canonical seçim `161/79`; personal reputation boundary'lere yapışmaz.
 
-### M17 — Başkan profili / yönetim felsefesi — PASS
+### M17 — Başkan yönetim profili — PASS
 
-6 arketip, 5 trait:
+6 arketip:
 
-- `financialDiscipline`
-- `riskAppetite`
-- `transferAmbition`
-- `youthOrientation`
-- `managerPatience`
-
-Arketipler:
 - balanced
 - prudentBuilder
 - ambitiousSpender
@@ -294,56 +326,68 @@ Arketipler:
 - patientPlanner
 - interventionist
 
+5 trait:
+
+- `financialDiscipline`
+- `riskAppetite`
+- `transferAmbition`
+- `youthOrientation`
+- `managerPatience`
+
 Canonical:
-- 127 profile
+
+- profiles `127`
 - tüm 6 arketip aktif
-- 79 turnover'dan 67'sinde arketip değişiyor
-- 57 anlamlı management philosophy değişimi
+- 79 turnover'dan 67 arketip değişimi
+- 57 meaningful philosophy change
 - avg profile distance `22,47`
 
 ### M18 — Manager patience → hoca karar eşiği — PASS
 
 İlk gerçek profile trait etkisi.
 
-Neutral `managerPatience=60` eski manager eşiklerini korur.
+Neutral `managerPatience=60` eski eşikleri korur.
 
 Canonical:
+
 - manager changes `81→88`
 - decision differences `93`
-- low patience dismissal rate `%16,4`
+- low patience dismissal `%16,4`
 - high patience `%6,2`
-- final manager assignment difference `37/48`
+- final assignment differences `37/48`
 
-M18 bilinçli olarak iki-geçişli shadow/reference timeline kullandı; seçimleri yeni world ile yeniden hesaplamadı. Bu sınırlama M19'da kapatıldı.
+M18 iki-geçişli reference timeline kullandı; election feedback M19'da kapatıldı.
 
 ### M19 — Manager/world ↔ seçim fixed-point — PASS
 
-Feedback zinciri:
+Zincir:
 
-`president timeline → patience-aware world → reputasyon → seçim → yeni president timeline`
-
-Timeline sabitlenene kadar replay edilir.
+`president timeline → patience-aware world → reputasyon → seçim → yeni timeline`
 
 Canonical:
-- 4 iterasyon
-- converged true / cycle false
+
+- `4` iterasyon
+- converged `true`
+- cycle `false`
 - `161/79 → 160/80`
 - manager `81→84`
 - transfers `173→168`
 
-Representative seed'ler `19011/19012/19013` de kısa horizon'da converge eder.
+Representative seeds `19011/19012/19013` kısa horizon'da converge eder.
 
-### M20 — Financial discipline → transfer bütçesi — PASS
+### M20 — Financial discipline → transfer affordability — PASS
 
-Trait yalnız affordability alanına bağlandı.
+Trait yalnız bütçe/affordability alanına bağlandı.
 
 Neutral `60`:
+
 - reserve `2M`
 - window spend cap `%35`
 - installment commitment cap `%90`
 
 Canonical:
-- 5 iterasyon
+
+- `5` iterasyon
 - `160/80 → 158/82`
 - manager `84→83`
 - transfer `168→153`
@@ -351,7 +395,7 @@ Canonical:
 - cash `1.226,59M`
 - debt `363,58M`
 
-Borç/emergency yönü causal ürün invariant'ı değildir; world feedback birleşik sonucudur.
+Borç/emergency yönü causal invariant değildir.
 
 ### M21 — Transfer ambition → aktivite — PASS
 
@@ -364,7 +408,8 @@ Trait yalnız completed transfer slots kontrol eder:
 Neutral `60 = 2` eski davranışı birebir korur.
 
 Canonical:
-- 4 iterasyon
+
+- `4` iterasyon
 - `158/82 → 150/90`
 - manager `83→80`
 - transfers `153→161`
@@ -372,157 +417,258 @@ Canonical:
 - debt `330,25M`
 - emergency `123,89M`
 
-M21 sonrası CI nested fixed-point tekrarları nedeniyle yaklaşık 6:10'a yükseldi; timeout geçici olarak 7 dakikaya çıkarıldı.
+M21 sonrası CI nested fixed-point tekrarları nedeniyle yaklaşık 6:10'a yükseldi; timeout geçici 7 dakikaya çıktı.
 
 ### M22 — Profile Feedback Orchestration I — PASS
 
 Davranış değiştirmeyen performans/refactor milestone'u.
 
-Sorun: M19/M20/M21 canonical 20-sezon kariyerleri hem test hem ayrı runner'larda tekrar çözülüyordu.
+Sorun:
+
+M19/M20/M21 canonical full-career hesapları test ve ayrı runner'larda tekrar çözülüyordu.
 
 Çözüm:
+
 - ortak `tool/profile_feedback_canonical_guard.dart`
 - full canonical testler `canonical-feedback` tag
 - normal test `dart test --exclude-tags canonical-feedback`
-- tek en yeni profile-feedback runner nested önceki raporları/guard'ları doğrular
-- ayrı M19/M20 canonical runner tekrarları kaldırıldı
+- tek en yeni profile-feedback runner nested önceki raporları doğrular
+- ayrı duplicate canonical runner tekrarları kaldırıldı
 
 M21 baseline birebir korundu.
 
-PR #23 merge: `4ec358cf7131087176426ba5767ab4e4e65a36b3`
+PR #23 merge:
 
-Final CI `33918259144`:
-- 76 hızlı/non-duplicate test PASS
-- M0–M18 PASS
-- M19–M21 combined PASS
-- artifact 0
-- süre ~2:51
-- timeout tekrar 5 dk
+`4ec358cf7131087176426ba5767ab4e4e65a36b3`
+
+Final güvenli CI yaklaşık `2:51`; timeout tekrar `5 dk`.
 
 ### M23 — Risk appetite → transfer pazarlık tavanı — PASS
 
-Trait yalnız buyer maximum bid ceiling'e bağlandı.
+Trait yalnız buyer max-bid ceiling'e bağlandı.
 
 Policy:
-- clamp risk `20..90`
-- `(risk−60) × 20 bps`
+
+- clamp `20..90`
+- adjustment `(risk - 60) × 20 bps`
 - clamp `-800..+600 bps`
+- neutral `60 = 0 bps`
 
-Örnek:
-- risk20 → `-800`
-- risk60 → `0`
-- risk90 → `+600`
-
-Neutral provider eski advanced-world signature'ını birebir korur.
-
-Değiştirilmeyen alanlar:
-- seller ask
-- shortlist
-- pozisyon ihtiyacı
-- transfer slotu
-- affordability
-- installment acceptance
-- candidate score
-
-Canonical seed `20260903`:
-- iterations `5`
-- converged true / cycle false
-- elections 240
-- M21 baseline `150/90`
-- M23 final `156/84`
-- election differences 44
-- manager `80→85`
-- transfers `161→133`
-- volume `1.461,55M→1.201,05M`
-- installment deals `73→66`
-- commitment `247,61M→230,59M`
-- cash `1.180,63M→1.195,96M`
-- debt `330,25M→381,94M`
-- emergency `123,89M→189,81M`
-- unique presidents 132
-- validation 0
-
-Iteration path:
-`91/148/156-84 → 88/147/157-83 → 82/140/159-81 → 85/133/156-84 → stable 85/133/156-84`
-
-Aggregate transfer hacmi/borç yönü risk trait'inin causal invariant'ı değildir. Doğrudan invariant:
-
-> `low risk max-bid < neutral max-bid < high risk max-bid`
+Seller ask, shortlist, affordability, slot ve candidate scoring değişmez.
 
 PR #24 merge:
+
 `17142c39bfeed20fce931e8810f30ba4ba98a322`
 
-Final PR CI `33920702055`:
+Canonical:
+
+- `5` iterasyon
+- `150/90 → 156/84`
+- manager `80→85`
+- transfers `161→133`
+- volume `1.201,05M`
+- installment deals `66`
+- commitment `230,59M`
+- cash `1.195,96M`
+- debt `381,94M`
+- emergency `189,81M`
+- validation `0`
+
+Causal invariant yalnız:
+
+> low risk max-bid < neutral max-bid < high risk max-bid
+
+### M24 — Youth orientation → genç/potansiyel transfer tercihi — PASS
+
+M17'deki son davranışsız trait gerçek karar noktasına bağlandı.
+
+Policy:
+
+- `youthOrientation=20` → youth signal `%60`
+- `60` → `%100` / neutral
+- `90` → `%130`
+
+Youth signal:
+
+- gelişim payı `potential - ability`, clamp `0..20`
+- gelişim katkısı `upside × 0.25`
+- yaş `<=23` → `+4`
+- yaş `>=31` → `-4`
+
+M24 yalnız bu signal'i candidate scoring içinde ölçekler.
+
+Değişmeyenler:
+
+- budget/affordability
+- transfer slotu
+- buyer max-bid
+- seller ask
+- installment acceptance
+- shortlist büyüklüğü
+- pozisyon ihtiyacı
+- market value
+- youth intake üretim miktarı/kalitesi
+
+Neutral `60` eski advanced-world signature'ını birebir korur.
+
+Doğrudan causal test:
+
+Aynı gerçek transfer penceresinde düşük yönelim daha hazır `27 yaş / 79 ability` oyuncuyu; yüksek yönelim `20 yaş / 72 ability / 92 potential` oyuncuyu ilk aday olarak seçer.
+
+Canonical M24 — seed `20260903`:
+
+- convergence `4`
+- cycle `false`
+- elections `240`
+- reelected/lost `156/84 → 159/81`
+- election differences `49`
+- manager `85→86`
+- transfers `133→157`
+- volume `1.201,05M → 1.417,94M`
+- installment deals `66→79`
+- commitment `230,59M → 261,26M`
+- cash `1.195,96M → 1.217,05M`
+- debt `381,94M → 347,57M`
+- emergency `189,81M → 144,39M`
+- unique presidents `129`
+- world changed `true`
+- validation `0`
+
+Iteration path:
+
+`91/141/156-84 → 88/154/155-85 → 86/157/159-81 → stable 86/157/159-81`
+
+PR #25 squash merge:
+
+`cfdca8f63dfa6c91fd2432031e0e2c34a8101a06`
+
+Final PR CI `33923631356`:
+
 - analyzer PASS
-- 78 hızlı/non-canonical test PASS
+- normal/non-canonical tests PASS
+- direct candidate-selection causal test PASS
 - M0–M18 runner PASS
-- birleşik M19–M23 canonical runner PASS
-- nested M19 `160/80`, M20 `158/82`, M21 `150/90`
-- M23 `5 iterasyon / 156-84 / 85 manager / 133 transfer`
-- validation 0
-- artifact 0
+- combined M19–M24 canonical runner PASS
+- nested M19/M20/M21/M23 guards PASS
+- artifact `0`
+- 5 dakikalık timeout altında PASS
 
-## 6. Şu an aktif trait durumu
+Aggregate transfer/hacim/borç yönü M24 için causal ürün invariant'ı sayılmaz.
 
-Gerçek davranışa bağlı:
-- managerPatience
-- financialDiscipline
-- transferAmbition
-- riskAppetite
+## 7. Başkan trait durumu — M24 sonrası
 
-Henüz bağlanmadı:
-- **youthOrientation**
+M17'de tanımlanan beş trait'in tamamı artık gerçek davranışa bağlıdır:
 
-## 7. Açık teknik riskler / sınırlar
+| Trait | Gerçek etki | Milestone |
+|---|---|---|
+| `managerPatience` | manager dismissal threshold | M18 |
+| `financialDiscipline` | transfer affordability/budget | M20 |
+| `transferAmbition` | completed transfer slots | M21 |
+| `riskAppetite` | buyer max-bid ceiling | M23 |
+| `youthOrientation` | youth/potential candidate preference | M24 |
 
-- Fixed-point feedback kabul edilmiş çözümdür; literal tek-pass seasonal orchestration değildir.
-- Her yeni trait aynı nested replay modeline yeni duplicate canonical hesap eklememeli; M22 yapısı genişletilmelidir.
-- Long career balance guard'ları canonical seed'e fazla overfit edilmemeli; causal unit/regression invariant'ları ayrı tutulmalı.
-- Aggregate cash/debt/transfer direction tek trait'in causal sonucu olarak yorumlanmamalı.
-- Save/load + migration sistemi henüz gerçek implementation milestone'una gelmedi.
-- UI/Flutter/APK henüz hedef değil.
-- 3D maç motoru, online multiplayer, gerçek kulüpler/futbolcular ilk kapsam dışında.
+Bu nedenle M25'te yeni trait davranışı eklemek yerine uzun kariyerin kritik teknik riskine geçilir.
 
-## 8. Sıradaki milestone — M24
+## 8. Canonical feedback tablosu
 
-**Başkan Altyapı Yönelimi → Genç Oyuncu / Transfer Tercihi I**.
+Seed `20260903`, 20 sezon:
 
-Önerilen ilk ve tek causal kontrol noktası:
+| Milestone | Iterasyon | Reelected/Lost | Manager | Transfer | Hacim |
+|---|---:|---:|---:|---:|---:|
+| M19 | 4 | `160/80` | 84 | 168 | — |
+| M20 | 5 | `158/82` | 83 | 153 | `1.387,32M` |
+| M21 | 4 | `150/90` | 80 | 161 | `1.461,55M` |
+| M23 | 5 | `156/84` | 85 | 133 | `1.201,05M` |
+| M24 | 4 | `159/81` | 86 | 157 | `1.417,94M` |
 
-`youthOrientation` → transfer candidate scoring içindeki gençlik/potansiyel ağırlığı.
+## 9. CI ve kalite politikası
 
-Kural:
-- neutral `youthOrientation=60` mevcut M23 dünyasını birebir korumalı
-- academy intake kalitesi aynı milestone'da değiştirilmemeli
-- genç oyuncu üretim adedi aynı milestone'da değiştirilmemeli
-- affordability / slot / max-bid aynı kalmalı
-- M22 duplicate-free canonical runner M24'e genişletilmeli
+Tek workflow:
 
-M24'ün amacı "altyapı başkanı her zaman daha çok transfer yapar" değildir; aynı transfer pazarı içinde genç/potansiyelli adaya verdiği **tercih ağırlığının** değişmesidir.
+- `dart analyze`
+- `dart test --exclude-tags canonical-feedback`
+- M0 100-season batch
+- M1–M18 ayrı headless runner
+- tek en yeni profile-feedback runner nested M19+ canonical guard'ları birlikte doğrular
 
-## 9. Dokümantasyon
+Current canonical runner:
 
-Son teknik belgeler:
+`tool/run_m24_president_youth_orientation_feedback.dart 20260903`
 
-- `M18_BASKAN_SABRI_TEKNIK_DIREKTOR_KARAR_ESIGI.md`
-- `M19_BASKAN_SABRI_SECIM_GERI_BESLEME_DONGUSU.md`
-- `M20_BASKAN_MALI_DISIPLIN_TRANSFER_BUTCE_DAVRANISI.md`
-- `M21_BASKAN_TRANSFER_HIRSI_TRANSFER_AKTIVITESI.md`
-- `M22_PROFILE_FEEDBACK_ORKESTRASYON_I.md`
-- `M23_BASKAN_RISK_ISTAHI_TRANSFER_PAZARLIK_DAVRANISI.md`
+Kurallar:
 
-## 10. Çalışma kuralı
+- artifact `0`
+- `actions/upload-artifact` yok
+- timeout `5 dk`
+- canonical full-career testler duplicate çalıştırılmaz
+- neutral profile path eski signature'ı korur
 
-Her önemli çalışma sonunda bu dosyada:
-- alınan kararlar
-- tamamlanan işler
-- test/CI sonuçları
-- reddedilen denemeler
-- açık sorunlar
-- sonraki işler
-- teknik mimari
-- simülasyon baselineları
+## 10. Reddedilen / ertelenen fikirler
 
-güncellenir.
+- 3D maç motoru — ilk sürüm kapsamı dışında
+- online multiplayer — ilk sürüm kapsamı dışında
+- gerçek kulüpler/futbolcular/lisanslı logolar — kullanılmayacak
+- FM seviyesinde detaylı taktik/antrenman — başkanlık kimliğine aykırı
+- aşırı kiralık/taksit pazarı — M8 kalibrasyonlarında reddedildi
+- fan trust'ın dar `46..68` bandı — M9'da reddedildi
+- 847 medya açıklaması/960 club-season — M10'da fazla yüksek bulundu
+- başkan profilinin beş trait'ini aynı milestone'da dünyaya bağlama — causal izlenebilirlik için reddedildi
+- aggregate world sonucu tek trait'in causal yönüymüş gibi yorumlama — yasaklandı
 
-Eski kararlarla yeni açık karar çelişirse en yeni karar geçerlidir. Canlı GitHub durumu eski sohbet notlarından üstündür.
+## 11. Açık teknik sınırlar / borçlar
+
+- Current M19+ çözümü literal tek-pass sezon orkestratörü değil; fixed-point replay'dir.
+- Save/load/migration henüz çekirdeğe uygulanmadı; M25 aktif hedefidir.
+- Gerçek cihaz dosya sistemi ve cloud save daha sonra.
+- Altyapı tesis yatırımının youth intake kalitesine etkisi henüz yok.
+- Sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı.
+- Seçim kaybında kullanıcı kariyerinin game-over / başka kulübe geçiş UX'i henüz yok.
+
+## 12. M25 — sıradaki milestone
+
+### Save/Load + Kayıt Versiyonlama I
+
+Amaç UI veya platform depolaması değil; **kayıt sözleşmesini çekirdekte kanıtlamak**.
+
+İlk kapsam:
+
+1. saf Dart save snapshot/domain formatı
+2. açık `saveVersion`
+3. canonical deterministic serialization
+4. deserialize + schema validation
+5. unsupported future version güvenli reddi
+6. bozuk/veri kayıplı save güvenli reddi
+7. checksum/signature
+8. migration registry/fixture altyapısı
+9. en az bir eski-version → current migration testi
+10. save→load→devam ile kesintisiz kariyerin aynı deterministic sonucu üretmesi
+
+İlk aşamada yapılmayacak:
+
+- Android dosya seçici
+- cloud save
+- Google Play Games save
+- şifreleme/anti-cheat
+- çoklu kullanıcı hesabı
+- UI slot ekranı
+
+Önce format, sürüm ve migration sözleşmesi.
+
+## 13. Ana uzun vadeli teknik hedef
+
+UI'dan bağımsız çekirdeğin:
+
+- 48 kulüp
+- 3 lig
+- oyuncu yaşam döngüsü
+- ekonomi
+- manager
+- kontrat
+- transfer/loan/installment
+- taraftar/media/promise
+- seçim/başkan profili
+- save/load
+
+ile **20–30 sezonu deterministik ve migration-safe biçimde** sürdürebilmesi.
+
+Sonrasında 100/500/1000 kariyer batch QA genişletilecek.
