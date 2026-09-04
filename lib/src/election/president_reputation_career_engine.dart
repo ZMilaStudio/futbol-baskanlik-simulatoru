@@ -7,6 +7,7 @@ import '../media/media_season_snapshot.dart';
 import '../media/media_state.dart';
 import '../promise/promise_fan_impact_engine.dart';
 import '../promise/promise_media_career_engine.dart';
+import '../promise/promise_media_career_report.dart';
 import '../promise/promise_media_impact_engine.dart';
 import '../promise/promise_season_snapshot.dart';
 import '../world/world_league.dart';
@@ -45,16 +46,28 @@ class PresidentReputationCareerEngine {
     int seasonCount = 20,
     int electionInterval = 4,
   }) {
-    if (electionInterval <= 0) {
-      throw ArgumentError.value(electionInterval, 'electionInterval');
-    }
-
     final sourceReport = sourceEngine.simulate(
       clubs: clubs,
       leagues: leagues,
       config: config,
       seasonCount: seasonCount,
     );
+    return simulateFromSourceReport(
+      sourceReport: sourceReport,
+      config: config,
+      electionInterval: electionInterval,
+    );
+  }
+
+  PresidentReputationCareerReport simulateFromSourceReport({
+    required PromiseMediaCareerReport sourceReport,
+    required SimulationConfig config,
+    int electionInterval = 4,
+  }) {
+    if (electionInterval <= 0) {
+      throw ArgumentError.value(electionInterval, 'electionInterval');
+    }
+
     final promiseByKey = {
       for (final snapshot in sourceReport.promiseReport.snapshots)
         '${snapshot.promise.seasonIndex}|${snapshot.promise.clubId}': snapshot,
@@ -64,7 +77,7 @@ class PresidentReputationCareerEngine {
       extraReasonProvider: (context) {
         final item = promiseByKey['${context.seasonIndex}|${context.clubId}'];
         if (item == null) {
-          throw StateError('Missing M16 promise fan source.');
+          throw StateError('Missing president reputation promise fan source.');
         }
         return fanImpactEngine.evaluate(item.resolution);
       },
@@ -140,7 +153,7 @@ class PresidentReputationCareerEngine {
             tenure == null ||
             currentFan == null ||
             currentMedia == null) {
-          throw StateError('Missing M16 source state for $key.');
+          throw StateError('Missing president reputation source state for $key.');
         }
 
         final nextFan = currentFan.apply(fanTemplate.reasons);
@@ -196,13 +209,14 @@ class PresidentReputationCareerEngine {
         final fan = fanStates[clubId]!;
         final media = mediaStates[clubId]!;
         final currentTenure = tenureStates[clubId]!;
-        final termPromises = (promisesByClub[clubId] ?? const <PromiseSeasonSnapshot>[])
-            .where((item) =>
-                item.promise.seasonIndex >= termStartSeasonIndex &&
-                item.promise.seasonIndex <= seasonIndex)
-            .toList();
+        final termPromises =
+            (promisesByClub[clubId] ?? const <PromiseSeasonSnapshot>[])
+                .where((item) =>
+                    item.promise.seasonIndex >= termStartSeasonIndex &&
+                    item.promise.seasonIndex <= seasonIndex)
+                .toList();
         if (termPromises.length != electionInterval) {
-          throw StateError('Invalid M16 promise term coverage for $clubId.');
+          throw StateError('Invalid president promise term coverage for $clubId.');
         }
         final promiseScore = (termPromises.fold<int>(
                   0,
