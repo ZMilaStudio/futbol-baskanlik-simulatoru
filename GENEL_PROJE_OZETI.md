@@ -4,7 +4,7 @@
 **Son güncelleme:** 04.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru`  
 **Repo:** Public / proprietary notice  
-**Aktif teknik aşama:** **M10 PASS — sıradaki M11 / Başkan Vaatleri + Takip Çekirdeği**  
+**Aktif teknik aşama:** **M11 PASS — sıradaki M12 / Vaat Sonuçlarının Taraftar Güvenine Etkisi**  
 **Proje önceliği:** Yan geliştirme; Kelime Avı ve Minik Dedektif gibi aktif projeleri aksatmayacak.  
 **UI/APK:** Henüz başlanmadı; simülasyon çekirdeği önceliklidir.
 
@@ -61,7 +61,10 @@ Dünya tamamen özgün olacak; gerçek kulüp, futbolcu, lig logosu veya lisansl
 25. Taraftar geçmişi her sezon otomatik nötre sıfırlanmamalıdır.
 26. Medya başkanın geçmiş açıklamasını sonraki eylemle birlikte değerlendirmelidir.
 27. Açıklama yalnız dekoratif metin değil, sonraki olayda çözülen hafıza kaydı olmalıdır.
-28. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
+28. Vaat yalnız sonucunu değil verildiği sezon başı bağlamını da saklamalıdır.
+29. Vaat üretiminde sezon sonu/gelecek bilgisi kullanılamaz.
+30. `partial` vaat sonucu fulfilled/broken arasında gerçek ve ölçülebilir bir ara durumdur.
+31. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
 
 ---
 
@@ -83,7 +86,7 @@ Tamamlanan katmanlar: M4 direct fee; M7 kontrat/free-agent; M8 kiralık+taksit.
 
 ## Taraftar
 
-M9 bağlamsal çekirdeği tamamlandı. Borçlu/zayıf kulüp pahalı yıldız yerine akıllı kiralık veya finans disiplini beklentisi üretebilir. `sporting / financial / transfer / identity` güven boyutları ve neden hafızası vardır. Henüz seyirci/gelir/sponsor tarafını geri beslemez.
+M9 bağlamsal çekirdeği tamamlandı. Borçlu/zayıf kulüp pahalı yıldız yerine akıllı kiralık veya finans disiplini beklentisi üretebilir. `sporting / financial / transfer / identity` güven boyutları ve neden hafızası vardır. Henüz seyirci/gelir/sponsor tarafını geri beslemez. `identityTrust` M9'da bilerek nötr tutuldu; M12'de vaat sonucu ilk gerçek kimlik sinyalini verecek.
 
 ## Medya
 
@@ -91,7 +94,7 @@ M10 ilk medya hafızasını tamamladı. Teknik direktörün geleceği hakkında 
 
 ## Vaat / seçim
 
-Başkan vaatleri ölçülebilir hedefler olarak saklanacak; gerçekleşti/başarısız/kısmi ilerleme durumuna çözülecek ve daha sonra taraftar/media/seçim sistemlerini etkileyecek. Seçim daha sonraki aşamadır.
+M11 ölçülebilir başkan vaatlerini tamamladı. Her AI kulüp-sezon için sezon başı bağlamından resmi vaat üretilir; sezon sonu `fulfilled / partial / broken` olarak çözülür. Borç azaltma, finansı istikrara alma, üst yarı, kümede kalma, terfi ve şampiyonluk yarışı vaatleri vardır. Vaat sonucu henüz fan/media/seçimi etkilemez. Seçim daha sonraki aşamadır.
 
 ## Tesis / altyapı / sponsor / kriz
 
@@ -111,7 +114,7 @@ Tesis adayları: altyapı, antrenman, sağlık, scouting, stadyum, kulüp mağaz
 
 ## Determinizm
 
-Kararlı FNV-1a hash + özel xorshift32 `SeededRng`. Runtime `hashCode` kullanılmaz. Maç, transfer, manager, kontrat, fan ve media kararları seed / simulation version / sezon / entity ID üzerinden deterministik türetilir.
+Kararlı FNV-1a hash + özel xorshift32 `SeededRng`. Runtime `hashCode` kullanılmaz. Maç, transfer, manager, kontrat, fan, media ve promise kararları seed / simulation version / sezon / entity ID üzerinden deterministik türetilir.
 
 ## Oyun zamanı
 
@@ -136,7 +139,7 @@ Anapara gider değildir; faiz giderdir. Negatif nakit `emergencyBorrowing` yarat
 - `WorldFinanceHooks`: taksit gibi sezon içi ek finans hareketleri.
 - `WorldTransferHooks`: kiralık gibi transfer penceresi sonrası hareketler.
 
-M9 ve M10 ilk sürümlerde alt sistem raporlarını gözlemsel kaynak olarak kullanır; fan/media çekirdeği henüz dünya sonucunu geri beslemez. Önce bağlam ve hafıza doğruluğu bağımsız kanıtlanır.
+M9–M11 ilk sürümlerde alt sistem raporlarını gözlemsel kaynak olarak kullanır; fan/media/promise çekirdeği henüz dünya sonucunu geri beslemez. Önce bağlam ve hafıza doğruluğu bağımsız kanıtlanır.
 
 ---
 
@@ -150,11 +153,11 @@ Tek hafif workflow:
 - `dart analyze`
 - `dart test`
 - M0 100 sezon batch
-- M1–M10 20 sezon headless runner'ları
+- M1–M11 20 sezon headless runner'ları
 
 APK/AAB, büyük binary ve `actions/upload-artifact` yok. Artifact hedefi `0`.
 
-M0–M10 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu. Codex yalnız büyük refactor/migration/karmaşık hata için kullanılacak.
+M0–M11 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu. Codex yalnız büyük refactor/migration/karmaşık hata için kullanılacak.
 
 ---
 
@@ -242,6 +245,20 @@ CI guard: statement `300–700`, contradiction `10–80`, strong-broken `3–50`
 
 Ayrıntı: `M10_MEDYA_HAFIZASI.md`.
 
+## M11 — Başkan Vaatleri + Takip — PASS
+
+`PresidentPromise`, preseason context, postseason outcome, `PromiseResolution`, deterministic generator/resolver, 20 sezon promise report/validator.
+
+Kritik karar: vaat üretimi sezon sonu verisini okuyamaz. Yalnız lig seviyesi, sezon başı güç sırası ve opening cash/debt kullanılır. Sonuçlar yalnız resolver aşamasında görülür.
+
+Vaat tipleri: reduce debt, stabilize finances, finish top half, avoid relegation, earn promotion, challenge title.
+
+Kabul seed `20260903`: promise `960`, fulfilled `435`, partial `169`, broken `356`, avg score `54,84`, financial `105`, sporting `855`. Tip dağılımı: title `60`, top-half `388`, avoid relegation `227`, promotion `180`, reduce debt `64`, stabilize finances `41`; validation `0`.
+
+CI guard: financial `60–200`, sporting `760–900`, fulfilled `300–600`, partial `100–300`, broken `250–500`, avg score `45–65`; altı vaat tipi için ayrı geniş dağılım sınırları.
+
+Ayrıntı: `M11_BASKAN_VAATLERI.md`.
+
 ---
 
 # 7. Uzun kariyer kalite hedefi
@@ -251,7 +268,7 @@ Ayrıntı: `M10_MEDYA_HAFIZASI.md`.
 - regresyon: 500 × 30 sezon
 - büyük sürüm stres: 1.000 × 30 sezon
 
-İzlenecekler: oyuncu sayısı/yaş, emeklilik/youth, cash/debt, wage/revenue, transfer yapısı, installments, loans, şampiyonluk, terfi, manager tenure, fan trust/expectation mix, media credibility/contradiction; ileride promise/election/başkan tenure.
+İzlenecekler: oyuncu sayısı/yaş, emeklilik/youth, cash/debt, wage/revenue, transfer yapısı, installments, loans, şampiyonluk, terfi, manager tenure, fan trust/expectation mix, media credibility/contradiction, promise type/completion mix; ileride election/başkan tenure.
 
 Her başarısız kariyer seed ile replay edilebilmelidir.
 
@@ -263,7 +280,7 @@ Aday metadata: `saveVersion`, `gameVersion`, `simulationVersion`, `dataVersion`,
 
 Minimum: autosave + önceki autosave yedeği + manuel save + migration.
 
-Kalıcı state: M8 installment/active loans, M9 `FanState`, M10 `MediaState` ve çözülmemiş önemli açıklamalar. Tam sezon snapshot geçmişlerinin save'e gömülmesi zorunlu değildir; kompakt history/event modeli kullanılabilir.
+Kalıcı state: M8 installment/active loans, M9 `FanState`, M10 `MediaState` ve çözülmemiş önemli açıklamalar; M11 aktif vaat + kompakt promise history. Tam sezon snapshot geçmişlerinin save'e gömülmesi zorunlu değildir; kompakt history/event modeli kullanılabilir.
 
 ---
 
@@ -275,35 +292,34 @@ Kalıcı state: M8 installment/active loans, M9 `FanState`, M10 `MediaState` ve 
 4. Manager maaşı/kontratı, başka kulüp teklifi ve spesifik transfer talebi yok.
 5. Taksit/kiralık ilk kalibrasyondur; satın alma opsiyonu, bonus, sell-on ve takas yok.
 6. M9 taraftar güveni henüz seyirci/bilet/mağaza/sponsor/protestoyu etkilemez.
-7. `identityTrust` M9'da nötrdür.
+7. `identityTrust` M9'da nötrdür; M12 vaat sonucu ile gerçek sinyal alacak.
 8. M10 medya yalnız `managerFuture` konusunu ve aynı sezon çözümlemesini kapsar; serbest metin, çok yıllı medya hikâyesi ve ekonomik/fan geri besleme yok.
-9. Sponsor, vaat, tesis ve kriz henüz çekirdeğe bağlanmadı.
-10. Flutter UI/APK bilinçli olarak başlamadı.
+9. M11 bir AI kulübü için sezon başına bir resmi vaat üretir; kullanıcı seçimi/UI, çok sezonlu vaat, tesis/genç dakika vaadi ve fan/media etkisi yok.
+10. Sponsor, tesis ve kriz henüz çekirdeğe bağlanmadı.
+11. Flutter UI/APK bilinçli olarak başlamadı.
 
 ---
 
-# 10. Sıradaki milestone — M11
+# 10. Sıradaki milestone — M12
 
-## Başkan Vaatleri + Takip Çekirdeği
+## Vaat Sonuçlarının Taraftar Güvenine Etkisi
 
 Amaç:
 
-> **Başkan verdiği sözü sezon sonunda unutamayacak.**
+> **Tutulan ve bozulan sözler taraftarın başkana bakışını gerçekten değiştirecek.**
 
-İlk M11 kapsamı:
+İlk M12 kapsamı:
 
-- `Promise` / `PromiseType` domain modeli,
-- ölçülebilir sezon hedefleri,
-- örneğin borcu azaltma, lig hedefi, genç oyuncu kullanımı, transfer harcama disiplini gibi deterministic promise türleri,
-- başlangıç baseline + hedef + deadline,
-- sezon boyunca progress,
-- `fulfilled / failed / partial` çözümlemesi,
-- neden/sonuç kaydı,
-- aynı seed replay,
-- 20 sezon promise completion dağılımı,
-- ilk aşamada fan/media puanını değiştirmeden gözlemsel doğrulama.
+- M11 promise resolution sonuçlarını M9 fan lifecycle'a bağlamak,
+- `fulfilled / partial / broken` sonucundan neden kodlu fan trust değişimi üretmek,
+- özellikle `identityTrust` boyutuna gerçek vaat güveni sinyali vermek,
+- finansal vaatlerin gerektiğinde financial trust ile de ilişkilendirilmesi,
+- aynı promise sonucunun tüm vaat tiplerinde aynı kör puanı vermemesi,
+- promise impact'in dünya maç/ekonomi sonucunu ilk aşamada değiştirmemesi,
+- same-seed replay,
+- 20 sezon fan+promise birleşik dağılım guard'ları.
 
-M11 seçim, Flutter UI ve serbest metin vaat içermez. Vaatlerin taraftar/media geri beslemesi sonraki katmanda bağlanacaktır.
+M12 medya veya seçim bağlantısını henüz yapmak zorunda değildir; önce M9+M11 aynı advanced-world zemini üzerinde güvenli biçimde birleştirilecektir.
 
 ---
 
