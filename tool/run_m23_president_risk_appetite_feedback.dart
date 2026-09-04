@@ -20,7 +20,7 @@ void main(List<String> args) {
             report.m21Baseline.m20Baseline,
           ),
           ...ProfileFeedbackCanonicalGuard.m21Issues(report.m21Baseline),
-          ...const PresidentRiskAppetiteFeedbackValidator().validate(report),
+          ...ProfileFeedbackCanonicalGuard.m23Issues(report),
         ]
       : const PresidentRiskAppetiteFeedbackValidator().validate(report);
 
