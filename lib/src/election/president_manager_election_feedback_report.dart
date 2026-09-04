@@ -1,6 +1,5 @@
 import '../manager/manager_career_report.dart';
 import '../transfer/advanced_transfer_career_report.dart';
-import 'president_election.dart';
 import 'president_reputation_career_report.dart';
 
 String presidentTimelineSignature(PresidentReputationCareerReport report) {
