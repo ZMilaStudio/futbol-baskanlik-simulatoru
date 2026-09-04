@@ -61,26 +61,31 @@ void main() {
     expect(report.sourceReport.losses, 79);
     expect(report.sourceReport.totalTurnovers, 79);
     expect(report.totalProfiles, 127);
-    expect(report.archetypesUsed, greaterThanOrEqualTo(5));
-    expect(report.archetypeChangedTurnovers, greaterThan(35));
-    expect(report.meaningfulTurnovers, greaterThan(35));
-    expect(report.averageTurnoverDistance, inInclusiveRange(8, 40));
+    expect(report.archetypesUsed, PresidentManagementArchetype.values.length);
     expect(
-      report.maximumFinancialDiscipline - report.minimumFinancialDiscipline,
-      greaterThanOrEqualTo(35),
+      report.archetypeDistribution.values.every(
+        (count) => count >= 10 && count <= 30,
+      ),
+      isTrue,
     );
-    expect(
-      report.maximumTransferAmbition - report.minimumTransferAmbition,
-      greaterThanOrEqualTo(35),
-    );
-    expect(
-      report.maximumYouthOrientation - report.minimumYouthOrientation,
-      greaterThanOrEqualTo(35),
-    );
-    expect(
-      report.maximumManagerPatience - report.minimumManagerPatience,
-      greaterThanOrEqualTo(35),
-    );
+    expect(report.archetypeChangedTurnovers, inInclusiveRange(55, 75));
+    expect(report.meaningfulTurnovers, inInclusiveRange(45, 65));
+    expect(report.averageTurnoverDistance, inInclusiveRange(18, 27));
+    expect(report.averageFinancialDiscipline, inInclusiveRange(54, 66));
+    expect(report.averageRiskAppetite, inInclusiveRange(49, 61));
+    expect(report.averageTransferAmbition, inInclusiveRange(50, 63));
+    expect(report.averageYouthOrientation, inInclusiveRange(54, 66));
+    expect(report.averageManagerPatience, inInclusiveRange(52, 64));
+    expect(report.minimumFinancialDiscipline, inInclusiveRange(20, 35));
+    expect(report.maximumFinancialDiscipline, inInclusiveRange(85, 90));
+    expect(report.minimumRiskAppetite, inInclusiveRange(20, 30));
+    expect(report.maximumRiskAppetite, inInclusiveRange(85, 90));
+    expect(report.minimumTransferAmbition, inInclusiveRange(20, 35));
+    expect(report.maximumTransferAmbition, inInclusiveRange(85, 90));
+    expect(report.minimumYouthOrientation, inInclusiveRange(20, 35));
+    expect(report.maximumYouthOrientation, inInclusiveRange(85, 90));
+    expect(report.minimumManagerPatience, inInclusiveRange(20, 30));
+    expect(report.maximumManagerPatience, inInclusiveRange(85, 90));
   });
 
   test('M17 is deterministic and different seeds produce different philosophies', () {
