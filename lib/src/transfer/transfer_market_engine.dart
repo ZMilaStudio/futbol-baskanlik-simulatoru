@@ -6,6 +6,7 @@ import '../league/club.dart';
 import '../player/player.dart';
 import '../player/player_position.dart';
 import 'market_value_model.dart';
+import 'transfer_budget_policy.dart';
 import 'transfer_deal.dart';
 import 'transfer_installment.dart';
 import 'transfer_market_result.dart';
@@ -40,6 +41,7 @@ class TransferMarketEngine {
     required int simulationVersion,
     Map<String, int>? contractYearsRemainingByPlayer,
     bool enableInstallments = false,
+    Map<String, TransferBudgetPolicy>? budgetPoliciesByClub,
   }) {
     final currentPlayers = List<Player>.of(players);
     final finances = {
@@ -53,13 +55,14 @@ class TransferMarketEngine {
       ..sort((a, b) => a.id.compareTo(b.id));
 
     for (final buyer in orderedClubs) {
+      final budgetPolicy =
+          budgetPoliciesByClub?[buyer.id] ?? TransferBudgetPolicy.neutral;
       for (var slot = 0; slot < 2; slot++) {
         final buyerState = finances[buyer.id];
         if (buyerState == null) {
           throw StateError('Missing finance state for ${buyer.id}.');
         }
-        const reserve = Money.fromUnits(2000000);
-        final spendable = buyerState.cash - reserve;
+        final spendable = buyerState.cash - budgetPolicy.reserveCash;
         if (spendable <= Money.zero) break;
 
         final buyerRoster = currentPlayers
@@ -153,7 +156,8 @@ class TransferMarketEngine {
               10300 + shortage * 700 + (rng.nextDouble() * 900).floor();
           final askingPrice = marketValue.scaleBasisPoints(askBps);
           final maximumBid = marketValue.scaleBasisPoints(maxBidBps);
-          final windowSpendCap = buyerState.cash.scaleBasisPoints(3500);
+          final windowSpendCap =
+              buyerState.cash.scaleBasisPoints(budgetPolicy.windowSpendCapBps);
           final affordable = spendable.min(windowSpendCap);
 
           if (askingPrice > maximumBid) continue;
@@ -174,7 +178,9 @@ class TransferMarketEngine {
             if (sellerAcceptsInstallments) {
               final upfrontBps = 5800 + (rng.nextDouble() * 1500).floor();
               final proposedUpfront = askingPrice.scaleBasisPoints(upfrontBps);
-              final totalCommitmentCap = buyerState.cash.scaleBasisPoints(9000);
+              final totalCommitmentCap = buyerState.cash.scaleBasisPoints(
+                budgetPolicy.totalCommitmentCapBps,
+              );
               final installmentAffordable =
                   proposedUpfront <= affordable &&
                   askingPrice <= totalCommitmentCap;
