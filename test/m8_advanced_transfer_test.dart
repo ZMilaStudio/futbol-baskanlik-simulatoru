@@ -34,17 +34,62 @@ void main() {
     expect(report.signature, repeat.signature);
     expect(report.worldReport.seasonCount, 20);
     expect(report.worldReport.totalMatches, 14400);
-    expect(report.installmentDeals, greaterThan(0));
-    expect(report.totalInstallmentCommitment, greaterThan(Money.zero));
+
+    // Geniş denge guard'ları: nihai oyun ekonomisi değil. Amaç M8'in
+    // donmuş/hiperaktif pazara veya taksidin varsayılan ödeme biçimine
+    // dönüşmesine izin vermemek.
+    expect(report.worldReport.totalTransfers, inInclusiveRange(80, 260));
+    expect(report.installmentDeals, inInclusiveRange(20, 120));
+    expect(
+      report.installmentDeals * 2,
+      lessThan(report.worldReport.totalTransfers),
+      reason: 'Taksitli bonservis kalıcı transferlerin çoğunluğu olmamalı.',
+    );
+    expect(report.totalLoans, inInclusiveRange(250, 700));
+    expect(report.activeLoans.length, inInclusiveRange(5, 48));
+    expect(report.averageLoanWageShareBps, inInclusiveRange(4500, 8000));
+
+    expect(
+      report.totalInstallmentCommitment,
+      greaterThanOrEqualTo(const Money.fromUnits(50000000)),
+    );
+    expect(
+      report.totalInstallmentCommitment,
+      lessThanOrEqualTo(const Money.fromUnits(600000000)),
+    );
     expect(report.totalInstallmentsPaid, greaterThan(Money.zero));
     expect(
       report.totalInstallmentsPaid,
       lessThanOrEqualTo(report.totalInstallmentCommitment),
     );
-    expect(report.totalLoans, greaterThan(0));
-    expect(report.activeLoans, isNotEmpty);
-    expect(report.totalLoanFees, greaterThan(Money.zero));
-    expect(report.averageLoanWageShareBps, inInclusiveRange(4500, 8000));
+    expect(
+      report.outstandingInstallments,
+      lessThanOrEqualTo(const Money.fromUnits(100000000)),
+    );
+    expect(
+      report.totalLoanFees,
+      greaterThanOrEqualTo(const Money.fromUnits(40000000)),
+    );
+    expect(
+      report.totalLoanFees,
+      lessThanOrEqualTo(const Money.fromUnits(250000000)),
+    );
+    expect(
+      report.worldReport.finalTotalCash,
+      greaterThanOrEqualTo(const Money.fromUnits(300000000)),
+    );
+    expect(
+      report.worldReport.finalTotalCash,
+      lessThanOrEqualTo(const Money.fromUnits(2000000000)),
+    );
+    expect(
+      report.worldReport.finalTotalDebt,
+      greaterThanOrEqualTo(const Money.fromUnits(100000000)),
+    );
+    expect(
+      report.worldReport.finalTotalDebt,
+      lessThanOrEqualTo(const Money.fromUnits(1200000000)),
+    );
   });
 
   test('M8 different seeds diverge', () {
