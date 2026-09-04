@@ -89,7 +89,7 @@ void main() {
     expect(issues, isEmpty);
     expect(report.converged, isTrue);
     expect(report.cycleDetected, isFalse);
-    expect(report.iterationCount, inInclusiveRange(1, 8));
+    expect(report.iterationCount, inInclusiveRange(3, 6));
     expect(report.finalReport.totalElections, 240);
     expect(report.baselineReelections, 158);
     expect(report.baselineLosses, 82);
@@ -97,13 +97,62 @@ void main() {
     expect(report.baselineTransfers, 153);
     expect(report.iterations.last.timelineChanged, isFalse);
     expect(report.iterations.last.electionOutcomeDifferences, 0);
-    expect(report.finalTransfers, inInclusiveRange(90, 230));
-    expect(report.finalManagerChanges, inInclusiveRange(60, 120));
-    expect(report.finalTransferVolume.minorUnits, greaterThan(0));
-    expect(report.finalInstallmentCommitment.minorUnits, greaterThanOrEqualTo(0));
-    expect(report.finalCash.minorUnits, greaterThanOrEqualTo(0));
-    expect(report.finalDebt.minorUnits, greaterThanOrEqualTo(0));
-    expect(report.uniqueFinalPresidents, inInclusiveRange(100, 155));
+
+    expect(report.electionOutcomeDifferences, inInclusiveRange(25, 80));
+    expect(report.finalReelections, inInclusiveRange(135, 165));
+    expect(report.finalLosses, inInclusiveRange(75, 105));
+    expect(report.finalManagerChanges, inInclusiveRange(70, 95));
+    expect(report.managerChangeDelta.abs(), lessThanOrEqualTo(20));
+
+    expect(report.finalTransfers, inInclusiveRange(140, 185));
+    expect(report.transferDelta.abs(), inInclusiveRange(5, 35));
+    expect(
+      report.finalTransferVolume,
+      greaterThanOrEqualTo(const Money.fromUnits(1200000000)),
+    );
+    expect(
+      report.finalTransferVolume,
+      lessThanOrEqualTo(const Money.fromUnits(1700000000)),
+    );
+    expect(
+      report.transferVolumeDelta.minorUnits.abs(),
+      lessThanOrEqualTo(const Money.fromUnits(300000000).minorUnits),
+    );
+
+    expect(report.finalInstallmentDeals, inInclusiveRange(55, 95));
+    expect(
+      report.finalInstallmentCommitment,
+      greaterThanOrEqualTo(const Money.fromUnits(180000000)),
+    );
+    expect(
+      report.finalInstallmentCommitment,
+      lessThanOrEqualTo(const Money.fromUnits(330000000)),
+    );
+    expect(
+      report.finalCash,
+      greaterThanOrEqualTo(const Money.fromUnits(1000000000)),
+    );
+    expect(
+      report.finalCash,
+      lessThanOrEqualTo(const Money.fromUnits(1400000000)),
+    );
+    expect(
+      report.finalDebt,
+      greaterThanOrEqualTo(const Money.fromUnits(250000000)),
+    );
+    expect(
+      report.finalDebt,
+      lessThanOrEqualTo(const Money.fromUnits(430000000)),
+    );
+    expect(
+      report.finalEmergencyBorrowing,
+      greaterThanOrEqualTo(const Money.fromUnits(80000000)),
+    );
+    expect(
+      report.finalEmergencyBorrowing,
+      lessThanOrEqualTo(const Money.fromUnits(200000000)),
+    );
+    expect(report.uniqueFinalPresidents, inInclusiveRange(120, 150));
     expect(report.worldChanged, isTrue);
   });
 }
