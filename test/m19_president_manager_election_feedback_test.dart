@@ -32,12 +32,15 @@ void main() {
       'uniquePresidents=${report.uniqueFinalPresidents} '
       'worldChanged=${report.worldChanged}',
     );
-    print(
-      'M19_ITERATIONS ${report.iterations.map((item) => '
-          'i${item.iteration}[changed=${item.timelineChanged},manager=${item.managerChanges},'
-          'transfers=${item.transfers},reelected=${item.reelections},lost=${item.losses},'
-          'electionDiff=${item.electionOutcomeDifferences}]').join(' ')}',
-    );
+    final iterationSummary = report.iterations
+        .map(
+          (item) => 'i${item.iteration}['
+              'changed=${item.timelineChanged},manager=${item.managerChanges},'
+              'transfers=${item.transfers},reelected=${item.reelections},'
+              'lost=${item.losses},electionDiff=${item.electionOutcomeDifferences}]',
+        )
+        .join(' ');
+    print('M19_ITERATIONS $iterationSummary');
 
     expect(issues, isEmpty);
     expect(report.converged, isTrue);
