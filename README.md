@@ -17,6 +17,7 @@ ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün determini
 - **M8 — Gelişmiş Transfer Yapıları I / Kiralık + Taksit:** PASS
 - **M9 — Taraftar Beklentisi + Güven Çekirdeği:** PASS
 - **M10 — Medya Hafızası + Başkan Açıklamaları:** PASS
+- **M11 — Başkan Vaatleri + Takip Çekirdeği:** PASS
 
 Flutter bağımlılığı henüz yoktur. Öncelik, başkanlık simülasyonunun uzun kariyer boyunca sağlam çalışan çekirdeğini mobil arayüzden önce otomatik testlerle kanıtlamaktır.
 
@@ -67,8 +68,6 @@ Ayrıntı: `M7_OYUNCU_SOZLESMESI_MAAS.md`.
 
 ## M8 — Kiralık + Taksit
 
-M8 ana transfer felsefesini gelişmiş yapılara açar:
-
 > **Paran yoksa transfer yapamazsın değil; paran yoksa daha akıllı transfer yapmak zorundasın.**
 
 - sezonluk `LoanAgreement`
@@ -76,8 +75,7 @@ M8 ana transfer felsefesini gelişmiş yapılara açar:
 - loan fee + `%45–80` maaş paylaşımı
 - sezon sonunda otomatik dönüş
 - upfront + iki gelecek sezon transfer taksiti
-- `TransferInstallmentObligation`
-- taksidin banka borcundan ayrı tutulması
+- banka borcundan ayrı `TransferInstallmentObligation`
 - vadesinde gerçek alıcı/satıcı nakit akışı
 - satıcı ekonomisine bağlı taksit kabulü
 - bağlamsal kiralık ihtiyacı
@@ -99,7 +97,7 @@ M9 taraftarı rastgele mutluluk sayacı yerine kulüp bağlamını okuyan bir do
 - permanent transfer / installment / loan davranışı
 - 7 aktif bağlamsal beklenti tipi + final `none`
 - neden kodlu güven değişimleri
-- çok sezonluk hafıza; yalnız dış bantlarda yumuşak mean reversion
+- çok sezonluk hafıza
 - deterministic replay + validator + headless runner
 
 Temel imza davranışı: aynı borç krizi bağlamında akıllı kiralık transfer güvenini `+4`, aşırı harcama/taksit yükü `-4` etkileyebilir.
@@ -120,13 +118,33 @@ M10 başkanın açıklamalarını sonraki yönetim eylemiyle birlikte hatırlaya
 - consistency / contradiction çözümlemesi
 - neden kodlu credibility değişimi
 - 48 kulüp × 20 sezon hafıza
-- headless runner + validator
 
 İmza davranışı: credibility `60` iken **“hocanın arkasındayız”** deyip hocayı değiştirmek `-10`; pressure açıklaması yapıp ardından değiştirmek `+3` üretir.
 
 İlk model `847/960` kulüp-sezonda açıklama ürettiği için reddedildi. Kabul seed `20260903`: statement `556`, contradiction `22`, strong-support contradiction `9`, consistent `385`, final credibility ortalama `75,52`, aralık `49–87`, boundary `0`, validation `0`.
 
 Ayrıntı: `M10_MEDYA_HAFIZASI.md`.
+
+## M11 — Başkan Vaatleri + Takip
+
+M11 vaatleri sezon sonunda unutulan metinler yerine ölçülebilir taahhütlere dönüştürür.
+
+- sezon başı `PresidentPromiseContext`
+- sezon sonu `PresidentPromiseOutcome`
+- fulfilled / partial / broken çözümlemesi
+- borç azaltma
+- finansı istikrara alma
+- üst yarı
+- kümede kalma
+- terfi
+- şampiyonluk yarışı
+- vaat üretiminde yalnız sezon başı bilgi; sezon sonu verisi kullanılmaz
+- deterministic promise history
+- 48×20 = 960 yıllık AI başkan vaadi
+
+Seed `20260903`: `960` vaat, `435` fulfilled, `169` partial, `356` broken, ortalama score `54,84`; finansal vaat `105`, sportif vaat `855`; altı vaat tipinin tamamı aktif, validation `0`.
+
+Ayrıntı: `M11_BASKAN_VAATLERI.md`.
 
 ## Mimari
 
@@ -141,7 +159,7 @@ Temel yön:
 - `WorldFinanceHooks`: transfer taksiti gibi sezon içi ek finans akışları,
 - `WorldTransferHooks`: kiralık gibi transfer penceresi sonrası ek hareketler.
 
-M9 ve M10 ilk sürümlerinde alt sistem raporlarını gözlemsel kaynak olarak kullanır; taraftar ve medya henüz maç/ekonomiyi geri beslemez. Önce bağlam ve hafıza doğruluğu kanıtlanır.
+M9–M11 ilk sürümlerinde alt sistem raporları gözlemsel kaynak olarak kullanılır; taraftar, medya ve vaat henüz dünya sonucunu geri beslemez. Önce bağlam/hafıza doğruluğu kanıtlanır.
 
 Deterministik RNG, cihaz saatinden bağımsız `GameDate` ve integer minor-unit `Money` temel teknik kurallardır.
 
@@ -162,6 +180,7 @@ dart run tool/run_m7_contract_career.dart 20260903
 dart run tool/run_m8_advanced_transfer_career.dart 20260903
 dart run tool/run_m9_fan_career.dart 20260903
 dart run tool/run_m10_media_career.dart 20260903
+dart run tool/run_m11_promise_career.dart 20260903
 ```
 
 ## CI prensibi
@@ -171,15 +190,15 @@ Tek hafif GitHub Actions workflow'u kullanılır:
 - `dart analyze`
 - tüm otomatik testler
 - M0 100 sezon batch
-- M1–M10 20 sezon headless runner'ları
+- M1–M11 20 sezon headless runner'ları
 
 APK/AAB, büyük binary veya `actions/upload-artifact` yoktur. Artifact hedefi `0`dır.
 
 ## Sıradaki milestone
 
-**M11 — Başkan Vaatleri + Takip Çekirdeği.**
+**M12 — Vaat Sonuçlarının Taraftar Güvenine Etkisi.**
 
-İlk hedef; sezon başında verilen ölçülebilir vaatleri kaydetmek, sezon boyunca ilerlemeyi takip etmek, gerçekleşti / başarısız / kısmen ilerledi şeklinde çözmek ve daha sonra taraftar ile medya hafızasına bağlanabilecek deterministik promise history üretmektir.
+İlk hedef M11 vaat sonuçlarını M9 taraftar hafızasına bağlamak ve özellikle nötr bırakılmış `identityTrust` boyutuna tutulmuş/bozulmuş sözlerden neden kodlu gerçek sinyal vermektir.
 
 ## Lisans
 

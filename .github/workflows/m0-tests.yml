@@ -67,3 +67,6 @@ jobs:
 
       - name: Run M10 20-season media career
         run: dart run tool/run_m10_media_career.dart 20260903
+
+      - name: Run M11 20-season promise career
+        run: dart run tool/run_m11_promise_career.dart 20260903
