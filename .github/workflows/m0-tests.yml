@@ -64,3 +64,6 @@ jobs:
 
       - name: Run M9 20-season fan career
         run: dart run tool/run_m9_fan_career.dart 20260903
+
+      - name: Run M10 20-season media career
+        run: dart run tool/run_m10_media_career.dart 20260903
