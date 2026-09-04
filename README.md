@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Teknik durum
 
-M0–M13 tamamlandı ve otomatik regresyon zincirinde tutuluyor.
+M0–M14 tamamlandı ve otomatik regresyon zincirinde tutuluyor.
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -14,7 +14,8 @@ M0–M13 tamamlandı ve otomatik regresyon zincirinde tutuluyor.
 - M10: medya hafızası + başkan açıklamaları
 - M11: ölçülebilir başkan vaatleri
 - M12: vaat sonuçları → taraftar güveni
-- **M13: vaat sonuçları → medya güvenilirliği — PASS**
+- M13: vaat sonuçları → medya güvenilirliği
+- **M14: başkanlık seçimi çekirdeği — PASS**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -28,7 +29,7 @@ Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalı�
 - terfi/düşme
 - ortak ekonomi, kontrat ve transfer pazarı
 
-## Son reputasyon katmanları
+## Reputasyon ve seçim zinciri
 
 ### M9 — Taraftar
 Sporting / financial / transfer / identity güven boyutları ve bağlamsal beklentiler. Seed `20260903`: 960 snapshot, avg trust `64,88`, aralık `44–75`.
@@ -40,20 +41,23 @@ ManagerFuture açıklaması sonraki eylemle consistency/contradiction olarak ç�
 Sezon başı bilgiden ölçülebilir vaat; sezon sonunda fulfilled / partial / broken. Seed: 960 vaat, 435 fulfilled, 169 partial, 356 broken, avg score `54,84`.
 
 ### M12 — Vaat → taraftar
-Her vaat `identityTrust`, finansal vaatler ayrıca `financialTrust` üretir. M9 overall `64,88` → M12 `65,31`; identity avg `61,83`, aralık `38–88`.
+M9 overall `64,88` → M12 `65,31`; identity avg `61,83`, aralık `38–88`.
 
 ### M13 — Vaat → medya
-Manager + advanced transfer + promise + media tek shared world üzerinde çalışır. Önce statement, ardından promise etkisi aynı credibility state'e uygulanır.
+Manager + advanced transfer + promise + media tek shared world üzerinde. Baseline credibility `74,88` → final `72,38`; aralık `36–93`.
 
-Seed `20260903`: 960 promise change; positive `452`, neutral `154`, negative `354`; statement `560`, contradiction `28`; baseline credibility `74,88` → final `72,38`; aralık `36–93`; validation `0`.
+### M14 — Başkanlık seçimi
+Dört sezonluk dönem sonunda fan overall `%35`, fan identity `%15`, media credibility `%25`, son dört sezon promise score `%25` ile approval üretilir ve deterministik challenger ile karşılaştırılır.
 
-Ayrıntı: `M13_VAAT_MEDYA_GUVENILIRLIGI.md`.
+Seed `20260903`: `240` seçim, `158` reelected, `82` lost, reelection `%65,8`; avg approval `63,24`, avg challenger `60,08`, approval aralığı `37–84`, `72` yakın seçim, boundary `0`, validation `0`.
+
+Ayrıntı: `M14_BASKANLIK_SECIMI.md`.
 
 ## Mimari
 
 **Flutter mobil kabuk + saf Dart simülasyon çekirdeği + headless test runner.**
 
-Gözlemsel/itibar katmanlarında aynı alt dünya mümkün olduğunca paylaşılır. M13'te `AdvancedTransferWorldCareerEngine + ManagerCareerController` tek world üretir; manager, media ve promise katmanları bu ortak gerçeği kullanır.
+Gözlemsel/itibar katmanlarında aynı alt dünya mümkün olduğunca paylaşılır. M14, M13 reputation raporunu temel alır ve taraftarı aynı advanced-transfer world üzerinden türetir; seçim için dünya tekrar simüle edilmez.
 
 Temel teknik kurallar:
 
@@ -76,17 +80,18 @@ dart run tool/run_m10_media_career.dart 20260903
 dart run tool/run_m11_promise_career.dart 20260903
 dart run tool/run_m12_promise_fan_career.dart 20260903
 dart run tool/run_m13_promise_media_career.dart 20260903
+dart run tool/run_m14_president_election_career.dart 20260903
 ```
 
 ## CI
 
-Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M13 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
+Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M14 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
 
 ## Sıradaki milestone
 
-**M14 — Başkanlık Seçimi Çekirdeği I.**
+**M15 — Başkanlık Görev Süresi + Devir Çekirdeği.**
 
-İlk hedef fan trust + media credibility + promise history'yi kullanarak deterministik başkan approval/seçim sonucu üretmek; rakip aday ve görevde kalma riskini gözlemsel olarak test etmektir. İlk sürüm kariyer dünyasını geri beslemek zorunda değildir.
+İlk hedef seçim sonuçlarını AI kulüplerinde gerçek görev süresi/devir state'ine bağlamak; kullanıcı game-over ve UI davranışını daha sonraki aşamaya bırakmaktır.
 
 ## Lisans
 

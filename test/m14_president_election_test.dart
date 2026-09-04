@@ -64,14 +64,34 @@ void main() {
     expect(report.seasonCount, 20);
     expect(report.electionInterval, 4);
     expect(report.totalElections, 240);
-    expect(report.reelections, greaterThan(60));
-    expect(report.losses, greaterThan(30));
-    expect(report.averageApproval, inInclusiveRange(45, 80));
-    expect(report.averageChallengerStrength, inInclusiveRange(45, 75));
-    expect(report.minimumApproval, inInclusiveRange(10, 70));
-    expect(report.maximumApproval, inInclusiveRange(55, 95));
-    expect(report.competitiveElections, greaterThan(20));
+    expect(report.reelections, inInclusiveRange(130, 185));
+    expect(report.losses, inInclusiveRange(55, 110));
+    expect(report.reelectionRate, inInclusiveRange(0.55, 0.78));
+    expect(report.averageApproval, inInclusiveRange(58, 68));
+    expect(report.averageChallengerStrength, inInclusiveRange(56, 64));
+    expect(report.minimumApproval, inInclusiveRange(25, 50));
+    expect(report.maximumApproval, inInclusiveRange(75, 90));
+    expect(report.competitiveElections, inInclusiveRange(45, 100));
+    expect(report.landslideReelections, inInclusiveRange(50, 115));
+    expect(report.landslideLosses, inInclusiveRange(20, 70));
     expect(report.boundaryApprovals, lessThanOrEqualTo(2));
+    expect(report.finalStates.every((state) => state.electionsHeld == 5), isTrue);
+  });
+
+  test('M14 schedules terms relative to a custom initial season index', () {
+    final world = const FictionalWorldFactory().build();
+    final report = const PresidentElectionCareerEngine().simulate(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: const SimulationConfig(careerSeed: 14150, seasonIndex: 7),
+      seasonCount: 5,
+    );
+    final issues = const PresidentElectionCareerValidator().validate(report);
+
+    expect(issues, isEmpty);
+    expect(report.totalElections, 48);
+    expect(report.elections.every((election) => election.seasonIndex == 10), isTrue);
+    expect(report.finalStates.every((state) => state.electionsHeld == 1), isTrue);
   });
 
   test('M14 is deterministic and election reputation shares one advanced world', () {
