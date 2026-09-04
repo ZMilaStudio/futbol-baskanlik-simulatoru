@@ -64,6 +64,8 @@ class BasicEconomyEngine {
     int economicScaleBps = 10000,
     int costScaleBps = 10000,
     Map<String, Money>? annualWagesByClub,
+    Map<String, Money>? transferInstallmentIncomeByClub,
+    Map<String, Money>? transferInstallmentExpenseByClub,
   }) {
     _validateScale(economicScaleBps, 'economicScaleBps');
     _validateScale(costScaleBps, 'costScaleBps');
@@ -112,6 +114,10 @@ class BasicEconomyEngine {
         13000000 + strengthDeltaHundredths * 3000,
       ).scaleBasisPoints(costScaleBps);
       final interestExpense = opening.debt.scaleBasisPoints(500);
+      final transferInstallmentIncome =
+          transferInstallmentIncomeByClub?[clubId] ?? Money.zero;
+      final transferInstallmentExpense =
+          transferInstallmentExpenseByClub?[clubId] ?? Money.zero;
 
       final principalRepaid = opening.debt.scaleBasisPoints(500);
       final cashBeforeEmergency =
@@ -123,7 +129,9 @@ class BasicEconomyEngine {
           wageExpense -
           operatingExpense -
           interestExpense -
-          principalRepaid;
+          principalRepaid +
+          transferInstallmentIncome -
+          transferInstallmentExpense;
       final debtBeforeEmergency = opening.debt - principalRepaid;
 
       const minimumCash = Money.fromUnits(2000000);
@@ -151,6 +159,8 @@ class BasicEconomyEngine {
           operatingExpense: operatingExpense,
           interestExpense: interestExpense,
           principalRepaid: principalRepaid,
+          transferInstallmentIncome: transferInstallmentIncome,
+          transferInstallmentExpense: transferInstallmentExpense,
           emergencyBorrowing: emergencyBorrowing,
           closingCash: closingCash,
           closingDebt: closingDebt,

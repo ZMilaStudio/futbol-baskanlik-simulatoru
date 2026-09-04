@@ -105,7 +105,8 @@ class WorldCareerValidator {
         if (season.movementsAfterSeason.isNotEmpty ||
             season.retiredAfterSeason.isNotEmpty ||
             season.youthIntakeAfterSeason.isNotEmpty ||
-            season.transfersAfterSeason.isNotEmpty) {
+            season.transfersAfterSeason.isNotEmpty ||
+            season.cashMovementsAfterWindow.isNotEmpty) {
           issues.add('Final season must not apply an off-season transition.');
         }
       }
@@ -145,7 +146,7 @@ class WorldCareerValidator {
     }
     final clubIds = season.clubs.map((club) => club.id).toSet();
     for (final player in season.players) {
-      if (!clubIds.contains(player.clubId)) {
+      if (!player.isFreeAgent && !clubIds.contains(player.clubId)) {
         issues.add(
           'Season ${season.seasonIndex} player ${player.id} has unknown club.',
         );
@@ -205,7 +206,10 @@ class WorldCareerValidator {
           'Season ${season.seasonIndex} player ${deal.playerId} transferred twice.',
         );
       }
-      if (deal.fromClubId == deal.toClubId || deal.fee <= Money.zero) {
+      if (deal.fromClubId == deal.toClubId ||
+          deal.fee <= Money.zero ||
+          deal.upfrontFee <= Money.zero ||
+          deal.upfrontFee > deal.fee) {
         issues.add('Season ${season.seasonIndex} contains invalid transfer.');
         continue;
       }
@@ -214,8 +218,39 @@ class WorldCareerValidator {
         issues.add('Season ${season.seasonIndex} transfer references unknown club.');
         continue;
       }
-      expectedCash[deal.fromClubId] = expectedCash[deal.fromClubId]! + deal.fee;
-      expectedCash[deal.toClubId] = expectedCash[deal.toClubId]! - deal.fee;
+      final futureTotal = deal.futureInstallmentTotal;
+      if (deal.upfrontFee + futureTotal != deal.fee) {
+        issues.add(
+          'Season ${season.seasonIndex} installment total mismatch ${deal.playerId}.',
+        );
+      }
+      for (final installment in deal.installments) {
+        if (installment.amount <= Money.zero ||
+            installment.dueSeasonIndex <= season.seasonIndex) {
+          issues.add(
+            'Season ${season.seasonIndex} invalid installment ${deal.playerId}.',
+          );
+        }
+      }
+      expectedCash[deal.fromClubId] =
+          expectedCash[deal.fromClubId]! + deal.upfrontFee;
+      expectedCash[deal.toClubId] =
+          expectedCash[deal.toClubId]! - deal.upfrontFee;
+    }
+    for (final movement in season.cashMovementsAfterWindow) {
+      if (movement.fromClubId == movement.toClubId ||
+          movement.amount <= Money.zero ||
+          closingByClub[movement.fromClubId] == null ||
+          closingByClub[movement.toClubId] == null) {
+        issues.add(
+          'Season ${season.seasonIndex} invalid transfer cash movement.',
+        );
+        continue;
+      }
+      expectedCash[movement.fromClubId] =
+          expectedCash[movement.fromClubId]! - movement.amount;
+      expectedCash[movement.toClubId] =
+          expectedCash[movement.toClubId]! + movement.amount;
     }
     for (final entry in closingByClub.entries) {
       final post = afterByClub[entry.key];

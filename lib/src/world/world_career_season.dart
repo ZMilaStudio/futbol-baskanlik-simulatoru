@@ -1,5 +1,6 @@
 import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
+import '../finance/transfer_cash_movement.dart';
 import '../league/club.dart';
 import '../player/player.dart';
 import '../season/season_report.dart';
@@ -45,6 +46,7 @@ class WorldCareerSeason {
     required Iterable<ClubFinanceState> financeStatesAfterWindow,
     required Iterable<LeagueMovement> movementsAfterSeason,
     required Iterable<WorldLeague> leaguesAfterTransition,
+    Iterable<TransferCashMovement> cashMovementsAfterWindow = const [],
   })  : leaguesBeforeSeason = List.unmodifiable(leaguesBeforeSeason),
         clubs = List.unmodifiable(clubs),
         players = List.unmodifiable(players),
@@ -55,7 +57,8 @@ class WorldCareerSeason {
         transfersAfterSeason = List.unmodifiable(transfersAfterSeason),
         financeStatesAfterWindow = List.unmodifiable(financeStatesAfterWindow),
         movementsAfterSeason = List.unmodifiable(movementsAfterSeason),
-        leaguesAfterTransition = List.unmodifiable(leaguesAfterTransition);
+        leaguesAfterTransition = List.unmodifiable(leaguesAfterTransition),
+        cashMovementsAfterWindow = List.unmodifiable(cashMovementsAfterWindow);
 
   final int seasonIndex;
   final List<WorldLeague> leaguesBeforeSeason;
@@ -69,6 +72,7 @@ class WorldCareerSeason {
   final List<ClubFinanceState> financeStatesAfterWindow;
   final List<LeagueMovement> movementsAfterSeason;
   final List<WorldLeague> leaguesAfterTransition;
+  final List<TransferCashMovement> cashMovementsAfterWindow;
 
   int get matchCount => leagueResults.fold(
         0,

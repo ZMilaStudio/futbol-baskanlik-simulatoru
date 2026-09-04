@@ -58,3 +58,6 @@ jobs:
 
       - name: Run M7 20-season contract career
         run: dart run tool/run_m7_contract_career.dart 20260903
+
+      - name: Run M8 20-season advanced transfer career
+        run: dart run tool/run_m8_advanced_transfer_career.dart 20260903

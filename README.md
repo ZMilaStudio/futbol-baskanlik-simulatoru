@@ -14,13 +14,11 @@ ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün determini
 - **M5 — 48 Kulüp / 3 Lig:** PASS
 - **M6 — Teknik Direktör Sistemi:** PASS
 - **M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi:** PASS
-- **M8 — Gelişmiş Transfer Yapıları I / Kiralık + Taksit:** sıradaki milestone
+- **M8 — Gelişmiş Transfer Yapıları I / Kiralık + Taksit:** PASS
 
 Flutter bağımlılığı henüz yoktur. Öncelik, başkanlık simülasyonunun uzun kariyer boyunca sağlam çalışan çekirdeğini mobil arayüzden önce otomatik testlerle kanıtlamaktır.
 
 ## Dünya ölçeği
-
-M5 ile çekirdek ilk gerçek oyun ölçeğine çıktı:
 
 - 48 özgün kurgu kulüp
 - 3 lig × 16 kulüp
@@ -28,15 +26,15 @@ M5 ile çekirdek ilk gerçek oyun ölçeğine çıktı:
 - 14.400 maç / 20 sezon
 - 864 başlangıç oyuncusu
 - terfi/düşme
-- ortak ekonomi ve transfer pazarı
+- ortak ekonomi, kontrat ve transfer pazarı
 
-Seed `20260903` M5 baseline: 71 transfer, `637,91M` transfer hacmi, `862,25M` final nakit, `647,04M` final borç, validation `0`.
+M5 seed `20260903` no-op baseline: 71 transfer, `637,91M` transfer hacmi, `862,25M` final nakit, `647,04M` final borç, validation `0`.
 
 Ayrıntı: `M5_48_KULUP_3_LIG.md`.
 
 ## M6 — Teknik Direktör Sistemi
 
-M6, başkanın saha içini yönetmek yerine doğru teknik direktörü seçmesi fikrini gerçek sisteme taşıdı.
+Başkan saha içini yönetmez; doğru teknik direktörü seçer.
 
 - 96 deterministik teknik direktör
 - 5 profil
@@ -53,41 +51,59 @@ Ayrıntı: `M6_TEKNIK_DIREKTOR_SISTEMI.md`.
 
 ## M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi
 
-M7 ile geçici maaş tahmini yerine gerçek oyuncu kontratları devreye girdi.
-
-- oyuncu bazlı başlangıç/bitiş sezonu
-- gerçek yıllık maaş
-- kontrat bitişinde yenileme veya serbest kalma
-- serbest oyuncu havuzu ve mevki ihtiyacına göre imza
-- youth intake için ilk profesyonel kontrat
+- gerçek yıllık oyuncu maaşı
+- başlangıç/bitiş sezonlu kontrat
+- yenileme veya serbest kalma
+- free-agent havuzu ve mevki ihtiyacına göre imza
+- youth intake ilk profesyonel kontratı
 - transfer sonrası yeni kontrat
 - kontrat süresinin piyasa değerine etkisi
-- normal bonservis pazarında free-agent ayrımı
-- manager ve contract sistemlerinin aynı world engine'de bağımsız hook'larla birlikte çalışması
 
-### M7 kabul baseline — seed `20260903`
-
-- 20 sezon / 14.400 maç
-- başlangıç kontratı `864`
-- final aktif kontrat `874`
-- yenileme `3.757`
-- release `1.143`
-- free-agent signing `776`
-- final free agent `32`
-- youth contract `912`
-- transfer sonrası kontrat `103`
-- final toplam yıllık maaş `491,27M`
-- ortalama final yıllık maaş `562.091`
-- bonservis transferi `103`
-- transfer hacmi `868,67M`
-- final nakit `1.060,80M`
-- final borç `554,81M`
-- emergency borrowing `428,76M`
-- validation `0`
-
-M7 sayıları nihai oyun ekonomisi değildir; CI'da geniş regresyon bantları kullanılır. Amaç sözleşme/free-agent pazarının ne donması ne de patlamasıdır.
+Seed `20260903`: 874 final aktif kontrat, 3.757 yenileme, 1.143 release, 776 free-agent signing, 32 final free agent, `491,27M` final yıllık maaş, 103 bonservis transferi, `1.060,80M` cash, `554,81M` debt, validation `0`.
 
 Ayrıntı: `M7_OYUNCU_SOZLESMESI_MAAS.md`.
+
+## M8 — Kiralık + Taksit
+
+M8 ana transfer felsefesini gelişmiş yapılara açar:
+
+> **Paran yoksa transfer yapamazsın değil; paran yoksa daha akıllı transfer yapmak zorundasın.**
+
+Eklenenler:
+
+- sezonluk `LoanAgreement`
+- parent club kontratının korunması
+- loan fee
+- `%45–80` maaş paylaşımı
+- sezon sonunda otomatik dönüş
+- upfront + iki gelecek sezon transfer taksiti
+- `TransferInstallmentObligation`
+- taksit yükümlülüğünün banka borcundan ayrı tutulması
+- vadesi gelen taksidin gerçek alıcı/satıcı nakit akışına dönüşmesi
+- satıcı ekonomisinin taksit kabulünü etkilemesi
+- bağlamsal kiralık ihtiyacı
+- M8 validator, report ve headless runner
+
+### M8 kabul baseline — seed `20260903`
+
+- 20 sezon / 14.400 maç
+- kalıcı transfer `140`
+- taksitli transfer `68` (`%48,6`)
+- taksit taahhüdü `234,79M`
+- ödenmiş taksit `232,77M`
+- açık taksit `2,02M`
+- kiralık `478`
+- final aktif kiralık `32`
+- loan fee `113,15M`
+- ortalama loan-club maaş payı `%62,18`
+- final cash `1.017,61M`
+- final debt `378,97M`
+- emergency borrowing `185,61M`
+- validation `0`
+
+İlk denemelerde 755 kiralık ve 146/183 taksitli transfer üreten aşırı kullanım bilinçli olarak reddedildi. CI artık taksidin kalıcı transferlerin çoğunluğuna dönüşmesini de engeller.
+
+Ayrıntı: `M8_KIRALIK_TAKSIT.md`.
 
 ## Mimari
 
@@ -95,12 +111,14 @@ Temel yön:
 
 **Flutter mobil kabuk + saf Dart simülasyon çekirdeği + headless test runner.**
 
-`WorldCareerEngine` iki bağımsız genişleme noktası kullanır:
+`WorldCareerEngine` kopyalanmadan no-op varsayılanlı hook'larla genişletilir:
 
-- `WorldCareerHooks`: teknik direktör gibi sezon/sportif lifecycle sistemleri
-- `WorldRosterHooks`: kontrat, kadro ve gerçek maaş gibi roster/economy sistemleri
+- `WorldCareerHooks`: teknik direktör gibi sezon/sportif lifecycle,
+- `WorldRosterHooks`: kontrat/kadro/gerçek maaş,
+- `WorldFinanceHooks`: transfer taksiti gibi sezon içi ek finans akışları,
+- `WorldTransferHooks`: kiralık gibi transfer penceresi sonrası ek hareketler.
 
-Her ikisinin varsayılanı no-op'tur. Bu sayede eski milestone baseline'ları yeni sistemler eklendiğinde de regresyon testi olarak korunur.
+Bu sayede M0–M7 baselineları M8 ile de regresyon testi olarak korunur.
 
 Deterministik RNG, cihaz saatinden bağımsız `GameDate` ve integer minor-unit `Money` temel teknik kurallardır.
 
@@ -118,26 +136,25 @@ dart run tool/run_m4_transfer_career.dart 20260903
 dart run tool/run_m5_world_career.dart 20260903
 dart run tool/run_m6_manager_career.dart 20260903
 dart run tool/run_m7_contract_career.dart 20260903
+dart run tool/run_m8_advanced_transfer_career.dart 20260903
 ```
 
 ## CI prensibi
 
-Tek hafif GitHub Actions workflow'u kullanılır. CI:
+Tek hafif GitHub Actions workflow'u kullanılır:
 
 - `dart analyze`
 - tüm otomatik testler
 - M0 100 sezon batch
-- M1–M7 20 sezon headless runner'ları
-
-çalıştırır.
+- M1–M8 20 sezon headless runner'ları
 
 APK/AAB, büyük binary veya `actions/upload-artifact` yoktur. Artifact hedefi `0`dır.
 
 ## Sıradaki milestone
 
-**M8 — Gelişmiş Transfer Yapıları I: Kiralık + Taksit.**
+**M9 — Taraftar Beklentisi + Güven Çekirdeği.**
 
-Amaç nakdi sınırlı veya borçlu kulüpler için transfer pazarını kapatmak yerine daha akıllı finansman yolları açmaktır. İlk aşamada yalnız kiralık ve taksitli bonservis eklenecek; satın alma opsiyonu, satıştan pay, bonus, takas ve maaş paylaşımı sonraki katmanlarda değerlendirilecek.
+İlk hedef taraftarı rastgele mutluluk sayacı yapmak değil; kulübün finansını, lig seviyesini, kadro gücünü, transferleri ve sezon hedefini anlayan bağlamsal bir sistem kurmaktır. M9'da medya, seçim ve Flutter UI henüz kapsam dışı kalacaktır.
 
 ## Lisans
 
