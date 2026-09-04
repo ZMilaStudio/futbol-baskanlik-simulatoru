@@ -58,9 +58,12 @@ class FanState {
   }
 
   static int _nextScore(int current, int delta) {
-    final stabilized = current > 60
+    // Fan trust should remember several seasons of history. Mean reversion is
+    // therefore only a soft safety rail near the outer bands, not a yearly
+    // pull back to neutral that erases club-to-club differences.
+    final stabilized = current > 75
         ? current - 1
-        : current < 60
+        : current < 45
             ? current + 1
             : current;
     return (stabilized + delta).clamp(0, 100).toInt();
