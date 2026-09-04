@@ -16,7 +16,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -97,3 +97,6 @@ jobs:
 
       - name: Run M20 20-season president financial discipline feedback career
         run: dart run tool/run_m20_president_financial_discipline_feedback.dart 20260903
+
+      - name: Run M21 20-season president transfer ambition feedback career
+        run: dart run tool/run_m21_president_transfer_ambition_feedback.dart 20260903
