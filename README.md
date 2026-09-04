@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Teknik durum
 
-M0–M15 tamamlandı ve otomatik regresyon zincirinde tutuluyor.
+M0–M16 tamamlandı ve otomatik regresyon zincirinde tutuluyor.
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -16,7 +16,8 @@ M0–M15 tamamlandı ve otomatik regresyon zincirinde tutuluyor.
 - M12: vaat sonuçları → taraftar güveni
 - M13: vaat sonuçları → medya güvenilirliği
 - M14: başkanlık seçimi çekirdeği
-- **M15: başkan kimliği + görev süresi + gerçek devir — PASS**
+- M15: başkan kimliği + görev süresi + gerçek devir
+- **M16: başkan devrinde kişisel itibar devri — PASS**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -30,32 +31,37 @@ Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalı�
 - terfi/düşme
 - ortak ekonomi, kontrat ve transfer pazarı
 
-## Reputasyon → seçim → görev devri zinciri
+## Başkanlık zinciri
 
-M9–M13 taraftar, medya ve vaat hafızasını üretir. M14 dört sezonluk dönem sonunda fan overall `%35`, fan identity `%15`, media credibility `%25`, son dört sezon promise score `%25` ile approval üretip deterministik challenger ile karşılaştırır.
+M9–M13 taraftar, medya ve vaat hafızasını üretir. M14 dört sezonluk dönem sonunda fan overall `%35`, fan identity `%15`, media credibility `%25`, son dört sezon promise score `%25` ile approval üretip deterministik challenger ile karşılaştırır. M15 seçim kaybını gerçek başkan devrine dönüştürür.
 
-Seed `20260903` M14: `240` seçim, `158` reelected, `82` lost, reelection `%65,8`, avg approval `63,24`, avg challenger `60,08`.
+M16 ile akış artık ardışıktır:
 
-M15 seçim sonucunu değiştirmeden başkan kimliğini ve tenure state'ini ekler. Yeniden seçimde aynı incumbent devam eder; kayıpta challenger yeni incumbent olur.
+**sezon → reputasyon → seçim → devir → kişisel reputasyon handover → sonraki sezon**
 
-Seed `20260903` M15:
+Yeni başkan kulübün sportif/mali/transfer güven bagajını devralır; predecessor'ın kişisel `identityTrust` ve `media credibility` geçmişini ise birebir miras almaz. İlk handover politikası `%25 predecessor izi + %75 nötr başlangıç`tır. Fan identity nötr referansı `60`, medya nötr referansı `65`tir.
 
-- `82` seçim kaybı → `82` gerçek başkan devri
-- `130` benzersiz başkan
-- `35` kulüpte en az bir devir
-- `24` kulüpte birden fazla devir
-- maksimum `5` devir/kulüp
-- biten görev süresi ortalaması `6,93` sezon
-- görev süresi aralığı `4–20`
+Seed `20260903` M16:
+
+- `240` seçim
+- `161` yeniden seçim / `79` kayıp ve devir
+- yeniden seçim oranı `%67,1`
+- `127` benzersiz başkan
+- final media credibility ortalaması `72,42`, aralık `59–93`
+- final fan identity ortalaması `65,00`, aralık `56–81`
+- ortalama handover media değişimi `+0,13`
+- ortalama handover identity değişimi `+2,18`
 - validation `0`
 
-Ayrıntı: `M15_BASKANLIK_GOREV_SURESI_DEVIR.md`.
+M14–M15 eski baseline'ı regresyon olarak aynen korunur; M16 ardışık kişisel itibar semantiği nedeniyle kendi seçim baseline'ına sahiptir.
+
+Ayrıntı: `M16_BASKAN_DEVRI_KISISEL_ITIBAR.md`.
 
 ## Mimari
 
 **Flutter mobil kabuk + saf Dart simülasyon çekirdeği + headless test runner.**
 
-Gözlemsel/itibar katmanlarında aynı alt dünya mümkün olduğunca paylaşılır. M15, M14 election report'unu değiştirmeden tenure/devir katmanı olarak çalışır.
+Gözlemsel/itibar katmanlarında aynı alt dünya paylaşılır. M16, M13'ün manager + advanced transfer + promise + media dünyasını tekrar simüle etmez; mevcut sezon olaylarını yeni incumbent reputasyon state'i üzerinde replay eder.
 
 Temel teknik kurallar:
 
@@ -80,17 +86,18 @@ dart run tool/run_m12_promise_fan_career.dart 20260903
 dart run tool/run_m13_promise_media_career.dart 20260903
 dart run tool/run_m14_president_election_career.dart 20260903
 dart run tool/run_m15_president_tenure_career.dart 20260903
+dart run tool/run_m16_president_reputation_career.dart 20260903
 ```
 
 ## CI
 
-Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M15 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
+Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M16 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
 
 ## Sıradaki milestone
 
-**M16 — Başkan Devrinde Kişisel İtibar Devri.**
+**M17 — Başkan Profili + Yönetim Felsefesi Çekirdeği.**
 
-Yeni incumbent predecessor'ın kişisel media credibility ve fan identity geçmişini olduğu gibi miras almamalı. M16, kulüp temelli güveni korurken başkana özgü reputasyonu kontrollü biçimde resetleyip sonraki seçimlere gerçek tenure bağlamı verecek.
+Başkan değişimi artık kimlik ve kişisel itibar değiştiriyor. Sıradaki adım, başkanların mali disiplin, transfer iştahı ve uzun vadeli yapılanma gibi deterministik yönetim eğilimlerine sahip olmasıdır. İlk M17 bu eğilimleri ölçülebilir profil/state olarak kuracak; ekonomi ve transfer AI'ına geri besleme kontrollü ve ayrı guard'larla eklenecek.
 
 ## Lisans
 
