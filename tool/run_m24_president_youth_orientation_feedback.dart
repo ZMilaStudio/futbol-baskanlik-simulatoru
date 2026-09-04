@@ -32,17 +32,43 @@ void main(List<String> args) {
             'M24 canonical: baseline manager count changed.',
           if (report.baselineTransfers != 133)
             'M24 canonical: baseline transfer count changed.',
-          if (report.iterationCount < 1 || report.iterationCount > 8)
-            'M24 canonical: iteration count outside 1..8.',
+          if (report.iterationCount < 3 || report.iterationCount > 6)
+            'M24 canonical: iteration count outside 3..6.',
           if (report.finalReport.totalElections != 240)
             'M24 canonical: election count changed.',
-          if (report.finalTransfers < 100 || report.finalTransfers > 180)
-            'M24 canonical: final transfer count outside 100..180.',
-          if (report.finalManagerChanges < 60 || report.finalManagerChanges > 110)
-            'M24 canonical: manager changes outside 60..110.',
-          if (report.uniqueFinalPresidents < 100 ||
-              report.uniqueFinalPresidents > 170)
-            'M24 canonical: unique presidents outside 100..170.',
+          if (report.electionOutcomeDifferences < 25 ||
+              report.electionOutcomeDifferences > 75)
+            'M24 canonical: election difference outside 25..75.',
+          if (report.finalReelections < 145 || report.finalReelections > 170)
+            'M24 canonical: final reelections outside 145..170.',
+          if (report.finalLosses < 70 || report.finalLosses > 95)
+            'M24 canonical: final losses outside 70..95.',
+          if (report.finalTransfers < 135 || report.finalTransfers > 175)
+            'M24 canonical: final transfer count outside 135..175.',
+          if (report.transferDelta.abs() < 10 || report.transferDelta.abs() > 40)
+            'M24 canonical: transfer delta magnitude outside 10..40.',
+          if (report.finalManagerChanges < 75 || report.finalManagerChanges > 100)
+            'M24 canonical: manager changes outside 75..100.',
+          if (!_moneyBetween(report.finalTransferVolume, 1200000000, 1650000000))
+            'M24 canonical: transfer volume outside 1.20B..1.65B.',
+          if (report.finalInstallmentDeals < 65 || report.finalInstallmentDeals > 90)
+            'M24 canonical: installment deals outside 65..90.',
+          if (!_moneyBetween(
+              report.finalInstallmentCommitment, 200000000, 320000000))
+            'M24 canonical: installment commitment outside 200M..320M.',
+          if (!_moneyBetween(report.finalCash, 1000000000, 1400000000))
+            'M24 canonical: final cash outside 1.00B..1.40B.',
+          if (!_moneyBetween(report.finalDebt, 280000000, 430000000))
+            'M24 canonical: final debt outside 280M..430M.',
+          if (!_moneyBetween(report.finalEmergencyBorrowing, 100000000, 220000000))
+            'M24 canonical: emergency borrowing outside 100M..220M.',
+          if (report.uniqueFinalPresidents < 115 ||
+              report.uniqueFinalPresidents > 145)
+            'M24 canonical: unique presidents outside 115..145.',
+          if (report.iterations.last.timelineChanged)
+            'M24 canonical: final timeline must be stable.',
+          if (report.iterations.last.electionOutcomeDifferences != 0)
+            'M24 canonical: final election difference must be zero.',
           if (!report.worldChanged)
             'M24 canonical: youth orientation must change the world.',
         ]
@@ -99,4 +125,10 @@ void main(List<String> args) {
   if (issues.isNotEmpty) {
     throw StateError('M19-M24 canonical validation failed.');
   }
+}
+
+bool _moneyBetween(Money value, int minUnits, int maxUnits) {
+  final min = Money.fromUnits(minUnits).minorUnits;
+  final max = Money.fromUnits(maxUnits).minorUnits;
+  return value.minorUnits >= min && value.minorUnits <= max;
 }
