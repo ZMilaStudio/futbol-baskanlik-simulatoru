@@ -79,3 +79,6 @@ jobs:
 
       - name: Run M14 20-season presidential election career
         run: dart run tool/run_m14_president_election_career.dart 20260903
+
+      - name: Run M15 20-season president tenure career
+        run: dart run tool/run_m15_president_tenure_career.dart 20260903
