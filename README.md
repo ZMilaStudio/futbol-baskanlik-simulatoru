@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Teknik durum
 
-**M0–M21 tamamlandı. M22 — Profile Feedback Orchestration I, final kalite kapısındadır.**
+**M0–M22 tamamlandı. Sıradaki aktif milestone: M23 — Başkan Risk İştahı → Transfer Pazarlık Davranışı I.**
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -18,8 +18,8 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 - M18: `managerPatience` → gerçek teknik direktör dismissal kararları
 - M19: manager/world → reputasyon → seçim fixed-point feedback
 - M20: `financialDiscipline` → gerçek transfer affordability/bütçe sınırları
-- M21: `transferAmbition` → gerçek transfer aktivite slotları + M20 feedback — PASS
-- **M22: M19–M21 canonical profile-feedback doğrulamasını tek-pass orchestration'a indirir; oyun davranışı değişmez**
+- M21: `transferAmbition` → gerçek transfer aktivite slotları + M20 feedback
+- M22: M19–M21 canonical profile-feedback doğrulamasını tek-pass orchestration'a indirir; oyun davranışı değişmez
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -120,9 +120,9 @@ M21 final kalite:
 - artifact `0`
 - final CI süresi yaklaşık `6 dk 10 sn`
 
-## M22 profile-feedback orchestration
+## M22 profile-feedback orchestration — PASS
 
-M21 sonrası aynı canonical profile-feedback kariyerleri hem testlerde hem M19/M20/M21 runner'larında tekrar çözülüyordu. M22 bu tekrarı davranış değiştirmeden kaldırır.
+M21 sonrası aynı canonical profile-feedback kariyerleri hem testlerde hem M19/M20/M21 runner'larında tekrar çözülüyordu. M22 bu tekrarı davranış değiştirmeden kaldırdı.
 
 Temel gözlem:
 
@@ -133,11 +133,11 @@ Dolayısıyla tek M21 canonical simülasyonu M19, M20 ve M21 için gereken büt�
 
 M22:
 
-- ortak `tool/profile_feedback_canonical_guard.dart` ekler,
-- üç pahalı full-career testi `canonical-feedback` etiketiyle normal CI test turundan ayırır,
-- policy, neutral-regression, determinism ve multi-seed convergence testlerini normal turda tutar,
-- M19/M20/M21 canonical guard'larını tek M21 runner içinde uygular,
-- ayrı M19 ve M20 canonical CI runner tekrarlarını kaldırır.
+- ortak `tool/profile_feedback_canonical_guard.dart` ekledi,
+- üç pahalı full-career testi `canonical-feedback` etiketiyle normal CI test turundan ayırdı,
+- policy, neutral-regression, determinism ve multi-seed convergence testlerini normal turda tuttu,
+- M19/M20/M21 canonical guard'larını tek M21 runner içinde uyguladı,
+- ayrı M19 ve M20 canonical CI runner tekrarlarını kaldırdı.
 
 İlk M22 ölçüm CI `33917924101`:
 
@@ -149,9 +149,14 @@ M22:
 - M20 nested final `158/82`,
 - M21 final yine `4 iterasyon / 150-90 / 80 manager / 161 transfer`,
 - validation `0`,
+- artifact `0`,
 - toplam süre yaklaşık `2 dk 06 sn`.
 
-M21 finaline göre yaklaşık `4 dk 04 sn`, yani yaklaşık `%66` CI süresi kazanıldı. Bu nedenle timeout `7` dakikadan tekrar `5` dakikaya indirildi.
+M21 finaline göre yaklaşık `4 dk 04 sn`, yani yaklaşık `%66` CI süresi kazanıldı. Timeout `7` dakikadan tekrar `5` dakikaya indirildi.
+
+M22 final PR CI `33918259144`, `5 dk` timeout altında analyzer + `76` hızlı test + M0–M18 + birleşik M19–M21 canonical kapısının tamamını PASS geçti; artifact `0`.
+
+PR #23 squash merge: `4ec358cf7131087176426ba5767ab4e4e65a36b3`.
 
 Ayrıntılar:
 
@@ -199,9 +204,17 @@ Tek workflow:
 
 Canonical guard kapsamı azaltılmadı; duplicate full-career hesaplar kaldırıldı. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`. Timeout `5` dakikadır.
 
-## Sıradaki yön
+## Sıradaki milestone — M23
 
-M22 final kalite kapısı geçtikten sonra sıradaki davranış trait'i adayı `riskAppetite` olacaktır. Yeni milestone mevcut birleşik profile-feedback doğrulamasını yeniden kullanmalı ve yeni duplicate full-career CI katmanları oluşturmamalıdır.
+**Başkan Risk İştahı → Transfer Pazarlık Davranışı I.**
+
+M23'te ayrım korunacak:
+
+- `financialDiscipline` = ne kadarını karşılayabilir / ne kadar rezerv bırakır,
+- `transferAmbition` = kaç transfer slotu kovalar,
+- `riskAppetite` = mevcut affordability içinde pazarlıkta ne kadar yukarı çıkmaya razı olur.
+
+İlk hedef buyer max-bid/negotiation ceiling davranışıdır. Neutral risk mevcut teklif davranışını birebir korumalıdır. Seller ask, candidate shortlist, pozisyon ihtiyacı, slot sayısı, affordability ve `youthOrientation` M23'te değişmeyecektir. M23 yeni duplicate full-career CI katmanı oluşturmayacak; M22 birleşik canonical profile-feedback kapısını genişletecektir.
 
 ## Lisans
 
