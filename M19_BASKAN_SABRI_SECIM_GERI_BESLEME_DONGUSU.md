@@ -99,6 +99,12 @@ Ek olarak temsilî üç seed (`19011`, `19012`, `19013`) 8 sezonluk feedback tes
 
 M18'deki “değişen world seçimlere geri dönmüyor” teknik borcu kapanır. Final M19 çözümünde president timeline ve manager/world/reputation/election sonucu karşılıklı olarak tutarlıdır.
 
+## Test geçmişi
+
+İlk PR CI denemesi model davranışına ulaşmadan yalnız test string sözdizimi ve iki unused import nedeniyle analyzer'da başarısız oldu. Bu yüzeysel hatalar temizlendi. Sonraki CI'da analyzer PASS, canonical M19 feedback PASS, toplam `72` test PASS, eski M0–M18 runner zinciri PASS ve artifact `0` görüldü.
+
+Final kalite kapısına ayrıca canonical denge guard'ları, üç temsilî seed için convergence testi, public M19 API export'ları ve bağımsız M19 headless runner eklendi.
+
 ## Sonraki yön
 
 M20 adayı: **Başkan Mali Disiplini → Transfer Bütçe Davranışı I**.
