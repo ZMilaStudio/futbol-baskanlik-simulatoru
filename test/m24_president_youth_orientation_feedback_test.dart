@@ -19,6 +19,92 @@ void main() {
     expect(high.applyYouthSignal(10), greaterThan(neutral.applyYouthSignal(10)));
   });
 
+  test('M24 youth orientation changes the first real transfer candidate', () {
+    const buyer = Club(id: 'a_buyer', name: 'Buyer', strength: 65);
+    const seller = Club(id: 'z_seller', name: 'Seller', strength: 70);
+    final players = <Player>[
+      for (var i = 0; i < 2; i++)
+        _player('buyer_gk_$i', buyer.id, PlayerPosition.goalkeeper, 65),
+      for (var i = 0; i < 6; i++)
+        _player('buyer_def_$i', buyer.id, PlayerPosition.defender, 65),
+      for (var i = 0; i < 6; i++)
+        _player('buyer_mid_$i', buyer.id, PlayerPosition.midfielder, 65),
+      const Player(
+        id: 'ready_forward',
+        name: 'Ready Forward',
+        clubId: 'z_seller',
+        position: PlayerPosition.forward,
+        age: 27,
+        ability: 79,
+        potential: 79,
+        retirementAge: 36,
+        isAcademyGraduate: false,
+      ),
+      const Player(
+        id: 'young_forward',
+        name: 'Young Forward',
+        clubId: 'z_seller',
+        position: PlayerPosition.forward,
+        age: 20,
+        ability: 72,
+        potential: 92,
+        retirementAge: 36,
+        isAcademyGraduate: false,
+      ),
+      for (var i = 0; i < 3; i++)
+        _player('seller_fwd_$i', seller.id, PlayerPosition.forward, 50),
+      for (var i = 0; i < 2; i++)
+        _player('seller_gk_$i', seller.id, PlayerPosition.goalkeeper, 65),
+      for (var i = 0; i < 5; i++)
+        _player('seller_def_$i', seller.id, PlayerPosition.defender, 65),
+      for (var i = 0; i < 4; i++)
+        _player('seller_mid_$i', seller.id, PlayerPosition.midfielder, 65),
+    ];
+    const finances = [
+      ClubFinanceState(
+        clubId: 'a_buyer',
+        cash: Money.fromUnits(500000000),
+        debt: Money.zero,
+      ),
+      ClubFinanceState(
+        clubId: 'z_seller',
+        cash: Money.fromUnits(100000000),
+        debt: Money.zero,
+      ),
+    ];
+    const orientationPolicy = PresidentYouthOrientationTransferPolicy();
+
+    final low = const TransferMarketEngine().simulateWindow(
+      clubs: const [buyer, seller],
+      players: players,
+      financeStates: finances,
+      careerSeed: 24001,
+      seasonIndex: 0,
+      simulationVersion: 1,
+      youthPreferencePoliciesByClub: {
+        buyer.id: orientationPolicy.forYouthOrientation(20),
+      },
+    );
+    final high = const TransferMarketEngine().simulateWindow(
+      clubs: const [buyer, seller],
+      players: players,
+      financeStates: finances,
+      careerSeed: 24001,
+      seasonIndex: 0,
+      simulationVersion: 1,
+      youthPreferencePoliciesByClub: {
+        buyer.id: orientationPolicy.forYouthOrientation(90),
+      },
+    );
+
+    expect(low.deals, isNotEmpty);
+    expect(high.deals, isNotEmpty);
+    expect(low.deals.first.toClubId, buyer.id);
+    expect(high.deals.first.toClubId, buyer.id);
+    expect(low.deals.first.playerId, 'ready_forward');
+    expect(high.deals.first.playerId, 'young_forward');
+  });
+
   test('M24 neutral youth preference preserves the old advanced world', () {
     final world = const FictionalWorldFactory().build();
     const config = SimulationConfig(careerSeed: 20260903);
@@ -85,7 +171,7 @@ void main() {
     expect(issues, isEmpty);
     expect(report.converged, isTrue);
     expect(report.cycleDetected, isFalse);
-    expect(report.iterationCount, inInclusiveRange(1, 8));
+    expect(report.iterationCount, inInclusiveRange(3, 6));
     expect(report.finalReport.totalElections, 240);
     expect(report.baselineReelections, 156);
     expect(report.baselineLosses, 84);
@@ -93,12 +179,34 @@ void main() {
     expect(report.baselineTransfers, 133);
     expect(report.iterations.last.timelineChanged, isFalse);
     expect(report.iterations.last.electionOutcomeDifferences, 0);
-    expect(report.finalTransfers, inInclusiveRange(100, 180));
-    expect(report.finalManagerChanges, inInclusiveRange(60, 110));
+    expect(report.electionOutcomeDifferences, inInclusiveRange(25, 75));
+    expect(report.finalReelections, inInclusiveRange(145, 170));
+    expect(report.finalLosses, inInclusiveRange(70, 95));
+    expect(report.finalTransfers, inInclusiveRange(135, 175));
+    expect(report.finalManagerChanges, inInclusiveRange(75, 100));
     expect(report.finalTransferVolume.minorUnits, greaterThan(0));
+    expect(report.finalInstallmentDeals, inInclusiveRange(60, 95));
     expect(report.finalCash.minorUnits, greaterThanOrEqualTo(0));
     expect(report.finalDebt.minorUnits, greaterThanOrEqualTo(0));
-    expect(report.uniqueFinalPresidents, inInclusiveRange(100, 170));
+    expect(report.uniqueFinalPresidents, inInclusiveRange(115, 145));
     expect(report.worldChanged, isTrue);
   }, tags: 'canonical-feedback');
 }
+
+Player _player(
+  String id,
+  String clubId,
+  PlayerPosition position,
+  double ability,
+) =>
+    Player(
+      id: id,
+      name: id,
+      clubId: clubId,
+      position: position,
+      age: 27,
+      ability: ability,
+      potential: ability,
+      retirementAge: 36,
+      isAcademyGraduate: false,
+    );
