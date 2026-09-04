@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Teknik durum
 
-**M0–M20 tamamlandı. M21 — Başkan Transfer Hırsı → Transfer Aktivitesi I, final kalite kapısındadır.**
+**M0–M21 tamamlandı ve otomatik regresyon zincirinde tutuluyor. Sıradaki aktif milestone: M22 — Profile Feedback Orchestration I / performans refactor.**
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -18,7 +18,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 - M18: `managerPatience` → gerçek teknik direktör dismissal kararları
 - M19: manager/world → reputasyon → seçim fixed-point feedback
 - M20: `financialDiscipline` → gerçek transfer affordability/bütçe sınırları
-- **M21: `transferAmbition` → gerçek transfer aktivite slotları + M20 feedback — PASS adayı**
+- **M21: `transferAmbition` → gerçek transfer aktivite slotları + M20 feedback — PASS**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -78,7 +78,7 @@ Seed `20260903`:
 - final debt `363,58M`
 - emergency borrowing `159,05M`
 
-## M21 ilk kabul baseline'ı
+## M21 kabul baseline'ı
 
 Seed `20260903`:
 
@@ -105,9 +105,19 @@ Iteration path:
 
 Sıra: `manager changes / transfers / reelected-lost`.
 
-M21 aggregate transfer sayısını `153 → 161`, hacmi yaklaşık `%5,35` artırdı. Bu controlled bir değişimdir; M21'in asıl causal invariant'ı aggregate artış değil, `low ambition slot < neutral slot < high ambition slot` ilişkisidir.
+M21 aggregate transfer sayısını `153 → 161`, hacmi yaklaşık `%5,35` artırdı. Bu kontrollü bir değişimdir; M21'in asıl causal invariant'ı aggregate artış değil, `low ambition slot < neutral slot < high ambition slot` ilişkisidir.
 
 Neutral activity-provider regresyonu, `transferAmbition=60` yolunun eski advanced-world signature'ını birebir korumasını zorunlu tutar.
+
+M21 final kalite:
+
+- PR #22 squash merge: `d24670a5ea9dfa51ee32f7fe0bdda894e0972856`
+- final PR CI `33916301967`: PASS
+- analyzer PASS
+- `79` test PASS
+- M0–M21 runner zinciri PASS
+- artifact `0`
+- final CI süresi yaklaşık `6 dk 10 sn`
 
 Ayrıntılar:
 
@@ -146,11 +156,24 @@ dart run tool/run_m21_president_transfer_ambition_feedback.dart 20260903
 
 Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M21 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
 
-M21 ile nested fixed-point zinciri 5 dakikalık CI sınırına dayandığı için timeout `7` dakikaya çıkarıldı. M22 ve sonrası için aynı full-career baseline'ın katman katman yeniden çözülmesini azaltacak ortak/cached feedback orchestration teknik borcu ele alınmalıdır.
+M21 ile nested fixed-point zinciri 5 dakikalık CI sınırını aştığı için timeout `7` dakikadır. Bu limit yükseltmesi yeni normal olarak kabul edilmemelidir.
 
-## Sıradaki yön
+## Sıradaki milestone — M22
 
-M21 final kalite kapısı geçtikten sonra doğrudan yeni bir trait eklemek yerine feedback orchestration maliyetini azaltmak öncelikli teknik değerlendirmedir. Sonraki davranış trait'i adayı `riskAppetite` olacaktır; ancak yeni katman mevcut nested çözümü körlemesine büyütmemelidir.
+**Profile Feedback Orchestration I / performans refactor.**
+
+Amaç yeni oyun davranışı eklemek değil, M19→M20→M21 katmanlarının aynı full-career baseline'ı tekrar tekrar çözmesini azaltırken **M21 canonical sonucu ve bütün eski signature'ları birebir korumaktır**.
+
+Hedefler:
+
+- ortak profile-feedback orchestration katmanı,
+- converged baseline'ın yeniden kullanılabilmesi,
+- nested milestone engine çağrılarının azaltılması,
+- M21 canonical `4 iterasyon / 150-90 / 80 manager / 161 transfer` sonucunun değişmemesi,
+- CI süresinin anlamlı biçimde düşmesi,
+- artifact `0`.
+
+M22 sonrasında sıradaki davranış trait'i adayı `riskAppetite` olacaktır.
 
 ## Lisans
 
