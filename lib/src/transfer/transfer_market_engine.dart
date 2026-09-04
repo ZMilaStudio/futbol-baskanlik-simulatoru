@@ -6,6 +6,7 @@ import '../league/club.dart';
 import '../player/player.dart';
 import '../player/player_position.dart';
 import 'market_value_model.dart';
+import 'transfer_activity_policy.dart';
 import 'transfer_budget_policy.dart';
 import 'transfer_deal.dart';
 import 'transfer_installment.dart';
@@ -15,10 +16,12 @@ class TransferMarketEngine {
   const TransferMarketEngine({
     this.marketValueModel = const MarketValueModel(),
     this.budgetPolicyProvider,
+    this.activityPolicyProvider,
   });
 
   final MarketValueModel marketValueModel;
   final TransferBudgetPolicyProvider? budgetPolicyProvider;
+  final TransferActivityPolicyProvider? activityPolicyProvider;
 
   static const Map<PlayerPosition, int> _squadTargets = {
     PlayerPosition.goalkeeper: 2,
@@ -44,6 +47,7 @@ class TransferMarketEngine {
     Map<String, int>? contractYearsRemainingByPlayer,
     bool enableInstallments = false,
     Map<String, TransferBudgetPolicy>? budgetPoliciesByClub,
+    Map<String, TransferActivityPolicy>? activityPoliciesByClub,
   }) {
     final currentPlayers = List<Player>.of(players);
     final finances = {
@@ -60,7 +64,10 @@ class TransferMarketEngine {
       final budgetPolicy = budgetPoliciesByClub?[buyer.id] ??
           budgetPolicyProvider?.call(buyer.id, seasonIndex + 1) ??
           TransferBudgetPolicy.neutral;
-      for (var slot = 0; slot < 2; slot++) {
+      final activityPolicy = activityPoliciesByClub?[buyer.id] ??
+          activityPolicyProvider?.call(buyer.id, seasonIndex + 1) ??
+          TransferActivityPolicy.neutral;
+      for (var slot = 0; slot < activityPolicy.maxDealsPerWindow; slot++) {
         final buyerState = finances[buyer.id];
         if (buyerState == null) {
           throw StateError('Missing finance state for ${buyer.id}.');

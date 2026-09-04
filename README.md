@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Teknik durum
 
-**M0–M20 tamamlandı ve otomatik regresyon zincirinde tutuluyor.** Sıradaki aktif milestone: **M21 — Başkan Transfer Hırsı → Transfer Aktivitesi I.**
+**M0–M20 tamamlandı. M21 — Başkan Transfer Hırsı → Transfer Aktivitesi I, final kalite kapısındadır.**
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -17,7 +17,8 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 - M17: başkan yönetim profili + 6 arketip / 5 trait
 - M18: `managerPatience` → gerçek teknik direktör dismissal kararları
 - M19: manager/world → reputasyon → seçim fixed-point feedback
-- **M20: `financialDiscipline` → gerçek transfer bütçe sınırları + M19 feedback — PASS**
+- M20: `financialDiscipline` → gerçek transfer affordability/bütçe sınırları
+- **M21: `transferAmbition` → gerçek transfer aktivite slotları + M20 feedback — PASS adayı**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -51,35 +52,23 @@ M20 yalnız `financialDiscipline` trait'ini transfer affordability katmanına ba
 - window spend cap `%35`
 - installment commitment cap `%90`
 
-Düşük disiplin daha düşük nakit rezervi ve daha geniş harcama/taahhüt sınırı; yüksek disiplin daha yüksek rezerv ve daha sert sınır üretir. Oyuncu aday sıralaması, maksimum teklif, `transferAmbition` ve `riskAppetite` değiştirilmez.
+M21 yalnız `transferAmbition` trait'ini transfer aktivite seviyesine bağlar:
 
-Transfer penceresi kadroyu sonraki sezon için kurduğu için politika `seasonIndex + 1` tarihinde görevde olan başkandan alınır. Böylece seçim sonrası yeni başkan kendi ilk yaz penceresini kontrol eder.
+- `<45` → buyer başına `1` tamamlanmış transfer slotu,
+- `45..74` → `2` slot,
+- `>=75` → `3` slot.
 
-## M19 baseline
+Nötr `transferAmbition=60` eski sabit `2` slot davranışını birebir korur. Candidate shortlist, pozisyon ihtiyacı, seller ask, buyer max bid, affordability ve taksit kabul mantığı değiştirilmez.
 
-Seed `20260903`:
+Transfer penceresi kadroyu sonraki sezon için kurduğu için mali disiplin ve transfer hırsı `seasonIndex + 1` tarihinde görevde olan başkandan alınır. Böylece seçim sonrası yeni başkan kendi ilk yaz penceresini kontrol eder.
 
-- `4` iterasyonda convergence, cycle `false`
-- elections `240`
-- reelected/lost `160 / 80`
-- manager changes `84`
-- transfers `168`
-- transfer volume `1.562,93M`
-- installment deals `81`
-- installment commitment `278,90M`
-- final cash `1.191,15M`
-- final debt `347,04M`
-- emergency borrowing `148,22M`
-
-## M20 kabul baseline'ı
+## M20 baseline
 
 Seed `20260903`:
 
-- `5` iterasyonda convergence
-- cycle `false`
+- `5` iterasyonda convergence, cycle `false`
 - elections `240`
 - reelected/lost `158 / 82`
-- M19/M20 election outcome differences `52 / 240`
 - manager changes `83`
 - transfers `153`
 - transfer volume `1.387,32M`
@@ -88,36 +77,44 @@ Seed `20260903`:
 - final cash `1.226,59M`
 - final debt `363,58M`
 - emergency borrowing `159,05M`
-- unique final presidents `130`
+
+## M21 ilk kabul baseline'ı
+
+Seed `20260903`:
+
+- `4` iterasyonda convergence
+- cycle `false`
+- elections `240`
+- reelected/lost `150 / 90`
+- M20/M21 election outcome differences `48 / 240`
+- manager changes `80`
+- transfers `161`
+- transfer volume `1.461,55M`
+- installment deals `73`
+- installment commitment `247,61M`
+- final cash `1.180,63M`
+- final debt `330,25M`
+- emergency borrowing `123,89M`
+- unique final presidents `138`
 - world changed `true`
 - validation `0`
 
 Iteration path:
 
-`98/158/157-83 → 88/150/157-83 → 84/160/156-84 → 83/153/158-82 → sabit 83/153/158-82`
+`88/145/158-82 → 82/148/151-89 → 80/161/150-90 → sabit 80/161/150-90`
 
 Sıra: `manager changes / transfers / reelected-lost`.
 
-Canonical aggregate sonuçta transfer sayısı `168 → 153`, hacim yaklaşık `%11,2` düştü. Borç ve emergency borrowing ise hafif yükseldi; bu, mali disiplinin borcu artırdığı anlamına gelmez. Dünya düşük ve yüksek disiplinli başkanları birlikte içerir ve değişen transfer yolu sportif/ekonomik sonuçları, seçimleri ve sonraki başkanları değiştirir. M20'nin hedefi her dünyada toplam borcu mekanik düşürmek değil, başkan karakterine göre gerçek bütçe sınırı üretmektir.
+M21 aggregate transfer sayısını `153 → 161`, hacmi yaklaşık `%5,35` artırdı. Bu controlled bir değişimdir; M21'in asıl causal invariant'ı aggregate artış değil, `low ambition slot < neutral slot < high ambition slot` ilişkisidir.
 
-Neutral-provider regresyonu, `financialDiscipline=60` yolunun eski advanced-world signature'ını birebir korumasını zorunlu tutar.
-
-M20 final kalite:
-
-- analyzer PASS
-- `76` test PASS
-- neutral-world signature regresyonu PASS
-- M0–M20 runner zinciri PASS
-- bağımsız M20 runner aynı `5` iterasyonlu fixed point'i üretti
-- validation `0`
-- artifact `0`
-- PR #21 squash merge: `b5f2c9488556855972b1be93f37dcb3114981d2e`
+Neutral activity-provider regresyonu, `transferAmbition=60` yolunun eski advanced-world signature'ını birebir korumasını zorunlu tutar.
 
 Ayrıntılar:
 
 - `M18_BASKAN_SABRI_TEKNIK_DIREKTOR_KARAR_ESIGI.md`
 - `M19_BASKAN_SABRI_SECIM_GERI_BESLEME_DONGUSU.md`
 - `M20_BASKAN_MALI_DISIPLIN_TRANSFER_BUTCE_DAVRANISI.md`
+- `M21_BASKAN_TRANSFER_HIRSI_TRANSFER_AKTIVITESI.md`
 
 ## Mimari
 
@@ -132,7 +129,7 @@ Temel teknik kurallar:
 - uzun kariyer invariant + denge guard'ları,
 - geri besleme döngülerinde convergence/cycle kontrolü,
 - neutral profile regresyonu,
-- APK/AAB/artifact üretmeyen hafif CI.
+- APK/AAB/artifact üretmeyen CI.
 
 ## Çalıştırma
 
@@ -140,20 +137,20 @@ Temel teknik kurallar:
 dart pub get
 dart analyze
 dart test
-dart run tool/run_m18_president_manager_patience_career.dart 20260903
 dart run tool/run_m19_president_manager_election_feedback.dart 20260903
 dart run tool/run_m20_president_financial_discipline_feedback.dart 20260903
+dart run tool/run_m21_president_transfer_ambition_feedback.dart 20260903
 ```
 
 ## CI
 
-Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M20 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
+Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M21 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
 
-## Sıradaki milestone
+M21 ile nested fixed-point zinciri 5 dakikalık CI sınırına dayandığı için timeout `7` dakikaya çıkarıldı. M22 ve sonrası için aynı full-career baseline'ın katman katman yeniden çözülmesini azaltacak ortak/cached feedback orchestration teknik borcu ele alınmalıdır.
 
-**M21 — Başkan Transfer Hırsı → Transfer Aktivitesi I.**
+## Sıradaki yön
 
-Yalnız `transferAmbition` trait'ini transfer arama/aktivite seviyesine bağlamak. `riskAppetite` ayrı milestone'da tutulacak; böylece “ne kadar harcayabilirim?” ile “ne kadar aktif transfer yapmak istiyorum?” ayrıştırılacak.
+M21 final kalite kapısı geçtikten sonra doğrudan yeni bir trait eklemek yerine feedback orchestration maliyetini azaltmak öncelikli teknik değerlendirmedir. Sonraki davranış trait'i adayı `riskAppetite` olacaktır; ancak yeni katman mevcut nested çözümü körlemesine büyütmemelidir.
 
 ## Lisans
 
