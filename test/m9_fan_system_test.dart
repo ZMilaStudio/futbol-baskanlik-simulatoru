@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   const expectationEngine = FanExpectationEngine();
+  const trustEngine = FanTrustEngine();
 
   test('fan expectations understand financial and sporting context', () {
     final stressed = _context(
@@ -40,6 +41,56 @@ void main() {
     );
   });
 
+  test('fans reward smart loans and punish overspending in the same crisis', () {
+    final smartLoan = _context(
+      health: FinancialHealth.debtCrisis,
+      position: 14,
+      cash: 3000000,
+      debt: 25000000,
+      emergency: 2000000,
+      loanIns: 1,
+    );
+    final aggressive = _context(
+      health: FinancialHealth.debtCrisis,
+      position: 14,
+      cash: 3000000,
+      debt: 25000000,
+      emergency: 2000000,
+      permanentBuys: 1,
+      installmentBuys: 2,
+      transferSpend: 8000000,
+    );
+
+    final smartExpectation = expectationEngine.generate(smartLoan);
+    final aggressiveExpectation = expectationEngine.generate(aggressive);
+    expect(smartExpectation.type, FanExpectationType.smartLoanReinforcement);
+    expect(
+      aggressiveExpectation.type,
+      FanExpectationType.smartLoanReinforcement,
+    );
+
+    final smartReasons = trustEngine.evaluate(
+      context: smartLoan,
+      expectation: smartExpectation,
+    );
+    final aggressiveReasons = trustEngine.evaluate(
+      context: aggressive,
+      expectation: aggressiveExpectation,
+    );
+
+    final smartTransfer = smartReasons.firstWhere(
+      (reason) => reason.dimension == FanTrustDimension.transfer,
+    );
+    final aggressiveTransfer = aggressiveReasons.firstWhere(
+      (reason) => reason.dimension == FanTrustDimension.transfer,
+    );
+
+    expect(smartTransfer.code, 'used_smart_loan');
+    expect(smartTransfer.delta, 4);
+    expect(aggressiveTransfer.code, 'overspent_in_financial_stress');
+    expect(aggressiveTransfer.delta, -4);
+  });
+
   test('M9 simulates deterministic context-aware fan trust for 20 seasons', () {
     final world = const FictionalWorldFactory().build();
     const engine = FanCareerEngine();
@@ -69,13 +120,24 @@ void main() {
     expect(report.signature, repeat.signature);
     expect(report.snapshots.length, 960);
     expect(report.finalStates.length, 48);
-    expect(report.averageFinalTrust, inInclusiveRange(20.0, 90.0));
-    expect(report.minFinalTrust, greaterThan(0));
-    expect(report.maxFinalTrust, lessThan(100));
-    expect(report.boundaryFinalStates, lessThanOrEqualTo(8));
-    expect(report.reasonCount, greaterThan(500));
-    expect(report.smartLoanExpectations, greaterThan(0));
-    expect(report.expectationCounts.length, greaterThanOrEqualTo(5));
+
+    // Geniş denge guard'ları: nihai taraftar ekonomisi değildir. Amaç güvenin
+    // 60 çevresine çökmesini veya 0/100 uçlarına yığılmasını engellemek.
+    expect(report.averageFinalTrust, inInclusiveRange(50.0, 75.0));
+    expect(report.minFinalTrust, inInclusiveRange(25, 60));
+    expect(report.maxFinalTrust, inInclusiveRange(65, 90));
+    expect(report.maxFinalTrust - report.minFinalTrust, greaterThanOrEqualTo(25));
+    expect(report.boundaryFinalStates, lessThanOrEqualTo(2));
+    expect(report.reasonCount, inInclusiveRange(1500, 3000));
+
+    expect(report.smartLoanExpectations, inInclusiveRange(5, 100));
+    expect(report.financialDisciplineExpectations, inInclusiveRange(20, 180));
+    expect(report.expectationCounts.length, greaterThanOrEqualTo(7));
+    expect(report.expectationCounts[FanExpectationType.none], 48);
+    expect(
+      report.expectationCounts[FanExpectationType.measuredImprovement] ?? 0,
+      inInclusiveRange(250, 650),
+    );
   });
 
   test('M9 different seeds diverge', () {
@@ -104,6 +166,15 @@ FanSeasonContext _context({
   required int debt,
   int emergency = 0,
   bool promoted = false,
+  bool relegated = false,
+  int permanentBuys = 0,
+  int permanentSales = 0,
+  int installmentBuys = 0,
+  int loanIns = 0,
+  int loanOuts = 0,
+  int transferSpend = 0,
+  int transferIncome = 0,
+  double strength = 60,
 }) =>
     FanSeasonContext(
       clubId: 'test_club',
@@ -111,19 +182,19 @@ FanSeasonContext _context({
       tier: LeagueTier.first,
       leaguePosition: position,
       leagueSize: 16,
-      clubStrength: 60,
+      clubStrength: strength,
       financialHealth: health,
       closingCash: Money.fromUnits(cash),
       closingDebt: Money.fromUnits(debt),
       emergencyBorrowing: Money.fromUnits(emergency),
-      permanentBuys: 0,
-      permanentSales: 0,
-      installmentBuys: 0,
-      loanIns: 0,
-      loanOuts: 0,
-      transferSpend: Money.zero,
-      transferIncome: Money.zero,
+      permanentBuys: permanentBuys,
+      permanentSales: permanentSales,
+      installmentBuys: installmentBuys,
+      loanIns: loanIns,
+      loanOuts: loanOuts,
+      transferSpend: Money.fromUnits(transferSpend),
+      transferIncome: Money.fromUnits(transferIncome),
       promoted: promoted,
-      relegated: false,
+      relegated: relegated,
       hasTransferWindow: true,
     );

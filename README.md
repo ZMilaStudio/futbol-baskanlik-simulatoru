@@ -15,6 +15,7 @@ ZMila Studio için geliştirilen Futbol Başkanlık Simülatörü'nün determini
 - **M6 — Teknik Direktör Sistemi:** PASS
 - **M7 — Oyuncu Sözleşmesi + Gerçek Maaş Sistemi:** PASS
 - **M8 — Gelişmiş Transfer Yapıları I / Kiralık + Taksit:** PASS
+- **M9 — Taraftar Beklentisi + Güven Çekirdeği:** PASS
 
 Flutter bağımlılığı henüz yoktur. Öncelik, başkanlık simülasyonunun uzun kariyer boyunca sağlam çalışan çekirdeğini mobil arayüzden önce otomatik testlerle kanıtlamaktır.
 
@@ -69,41 +70,55 @@ M8 ana transfer felsefesini gelişmiş yapılara açar:
 
 > **Paran yoksa transfer yapamazsın değil; paran yoksa daha akıllı transfer yapmak zorundasın.**
 
-Eklenenler:
-
 - sezonluk `LoanAgreement`
 - parent club kontratının korunması
-- loan fee
-- `%45–80` maaş paylaşımı
+- loan fee + `%45–80` maaş paylaşımı
 - sezon sonunda otomatik dönüş
 - upfront + iki gelecek sezon transfer taksiti
 - `TransferInstallmentObligation`
-- taksit yükümlülüğünün banka borcundan ayrı tutulması
-- vadesi gelen taksidin gerçek alıcı/satıcı nakit akışına dönüşmesi
-- satıcı ekonomisinin taksit kabulünü etkilemesi
+- taksidin banka borcundan ayrı tutulması
+- vadesinde gerçek alıcı/satıcı nakit akışı
+- satıcı ekonomisine bağlı taksit kabulü
 - bağlamsal kiralık ihtiyacı
-- M8 validator, report ve headless runner
 
-### M8 kabul baseline — seed `20260903`
-
-- 20 sezon / 14.400 maç
-- kalıcı transfer `140`
-- taksitli transfer `68` (`%48,6`)
-- taksit taahhüdü `234,79M`
-- ödenmiş taksit `232,77M`
-- açık taksit `2,02M`
-- kiralık `478`
-- final aktif kiralık `32`
-- loan fee `113,15M`
-- ortalama loan-club maaş payı `%62,18`
-- final cash `1.017,61M`
-- final debt `378,97M`
-- emergency borrowing `185,61M`
-- validation `0`
-
-İlk denemelerde 755 kiralık ve 146/183 taksitli transfer üreten aşırı kullanım bilinçli olarak reddedildi. CI artık taksidin kalıcı transferlerin çoğunluğuna dönüşmesini de engeller.
+Seed `20260903`: 140 kalıcı transfer, 68 taksitli, 478 kiralık, `234,79M` taksit taahhüdü, `113,15M` loan fee, final cash `1.017,61M`, debt `378,97M`, validation `0`.
 
 Ayrıntı: `M8_KIRALIK_TAKSIT.md`.
+
+## M9 — Taraftar Beklentisi + Güven
+
+M9 taraftarı rastgele mutluluk sayacı yerine kulüp bağlamını okuyan bir domain'e dönüştürür.
+
+- `FanState`: sporting / financial / transfer / identity
+- ağırlıklı 0–100 overall trust
+- 48×20 = 960 kulüp-sezon context snapshot
+- lig sırası ve terfi/düşme
+- takım gücü
+- financial health, cash/debt, emergency borrowing
+- permanent transfer / installment / loan davranışı
+- 7 aktif bağlamsal beklenti tipi + final `none`
+- neden kodlu güven değişimleri
+- çok sezonluk hafıza; yalnız dış bantlarda yumuşak mean reversion
+- deterministic replay + validator + headless runner
+
+Temel imza davranışı: aynı borç krizi bağlamında akıllı kiralık transfer güvenini `+4`, aşırı harcama/taksit yükü `-4` etkileyebilir.
+
+### M9 kabul baseline — seed `20260903`
+
+- 20 sezon / 14.400 maç
+- fan snapshot `960`
+- final fan state `48`
+- ortalama trust `64,88`
+- final trust aralığı `44–75`
+- boundary `0`
+- trust reason `2.143`
+- smart-loan expectation `9`
+- financial-discipline expectation `58`
+- validation `0`
+
+İlk teknik PASS `46–68` aralığında kaldığı için reddedildi; yıllık 60'a dönüş geçmişi fazla siliyordu. Kabul modelinde hafıza korunarak aralık 31 puana çıktı.
+
+Ayrıntı: `M9_TARAFTAR_GUVEN.md`.
 
 ## Mimari
 
@@ -118,7 +133,7 @@ Temel yön:
 - `WorldFinanceHooks`: transfer taksiti gibi sezon içi ek finans akışları,
 - `WorldTransferHooks`: kiralık gibi transfer penceresi sonrası ek hareketler.
 
-Bu sayede M0–M7 baselineları M8 ile de regresyon testi olarak korunur.
+M9 ilk sürümde M8 raporunu gözlemsel context olarak kullanır; taraftar henüz ekonomi veya maç motorunu geri beslemez. Önce bağlam doğruluğu kanıtlanır.
 
 Deterministik RNG, cihaz saatinden bağımsız `GameDate` ve integer minor-unit `Money` temel teknik kurallardır.
 
@@ -137,6 +152,7 @@ dart run tool/run_m5_world_career.dart 20260903
 dart run tool/run_m6_manager_career.dart 20260903
 dart run tool/run_m7_contract_career.dart 20260903
 dart run tool/run_m8_advanced_transfer_career.dart 20260903
+dart run tool/run_m9_fan_career.dart 20260903
 ```
 
 ## CI prensibi
@@ -146,15 +162,15 @@ Tek hafif GitHub Actions workflow'u kullanılır:
 - `dart analyze`
 - tüm otomatik testler
 - M0 100 sezon batch
-- M1–M8 20 sezon headless runner'ları
+- M1–M9 20 sezon headless runner'ları
 
 APK/AAB, büyük binary veya `actions/upload-artifact` yoktur. Artifact hedefi `0`dır.
 
 ## Sıradaki milestone
 
-**M9 — Taraftar Beklentisi + Güven Çekirdeği.**
+**M10 — Medya Hafızası + Başkan Açıklamaları Çekirdeği.**
 
-İlk hedef taraftarı rastgele mutluluk sayacı yapmak değil; kulübün finansını, lig seviyesini, kadro gücünü, transferleri ve sezon hedefini anlayan bağlamsal bir sistem kurmaktır. M9'da medya, seçim ve Flutter UI henüz kapsam dışı kalacaktır.
+İlk hedef açıklamayı yalnız anlık metin seçimi yapmak değil; başkanın geçmiş sözlerini saklamak ve sonraki davranışla çelişki/uyum tespit edebilen deterministik bir medya güvenilirlik sistemi kurmaktır. İlk M10'da vaat/election ve Flutter UI yine kapsam dışı kalacaktır.
 
 ## Lisans
 
