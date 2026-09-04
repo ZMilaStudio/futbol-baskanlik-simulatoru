@@ -36,6 +36,31 @@ void main() {
     );
   });
 
+  test('M20 neutral budget provider preserves the old advanced world', () {
+    final world = const FictionalWorldFactory().build();
+    const config = SimulationConfig(careerSeed: 20260903);
+    final baseline = const AdvancedTransferWorldCareerEngine().simulate(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      seasonCount: 4,
+    );
+    final neutral = AdvancedTransferWorldCareerEngine(
+      worldEngine: WorldCareerEngine(
+        transferMarketEngine: TransferMarketEngine(
+          budgetPolicyProvider: (_, __) => TransferBudgetPolicy.neutral,
+        ),
+      ),
+    ).simulate(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      seasonCount: 4,
+    );
+
+    expect(neutral.signature, baseline.signature);
+  });
+
   test('M20 closes financial discipline into the M19 feedback world', () {
     final world = const FictionalWorldFactory().build();
     final report = const PresidentFinancialDisciplineFeedbackEngine().simulate(
@@ -81,7 +106,7 @@ void main() {
     expect(issues, isEmpty);
     expect(report.converged, isTrue);
     expect(report.cycleDetected, isFalse);
-    expect(report.iterationCount, inInclusiveRange(1, 8));
+    expect(report.iterationCount, inInclusiveRange(3, 7));
     expect(report.finalReport.totalElections, 240);
     expect(report.baselineReelections, 160);
     expect(report.baselineLosses, 80);
@@ -89,5 +114,53 @@ void main() {
     expect(report.baselineTransfers, 168);
     expect(report.iterations.last.timelineChanged, isFalse);
     expect(report.iterations.last.electionOutcomeDifferences, 0);
+    expect(report.electionOutcomeDifferences, inInclusiveRange(25, 90));
+    expect(report.finalReelections, inInclusiveRange(140, 175));
+    expect(report.finalLosses, inInclusiveRange(65, 100));
+    expect(report.finalManagerChanges, inInclusiveRange(70, 105));
+    expect(report.managerChangeDelta.abs(), lessThanOrEqualTo(25));
+    expect(report.finalTransfers, inInclusiveRange(130, 190));
+    expect(report.transferDelta.abs(), lessThanOrEqualTo(50));
+    expect(
+      report.finalTransferVolume,
+      inInclusiveRange(
+        const Money.fromUnits(1100000000),
+        const Money.fromUnits(1700000000),
+      ),
+    );
+    expect(report.transferVolumeDelta.minorUnits.abs(), lessThanOrEqualTo(
+      const Money.fromUnits(400000000).minorUnits,
+    ));
+    expect(report.finalInstallmentDeals, inInclusiveRange(60, 100));
+    expect(
+      report.finalInstallmentCommitment,
+      inInclusiveRange(
+        const Money.fromUnits(200000000),
+        const Money.fromUnits(360000000),
+      ),
+    );
+    expect(
+      report.finalCash,
+      inInclusiveRange(
+        const Money.fromUnits(900000000),
+        const Money.fromUnits(1500000000),
+      ),
+    );
+    expect(
+      report.finalDebt,
+      inInclusiveRange(
+        const Money.fromUnits(250000000),
+        const Money.fromUnits(500000000),
+      ),
+    );
+    expect(
+      report.finalEmergencyBorrowing,
+      inInclusiveRange(
+        const Money.fromUnits(80000000),
+        const Money.fromUnits(250000000),
+      ),
+    );
+    expect(report.uniqueFinalPresidents, inInclusiveRange(110, 145));
+    expect(report.worldChanged, isTrue);
   });
 }
