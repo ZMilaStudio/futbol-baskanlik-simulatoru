@@ -1,6 +1,8 @@
+export 'src/career/career_checkpoint.dart';
 export 'src/career/career_engine.dart';
 export 'src/career/career_report.dart';
 export 'src/career/career_season.dart';
+export 'src/career/career_simulation_result.dart';
 export 'src/career/career_validator.dart';
 export 'src/career/club_strength_evolution.dart';
 export 'src/contract/contract_career_report.dart';
@@ -130,6 +132,9 @@ export 'src/promise/promise_media_season_snapshot.dart';
 export 'src/promise/promise_resolution.dart';
 export 'src/promise/promise_resolver.dart';
 export 'src/promise/promise_season_snapshot.dart';
+export 'src/save/career_save_codec.dart';
+export 'src/save/save_checksum.dart';
+export 'src/save/save_load_exception.dart';
 export 'src/season/season_engine.dart';
 export 'src/season/season_report.dart';
 export 'src/season/season_validator.dart';

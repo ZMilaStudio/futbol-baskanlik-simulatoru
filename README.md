@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Güncel durum
 
-**M0–M24 tamamlandı ve `main` üzerinde doğrulandı.** Sıradaki aktif milestone: **M25 — Save/Load + Kayıt Versiyonlama I**.
+**M0–M25 tamamlandı ve otomatik kalite kapılarından geçti.** Sıradaki aktif milestone: **M26 — World Save Snapshot I**.
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -18,7 +18,8 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 - M21: `transferAmbition` → transfer aktivite slotları
 - M22: canonical feedback CI/orchestration optimizasyonu
 - M23: `riskAppetite` → buyer max-bid pazarlık tavanı
-- **M24: `youthOrientation` → transfer candidate genç/potansiyel tercihi — PASS**
+- M24: `youthOrientation` → transfer candidate genç/potansiyel tercihi
+- **M25: versioned CareerEngine checkpoint + deterministic save/load + checksum + migration — PASS**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -156,29 +157,63 @@ M22 aynı nested full-career dünyalarının tekrar tekrar çözülmesini kaldı
 
 M24 runner: `tool/run_m24_president_youth_orientation_feedback.dart`.
 
-## M24 kalite sonucu
+## M25 — Save/Load + Kayıt Versiyonlama I
 
-PR #25 squash merge:
+M25 uzun kariyerin kayıt sözleşmesini temel `CareerEngine` sezon sınırında kanıtlar.
 
-`cfdca8f63dfa6c91fd2432031e0e2c34a8101a06`
+Yeni yapı:
 
-Final PR CI `33923631356`:
+- `CareerCheckpoint`
+- `CareerSimulationResult`
+- `CareerEngine.simulateWithCheckpoint(...)`
+- `CareerEngine.resume(...)`
+- `CareerSaveCodec`
+- `saveVersion=1`
+- deterministic canonical JSON
+- FNV-1a corruption checksum
+- açık `SaveLoadFailure` hata kodları
+- `v0 → v1` migration fixture
+
+Checkpoint **bir sonraki sezonun başlangıç state'idir**. Orijinal config, kariyer başlangıç tarihi, tamamlanan sezon sayısı, baseline strengths ve next-season clubs taşınır.
+
+Canonical seed `20260903`:
+
+`20 sezon kesintisiz` ile `8 sezon → save → load → 12 sezon resume` karşılaştırması:
+
+- season/fixture/match replay match `true`
+- final report clubs match `true`
+- next checkpoint clubs match `true`
+
+Runner kabul çıktısı:
+
+- save version `1`
+- checksum `536de64d`
+- save size `1039 bytes`
+- next season index `8`
+- next season date `2034-07-01`
+- legacy fixture migration `v0 → v1`
+
+M25 checksum kriptografik imza değildir; kazara veri bozulmasını tespit eder.
+
+**Kapsam sınırı:** M25 henüz M24'ün tam world/player/finance/contract/manager/president state'ini serialize etmez. Bu genişleme M26'nın konusudur.
+
+Ayrıntı: `M25_SAVE_LOAD_KAYIT_VERSIYONLAMA_I.md`.
+
+## M25 kalite sonucu
+
+PR #26 final kapanışında beklenen kalite kapısı:
 
 - analyzer PASS
-- normal/non-canonical tests PASS
-- doğrudan candidate-selection causal testi PASS
+- `87` normal/non-canonical test PASS
+- 6 M25 save/load testi PASS
 - M0–M18 runner PASS
 - combined M19–M24 canonical runner PASS
-- nested M19/M20/M21/M23 guard'ları PASS
-- validation `0`
+- M25 save/load runner PASS
+- M24 canonical baseline değişmeden korunur
 - artifact `0`
-- 5 dakikalık timeout altında PASS
+- 5 dakikalık timeout içinde PASS
 
-Ayrıntı:
-
-- `M22_PROFILE_FEEDBACK_ORKESTRASYON_I.md`
-- `M23_BASKAN_RISK_ISTAHI_TRANSFER_PAZARLIK_DAVRANISI.md`
-- `M24_BASKAN_ALTYAPI_YONELIMI_TRANSFER_GENCLIK_TERCIHI.md`
+Runner dahil doğrulanmış PR CI: `33925868414`.
 
 ## Mimari kurallar
 
@@ -193,6 +228,9 @@ Ayrıntı:
 - neutral trait regresyonu
 - her trait ilk bağlantıda tek karar noktasına bağlanır
 - duplicate canonical full-career hesapları büyütülmez
+- save/load checkpoint devamı kesintisiz replay ile birebir olmalıdır
+- unsupported future save güvenli reddedilir
+- migration yolları fixture ile test edilir
 - APK/AAB/actions artifact üretilmez
 
 ## Çalıştırma
@@ -202,25 +240,31 @@ dart pub get
 dart analyze
 dart test --exclude-tags canonical-feedback
 dart run tool/run_m24_president_youth_orientation_feedback.dart 20260903
+dart run tool/run_m25_save_load.dart 20260903
 ```
 
-## Sıradaki milestone — M25
+## Sıradaki milestone — M26
 
-**Save/Load + Kayıt Versiyonlama I**.
+**World Save Snapshot I**.
 
-Başkan profilindeki beş trait artık gerçek davranışa bağlandığı için yeni davranış katmanlarını üst üste eklemek yerine uzun kariyerin kritik teknik riskine geçiyoruz.
+M25 kayıt formatı/sürümleme/checksum/migration temelini kanıtladı. M26'nın amacı sezon sınırı checkpoint kapsamını gerçek world state'e genişletmektir.
 
-İlk hedef:
+Öncelikli aday state'ler:
 
-- UI/Flutter bağımsız saf Dart save snapshot formatı,
-- açık `saveVersion`,
-- deterministic serialize/deserialize,
-- checksum/signature doğrulaması,
-- bozuk veya desteklenmeyen save'i güvenli reddetme,
-- en az bir migration fixture altyapısı,
-- save→load sonrası aynı kariyer devamının kesintisiz replay ile aynı sonucu vermesi.
+- league/club assignment
+- club finance
+- player roster/lifecycle
+- player contracts
+- loan + installment obligations
+- manager assignment
 
-İlk sürüm cihaz dosya sistemi veya cloud save içermez; önce format ve migration sözleşmesi kanıtlanır.
+President/reputation/election timeline aynı milestone'a aşırı kapsam yaratırsa ayrı takip milestone'una bırakılabilir.
+
+Kabul kuralı değişmez:
+
+> **save → load → devam, aynı seed'deki kesintisiz simülasyonla aynı sonucu üretmelidir.**
+
+Android dosya sistemi, cloud save ve save-slot UI daha sonra gelir.
 
 ## Lisans
 

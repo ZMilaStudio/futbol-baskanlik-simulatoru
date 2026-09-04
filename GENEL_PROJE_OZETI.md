@@ -52,17 +52,21 @@ Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işler
 
 ## 3. Güncel teknik durum
 
-**M0–M24 PASS ve `main` üzerinde.**
+**M0–M25 PASS. M25 PR #26 final kalite kapısındadır; davranış ve runner kanıtları yeşildir.**
 
 M24 squash merge:
 
 `cfdca8f63dfa6c91fd2432031e0e2c34a8101a06`
 
-M24 sonrası dokümantasyon HEAD'i bu özet güncellemesiyle yenilenmiştir.
+M25 doğrulanmış PR CI:
+
+`33925868414`
 
 Aktif sıradaki milestone:
 
-> **M25 — Save/Load + Kayıt Versiyonlama I**
+> **M26 — World Save Snapshot I**
+
+M25 merge tamamlandığında bu bölüm gerçek squash merge SHA ile güncellenecektir.
 
 ## 4. Teknik mimari
 
@@ -75,7 +79,9 @@ Aktif sıradaki milestone:
 - profile feedback için deterministic fixed-point replay
 - convergence/cycle kontrolü
 - neutral trait regresyonu
-- kayıt formatı/migration M25'ten itibaren doğrudan ele alınacak
+- `CareerCheckpoint` tabanlı sezon-sınırı save/resume
+- `saveVersion=1` + canonical JSON + corruption checksum
+- explicit save failure kodları + migration fixture altyapısı
 - APK/AAB üretmeyen core CI
 - `actions/upload-artifact` yok; artifact hedefi `0`
 
@@ -112,6 +118,10 @@ Canonical kariyer seed'i:
 15. Aynı canonical full-career hesaplar CI içinde gereksiz tekrar edilmez.
 16. Aggregate metrik yönü, izole trait'in causal ürünüymüş gibi yorumlanmaz; causal invariant doğrudan test edilir.
 17. Canlı GitHub durumu eski sohbet notlarından üstündür.
+18. Save/load checkpoint devamı kesintisiz replay ile birebir aynı deterministic sonucu üretmelidir.
+19. Save format sürümü açık olmalı; desteklenmeyen future version güvenli reddedilmelidir.
+20. Migration yolu fixture/test olmadan kabul edilmez.
+21. Checksum veri bozulma kontrolüdür; kriptografik güvenlik garantisi gibi sunulmaz.
 
 ## 6. Milestone geçmişi
 
@@ -555,9 +565,88 @@ Final PR CI `33923631356`:
 
 Aggregate transfer/hacim/borç yönü M24 için causal ürün invariant'ı sayılmaz.
 
-## 7. Başkan trait durumu — M24 sonrası
+### M25 — Save/Load + Kayıt Versiyonlama I — PASS
 
-M17'de tanımlanan beş trait'in tamamı artık gerçek davranışa bağlıdır:
+İlk save/load milestone'u temel `CareerEngine` sezon-sınırı checkpoint'i üzerinde çalışır.
+
+Yeni çekirdek:
+
+- `CareerCheckpoint`
+- `CareerSimulationResult`
+- `CareerEngine.simulateWithCheckpoint(...)`
+- `CareerEngine.resume(...)`
+- eski `CareerEngine.simulate(...)` API'si korunur
+- `CareerSaveCodec`
+- `saveVersion=1`
+- canonical deterministic JSON
+- FNV-1a 32-bit corruption checksum
+- explicit `SaveLoadFailure`
+- sentetik `v0 → v1` migration fixture
+
+Checkpoint semantiği:
+
+> kayıt state'i, **bir sonraki sezonun başlangıç state'idir**.
+
+Taşınan state:
+
+- orijinal `SimulationConfig`
+- kariyer başlangıç tarihi
+- tamamlanan sezon sayısı
+- baseline club strengths
+- next-season club state
+
+Canonical seed `20260903` kabul testi:
+
+`20 sezon kesintisiz` ile `8 sezon → save → load → 12 sezon resume` karşılaştırılır.
+
+Karşılaştırma fixture/match seviyesindedir:
+
+- season index/seed
+- champion
+- club strengths
+- fixture skorları
+- expected goals
+- match seed
+- final report clubs
+- next checkpoint clubs
+
+Sonuçların tamamı birebir eşittir.
+
+M25 runner kabul çıktısı:
+
+- save version `1`
+- checksum `536de64d`
+- save boyutu `1039 bytes`
+- loaded next season index `8`
+- loaded next season date `2034-07-01`
+- season replay match `true`
+- final report clubs match `true`
+- next checkpoint clubs match `true`
+- legacy fixture `v0 → v1`
+
+Doğrulanmış runner CI `33925868414`:
+
+- analyzer PASS
+- `87` normal/non-canonical test PASS
+- 6 M25 save/load testi PASS
+- M0–M18 runner PASS
+- combined M19–M24 canonical runner PASS
+- M25 save/load runner PASS
+- M24 canonical baseline değişmedi
+- artifact `0`
+- timeout `5 dk` içinde PASS
+
+Checksum yalnız accidental corruption detection içindir; kriptografik güvenlik/anti-cheat değildir.
+
+**M25 tam M24 world save değildir.** Player/economy/contracts/loans/installments/manager/president state'in tam snapshot'ı M26 ve devam milestone'larına bırakılmıştır.
+
+Ayrıntı:
+
+`M25_SAVE_LOAD_KAYIT_VERSIYONLAMA_I.md`
+
+## 7. Başkan trait durumu — M25 sonrası
+
+M17'de tanımlanan beş trait'in tamamı gerçek davranışa bağlıdır:
 
 | Trait | Gerçek etki | Milestone |
 |---|---|---|
@@ -567,7 +656,7 @@ M17'de tanımlanan beş trait'in tamamı artık gerçek davranışa bağlıdır:
 | `riskAppetite` | buyer max-bid ceiling | M23 |
 | `youthOrientation` | youth/potential candidate preference | M24 |
 
-Bu nedenle M25'te yeni trait davranışı eklemek yerine uzun kariyerin kritik teknik riskine geçilir.
+M25 yeni trait davranışı eklemedi; uzun kariyer kayıt güvenilirliğine geçti.
 
 ## 8. Canonical feedback tablosu
 
@@ -590,10 +679,15 @@ Tek workflow:
 - M0 100-season batch
 - M1–M18 ayrı headless runner
 - tek en yeni profile-feedback runner nested M19+ canonical guard'ları birlikte doğrular
+- M25 save/load continuation runner
 
-Current canonical runner:
+Current canonical profile runner:
 
 `tool/run_m24_president_youth_orientation_feedback.dart 20260903`
+
+Current save runner:
+
+`tool/run_m25_save_load.dart 20260903`
 
 Kurallar:
 
@@ -602,6 +696,9 @@ Kurallar:
 - timeout `5 dk`
 - canonical full-career testler duplicate çalıştırılmaz
 - neutral profile path eski signature'ı korur
+- save/load resume kesintisiz kariyerle aynı deterministic sonucu üretir
+- future save version güvenli reddedilir
+- migration fixture test edilir
 
 ## 10. Reddedilen / ertelenen fikirler
 
@@ -614,45 +711,52 @@ Kurallar:
 - 847 medya açıklaması/960 club-season — M10'da fazla yüksek bulundu
 - başkan profilinin beş trait'ini aynı milestone'da dünyaya bağlama — causal izlenebilirlik için reddedildi
 - aggregate world sonucu tek trait'in causal yönüymüş gibi yorumlama — yasaklandı
+- M25 içinde tam advanced world save kapsamını tek seferde çözmek — migration/kapsam riskini gereksiz büyüteceği için ertelendi
+- checksum'u kriptografik güvenlik/anti-cheat gibi sunmak — reddedildi
 
 ## 11. Açık teknik sınırlar / borçlar
 
 - Current M19+ çözümü literal tek-pass sezon orkestratörü değil; fixed-point replay'dir.
-- Save/load/migration henüz çekirdeğe uygulanmadı; M25 aktif hedefidir.
+- M25 save yalnız temel `CareerEngine` sezon-sınırı state'ini kapsar; tam advanced world snapshot henüz yok.
+- Player/economy/contracts/loan/installment/manager/president state'in save kapsamı M26+ konusudur.
 - Gerçek cihaz dosya sistemi ve cloud save daha sonra.
+- Otomatik save/yedek save slot politikası henüz platform katmanına bağlanmadı.
 - Altyapı tesis yatırımının youth intake kalitesine etkisi henüz yok.
 - Sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı.
 - Seçim kaybında kullanıcı kariyerinin game-over / başka kulübe geçiş UX'i henüz yok.
 
-## 12. M25 — sıradaki milestone
+## 12. M26 — sıradaki milestone
 
-### Save/Load + Kayıt Versiyonlama I
+### World Save Snapshot I
 
-Amaç UI veya platform depolaması değil; **kayıt sözleşmesini çekirdekte kanıtlamak**.
+Amaç M25'in doğrulanmış format/sürüm/migration temelini gerçek sezon-sınırı dünya state'ine genişletmektir.
 
-İlk kapsam:
+İlk öncelik adayları:
 
-1. saf Dart save snapshot/domain formatı
-2. açık `saveVersion`
-3. canonical deterministic serialization
-4. deserialize + schema validation
-5. unsupported future version güvenli reddi
-6. bozuk/veri kayıplı save güvenli reddi
-7. checksum/signature
-8. migration registry/fixture altyapısı
-9. en az bir eski-version → current migration testi
-10. save→load→devam ile kesintisiz kariyerin aynı deterministic sonucu üretmesi
+1. league/club assignment
+2. club finance state
+3. player roster/lifecycle state
+4. player contracts
+5. transfer installment obligations
+6. active loan agreements
+7. manager assignment
 
-İlk aşamada yapılmayacak:
+President/reputation/election timeline aynı milestone'a aşırı kapsam yaratırsa ayrı M27 takip milestone'una bırakılabilir.
+
+M26 kabul kuralı:
+
+> **world save → load → devam, aynı seed'deki kesintisiz world simülasyonuyla birebir deterministic sonuç üretmelidir.**
+
+M26 ilk aşamada yine şunları kapsamayacak:
 
 - Android dosya seçici
 - cloud save
 - Google Play Games save
-- şifreleme/anti-cheat
 - çoklu kullanıcı hesabı
-- UI slot ekranı
+- save slot UI
+- encryption/anti-cheat
 
-Önce format, sürüm ve migration sözleşmesi.
+Önce gerçek world state snapshot sözleşmesi.
 
 ## 13. Ana uzun vadeli teknik hedef
 
@@ -667,7 +771,7 @@ UI'dan bağımsız çekirdeğin:
 - transfer/loan/installment
 - taraftar/media/promise
 - seçim/başkan profili
-- save/load
+- versioned save/load + migration
 
 ile **20–30 sezonu deterministik ve migration-safe biçimde** sürdürebilmesi.
 
