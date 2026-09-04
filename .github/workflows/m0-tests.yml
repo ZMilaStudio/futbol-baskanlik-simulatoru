@@ -94,3 +94,6 @@ jobs:
 
       - name: Run M19 20-season president manager election feedback career
         run: dart run tool/run_m19_president_manager_election_feedback.dart 20260903
+
+      - name: Run M20 20-season president financial discipline feedback career
+        run: dart run tool/run_m20_president_financial_discipline_feedback.dart 20260903
