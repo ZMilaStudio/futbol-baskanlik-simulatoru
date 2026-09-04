@@ -85,3 +85,6 @@ jobs:
 
       - name: Run M16 20-season president reputation career
         run: dart run tool/run_m16_president_reputation_career.dart 20260903
+
+      - name: Run M17 20-season president management profile career
+        run: dart run tool/run_m17_president_management_career.dart 20260903
