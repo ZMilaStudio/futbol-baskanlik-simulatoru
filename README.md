@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Teknik durum
 
-**M0–M19 tamamlandı. M20 — Başkan Mali Disiplini → Transfer Bütçe Davranışı I, final kalite kapısındadır.**
+**M0–M20 tamamlandı ve otomatik regresyon zincirinde tutuluyor.** Sıradaki aktif milestone: **M21 — Başkan Transfer Hırsı → Transfer Aktivitesi I.**
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -17,7 +17,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 - M17: başkan yönetim profili + 6 arketip / 5 trait
 - M18: `managerPatience` → gerçek teknik direktör dismissal kararları
 - M19: manager/world → reputasyon → seçim fixed-point feedback
-- **M20: `financialDiscipline` → gerçek transfer bütçe sınırları + M19 feedback — PASS adayı**
+- **M20: `financialDiscipline` → gerçek transfer bütçe sınırları + M19 feedback — PASS**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -71,7 +71,7 @@ Seed `20260903`:
 - final debt `347,04M`
 - emergency borrowing `148,22M`
 
-## M20 ilk kabul baseline'ı
+## M20 kabul baseline'ı
 
 Seed `20260903`:
 
@@ -101,6 +101,17 @@ Sıra: `manager changes / transfers / reelected-lost`.
 Canonical aggregate sonuçta transfer sayısı `168 → 153`, hacim yaklaşık `%11,2` düştü. Borç ve emergency borrowing ise hafif yükseldi; bu, mali disiplinin borcu artırdığı anlamına gelmez. Dünya düşük ve yüksek disiplinli başkanları birlikte içerir ve değişen transfer yolu sportif/ekonomik sonuçları, seçimleri ve sonraki başkanları değiştirir. M20'nin hedefi her dünyada toplam borcu mekanik düşürmek değil, başkan karakterine göre gerçek bütçe sınırı üretmektir.
 
 Neutral-provider regresyonu, `financialDiscipline=60` yolunun eski advanced-world signature'ını birebir korumasını zorunlu tutar.
+
+M20 final kalite:
+
+- analyzer PASS
+- `76` test PASS
+- neutral-world signature regresyonu PASS
+- M0–M20 runner zinciri PASS
+- bağımsız M20 runner aynı `5` iterasyonlu fixed point'i üretti
+- validation `0`
+- artifact `0`
+- PR #21 squash merge: `b5f2c9488556855972b1be93f37dcb3114981d2e`
 
 Ayrıntılar:
 
@@ -138,7 +149,7 @@ dart run tool/run_m20_president_financial_discipline_feedback.dart 20260903
 
 Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M20 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
 
-## Sıradaki milestone adayı
+## Sıradaki milestone
 
 **M21 — Başkan Transfer Hırsı → Transfer Aktivitesi I.**
 
