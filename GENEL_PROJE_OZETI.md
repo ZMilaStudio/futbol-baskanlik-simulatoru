@@ -52,37 +52,50 @@ Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işler
 
 ## 3. Güncel teknik durum
 
-**M0–M25 PASS ve `main` üzerindedir.**
+**M0–M25 PASS ve `main` üzerindedir. M26 davranış/test kriterleri PASS; PR #27 final dokümantasyon kalite kapısındadır.**
 
 M25 PR #26 squash merge:
 
 `c46d5fc99655476f389de82d861ce7a5e6a93aec`
 
-M25 final PR HEAD CI:
-
-`33926527304` — PASS
-
 M25 merge sonrası `main` CI:
 
 `33929524537` — PASS
 
-Bu `main` koşusunda:
+M25 kapanış dokümantasyon `main` CI:
+
+`33929813791` — PASS
+
+M26 doğrulanmış PR CI:
+
+`33930202369` — PASS
+
+Bu M26 koşusunda:
 
 - analyzer PASS
-- normal/non-canonical testler PASS
+- `94` normal/non-canonical test PASS
 - M0–M18 runner zinciri PASS
 - combined M19–M24 canonical profile feedback PASS
 - M25 save/load continuation PASS
+- M26 world save continuation PASS
 - artifact `0`
 - timeout `5 dk` altında PASS
 
 Aktif milestone:
 
-> **M26 — World Save Snapshot I**
+> **M26 — World Save Snapshot I / final docs + merge kapısı**
 
 Aktif branch:
 
 `m26-world-save-snapshot`
+
+Açık PR:
+
+`#27 — M26: add resumable core world save snapshot`
+
+M26 merge temiz kapandığında sıradaki milestone:
+
+> **M27 — Advanced World Runtime Snapshot I**
 
 ## 4. Teknik mimari
 
@@ -95,9 +108,13 @@ Aktif branch:
 - profile feedback için deterministic fixed-point replay
 - convergence/cycle kontrolü
 - neutral trait regresyonu
-- M25 `CareerCheckpoint` tabanlı sezon-sınırı save/resume
+- M25 `CareerCheckpoint` tabanlı temel sezon-sınırı save/resume
+- M26 `WorldCheckpoint` tabanlı core world save/resume
+- ayrı `CareerSaveCodec` ve `WorldSaveCodec`
 - `saveVersion=1` + canonical JSON + corruption checksum
 - explicit save failure kodları + migration fixture altyapısı
+- eski public `WorldCareerEngine.simulate()` semantiği korunur
+- checkpoint-capable world yolu segment sonu offseason'u hazırlayarak gerçek next-season opening state üretir
 - APK/AAB üretmeyen core CI
 - `actions/upload-artifact` yok; artifact hedefi `0`
 
@@ -140,6 +157,7 @@ Canonical kariyer seed'i:
 21. Checksum veri bozulma kontrolüdür; kriptografik güvenlik garantisi gibi sunulmaz.
 22. Save snapshot yalnız sahibi olduğu runtime state'i serileştirir; farklı controller/hook katmanlarının state'i tek milestone'a zorla yığılmaz.
 23. Eski public simülasyon API'sinin davranışı save/checkpoint eklenirken sessizce değiştirilmez.
+24. Segment bazlı world save gerçek next-season opening state üretmelidir; final offseason checkpoint yolunda eksik bırakılamaz.
 
 ## 6. Milestone geçmişi
 
@@ -590,13 +608,84 @@ Her iki doğrulamada da artifact `0`; M24 canonical baseline değişmedi.
 
 Checksum yalnız accidental corruption detection içindir; kriptografik güvenlik/anti-cheat değildir.
 
-**M25 tam world save değildir.** Tam dünya state'i M26 ve controller/hook-owned advanced state sonraki milestone'larda ele alınır.
-
 Ayrıntı:
 
 `M25_SAVE_LOAD_KAYIT_VERSIYONLAMA_I.md`
 
-## 7. Başkan trait durumu — M25 sonrası
+### M26 — World Save Snapshot I — DAVRANIŞ PASS / PR #27 FINAL KAPISI
+
+M25'in save/version/migration temelini gerçek core world state'e genişletir.
+
+Yeni çekirdek:
+
+- `WorldCheckpoint`
+- `WorldCareerSimulationResult`
+- `WorldCareerEngine.simulateWithCheckpoint(...)`
+- `WorldCareerEngine.resume(...)`
+- `WorldSaveCodec`
+- format `zmila-fbs-world`
+- `saveVersion=1`
+- canonical deterministic JSON
+- FNV-1a corruption checksum
+- explicit failure kodları
+- sentetik `v0 → v1` migration
+
+Snapshot state:
+
+- orijinal `SimulationConfig`
+- completed seasons / next season index
+- 48 base club
+- 3×16 next-season league membership
+- next-season player/lifecycle state
+- 48 club finance state
+
+Kritik mimari karar:
+
+Eski `WorldCareerEngine.simulate()` çağrının son sezonunda offseason hazırlamaz ve bu eski davranış korunur. Yeni checkpoint-capable yol ise segmentin final offseason'unu ayrıca hazırlayarak gerçek next-season opening state üretir.
+
+Canonical seed `20260903`:
+
+`20 sezon checkpoint-capable world` ile `8 sezon → world save → load → 12 sezon resume` birebir eşittir.
+
+M26 runner kabul çıktısı:
+
+- save version `1`
+- checksum `0645c8a5`
+- save boyutu `187664 bytes`
+- loaded next season index `8`
+- season replay match `true`
+- final players match `true`
+- final finance match `true`
+- final leagues match `true`
+- next checkpoint match `true`
+- legacy fixture `v0 → v1`
+
+Doğrulanmış PR CI `33930202369`:
+
+- analyzer PASS
+- `94` test PASS
+- M0–M18 runner PASS
+- M19–M24 canonical runner PASS
+- M25 runner PASS
+- M26 runner PASS
+- artifact `0`
+- timeout `5 dk` içinde PASS
+
+İlk M26 PR CI yalnız public barrel'da mevcut `WorldCareerValidator` export'unun yanlışlıkla düşürülmesi nedeniyle analyzer'da durdu. Export geri kondu; simülasyon davranışı değiştirilmedi. Sonraki CI tam PASS oldu.
+
+M26 bilinçli olarak şu controller/hook-owned state'i içermez:
+
+- contracts
+- installment/loan obligations
+- manager assignments
+- fan/media/promise memory
+- president/reputation/election timeline
+
+Ayrıntı:
+
+`M26_WORLD_SAVE_SNAPSHOT_I.md`
+
+## 7. Başkan trait durumu — M26 sonrası
 
 M17'de tanımlanan beş trait'in tamamı gerçek davranışa bağlıdır:
 
@@ -608,7 +697,7 @@ M17'de tanımlanan beş trait'in tamamı gerçek davranışa bağlıdır:
 | `riskAppetite` | buyer max-bid ceiling | M23 |
 | `youthOrientation` | youth/potential candidate preference | M24 |
 
-M25 yeni trait davranışı eklemedi; uzun kariyer kayıt güvenilirliğine geçti.
+M25 ve M26 yeni trait davranışı eklemedi; uzun kariyer kayıt güvenilirliği katmanlarını kurdu.
 
 ## 8. Canonical feedback tablosu
 
@@ -632,14 +721,16 @@ Tek workflow:
 - M1–M18 ayrı headless runner
 - tek en yeni profile-feedback runner nested M19+ canonical guard'ları birlikte doğrular
 - M25 save/load continuation runner
+- M26 world save continuation runner
 
 Current canonical profile runner:
 
 `tool/run_m24_president_youth_orientation_feedback.dart 20260903`
 
-Current save runner:
+Save runners:
 
-`tool/run_m25_save_load.dart 20260903`
+- `tool/run_m25_save_load.dart 20260903`
+- `tool/run_m26_world_save.dart 20260903`
 
 Kurallar:
 
@@ -651,6 +742,7 @@ Kurallar:
 - save/load resume kesintisiz kariyerle aynı deterministic sonucu üretir
 - future save version güvenli reddedilir
 - migration fixture test edilir
+- checkpoint API eklenirken eski public simulation semantiği korunur
 
 ## 10. Reddedilen / ertelenen fikirler
 
@@ -666,83 +758,56 @@ Kurallar:
 - M25 içinde tam advanced world save kapsamını tek seferde çözmek — migration/kapsam riskini gereksiz büyüttüğü için ertelendi
 - checksum'u kriptografik güvenlik/anti-cheat gibi sunmak — reddedildi
 - M26 içine kontrat + loan/installment + manager + president state'in tamamını zorla koymak — state sahipliği farklı controller/hook katmanlarında olduğu için reddedildi
+- eski `WorldCareerEngine.simulate()` davranışını checkpoint uğruna değiştirmek — regresyon riski nedeniyle reddedildi
 
 ## 11. Açık teknik sınırlar / borçlar
 
 - Current M19+ çözümü literal tek-pass sezon orkestratörü değil; fixed-point replay'dir.
-- M25 save yalnız temel `CareerEngine` sezon-sınırı state'ini kapsar.
-- M26 core `WorldCareerEngine` state'ini kapsayacaktır; contract/loan/installment/manager/president runtime state ayrı takip milestone'larında ele alınacaktır.
+- M25 save temel `CareerEngine` state'ini kapsar.
+- M26 core `WorldCareerEngine` state'ini kapsar.
+- Contract/loan/installment/manager/president runtime state henüz save kapsamına alınmadı.
 - Gerçek cihaz dosya sistemi ve cloud save daha sonra.
 - Otomatik save/yedek save slot politikası henüz platform katmanına bağlanmadı.
 - Altyapı tesis yatırımının youth intake kalitesine etkisi henüz yok.
 - Sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı.
 - Seçim kaybında kullanıcı kariyerinin game-over / başka kulübe geçiş UX'i henüz yok.
 
-## 12. M26 — aktif milestone
+## 12. M27 — sıradaki milestone
 
-### World Save Snapshot I
+### Advanced World Runtime Snapshot I
 
-Amaç M25'in doğrulanmış format/sürüm/migration temelini `WorldCareerEngine`'in gerçekten sahip olduğu sezon-sınırı dünya state'ine genişletmektir.
+M26'nın core world checkpoint'i PASS olduktan sonra sıradaki risk, hook/controller katmanlarının sezonlar arası state'idir.
 
-M26 snapshot kapsamı:
+İlk kapsam adayları:
 
-1. orijinal `SimulationConfig`
-2. tamamlanan sezon sayısı / next season index
-3. 48 temel kulüp kimliği ve baseline strength
-4. 3 ligde next-season club assignment
-5. next-season player roster/lifecycle state
-6. next-season club finance state
+1. player contracts
+2. transfer installment obligations
+3. active loan agreements
+4. manager pool / assignments
 
-M26'da **özellikle ayrı tutulacak** hook/controller-owned state:
+Başlangıç ilkesi:
 
-- player contracts
-- transfer installment obligations
-- active loan agreements
-- manager pool/assignments
-- fan/media/promise memory
-- president/reputation/election timeline
+> **M27 yalnız aynı advanced simulation yolunda gerçekten sahip olunan runtime state'i snapshot'a alacak; president/reputation/election zinciri kapsamı aşırı büyütürse ayrı M28'e bırakılacaktır.**
 
-Bunlar world checkpoint çekirdeği kanıtlandıktan sonra M27+ runtime snapshot katmanlarına eklenecek.
+M27 kabul kuralı, M26 ile aynıdır:
 
-### Kritik offseason semantiği
+> **advanced world save → load → devam, kesintisiz aynı-seed advanced world ile birebir deterministic sonuç üretmelidir.**
 
-Mevcut eski `WorldCareerEngine.simulate()` davranışında istenen segmentin son sezonundan sonra offseason geçişi çalıştırılmaz; çünkü `hasNextSeason` yalnız aynı çağrı içinde sonraki sezon varsa `true` olur.
+M27 ilk aşamada yine platform depolaması değildir:
 
-Bu davranış M0–M24 baseline'larının parçasıdır ve **değiştirilmeyecektir**.
+- Android dosya seçici yok
+- cloud save yok
+- Google Play Games save yok
+- save slot UI yok
+- encryption/anti-cheat yok
 
-Yeni M26 checkpoint yolu ise gerçek bir “next-season opening state” üretmek için segmentin son sezonundan sonra da gerekli:
+## 13. Uzun vadeli teknik yön
 
-- promotion/relegation
-- player lifecycle
-- youth intake/retirement
-- transfer window
-- finance window state
+Save zinciri:
 
-geçişini hazırlamalıdır.
-
-Bu nedenle M26 yeni checkpoint/resume API'si ile eski `simulate()` API'sinin semantiğini birbirinden ayıracak; eski public davranış sessizce değiştirilmeyecektir.
-
-M26 kabul kuralı:
-
-> **20 sezonluk checkpoint-capable world koşusu ile `8 sezon → world save → load → 12 sezon resume` aynı seed'de sezon, oyuncu, lig ve finans state'i seviyesinde birebir deterministic sonuç üretmelidir.**
-
-M26 ilk aşamada yine şunları kapsamayacak:
-
-- Android dosya seçici
-- cloud save
-- Google Play Games save
-- çoklu kullanıcı hesabı
-- save slot UI
-- encryption/anti-cheat
-
-Önce gerçek core world state snapshot sözleşmesi.
-
-## 13. Sonraki teknik yön
-
-M26 PASS sonrası doğal takip:
-
-> **M27 — Advanced World Runtime Snapshot I**
-
-İlk adaylar contract + installment/loan + manager controller state'idir. President/reputation/election state kapsam büyüklüğüne göre M27 veya ayrı M28'e bırakılabilir.
+- M25: temel `CareerEngine` checkpoint — PASS
+- M26: core `WorldCareerEngine` checkpoint — davranış PASS / merge kapısı
+- M27+: advanced hook/controller runtime snapshot
+- daha sonra platform save slotları, autosave/yedek politikası ve gerekirse cloud save
 
 Uzun vadeli hedef, 20–30 sezonluk kariyerin tüm kritik state'iyle deterministic ve migration-safe biçimde kaydedilip devam ettirilebilmesidir. Sonrasında 100/500/1000 kariyer batch QA genişletilecektir.

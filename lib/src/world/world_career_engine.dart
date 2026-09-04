@@ -15,6 +15,8 @@ import 'league_tier.dart';
 import 'world_career_hooks.dart';
 import 'world_career_report.dart';
 import 'world_career_season.dart';
+import 'world_career_simulation_result.dart';
+import 'world_checkpoint.dart';
 import 'world_finance_hooks.dart';
 import 'world_league.dart';
 import 'world_roster_hooks.dart';
@@ -37,6 +39,9 @@ class WorldCareerEngine {
   final BasicEconomyEngine economyEngine;
   final TransferMarketEngine transferMarketEngine;
 
+  /// Existing world simulation semantics are intentionally preserved.
+  /// The final requested season does not prepare an offseason unless another
+  /// season exists inside this same call.
   WorldCareerReport simulate({
     required List<Club> clubs,
     required List<WorldLeague> leagues,
@@ -48,31 +53,156 @@ class WorldCareerEngine {
     WorldTransferHooks transferHooks = const NoopWorldTransferHooks(),
     bool enableTransferInstallments = false,
   }) {
-    if (seasonCount <= 0) {
-      throw ArgumentError.value(seasonCount, 'seasonCount', 'Must be positive.');
-    }
+    _validateSeasonCount(seasonCount);
     _validateSetup(clubs, leagues);
 
     final baseClubs = List<Club>.unmodifiable(clubs);
     final initialLeagues = _sortedLeagues(leagues);
-    var currentLeagues = initialLeagues;
-    var currentPlayers = poolGenerator.generate(
+    final initialPlayers = poolGenerator.generate(
       clubs: baseClubs,
       careerSeed: config.careerSeed,
       simulationVersion: config.simulationVersion,
     );
-    final initialPlayerCount = currentPlayers.length;
     final initialFinanceStates = _initialFinanceStates(
       clubs: baseClubs,
-      leagues: currentLeagues,
+      leagues: initialLeagues,
       config: config,
     );
-    var currentFinanceStates = initialFinanceStates;
+
+    return _simulateSegment(
+      baseClubs: baseClubs,
+      openingLeagues: initialLeagues,
+      openingPlayers: initialPlayers,
+      openingFinanceStates: initialFinanceStates,
+      config: config,
+      completedBefore: 0,
+      seasonCount: seasonCount,
+      advanceAfterFinalSeason: false,
+      hooks: hooks,
+      rosterHooks: rosterHooks,
+      financeHooks: financeHooks,
+      transferHooks: transferHooks,
+      enableTransferInstallments: enableTransferInstallments,
+    ).report;
+  }
+
+  /// Core-world checkpoint path for M26. It deliberately owns only state that
+  /// belongs to [WorldCareerEngine] itself. Stateful contract/manager/etc.
+  /// controllers are added by later runtime-snapshot milestones.
+  WorldCareerSimulationResult simulateWithCheckpoint({
+    required List<Club> clubs,
+    required List<WorldLeague> leagues,
+    required SimulationConfig config,
+    int seasonCount = 20,
+  }) {
+    _validateSeasonCount(seasonCount);
+    _validateSetup(clubs, leagues);
+
+    final baseClubs = List<Club>.unmodifiable(clubs);
+    final initialLeagues = _sortedLeagues(leagues);
+    final initialPlayers = poolGenerator.generate(
+      clubs: baseClubs,
+      careerSeed: config.careerSeed,
+      simulationVersion: config.simulationVersion,
+    );
+    final initialFinanceStates = _initialFinanceStates(
+      clubs: baseClubs,
+      leagues: initialLeagues,
+      config: config,
+    );
+    final run = _simulateSegment(
+      baseClubs: baseClubs,
+      openingLeagues: initialLeagues,
+      openingPlayers: initialPlayers,
+      openingFinanceStates: initialFinanceStates,
+      config: config,
+      completedBefore: 0,
+      seasonCount: seasonCount,
+      advanceAfterFinalSeason: true,
+    );
+
+    return WorldCareerSimulationResult(
+      report: run.report,
+      checkpoint: _checkpointFromRun(
+        run: run,
+        config: config,
+        completedSeasons: seasonCount,
+      ),
+    );
+  }
+
+  WorldCareerSimulationResult resume({
+    required WorldCheckpoint checkpoint,
+    required int seasonCount,
+  }) {
+    _validateSeasonCount(seasonCount);
+    checkpoint.validate();
+    _validateSetup(checkpoint.baseClubs, checkpoint.nextSeasonLeagues);
+
+    final run = _simulateSegment(
+      baseClubs: checkpoint.baseClubs,
+      openingLeagues: _sortedLeagues(checkpoint.nextSeasonLeagues),
+      openingPlayers: checkpoint.nextSeasonPlayers,
+      openingFinanceStates: checkpoint.nextSeasonFinanceStates,
+      config: checkpoint.config,
+      completedBefore: checkpoint.completedSeasons,
+      seasonCount: seasonCount,
+      advanceAfterFinalSeason: true,
+    );
+
+    return WorldCareerSimulationResult(
+      report: run.report,
+      checkpoint: _checkpointFromRun(
+        run: run,
+        config: checkpoint.config,
+        completedSeasons: checkpoint.completedSeasons + seasonCount,
+      ),
+    );
+  }
+
+  WorldCheckpoint _checkpointFromRun({
+    required _WorldSegmentRun run,
+    required SimulationConfig config,
+    required int completedSeasons,
+  }) =>
+      WorldCheckpoint(
+        config: config,
+        completedSeasons: completedSeasons,
+        baseClubs: run.baseClubs,
+        nextSeasonLeagues: run.finalLeagues,
+        nextSeasonPlayers: run.finalPlayers,
+        nextSeasonFinanceStates: run.finalFinanceStates,
+      );
+
+  _WorldSegmentRun _simulateSegment({
+    required List<Club> baseClubs,
+    required List<WorldLeague> openingLeagues,
+    required List<Player> openingPlayers,
+    required List<ClubFinanceState> openingFinanceStates,
+    required SimulationConfig config,
+    required int completedBefore,
+    required int seasonCount,
+    required bool advanceAfterFinalSeason,
+    WorldCareerHooks hooks = const NoopWorldCareerHooks(),
+    WorldRosterHooks rosterHooks = const NoopWorldRosterHooks(),
+    WorldFinanceHooks financeHooks = const NoopWorldFinanceHooks(),
+    WorldTransferHooks transferHooks = const NoopWorldTransferHooks(),
+    bool enableTransferInstallments = false,
+  }) {
+    var currentLeagues = List<WorldLeague>.unmodifiable(openingLeagues);
+    var currentPlayers = List<Player>.unmodifiable(openingPlayers);
+    var currentFinanceStates = List<ClubFinanceState>.unmodifiable(
+      openingFinanceStates,
+    );
+    final initialLeagues = currentLeagues;
+    final initialFinanceStates = currentFinanceStates;
+    final initialPlayerCount = currentPlayers.length;
     final seasons = <WorldCareerSeason>[];
 
     for (var offset = 0; offset < seasonCount; offset++) {
-      final seasonIndex = config.seasonIndex + offset;
-      final hasNextSeason = offset < seasonCount - 1;
+      final seasonIndex = config.seasonIndex + completedBefore + offset;
+      final hasNextSeason =
+          offset < seasonCount - 1 || advanceAfterFinalSeason;
       final leaguesBeforeSeason = currentLeagues;
       final seasonPlayers = List<Player>.unmodifiable(currentPlayers);
       final squadClubs = strengthCalculator.deriveClubs(
@@ -243,14 +373,18 @@ class WorldCareerEngine {
           clubs: postLifecycleClubs,
           leaguesForNextSeason: leaguesAfterTransition,
         );
-        currentPlayers = postTransfer.players;
-        currentFinanceStates = postTransfer.financeStates;
-        financeStatesAfterWindow = postTransfer.financeStates;
+        currentPlayers = List<Player>.unmodifiable(postTransfer.players);
+        currentFinanceStates = List<ClubFinanceState>.unmodifiable(
+          postTransfer.financeStates,
+        );
+        financeStatesAfterWindow = currentFinanceStates;
         cashMovementsAfterWindow = postTransfer.cashMovements;
         transfersAfterSeason = market.deals;
-        currentLeagues = leaguesAfterTransition;
+        currentLeagues = List<WorldLeague>.unmodifiable(leaguesAfterTransition);
       } else {
-        currentFinanceStates = closingFinanceStates;
+        currentFinanceStates = List<ClubFinanceState>.unmodifiable(
+          closingFinanceStates,
+        );
       }
 
       seasons.add(
@@ -276,8 +410,7 @@ class WorldCareerEngine {
       baseClubs: baseClubs,
       players: currentPlayers,
     );
-
-    return WorldCareerReport(
+    final report = WorldCareerReport(
       careerSeed: config.careerSeed,
       initialPlayerCount: initialPlayerCount,
       initialFinanceStates: initialFinanceStates,
@@ -288,6 +421,20 @@ class WorldCareerEngine {
       finalClubs: List.unmodifiable(finalClubs),
       finalLeagues: List.unmodifiable(currentLeagues),
     );
+
+    return _WorldSegmentRun(
+      report: report,
+      baseClubs: List.unmodifiable(baseClubs),
+      finalPlayers: List.unmodifiable(currentPlayers),
+      finalFinanceStates: List.unmodifiable(currentFinanceStates),
+      finalLeagues: List.unmodifiable(currentLeagues),
+    );
+  }
+
+  void _validateSeasonCount(int seasonCount) {
+    if (seasonCount <= 0) {
+      throw ArgumentError.value(seasonCount, 'seasonCount', 'Must be positive.');
+    }
   }
 
   List<ClubFinanceState> _initialFinanceStates({
@@ -464,6 +611,22 @@ class WorldCareerEngine {
       }
     }
   }
+}
+
+class _WorldSegmentRun {
+  const _WorldSegmentRun({
+    required this.report,
+    required this.baseClubs,
+    required this.finalPlayers,
+    required this.finalFinanceStates,
+    required this.finalLeagues,
+  });
+
+  final WorldCareerReport report;
+  final List<Club> baseClubs;
+  final List<Player> finalPlayers;
+  final List<ClubFinanceState> finalFinanceStates;
+  final List<WorldLeague> finalLeagues;
 }
 
 class _LeagueTransition {
