@@ -60,12 +60,12 @@ void main() {
     expect(report.initialStates, hasLength(48));
     expect(report.finalStates, hasLength(48));
     expect(report.uniquePresidents, 130);
-    expect(report.clubsWithTurnover, inInclusiveRange(25, 48));
-    expect(report.repeatedTurnoverClubs, inInclusiveRange(5, 40));
-    expect(report.maximumTurnoversPerClub, inInclusiveRange(2, 5));
-    expect(report.averageOutgoingTenureSeasons, inInclusiveRange(4, 12));
+    expect(report.clubsWithTurnover, inInclusiveRange(32, 39));
+    expect(report.repeatedTurnoverClubs, inInclusiveRange(20, 29));
+    expect(report.maximumTurnoversPerClub, inInclusiveRange(4, 5));
+    expect(report.averageOutgoingTenureSeasons, inInclusiveRange(6, 8));
     expect(report.minimumOutgoingTenureSeasons, 4);
-    expect(report.maximumOutgoingTenureSeasons, inInclusiveRange(8, 20));
+    expect(report.maximumOutgoingTenureSeasons, inInclusiveRange(16, 20));
   });
 
   test('M15 is deterministic and does not alter the M14 election world', () {

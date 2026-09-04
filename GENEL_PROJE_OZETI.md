@@ -3,7 +3,7 @@
 
 **Son güncelleme:** 04.09.2026  
 **Repo:** `ZMilaStudio/futbol-baskanlik-simulatoru` — Public / proprietary notice  
-**Aktif teknik aşama:** **M14 PASS — sıradaki M15 / Başkanlık Görev Süresi + Devir Çekirdeği**  
+**Aktif teknik aşama:** **M15 PASS — sıradaki M16 / Başkan Devrinde Kişisel İtibar Devri**  
 **Proje önceliği:** Yan geliştirme; aktif ana projeleri aksatmayacak.  
 **UI/APK:** Bilinçli olarak başlanmadı; önce simülasyon çekirdeği.
 
@@ -37,7 +37,9 @@ Kalıcı ürün/teknik ilkeler:
 14. Vaat sezon başı bağlamından üretilir; gelecek bilgisi kullanılamaz.
 15. Reputasyon katmanları mümkün olduğunca aynı world report'u paylaşır.
 16. Seçim tek bir kupaya/metriğe bağlı değildir.
-17. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
+17. Seçim kaybı başkan kimliğinde gerçek devir üretir; yeniden seçim aynı incumbent tenure'ını sürdürür.
+18. Kulüp temelli reputasyon ile başkana özgü reputasyon uzun vadede ayrıştırılmalıdır.
+19. UI/APK, çekirdek kanıtlanmadan öncelik değildir.
 
 ---
 
@@ -54,7 +56,7 @@ Kalıcı ürün/teknik ilkeler:
 
 `WorldCareerEngine` no-op varsayılanlı hook'larla genişletilir: `WorldCareerHooks`, `WorldRosterHooks`, `WorldFinanceHooks`, `WorldTransferHooks`.
 
-M12 fan+promise aynı advanced report'u paylaşır. M13 `AdvancedTransferWorldCareerEngine + ManagerCareerController` ile manager+advanced transfer+promise+media tek world üretir. M14 M13 reputation report'unu temel alır ve promise-driven fan state'ini aynı advanced report üzerinden türetir; seçim için yeni dünya simüle edilmez.
+M12 fan+promise aynı advanced report'u paylaşır. M13 manager+advanced transfer+promise+media tek world üretir. M14 M13 reputation report'u ve aynı advanced world'den promise-driven fan state'ini kullanarak seçim üretir. M15 M14 election report'unu değiştirmeden deterministik başkan kimliği, tenure state ve seçim kaybı kaynaklı turnover history ekler.
 
 ---
 
@@ -66,11 +68,11 @@ Tek hafif workflow:
 - `dart analyze`
 - tüm testler
 - M0 100 sezon batch
-- M1–M14 20 sezon headless runner zinciri
+- M1–M15 20 sezon headless runner zinciri
 
 APK/AAB, büyük binary veya `actions/upload-artifact` yok. Artifact hedefi `0`.
 
-M0–M14 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu. Codex yalnız büyük refactor/migration/karmaşık hata için kullanılacak.
+M0–M15 geliştirmesinde Codex kredisi kullanılmadı; GitHub araçları yeterli oldu. Codex yalnız büyük refactor/migration/karmaşık hata için kullanılacak.
 
 ---
 
@@ -101,58 +103,65 @@ Seed `20260903`: Vadişehir 10, Kuzey Yıldızı 6, Demirkent 4 şampiyonluk.
 874 final kontrat, 3.757 renewal, 1.143 release, 776 free signing, wage bill `491,27M`.
 
 ## M8 — Kiralık + Taksit — PASS
-Yüksek taksit oranlı denemeler reddedildi. Kabul: 140 kalıcı, 68 taksitli, 478 kiralık; cash `1.017,61M`, debt `378,97M`.
+140 kalıcı, 68 taksitli, 478 kiralık; cash `1.017,61M`, debt `378,97M`.
 
 ## M9 — Taraftar — PASS
 960 snapshot, avg trust `64,88`, aralık `44–75`, reason `2.143`.
 
 ## M10 — Medya Hafızası — PASS
-İlk aşırı sık statement modeli reddedildi. Kabul: 556 statement, 22 contradiction, avg credibility `75,52`, aralık `49–87`.
+556 statement, 22 contradiction, avg credibility `75,52`, aralık `49–87`.
 
 ## M11 — Başkan Vaatleri — PASS
 960 vaat; 435 fulfilled, 169 partial, 356 broken, avg `54,84`; financial 105 / sporting 855.
 
 ## M12 — Vaat → Taraftar — PASS
-Aynı advanced world. Baseline overall `64,88` → `65,31`; identity avg `61,83`, aralık `38–88`.
+Baseline overall `64,88` → `65,31`; identity avg `61,83`, aralık `38–88`.
 
 ## M13 — Vaat → Medya — PASS
-Manager + advanced transfer + promise + media tek shared world. Promise change 960; positive 452 / neutral 154 / negative 354. Baseline credibility `74,88` → `72,38`; aralık `36–93`; validation `0`.
+Promise change 960; positive 452 / neutral 154 / negative 354. Baseline credibility `74,88` → `72,38`; aralık `36–93`; validation `0`.
 
 ## M14 — Başkanlık Seçimi Çekirdeği I — PASS
+Dört sezonluk dönem sonunda seçim. Approval: fan overall `%35`, fan identity `%15`, media `%25`, term promise score `%25`.
 
-Dört sezonluk dönem sonunda seçim yapılır. 20 sezon / 48 kulüp = `240` seçim.
+Seed `20260903`: elections `240`, reelected `158`, lost `82`, rate `%65,8`, avg approval `63,24`, avg challenger `60,08`, range `37–84`, competitive `72`, landslide wins `79`, landslide losses `41`, boundary `0`, validation `0`.
 
-Approval ağırlıkları:
+Custom initial `seasonIndex=7` testinde ilk seçim `10` sonunda doğru üretildi.
 
-- fan overall `%35`
-- fan identity `%15`
-- media credibility `%25`
-- son dört sezon promise score `%25`
+Ayrıntı: `M14_BASKANLIK_SECIMI.md`.
 
-Challenger strength career seed + simulation version + season + term + club ID ile deterministik üretilir. Seçim sonucu ilk sürümde gözlemseldir; dünya/kariyer akışını durdurmaz.
+## M15 — Başkanlık Görev Süresi + Devir — PASS
+
+M14 seçim sonucu aynen korunur; yeni state katmanı seçim sonuçlarını başkan kimliği ve tenure history'ye çevirir.
+
+- deterministik başlangıç incumbent profili,
+- deterministik challenger profili,
+- `reelected` → aynı başkan / aynı tenure,
+- `lost` → challenger yeni incumbent,
+- outgoing tenure süresi ve yeniden seçim geçmişi,
+- final incumbent state,
+- tüm devir zincirini replay eden validator.
 
 Kabul seed `20260903`:
 
 - elections `240`
 - reelected `158`
 - lost `82`
-- reelection rate `%65,8`
-- avg approval `63,24`
-- avg challenger `60,08`
-- approval range `37–84`
-- competitive `72`
-- landslide wins `79`
-- landslide losses `41`
-- boundary `0`
+- turnovers `82`
+- unique presidents `130`
+- turnover yaşayan kulüp `35`
+- birden fazla turnover yaşayan kulüp `24`
+- max turnover/club `5`
+- avg outgoing tenure `6,93 sezon`
+- tenure range `4–20`
 - validation `0`
 
-İlk model doğrudan kabul edildi: seçim yaklaşık üçte bir oranında kaybedilebiliyor, yakın yarış ve net sonuçlar birlikte mevcut; 0/100 yığılması yok.
+İlk model doğrudan kabul edildi. M14 sonucu değişmedi ve her kayıp seçim birebir başkan devri üretti.
 
-CI guard: reelected `130–185`, lost `55–110`, rate `0,55–0,78`, avg approval `58–68`, avg challenger `56–64`, min `25–50`, max `75–90`, competitive `45–100`, landslide win `50–115`, landslide loss `20–70`, boundary `<=2`.
+Denge notu: bir kulüp beş seçimin beşinde de başkan değiştirdi. M15 bunu bastırmıyor; kök dağılım M14'e ait. Çoklu-seed testlerde tekrar sıklığı izlenecek.
 
-Custom initial season index testi: başlangıç `seasonIndex=7`, 5 sezon simülasyonda ilk seçim `seasonIndex=10` sonunda ve yalnız 48 seçim.
+CI kabul guard'ları: elections `240`, reelected `158`, lost/turnover `82`, unique presidents `130`, clubs changed `32–39`, repeat clubs `20–29`, max turnover `4–5`, avg outgoing tenure `6–8`, min tenure `4`, max tenure `16–20`.
 
-Ayrıntı: `M14_BASKANLIK_SECIMI.md`.
+Ayrıntı: `M15_BASKANLIK_GOREV_SURESI_DEVIR.md`.
 
 ---
 
@@ -163,7 +172,7 @@ Ayrıntı: `M14_BASKANLIK_SECIMI.md`.
 - regresyon: 500 × 30 sezon
 - büyük sürüm stres: 1.000 × 30 sezon
 
-İzlenecekler: oyuncu popülasyonu/yaş, cash/debt, wage/revenue, transfer/loan/installment, şampiyonluk/terfi, manager tenure, fan trust, media credibility, promise completion, election approval/challenger/outcome; ileride president tenure/devir.
+İzlenecekler: oyuncu popülasyonu/yaş, cash/debt, wage/revenue, transfer/loan/installment, şampiyonluk/terfi, manager tenure, fan trust, media credibility, promise completion, election approval/outcome, president tenure/turnover.
 
 Her başarısız kariyer seed ile replay edilebilmelidir.
 
@@ -173,7 +182,7 @@ Her başarısız kariyer seed ile replay edilebilmelidir.
 
 Aday metadata: `saveVersion`, `gameVersion`, `simulationVersion`, `dataVersion`, `careerSeed`, current `GameDate`, checksum/integrity, migration history.
 
-Kalıcı state adayları: installment/active loans, `FanState`, `MediaState`, çözülmemiş açıklamalar, aktif vaat + kompakt promise history, ileride `PresidentTenureState` ve seçim geçmişi.
+Kalıcı state adayları: installment/active loans, `FanState`, `MediaState`, çözülmemiş açıklamalar, aktif vaat + kompakt promise history, `PresidentTenureState`, başkan kimliği ve kompakt election/turnover history.
 
 ---
 
@@ -187,31 +196,34 @@ Kalıcı state adayları: installment/active loans, `FanState`, `MediaState`, ç
 6. Taraftar henüz seyirci/bilet/mağaza/sponsor/protestoyu geri beslemez.
 7. Medya managerFuture + promise credibility kapsamındadır; serbest metin/çok yıllı konu ağı yok.
 8. AI kulüp sezon başına bir resmi vaat kullanır; kullanıcı vaat seçimi ve çok sezonlu vaat yok.
-9. M14 election sonucu gözlemseldir; incumbent profile/devir ve kullanıcı game-over yok.
-10. Sponsor, tesis ve kriz çekirdeğe bağlanmadı.
-11. Flutter UI/APK bilinçli olarak başlamadı.
+9. **M15'te yeni incumbent predecessor'ın media credibility ve fan identity geçmişini fiilen miras alır; kişisel reputasyon devri M16'da düzeltilmeli.**
+10. M15 baseline'da bir kulüp 5/5 seçimde turnover yaşadı; çoklu-seed sıklığı izlenmeli.
+11. Başkan profili henüz ekonomi/transfer/manager kararlarını etkilemez.
+12. Sponsor, tesis ve kriz çekirdeğe bağlanmadı.
+13. Kullanıcı seçim kaybı → game-over/başka kulüp kariyeri henüz yok.
+14. Flutter UI/APK bilinçli olarak başlamadı.
 
 ---
 
-# 8. Sıradaki milestone — M15
+# 8. Sıradaki milestone — M16
 
-## Başkanlık Görev Süresi + Devir Çekirdeği
+## Başkan Devrinde Kişisel İtibar Devri
 
 Amaç:
 
-> **Seçimi kaybetmek yalnız raporda kalan bir etiket değil, kulüpte gerçekten başkan değişimi yaratacak.**
+> **Yeni başkan kulübün borcunu ve kadrosunu devralır; predecessor'ın kişisel söz ve medya güvenilirliğini ise birebir devralmamalıdır.**
 
 İlk kapsam:
 
-- deterministik `PresidentProfile` / `PresidentTenureState`,
-- 48 kulübe başlangıç incumbent başkan,
-- görev başlangıç sezonu ve term numarası,
-- M14 `reelected` ile tenure devamı,
-- M14 `lost` ile yeni incumbent/devir,
-- başkan değişim geçmişi,
-- aynı seed ile aynı başkanlık zinciri,
-- ilk aşamada yeni başkanın transfer/ekonomi AI davranışını değiştirmemesi,
-- kullanıcı game-over/başka kulübe geçiş/UI kapsam dışı.
+- başkan değişiminde media credibility için kontrollü başlangıç/normalizasyon,
+- fan `identityTrust` için kontrollü reset/devir,
+- sporting/financial/transfer gibi kulüp temelli fan boyutlarının korunması,
+- yeni incumbent'ın sonraki dört sezonunun kendi reputasyon geçmişini oluşturması,
+- term promise score'un mevcut dönem başkanına doğru bağlanması,
+- sonraki seçimlerin gerçek incumbent state'iyle ardışık simülasyonu,
+- deterministic replay + 20 sezon denge/turnover raporu.
+
+Başkan karakter profillerinin ekonomi/transfer AI'a etkisi M16'ya zorla eklenmeyecek; önce kişisel reputasyon semantiği doğru kurulacak.
 
 ---
 
