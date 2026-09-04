@@ -1,6 +1,4 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
-import 'package:futbol_baskanlik_m0/src/election/president_manager_election_feedback_engine.dart';
-import 'package:futbol_baskanlik_m0/src/election/president_manager_election_feedback_validator.dart';
 import 'package:test/test.dart';
 
 void main() {
