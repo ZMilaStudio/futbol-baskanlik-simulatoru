@@ -62,7 +62,7 @@ void main() {
     expect(report.transferDelta.abs(), lessThanOrEqualTo(60));
     expect(report.uniqueFinalPresidents, inInclusiveRange(110, 145));
     expect(report.worldChanged, isTrue);
-  });
+  }, tags: 'canonical-feedback');
 
   test('M19 feedback converges across representative career seeds', () {
     final world = const FictionalWorldFactory().build();

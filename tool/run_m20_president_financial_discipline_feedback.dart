@@ -1,5 +1,7 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 
+import 'profile_feedback_canonical_guard.dart';
+
 void main(List<String> args) {
   final seed = args.isEmpty ? 20260903 : int.parse(args.first);
   final world = const FictionalWorldFactory().build();
@@ -8,8 +10,9 @@ void main(List<String> args) {
     leagues: world.leagues,
     config: SimulationConfig(careerSeed: seed),
   );
-  final issues =
-      const PresidentFinancialDisciplineFeedbackValidator().validate(report);
+  final issues = seed == 20260903
+      ? ProfileFeedbackCanonicalGuard.m20Issues(report)
+      : const PresidentFinancialDisciplineFeedbackValidator().validate(report);
 
   print('M20 20-season president financial discipline feedback career');
   print('Seed: $seed');

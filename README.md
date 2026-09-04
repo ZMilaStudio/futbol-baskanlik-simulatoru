@@ -6,7 +6,7 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 
 ## Teknik durum
 
-**M0–M21 tamamlandı ve otomatik regresyon zincirinde tutuluyor. Sıradaki aktif milestone: M22 — Profile Feedback Orchestration I / performans refactor.**
+**M0–M21 tamamlandı. M22 — Profile Feedback Orchestration I, final kalite kapısındadır.**
 
 - M0–M5: lig, kariyer, oyuncu, ekonomi, transfer, 48 kulüp / 3 lig
 - M6–M8: teknik direktör, sözleşme/maaş, kiralık+taksit
@@ -18,7 +18,8 @@ ZMila Studio için geliştirilen deterministik, UI'dan bağımsız Dart futbol k
 - M18: `managerPatience` → gerçek teknik direktör dismissal kararları
 - M19: manager/world → reputasyon → seçim fixed-point feedback
 - M20: `financialDiscipline` → gerçek transfer affordability/bütçe sınırları
-- **M21: `transferAmbition` → gerçek transfer aktivite slotları + M20 feedback — PASS**
+- M21: `transferAmbition` → gerçek transfer aktivite slotları + M20 feedback — PASS
+- **M22: M19–M21 canonical profile-feedback doğrulamasını tek-pass orchestration'a indirir; oyun davranışı değişmez**
 
 Flutter bağımlılığı henüz yoktur. Öncelik uzun kariyerde sağlam çalışan başkanlık simülasyonunu mobil arayüzden önce kanıtlamaktır.
 
@@ -119,12 +120,46 @@ M21 final kalite:
 - artifact `0`
 - final CI süresi yaklaşık `6 dk 10 sn`
 
+## M22 profile-feedback orchestration
+
+M21 sonrası aynı canonical profile-feedback kariyerleri hem testlerde hem M19/M20/M21 runner'larında tekrar çözülüyordu. M22 bu tekrarı davranış değiştirmeden kaldırır.
+
+Temel gözlem:
+
+- M21 raporu `m20Baseline` taşır,
+- M20 raporu `m19Baseline` taşır.
+
+Dolayısıyla tek M21 canonical simülasyonu M19, M20 ve M21 için gereken bütün nested raporları içerir.
+
+M22:
+
+- ortak `tool/profile_feedback_canonical_guard.dart` ekler,
+- üç pahalı full-career testi `canonical-feedback` etiketiyle normal CI test turundan ayırır,
+- policy, neutral-regression, determinism ve multi-seed convergence testlerini normal turda tutar,
+- M19/M20/M21 canonical guard'larını tek M21 runner içinde uygular,
+- ayrı M19 ve M20 canonical CI runner tekrarlarını kaldırır.
+
+İlk M22 ölçüm CI `33917924101`:
+
+- analyzer PASS,
+- `76` hızlı/non-duplicate test PASS,
+- M0–M18 runner PASS,
+- tek M19–M21 canonical profile-feedback runner PASS,
+- M19 nested final `160/80`,
+- M20 nested final `158/82`,
+- M21 final yine `4 iterasyon / 150-90 / 80 manager / 161 transfer`,
+- validation `0`,
+- toplam süre yaklaşık `2 dk 06 sn`.
+
+M21 finaline göre yaklaşık `4 dk 04 sn`, yani yaklaşık `%66` CI süresi kazanıldı. Bu nedenle timeout `7` dakikadan tekrar `5` dakikaya indirildi.
+
 Ayrıntılar:
 
 - `M18_BASKAN_SABRI_TEKNIK_DIREKTOR_KARAR_ESIGI.md`
 - `M19_BASKAN_SABRI_SECIM_GERI_BESLEME_DONGUSU.md`
 - `M20_BASKAN_MALI_DISIPLIN_TRANSFER_BUTCE_DAVRANISI.md`
 - `M21_BASKAN_TRANSFER_HIRSI_TRANSFER_AKTIVITESI.md`
+- `M22_PROFILE_FEEDBACK_ORKESTRASYON_I.md`
 
 ## Mimari
 
@@ -154,26 +189,19 @@ dart run tool/run_m21_president_transfer_ambition_feedback.dart 20260903
 
 ## CI
 
-Tek workflow: `dart analyze` + tüm testler + M0 100 sezon batch + M1–M21 20 sezon runner zinciri. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`.
+Tek workflow:
 
-M21 ile nested fixed-point zinciri 5 dakikalık CI sınırını aştığı için timeout `7` dakikadır. Bu limit yükseltmesi yeni normal olarak kabul edilmemelidir.
+- `dart analyze`,
+- `dart test --exclude-tags canonical-feedback`,
+- M0 100 sezon batch,
+- M1–M18 20 sezon runner zinciri,
+- tek M19–M21 canonical profile-feedback runner.
 
-## Sıradaki milestone — M22
+Canonical guard kapsamı azaltılmadı; duplicate full-career hesaplar kaldırıldı. Büyük binary ve `actions/upload-artifact` yok; artifact hedefi `0`. Timeout `5` dakikadır.
 
-**Profile Feedback Orchestration I / performans refactor.**
+## Sıradaki yön
 
-Amaç yeni oyun davranışı eklemek değil, M19→M20→M21 katmanlarının aynı full-career baseline'ı tekrar tekrar çözmesini azaltırken **M21 canonical sonucu ve bütün eski signature'ları birebir korumaktır**.
-
-Hedefler:
-
-- ortak profile-feedback orchestration katmanı,
-- converged baseline'ın yeniden kullanılabilmesi,
-- nested milestone engine çağrılarının azaltılması,
-- M21 canonical `4 iterasyon / 150-90 / 80 manager / 161 transfer` sonucunun değişmemesi,
-- CI süresinin anlamlı biçimde düşmesi,
-- artifact `0`.
-
-M22 sonrasında sıradaki davranış trait'i adayı `riskAppetite` olacaktır.
+M22 final kalite kapısı geçtikten sonra sıradaki davranış trait'i adayı `riskAppetite` olacaktır. Yeni milestone mevcut birleşik profile-feedback doğrulamasını yeniden kullanmalı ve yeni duplicate full-career CI katmanları oluşturmamalıdır.
 
 ## Lisans
 
