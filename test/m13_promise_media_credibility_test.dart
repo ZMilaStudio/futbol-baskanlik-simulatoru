@@ -20,11 +20,13 @@ void main() {
               type: type,
             ),
             status: status,
+            // The impact engine consumes promise type + status. Use existing
+            // M11 resolution reasons instead of inventing generic enum values.
             reason: status == PromiseStatus.fulfilled
-                ? PromiseResolutionReason.targetMet
+                ? PromiseResolutionReason.topHalfMet
                 : status == PromiseStatus.partial
-                    ? PromiseResolutionReason.nearTarget
-                    : PromiseResolutionReason.targetMissed,
+                    ? PromiseResolutionReason.nearTopHalf
+                    : PromiseResolutionReason.missedTopHalf,
             score: status == PromiseStatus.fulfilled
                 ? 100
                 : status == PromiseStatus.partial
