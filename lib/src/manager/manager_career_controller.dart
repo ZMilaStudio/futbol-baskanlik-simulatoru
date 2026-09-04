@@ -13,6 +13,7 @@ import 'manager_assignment.dart';
 import 'manager_career_season.dart';
 import 'manager_fit_model.dart';
 import 'manager_impact_model.dart';
+import 'manager_patience_policy.dart';
 import 'manager_pool_generator.dart';
 
 class ManagerCareerController implements WorldCareerHooks {
@@ -23,6 +24,8 @@ class ManagerCareerController implements WorldCareerHooks {
     this.poolGenerator = const ManagerPoolGenerator(),
     this.fitModel = const ManagerFitModel(),
     this.impactModel = const ManagerImpactModel(),
+    this.patienceProvider,
+    this.dismissalPolicy = const ManagerDismissalPolicy(),
   });
 
   final int careerSeed;
@@ -31,6 +34,8 @@ class ManagerCareerController implements WorldCareerHooks {
   final ManagerPoolGenerator poolGenerator;
   final ManagerFitModel fitModel;
   final ManagerImpactModel impactModel;
+  final ManagerPatienceProvider? patienceProvider;
+  final ManagerDismissalPolicy dismissalPolicy;
 
   bool _initialized = false;
   List<Manager> _managers = const [];
@@ -172,6 +177,11 @@ class ManagerCareerController implements WorldCareerHooks {
         expectedPosition: pending.expectedPosition,
         actualPosition: actualPosition,
       );
+      final managerPatience = patienceProvider?.call(
+            pending.clubId,
+            seasonIndex,
+          ) ??
+          ManagerDismissalPolicy.neutralPatience;
       final reason = _changeReason(
         manager: manager,
         seasonIndex: seasonIndex,
@@ -179,6 +189,7 @@ class ManagerCareerController implements WorldCareerHooks {
         relationshipAfter: relationshipAfter,
         expectedPosition: pending.expectedPosition,
         actualPosition: actualPosition,
+        managerPatience: managerPatience,
       );
 
       clubSeasons.add(
@@ -450,19 +461,24 @@ class ManagerCareerController implements WorldCareerHooks {
     required double relationshipAfter,
     required int expectedPosition,
     required int actualPosition,
+    required int managerPatience,
   }) {
     if (!hasNextSeason) return null;
     if (_ageAt(manager, seasonIndex + 1) >= manager.retirementAge) {
       return ManagerChangeReason.retirement;
     }
-    if (relationshipAfter < 28) {
+    final thresholds = dismissalPolicy.thresholds(managerPatience);
+    if (relationshipAfter < thresholds.boardBreakdownRelationship) {
       return ManagerChangeReason.boardBreakdown;
     }
     final underperformance = actualPosition - expectedPosition;
-    if (underperformance >= 5 && relationshipAfter < 46) {
+    if (underperformance >= thresholds.underperformanceGap &&
+        relationshipAfter < thresholds.underperformanceRelationship) {
       return ManagerChangeReason.performance;
     }
-    if (actualPosition >= 15 && expectedPosition <= 10 && relationshipAfter < 52) {
+    if (actualPosition >= 15 &&
+        expectedPosition <= 10 &&
+        relationshipAfter < thresholds.relegationRelationship) {
       return ManagerChangeReason.performance;
     }
     return null;
