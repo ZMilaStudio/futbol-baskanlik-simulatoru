@@ -10,6 +10,7 @@ class PresidentManagerPatienceState {
     required this.presidentId,
     required this.archetype,
     required this.managerPatience,
+    required this.financialDiscipline,
   });
 
   final String clubId;
@@ -17,6 +18,7 @@ class PresidentManagerPatienceState {
   final String presidentId;
   final PresidentManagementArchetype archetype;
   final int managerPatience;
+  final int financialDiscipline;
 
   String get signature =>
       '$clubId:s$seasonIndex:$presidentId:${archetype.name}:'
@@ -120,9 +122,13 @@ class PresidentManagerPatienceTimeline {
       presidentId: presidentId,
       archetype: profile.archetype,
       managerPatience: profile.managerPatience,
+      financialDiscipline: profile.financialDiscipline,
     );
   }
 
   int patienceFor(String clubId, int seasonIndex) =>
       resolve(clubId, seasonIndex).managerPatience;
+
+  int financialDisciplineFor(String clubId, int seasonIndex) =>
+      resolve(clubId, seasonIndex).financialDiscipline;
 }
