@@ -52,7 +52,7 @@ Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işler
 
 ## 3. Güncel teknik durum
 
-**M0–M26 PASS ve `main` üzerindedir. M27 davranış/test kabulü PASS; PR #28 final dokümantasyon/merge kapısındadır.**
+**M0–M27 PASS ve `main` üzerindedir.**
 
 M25 PR #26 squash merge:
 
@@ -90,15 +90,23 @@ M26 kapanış docs CI:
 
 `33932488669` — PASS, artifact `0`
 
-M27 açık PR:
+M27 PR #28 final docs HEAD:
 
-`#28 — M27: add advanced runtime save snapshot`
+`8956e558a9b1c509f46404cc80cc4084102e1285`
 
-M27 ilk tam kabul CI:
+M27 final PR CI:
 
-`33933116072` — PASS
+`33933550850` — PASS
 
-Bu koşuda:
+M27 PR #28 squash merge:
+
+`46e52be2b65910f200b4dee85647d1ae982b5d94`
+
+M27 merge sonrası `main` CI:
+
+`33933781498` — PASS
+
+Bu merge sonrası `main` koşusunda:
 
 - analyzer PASS
 - `102` normal/non-canonical test PASS
@@ -111,10 +119,6 @@ Bu koşuda:
 - timeout `5 dk` altında PASS
 
 Aktif milestone:
-
-> **M27 — Advanced World Runtime Snapshot I / final docs + merge kapısı**
-
-M27 temiz merge edilirse sıradaki milestone:
 
 > **M28 — Save History Compaction / Historical Memory Policy I**
 
@@ -682,7 +686,7 @@ Tüm doğrulamalarda artifact `0`.
 
 Ayrıntı: `M26_WORLD_SAVE_SNAPSHOT_I.md`
 
-### M27 — Advanced World Runtime Snapshot I — DAVRANIŞ PASS / PR #28 FINAL KAPISI
+### M27 — Advanced World Runtime Snapshot I — PASS
 
 M26 core world state'ini, gerçek hook/controller-owned sezonlar-arası state'e genişletir.
 
@@ -729,7 +733,7 @@ Canonical seed `20260903`:
 
 `20 sezon advanced runtime` ile `8 sezon → save → load → 12 sezon resume` birebir eşittir.
 
-İlk tam PR CI `33933116072`:
+M27 final PR CI `33933550850`:
 
 - analyzer PASS
 - `102` test PASS
@@ -759,6 +763,13 @@ M27 runner kabul çıktısı:
 - manager assignments `48`
 - manager seasons `8`
 - legacy fixture `v0 → v1`
+
+PR #28 squash merge:
+
+`46e52be2b65910f200b4dee85647d1ae982b5d94`
+
+Merge sonrası `main` CI `33933781498`: PASS.
+Merge sonrası doğrulamada tüm M0–M27 zinciri PASS ve artifact `0`.
 
 M27 bilinçli olarak şunları kapsamaz:
 
@@ -867,7 +878,7 @@ Kurallar:
 - Sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı.
 - Seçim kaybında kullanıcı kariyerinin game-over / başka kulübe geçiş UX'i henüz yok.
 
-## 12. M28 — sıradaki milestone
+## 12. M28 — aktif milestone
 
 ### Save History Compaction / Historical Memory Policy I
 
@@ -907,8 +918,8 @@ Save zinciri:
 
 - M25: temel `CareerEngine` checkpoint — PASS
 - M26: core `WorldCareerEngine` checkpoint — PASS
-- M27: contract/loan/installment/manager advanced runtime checkpoint — davranış PASS / merge kapısı
-- M28: save history compaction + historical memory policy
+- M27: contract/loan/installment/manager advanced runtime checkpoint — PASS
+- M28: save history compaction + historical memory policy — aktif
 - M29 adayı: president/reputation/election runtime snapshot
 - sonraki katman: fan/media/promise memory snapshot
 - daha sonra platform save slotları, autosave/yedek politikası ve gerekirse cloud save
