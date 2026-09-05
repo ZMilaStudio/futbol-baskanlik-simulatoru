@@ -10,7 +10,9 @@ import 'save_checksum.dart';
 import 'save_load_exception.dart';
 
 class PresidentRuntimeSaveCodec {
-  const PresidentRuntimeSaveCodec({this.runtimeCodec = const CompactAdvancedWorldSaveCodec()});
+  const PresidentRuntimeSaveCodec({
+    this.runtimeCodec = const CompactAdvancedWorldSaveCodec(),
+  });
 
   final CompactAdvancedWorldSaveCodec runtimeCodec;
 
@@ -26,8 +28,16 @@ class PresidentRuntimeSaveCodec {
       'seasonsIntoCurrentTerm': checkpoint.seasonsIntoCurrentTerm,
       'clubs': checkpoint.clubs.map(_encodeClub).toList(),
     };
-    final checksum = SaveChecksum.forPayload(saveVersion: currentSaveVersion, payload: payload);
-    return SaveChecksum.canonicalJson({'format': format, 'saveVersion': currentSaveVersion, 'payload': payload, 'checksum': checksum});
+    final checksum = SaveChecksum.forPayload(
+      saveVersion: currentSaveVersion,
+      payload: payload,
+    );
+    return SaveChecksum.canonicalJson({
+      'format': format,
+      'saveVersion': currentSaveVersion,
+      'payload': payload,
+      'checksum': checksum,
+    });
   }
 
   PresidentRuntimeCheckpoint decode(String encoded) {
@@ -35,22 +45,38 @@ class PresidentRuntimeSaveCodec {
     try {
       decoded = jsonDecode(encoded);
     } on FormatException catch (error) {
-      throw SaveLoadException(SaveLoadFailure.malformedJson, 'President runtime save is not valid JSON: ${error.message}');
+      throw SaveLoadException(
+        SaveLoadFailure.malformedJson,
+        'President runtime save is not valid JSON: ${error.message}',
+      );
     }
     final envelope = _map(decoded, 'envelope');
     if (_string(envelope['format'], 'format') != format) {
-      throw const SaveLoadException(SaveLoadFailure.invalidEnvelope, 'Unknown president runtime save format.');
+      throw const SaveLoadException(
+        SaveLoadFailure.invalidEnvelope,
+        'Unknown president runtime save format.',
+      );
     }
     final saveVersion = _int(envelope['saveVersion'], 'saveVersion');
     if (saveVersion < 0 || saveVersion > currentSaveVersion) {
-      throw SaveLoadException(SaveLoadFailure.unsupportedVersion, 'Unsupported president runtime save version $saveVersion.');
+      throw SaveLoadException(
+        SaveLoadFailure.unsupportedVersion,
+        'Unsupported president runtime save version $saveVersion.',
+      );
     }
     final payloadObject = envelope['payload'];
     final checksum = _string(envelope['checksum'], 'checksum');
-    final expected = SaveChecksum.forPayload(saveVersion: saveVersion, payload: payloadObject);
+    final expected = SaveChecksum.forPayload(
+      saveVersion: saveVersion,
+      payload: payloadObject,
+    );
     if (checksum != expected) {
-      throw SaveLoadException(SaveLoadFailure.checksumMismatch, 'President runtime save checksum mismatch: expected $expected, found $checksum.');
+      throw SaveLoadException(
+        SaveLoadFailure.checksumMismatch,
+        'President runtime save checksum mismatch: expected $expected, found $checksum.',
+      );
     }
+
     var version = saveVersion;
     var payload = _map(payloadObject, 'payload');
     while (version < currentSaveVersion) {
@@ -59,25 +85,42 @@ class PresidentRuntimeSaveCodec {
           payload = _migrateV0ToV1(payload);
           version = 1;
         default:
-          throw SaveLoadException(SaveLoadFailure.unsupportedVersion, 'No president runtime migration path from version $version.');
+          throw SaveLoadException(
+            SaveLoadFailure.unsupportedVersion,
+            'No president runtime migration path from version $version.',
+          );
       }
     }
+
     try {
       final clubList = payload['clubs'];
-      if (clubList is! List) throw const SaveLoadException(SaveLoadFailure.invalidPayload, 'clubs must be a list.');
+      if (clubList is! List) {
+        throw const SaveLoadException(
+          SaveLoadFailure.invalidPayload,
+          'clubs must be a list.',
+        );
+      }
       return PresidentRuntimeCheckpoint(
         runtime: runtimeCodec.decode(_string(payload['runtimeSave'], 'runtimeSave')),
         electionInterval: _int(payload['electionInterval'], 'electionInterval'),
-        completedElectionTerms: _int(payload['completedElectionTerms'], 'completedElectionTerms'),
-        seasonsIntoCurrentTerm: _int(payload['seasonsIntoCurrentTerm'], 'seasonsIntoCurrentTerm'),
+        completedElectionTerms:
+            _int(payload['completedElectionTerms'], 'completedElectionTerms'),
+        seasonsIntoCurrentTerm:
+            _int(payload['seasonsIntoCurrentTerm'], 'seasonsIntoCurrentTerm'),
         clubs: clubList.map((item) => _decodeClub(_map(item, 'club'))),
       );
     } on SaveLoadException {
       rethrow;
     } on ArgumentError catch (error) {
-      throw SaveLoadException(SaveLoadFailure.invalidPayload, error.message?.toString() ?? error.toString());
+      throw SaveLoadException(
+        SaveLoadFailure.invalidPayload,
+        error.message?.toString() ?? error.toString(),
+      );
     } catch (error) {
-      throw SaveLoadException(SaveLoadFailure.invalidPayload, 'Invalid president runtime save payload: $error');
+      throw SaveLoadException(
+        SaveLoadFailure.invalidPayload,
+        'Invalid president runtime save payload: $error',
+      );
     }
   }
 
@@ -103,25 +146,43 @@ class PresidentRuntimeSaveCodec {
 
   PresidentClubRuntimeState _decodeClub(Map<String, Object?> json) {
     final clubId = _string(json['clubId'], 'club.clubId');
-    final president = PresidentProfile(id: _string(json['presidentId'], 'club.presidentId'), name: _string(json['presidentName'], 'club.presidentName'));
+    final president = PresidentProfile(
+      id: _string(json['presidentId'], 'club.presidentId'),
+      name: _string(json['presidentName'], 'club.presidentName'),
+    );
     final archetypeName = _string(json['archetype'], 'club.archetype');
-    final archetype = PresidentManagementArchetype.values.where((item) => item.name == archetypeName).firstOrNull;
-    if (archetype == null) throw SaveLoadException(SaveLoadFailure.invalidPayload, 'Unknown president archetype $archetypeName.');
+    PresidentManagementArchetype? archetype;
+    for (final candidate in PresidentManagementArchetype.values) {
+      if (candidate.name == archetypeName) {
+        archetype = candidate;
+        break;
+      }
+    }
+    if (archetype == null) {
+      throw SaveLoadException(
+        SaveLoadFailure.invalidPayload,
+        'Unknown president archetype $archetypeName.',
+      );
+    }
     return PresidentClubRuntimeState(
       tenure: PresidentTenureState(
         clubId: clubId,
         president: president,
         tenureNumber: _int(json['tenureNumber'], 'club.tenureNumber'),
-        startedSeasonIndex: _int(json['startedSeasonIndex'], 'club.startedSeasonIndex'),
+        startedSeasonIndex:
+            _int(json['startedSeasonIndex'], 'club.startedSeasonIndex'),
         reelectionsWon: _int(json['reelectionsWon'], 'club.reelectionsWon'),
       ),
       managementProfile: PresidentManagementProfile(
         presidentId: president.id,
         archetype: archetype,
-        financialDiscipline: _int(json['financialDiscipline'], 'club.financialDiscipline'),
+        financialDiscipline:
+            _int(json['financialDiscipline'], 'club.financialDiscipline'),
         riskAppetite: _int(json['riskAppetite'], 'club.riskAppetite'),
-        transferAmbition: _int(json['transferAmbition'], 'club.transferAmbition'),
-        youthOrientation: _int(json['youthOrientation'], 'club.youthOrientation'),
+        transferAmbition:
+            _int(json['transferAmbition'], 'club.transferAmbition'),
+        youthOrientation:
+            _int(json['youthOrientation'], 'club.youthOrientation'),
         managerPatience: _int(json['managerPatience'], 'club.managerPatience'),
       ),
       fanReputation: FanState(
@@ -131,7 +192,10 @@ class PresidentRuntimeSaveCodec {
         transferTrust: _int(json['fanTransfer'], 'club.fanTransfer'),
         identityTrust: _int(json['fanIdentity'], 'club.fanIdentity'),
       ),
-      mediaReputation: MediaState(clubId: clubId, credibility: _int(json['mediaCredibility'], 'club.mediaCredibility')),
+      mediaReputation: MediaState(
+        clubId: clubId,
+        credibility: _int(json['mediaCredibility'], 'club.mediaCredibility'),
+      ),
     );
   }
 
@@ -144,23 +208,45 @@ class PresidentRuntimeSaveCodec {
       };
 
   static Map<String, Object?> _map(Object? value, String field) {
-    if (value is! Map) throw SaveLoadException(field == 'envelope' ? SaveLoadFailure.invalidEnvelope : SaveLoadFailure.invalidPayload, '$field must be an object.');
+    if (value is! Map) {
+      throw SaveLoadException(
+        field == 'envelope'
+            ? SaveLoadFailure.invalidEnvelope
+            : SaveLoadFailure.invalidPayload,
+        '$field must be an object.',
+      );
+    }
     final result = <String, Object?>{};
     for (final entry in value.entries) {
-      if (entry.key is! String) throw SaveLoadException(SaveLoadFailure.invalidPayload, '$field must use string keys.');
+      if (entry.key is! String) {
+        throw SaveLoadException(
+          SaveLoadFailure.invalidPayload,
+          '$field must use string keys.',
+        );
+      }
       result[entry.key as String] = entry.value;
     }
     return result;
   }
 
   static String _string(Object? value, String field) {
-    if (value is! String || value.isEmpty) throw SaveLoadException(SaveLoadFailure.invalidPayload, '$field must be a non-empty string.');
+    if (value is! String || value.isEmpty) {
+      throw SaveLoadException(
+        SaveLoadFailure.invalidPayload,
+        '$field must be a non-empty string.',
+      );
+    }
     return value;
   }
 
   static int _int(Object? value, String field) {
     if (value is int) return value;
-    if (value is num && value.isFinite && value == value.roundToDouble()) return value.toInt();
-    throw SaveLoadException(SaveLoadFailure.invalidPayload, '$field must be an integer.');
+    if (value is num && value.isFinite && value == value.roundToDouble()) {
+      return value.toInt();
+    }
+    throw SaveLoadException(
+      SaveLoadFailure.invalidPayload,
+      '$field must be an integer.',
+    );
   }
 }
