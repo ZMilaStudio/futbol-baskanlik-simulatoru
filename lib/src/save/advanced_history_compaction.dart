@@ -1,6 +1,7 @@
 import '../contract/contract_event.dart';
 import '../manager/manager_career_season.dart';
 import '../transfer/loan_agreement.dart';
+import '../world/world_career_report.dart';
 import 'advanced_runtime_checkpoint.dart';
 
 class AdvancedHistorySummary {
@@ -202,7 +203,7 @@ class CompactAdvancedRuntimeSimulationResult {
     required this.checkpoint,
   });
 
-  final dynamic report;
+  final WorldCareerReport report;
   final CompactAdvancedRuntimeCheckpoint checkpoint;
 }
 
@@ -246,7 +247,8 @@ class AdvancedRuntimeHistoryCompactor {
   ) {
     final initialSeasonIndex = source.world.config.seasonIndex;
     final start = (source.nextSeasonIndex - recentSeasonCount)
-        .clamp(initialSeasonIndex, source.nextSeasonIndex);
+        .clamp(initialSeasonIndex, source.nextSeasonIndex)
+        .toInt();
     final activeLoanSignatures =
         source.transfer.activeLoans.map((loan) => loan.signature).toSet();
 
