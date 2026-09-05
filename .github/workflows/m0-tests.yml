@@ -16,7 +16,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -103,3 +103,6 @@ jobs:
 
       - name: Run M27 advanced runtime save continuation
         run: dart run tool/run_m27_advanced_runtime_save.dart 20260903
+
+      - name: Run M28 save history compaction
+        run: dart run tool/run_m28_save_history_compaction.dart 20260903
