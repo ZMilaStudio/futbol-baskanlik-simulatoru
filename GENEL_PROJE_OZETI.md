@@ -52,7 +52,7 @@ Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işler
 
 ## 3. Güncel teknik durum
 
-**M0–M25 PASS ve `main` üzerindedir. M26 davranış/test kriterleri PASS; PR #27 final dokümantasyon kalite kapısındadır.**
+**M0–M26 PASS ve `main` üzerindedir.**
 
 M25 PR #26 squash merge:
 
@@ -66,11 +66,23 @@ M25 kapanış dokümantasyon `main` CI:
 
 `33929813791` — PASS
 
-M26 doğrulanmış PR CI:
+M26 PR #27 final HEAD:
 
-`33930202369` — PASS
+`311dc8be015aba571c1ef06995e953d750f46fe4`
 
-Bu M26 koşusunda:
+M26 final PR CI:
+
+`33930624622` — PASS
+
+M26 PR #27 squash merge:
+
+`c721588f998f5d29495c8074d956e48e306a1dc8`
+
+M26 merge sonrası `main` CI:
+
+`33930915685` — PASS
+
+Bu merge sonrası `main` koşusunda:
 
 - analyzer PASS
 - `94` normal/non-canonical test PASS
@@ -83,19 +95,9 @@ Bu M26 koşusunda:
 
 Aktif milestone:
 
-> **M26 — World Save Snapshot I / final docs + merge kapısı**
-
-Aktif branch:
-
-`m26-world-save-snapshot`
-
-Açık PR:
-
-`#27 — M26: add resumable core world save snapshot`
-
-M26 merge temiz kapandığında sıradaki milestone:
-
 > **M27 — Advanced World Runtime Snapshot I**
+
+M27 henüz geliştirme branch'i açılmadan kapsam/state sahipliği analizi aşamasındadır.
 
 ## 4. Teknik mimari
 
@@ -158,6 +160,7 @@ Canonical kariyer seed'i:
 22. Save snapshot yalnız sahibi olduğu runtime state'i serileştirir; farklı controller/hook katmanlarının state'i tek milestone'a zorla yığılmaz.
 23. Eski public simülasyon API'sinin davranışı save/checkpoint eklenirken sessizce değiştirilmez.
 24. Segment bazlı world save gerçek next-season opening state üretmelidir; final offseason checkpoint yolunda eksik bırakılamaz.
+25. Advanced runtime snapshot kapsamı controller/hook state sahipliğine göre katmanlandırılır; tek milestone'a tüm kariyer state'i zorla yığılmaz.
 
 ## 6. Milestone geçmişi
 
@@ -612,7 +615,7 @@ Ayrıntı:
 
 `M25_SAVE_LOAD_KAYIT_VERSIYONLAMA_I.md`
 
-### M26 — World Save Snapshot I — DAVRANIŞ PASS / PR #27 FINAL KAPISI
+### M26 — World Save Snapshot I — PASS
 
 M25'in save/version/migration temelini gerçek core world state'e genişletir.
 
@@ -660,7 +663,7 @@ M26 runner kabul çıktısı:
 - next checkpoint match `true`
 - legacy fixture `v0 → v1`
 
-Doğrulanmış PR CI `33930202369`:
+M26 final PR CI `33930624622`:
 
 - analyzer PASS
 - `94` test PASS
@@ -671,7 +674,15 @@ Doğrulanmış PR CI `33930202369`:
 - artifact `0`
 - timeout `5 dk` içinde PASS
 
-İlk M26 PR CI yalnız public barrel'da mevcut `WorldCareerValidator` export'unun yanlışlıkla düşürülmesi nedeniyle analyzer'da durdu. Export geri kondu; simülasyon davranışı değiştirilmedi. Sonraki CI tam PASS oldu.
+PR #27 squash merge:
+
+`c721588f998f5d29495c8074d956e48e306a1dc8`
+
+Merge sonrası `main` CI `33930915685`: PASS.
+
+Merge sonrası doğrulamada da tüm M0–M26 zinciri PASS ve artifact `0`.
+
+İlk M26 PR CI yalnız public barrel'da mevcut `WorldCareerValidator` export'unun yanlışlıkla düşürülmesi nedeniyle analyzer'da durdu. Export geri kondu; simülasyon davranışı değiştirilmedi. Sonraki tüm CI koşuları tam PASS oldu.
 
 M26 bilinçli olarak şu controller/hook-owned state'i içermez:
 
@@ -772,7 +783,7 @@ Kurallar:
 - Sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı.
 - Seçim kaybında kullanıcı kariyerinin game-over / başka kulübe geçiş UX'i henüz yok.
 
-## 12. M27 — sıradaki milestone
+## 12. M27 — aktif milestone
 
 ### Advanced World Runtime Snapshot I
 
@@ -793,7 +804,7 @@ M27 kabul kuralı, M26 ile aynıdır:
 
 > **advanced world save → load → devam, kesintisiz aynı-seed advanced world ile birebir deterministic sonuç üretmelidir.**
 
-M27 ilk aşamada yine platform depolaması değildir:
+M27 ilk aşamada platform depolaması değildir:
 
 - Android dosya seçici yok
 - cloud save yok
@@ -801,12 +812,14 @@ M27 ilk aşamada yine platform depolaması değildir:
 - save slot UI yok
 - encryption/anti-cheat yok
 
+M27'de geliştirmeye başlamadan önce kontrat, loan/installment ve manager state'in hangi controller/hook sınıflarında yaşadığı koddan doğrulanacak; snapshot sınırı buna göre belirlenecektir.
+
 ## 13. Uzun vadeli teknik yön
 
 Save zinciri:
 
 - M25: temel `CareerEngine` checkpoint — PASS
-- M26: core `WorldCareerEngine` checkpoint — davranış PASS / merge kapısı
+- M26: core `WorldCareerEngine` checkpoint — PASS
 - M27+: advanced hook/controller runtime snapshot
 - daha sonra platform save slotları, autosave/yedek politikası ve gerekirse cloud save
 
