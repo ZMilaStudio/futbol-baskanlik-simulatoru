@@ -7,6 +7,7 @@ import '../manager/manager_pool_generator.dart';
 import '../transfer/advanced_transfer_controller.dart';
 import '../transfer/loan_market_engine.dart';
 import '../world/world_career_engine.dart';
+import '../world/world_checkpoint.dart';
 import '../world/world_league.dart';
 import 'advanced_runtime_checkpoint.dart';
 
@@ -120,7 +121,7 @@ class AdvancedRuntimeCareerEngine {
   }
 
   AdvancedRuntimeCheckpoint _checkpoint({
-    required dynamic world,
+    required WorldCheckpoint world,
     required AdvancedTransferController transferController,
     required ManagerCareerController managerController,
   }) =>
