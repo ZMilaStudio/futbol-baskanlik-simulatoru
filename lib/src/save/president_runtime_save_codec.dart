@@ -22,7 +22,10 @@ class PresidentRuntimeSaveCodec {
   String encode(PresidentRuntimeCheckpoint checkpoint) {
     checkpoint.validate();
     final payload = <String, Object?>{
-      'runtimeSave': runtimeCodec.encode(checkpoint.runtime),
+      // Keep the nested M28 save as a JSON object rather than an encoded JSON
+      // string. String nesting escapes every quote and materially inflates the
+      // payload without adding any state.
+      'runtimeSave': jsonDecode(runtimeCodec.encode(checkpoint.runtime)),
       'electionInterval': checkpoint.electionInterval,
       'completedElectionTerms': checkpoint.completedElectionTerms,
       'seasonsIntoCurrentTerm': checkpoint.seasonsIntoCurrentTerm,
@@ -101,7 +104,7 @@ class PresidentRuntimeSaveCodec {
         );
       }
       return PresidentRuntimeCheckpoint(
-        runtime: runtimeCodec.decode(_string(payload['runtimeSave'], 'runtimeSave')),
+        runtime: runtimeCodec.decode(_nestedRuntimeJson(payload['runtimeSave'])),
         electionInterval: _int(payload['electionInterval'], 'electionInterval'),
         completedElectionTerms:
             _int(payload['completedElectionTerms'], 'completedElectionTerms'),
@@ -206,6 +209,21 @@ class PresidentRuntimeSaveCodec {
         'seasonsIntoCurrentTerm': legacy['termOffset'],
         'clubs': legacy['presidents'],
       };
+
+  static String _nestedRuntimeJson(Object? value) {
+    if (value is String && value.isNotEmpty) {
+      // Accept the original draft representation so synthetic migration and
+      // any pre-release development save remain loadable.
+      return value;
+    }
+    if (value is Map) {
+      return SaveChecksum.canonicalJson(_map(value, 'runtimeSave'));
+    }
+    throw const SaveLoadException(
+      SaveLoadFailure.invalidPayload,
+      'runtimeSave must be a JSON object or encoded JSON string.',
+    );
+  }
 
   static Map<String, Object?> _map(Object? value, String field) {
     if (value is! Map) {
