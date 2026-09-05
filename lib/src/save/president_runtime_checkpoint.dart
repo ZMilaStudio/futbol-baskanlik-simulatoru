@@ -22,14 +22,18 @@ class PresidentClubRuntimeState {
 
   void validate() {
     if (managementProfile.presidentId != tenure.president.id) {
-      throw ArgumentError('President management profile does not match tenure president for $clubId.');
+      throw ArgumentError(
+        'President management profile does not match tenure president for $clubId.',
+      );
     }
     if (fanReputation.clubId != clubId || mediaReputation.clubId != clubId) {
       throw ArgumentError('President reputation club mismatch for $clubId.');
     }
   }
 
-  String get signature => '${tenure.signature}|${managementProfile.signature}|fan=${fanReputation.signature}|media=${mediaReputation.signature}';
+  String get signature =>
+      '${tenure.signature}|${managementProfile.signature}|'
+      'fan=${fanReputation.signature}|media=${mediaReputation.signature}';
 }
 
 class PresidentRuntimeCheckpoint {
@@ -46,33 +50,44 @@ class PresidentRuntimeCheckpoint {
   factory PresidentRuntimeCheckpoint.capture({
     required CompactAdvancedRuntimeCheckpoint runtime,
     required PresidentReputationCareerReport report,
-    PresidentManagementProfileGenerator profileGenerator = const PresidentManagementProfileGenerator(),
+    PresidentManagementProfileGenerator profileGenerator =
+        const PresidentManagementProfileGenerator(),
   }) {
     if (report.seasonCount != runtime.completedSeasons) {
-      throw ArgumentError('President report season count must match compact runtime completed seasons.');
+      throw ArgumentError(
+        'President report season count must match compact runtime completed seasons.',
+      );
     }
     if (report.electionInterval <= 0) {
       throw ArgumentError.value(report.electionInterval, 'electionInterval');
     }
-    final fanByClub = {for (final state in report.finalFanStates) state.clubId: state};
-    final mediaByClub = {for (final state in report.finalMediaStates) state.clubId: state};
+    final fanByClub = {
+      for (final state in report.finalFanStates) state.clubId: state,
+    };
+    final mediaByClub = {
+      for (final state in report.finalMediaStates) state.clubId: state,
+    };
     final states = <PresidentClubRuntimeState>[];
     for (final tenure in report.finalTenureStates) {
       final fan = fanByClub[tenure.clubId];
       final media = mediaByClub[tenure.clubId];
       if (fan == null || media == null) {
-        throw ArgumentError('Missing final president reputation state for ${tenure.clubId}.');
+        throw ArgumentError(
+          'Missing final president reputation state for ${tenure.clubId}.',
+        );
       }
-      states.add(PresidentClubRuntimeState(
-        tenure: tenure,
-        managementProfile: profileGenerator.generate(
-          president: tenure.president,
-          careerSeed: report.careerSeed,
-          simulationVersion: report.simulationVersion,
+      states.add(
+        PresidentClubRuntimeState(
+          tenure: tenure,
+          managementProfile: profileGenerator.generate(
+            president: tenure.president,
+            careerSeed: report.careerSeed,
+            simulationVersion: report.simulationVersion,
+          ),
+          fanReputation: fan,
+          mediaReputation: media,
         ),
-        fanReputation: fan,
-        mediaReputation: media,
-      ));
+      );
     }
     states.sort((a, b) => a.clubId.compareTo(b.clubId));
     return PresidentRuntimeCheckpoint(
@@ -95,23 +110,59 @@ class PresidentRuntimeCheckpoint {
 
   void validate() {
     runtime.validate();
-    if (electionInterval <= 0) throw ArgumentError.value(electionInterval, 'electionInterval');
-    if (completedElectionTerms < 0) throw ArgumentError.value(completedElectionTerms, 'completedElectionTerms');
-    if (seasonsIntoCurrentTerm < 0 || seasonsIntoCurrentTerm >= electionInterval) {
-      throw ArgumentError.value(seasonsIntoCurrentTerm, 'seasonsIntoCurrentTerm');
+    if (electionInterval <= 0) {
+      throw ArgumentError.value(electionInterval, 'electionInterval');
     }
-    if (completedElectionTerms * electionInterval + seasonsIntoCurrentTerm != completedSeasons) {
-      throw ArgumentError('President election cursor does not match completed seasons.');
+    if (completedElectionTerms < 0) {
+      throw ArgumentError.value(
+        completedElectionTerms,
+        'completedElectionTerms',
+      );
     }
-    if (clubs.length != runtime.runtime.world.clubs.length) {
-      throw ArgumentError('President runtime must contain exactly one state per world club.');
+    if (seasonsIntoCurrentTerm < 0 ||
+        seasonsIntoCurrentTerm >= electionInterval) {
+      throw ArgumentError.value(
+        seasonsIntoCurrentTerm,
+        'seasonsIntoCurrentTerm',
+      );
+    }
+    if (completedElectionTerms * electionInterval + seasonsIntoCurrentTerm !=
+        completedSeasons) {
+      throw ArgumentError(
+        'President election cursor does not match completed seasons.',
+      );
+    }
+    final worldClubIds = runtime.runtime.world.baseClubs
+        .map((club) => club.id)
+        .toSet();
+    if (clubs.length != worldClubIds.length) {
+      throw ArgumentError(
+        'President runtime must contain exactly one state per world club.',
+      );
     }
     final ids = <String>{};
     for (final state in clubs) {
       state.validate();
-      if (!ids.add(state.clubId)) throw ArgumentError('Duplicate president runtime club ${state.clubId}.');
+      if (!worldClubIds.contains(state.clubId)) {
+        throw ArgumentError(
+          'President runtime references unknown club ${state.clubId}.',
+        );
+      }
+      if (!ids.add(state.clubId)) {
+        throw ArgumentError(
+          'Duplicate president runtime club ${state.clubId}.',
+        );
+      }
+    }
+    if (ids.length != worldClubIds.length) {
+      throw ArgumentError(
+        'President runtime must contain every world club exactly once.',
+      );
     }
   }
 
-  String get signature => 'next=$nextSeasonIndex:terms=$completedElectionTerms:termOffset=$seasonsIntoCurrentTerm:${clubs.map((item) => item.signature).join('|')}';
+  String get signature =>
+      'next=$nextSeasonIndex:terms=$completedElectionTerms:'
+      'termOffset=$seasonsIntoCurrentTerm:'
+      '${clubs.map((item) => item.signature).join('|')}';
 }
