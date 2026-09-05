@@ -32,7 +32,7 @@ void main() {
     expect(decoded.completedSeasons, 5);
     expect(decoded.nextSeasonIndex, 9);
     expect(decoded.recentHistoryStartSeasonIndex, 7);
-    expect(decoded.runtime.manager.seasons.length, 2);
+    expect(decoded.runtime.manager.seasons.length, 5);
     expect(decoded.history.contractEventCount,
         full.checkpoint.transfer.contractEvents.length);
     expect(decoded.history.loanCount, full.checkpoint.transfer.loanHistory.length);
@@ -76,7 +76,7 @@ void main() {
         compactUninterrupted.history.signature);
   });
 
-  test('M28 keeps current state and bounds raw history to recent seasons', () {
+  test('M28 bounds contract and loan detail while preserving M27 manager history', () {
     final world = const FictionalWorldFactory().build();
     const config = SimulationConfig(careerSeed: 28002);
     final full = runtimeEngine.simulateWithCheckpoint(
@@ -88,7 +88,10 @@ void main() {
     final compact = compactor.compactFull(full.checkpoint);
 
     expect(compact.recentHistoryStartSeasonIndex, 6);
-    expect(compact.runtime.manager.seasons.map((item) => item.seasonIndex), [6, 7]);
+    expect(
+      compact.runtime.manager.seasons.map((item) => item.seasonIndex),
+      [0, 1, 2, 3, 4, 5, 6, 7],
+    );
     expect(
       compact.runtime.transfer.contractEvents
           .every((event) => event.seasonIndex >= 6),
@@ -118,6 +121,30 @@ void main() {
         full.checkpoint.transfer.contractEvents.length);
     expect(compact.history.loanCount, full.checkpoint.transfer.loanHistory.length);
     expect(compact.history.managerSeasonCount, 8);
+  });
+
+  test('M28 preserves strict M27 full manager-history checkpoint invariant', () {
+    final world = const FictionalWorldFactory().build();
+    const config = SimulationConfig(careerSeed: 28006);
+    final full = runtimeEngine.simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      seasonCount: 4,
+    );
+
+    expect(
+      () => AdvancedRuntimeCheckpoint(
+        world: full.checkpoint.world,
+        transfer: full.checkpoint.transfer,
+        manager: ManagerRuntimeState(
+          managers: full.checkpoint.manager.managers,
+          assignments: full.checkpoint.manager.assignments,
+          seasons: full.checkpoint.manager.seasons.skip(1),
+        ),
+      ),
+      throwsArgumentError,
+    );
   });
 
   test('M28 compact save materially reduces M27 history payload size', () {
