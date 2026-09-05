@@ -189,11 +189,6 @@ class CompactAdvancedRuntimeCheckpoint {
         throw ArgumentError('Old inactive loan escaped the history window.');
       }
     }
-    for (final season in runtime.manager.seasons) {
-      if (season.seasonIndex < recentHistoryStartSeasonIndex) {
-        throw ArgumentError('Manager detail escaped the recent history window.');
-      }
-    }
   }
 }
 
@@ -269,8 +264,7 @@ class AdvancedRuntimeHistoryCompactor {
       manager: ManagerRuntimeState(
         managers: source.manager.managers,
         assignments: source.manager.assignments,
-        seasons: source.manager.seasons
-            .where((season) => season.seasonIndex >= start),
+        seasons: source.manager.seasons,
       ),
     );
 
