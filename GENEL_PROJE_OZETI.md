@@ -52,7 +52,7 @@ Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işler
 
 ## 3. Güncel teknik durum
 
-**M0–M27 PASS ve `main` üzerindedir.**
+**M0–M27 PASS ve `main` üzerindedir. M28 implementasyonu PR #29 üzerinde PASS durumundadır.**
 
 M25 PR #26 squash merge:
 
@@ -118,9 +118,39 @@ Bu merge sonrası `main` koşusunda:
 - artifact `0`
 - timeout `5 dk` altında PASS
 
-Aktif milestone:
+M28 PR #29 final doğrulama HEAD:
 
-> **M28 — Save History Compaction / Historical Memory Policy I**
+`ac3f32c79e2b4053743ecd98e41f18b1b51dc71c`
+
+M28 final PR CI:
+
+`33996728196`, job `101388457531` — PASS
+
+Bu PR koşusunda:
+
+- analyzer PASS
+- `111` normal/non-canonical test PASS
+- M0–M18 runner zinciri PASS
+- combined M19–M24 canonical profile feedback PASS
+- M25 save/load continuation PASS
+- M26 world save continuation PASS
+- M27 advanced runtime save continuation PASS
+- M28 save history compaction PASS
+- artifact `0`
+- CI timeout, M28 zincirinin gerçek süresine uygun olarak `7 dk` yapıldı
+
+M28 canonical ölçümleri:
+
+- M27 season-8 full save: `1.013.092 bytes`
+- M28 season-8 compact save: `736.274 bytes`
+- azalma: `%27,3`
+- M28 season-20 compact save: `915.648 bytes`
+- save/load sonrası 8+12 sezon replay: birebir PASS
+- final compact checkpoint: kesintisiz 20 sezonla birebir PASS
+
+Aktif durum:
+
+> **M28 implementasyonu tamamlandı ve PR #29 yeşil; merge kullanıcı onayı bekler.**
 
 ## 4. Teknik mimari
 
@@ -136,7 +166,9 @@ Aktif milestone:
 - M25 `CareerCheckpoint` tabanlı temel sezon-sınırı save/resume
 - M26 `WorldCheckpoint` tabanlı core world save/resume
 - M27 `AdvancedRuntimeCheckpoint` tabanlı hook/controller runtime save/resume
-- ayrı `CareerSaveCodec`, `WorldSaveCodec`, `AdvancedWorldSaveCodec`
+- M28 `CompactAdvancedRuntimeCheckpoint` + `AdvancedHistorySummary` tabanlı history compaction
+- son iki sezonluk contract/loan ayrıntı penceresi; all-time contract/loan/manager özet sayaçları
+- ayrı `CareerSaveCodec`, `WorldSaveCodec`, `AdvancedWorldSaveCodec`, `CompactAdvancedWorldSaveCodec`
 - `saveVersion=1` + canonical JSON + corruption checksum
 - explicit save failure kodları + migration fixture altyapısı
 - restore constructor'ları ile controller state tekrar initial üretim yapmadan devam eder
@@ -869,43 +901,42 @@ Kurallar:
 - M26 core `WorldCareerEngine` state'ini kapsar.
 - M27 contract/loan/installment/manager runtime state'ini kapsar.
 - President/reputation/election ve fan/media/promise runtime state henüz save kapsamına alınmadı.
-- M27 8-sezon canonical save `1.013.092 bytes`; M26 aynı checkpoint `187.664 bytes`. Yaklaşık `5,4×` büyüme vardır.
-- Ana büyüme kaynakları append-only `3496` contract event, `186` loan history ve manager season history kayıtlarıdır.
-- Bu history'nin tamamı deterministic continuation için gerekli görünmemektedir; ancak ürün tarihçesi için kayıp yaşatmadan ayrı archive/summary policy gerekir.
+- M27 8-sezon canonical save `1.013.092 bytes`; M26 aynı checkpoint `187.664 bytes`. Yaklaşık `5,4×` büyüme M28'in gerekçesidir.
+- M28 season-8 compact save `736.274 bytes` ile full M27'ye göre `%27,3` küçüldü; contract/loan ayrıntısı son iki sezonluk pencereye alındı.
+- Manager season history, M27 strict checkpoint invariant'i nedeniyle şimdilik tam tutulur; 20-sezon compact save `915.648 bytes` olduğundan ileride manager history'nin continuation-critical bölümünün ayrıştırılması ayrıca değerlendirilebilir.
 - Gerçek cihaz dosya sistemi ve cloud save daha sonra.
 - Otomatik save/yedek save slot politikası henüz platform katmanına bağlanmadı.
 - Altyapı tesis yatırımının youth intake kalitesine etkisi henüz yok.
 - Sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı.
 - Seçim kaybında kullanıcı kariyerinin game-over / başka kulübe geçiş UX'i henüz yok.
 
-## 12. M28 — aktif milestone
+## 12. M28 — IMPLEMENTATION PASS / PR #29 YEŞİL
 
 ### Save History Compaction / Historical Memory Policy I
 
-M27 correctness PASS olduktan sonra yeni runtime state eklemeden önce save boyutu mimari olarak kontrol altına alınacaktır.
+M28, continuation için gerekli current state ile raporlama/tarihçe amaçlı append-only state'i ayırdı.
 
-Amaç:
+Tamamlananlar:
 
-> **Simulation continuation için gerçekten gerekli current state ile kullanıcıya rapor/tarihçe göstermek için tutulan historical state'i ayırmak.**
+- `AdvancedHistorySummary` all-time contract event, loan fee/count ve manager change/count toplamlarını korur
+- contract event ve loan history ayrıntısı varsayılan son iki sezon penceresine sıkıştırılır
+- aktif contract, aktif loan, installment ve manager runtime state kaybolmaz
+- manager season history M27 strict invariant'i gereği tam tutulur
+- `CompactAdvancedWorldSaveCodec` canonical JSON, checksum, explicit failure code ve v0→v1 migration fixture sağlar
+- 8 sezon save/load + 12 sezon resume, kesintisiz 20 sezonla birebir deterministic sonuç verir
+- season-8 compact save, full M27 save'den `%27,3` küçüktür
+- analyzer, 111 test ve M0–M28 runner zinciri PASS
 
-İlk çalışma alanları:
+Kök hata ve düzeltme:
 
-1. contract event history
-2. loan history
-3. manager season/change history
+- İlk PR CI run `33962416197`, job `101296509828`, resume sınırındaki opening transfer geçmişini ikinci kez all-time özete eklediği için başarısızdı
+- contract event farkı `+380`, loan farkı `+23` idi
+- `f2a3cc4bf8b6ca0d516ca3ab7c94e9817c6db5fb` commit'i transfer/loan delta aralığını resume sınırında exclusive yaptı
+- manager completed-season history aynı sınırda inclusive bırakıldı
+- doğrulama run'ı tüm kontrolleri geçip tam 5 dakikalık job limitinde iptal olunca timeout `ac3f32c79e2b4053743ecd98e41f18b1b51dc71c` ile 7 dakikaya çıkarıldı
+- final run `33996728196` tamamen PASS oldu
 
-M28 kabul kriterleri:
-
-- continuation-critical state açık olarak sınıflandırılacak
-- historical state için compact/archive policy belirlenecek
-- 20 sezon canonical save boyutu ölçülecek ve guard eklenecek
-- compact save → load → resume, M27 full-history continuation ile aynı deterministic future world'ü üretmeli
-- aktif contract/loan/installment/manager state kaybolmamalı
-- kullanıcıya gerekli tarihçe için lossless veya kontrollü summary/archive sözleşmesi tanımlanmalı
-- save version/migration güvenliği korunmalı
-- M0–M27 baseline değişmemeli
-
-M28 de platform depolaması değildir:
+M28 platform depolaması değildir:
 
 - Android file picker yok
 - cloud save yok
@@ -919,7 +950,7 @@ Save zinciri:
 - M25: temel `CareerEngine` checkpoint — PASS
 - M26: core `WorldCareerEngine` checkpoint — PASS
 - M27: contract/loan/installment/manager advanced runtime checkpoint — PASS
-- M28: save history compaction + historical memory policy — aktif
+- M28: save history compaction + historical memory policy — PR #29 PASS, merge bekliyor
 - M29 adayı: president/reputation/election runtime snapshot
 - sonraki katman: fan/media/promise memory snapshot
 - daha sonra platform save slotları, autosave/yedek politikası ve gerekirse cloud save
