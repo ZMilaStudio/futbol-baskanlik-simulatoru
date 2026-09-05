@@ -162,15 +162,14 @@ class ManagerRuntimeState {
       throw ArgumentError('Manager state must assign every club exactly once.');
     }
 
-    if (seasons.length > world.completedSeasons) {
+    if (seasons.length != world.completedSeasons) {
       throw ArgumentError(
-        'Manager history cannot exceed completed season count.',
+        'Manager history must contain one entry per completed season.',
       );
     }
-    final firstRetainedSeasonIndex = world.nextSeasonIndex - seasons.length;
     for (var index = 0; index < seasons.length; index++) {
       final season = seasons[index];
-      final expectedIndex = firstRetainedSeasonIndex + index;
+      final expectedIndex = world.config.seasonIndex + index;
       if (season.seasonIndex != expectedIndex || season.clubs.length != 48) {
         throw ArgumentError('Invalid manager season ${season.seasonIndex}.');
       }
