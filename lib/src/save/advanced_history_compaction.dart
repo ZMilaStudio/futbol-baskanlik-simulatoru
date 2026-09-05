@@ -226,10 +226,16 @@ class AdvancedRuntimeHistoryCompactor {
     }
     final history = previousHistory.append(
       completedSeasons: source.completedSeasons,
+      // A clean season-boundary checkpoint already contains the opening
+      // transfer history tagged with [resumeStartSeasonIndex]. Only later
+      // transfer boundaries are new after resume; including the boundary again
+      // would double-count those events and loans in the all-time summary.
       contractEvents: source.transfer.contractEvents
-          .where((event) => event.seasonIndex >= resumeStartSeasonIndex),
+          .where((event) => event.seasonIndex > resumeStartSeasonIndex),
       loanHistory: source.transfer.loanHistory
-          .where((loan) => loan.startSeasonIndex >= resumeStartSeasonIndex),
+          .where((loan) => loan.startSeasonIndex > resumeStartSeasonIndex),
+      // Manager history is recorded for completed seasons, so the resumed
+      // season itself is new and remains inclusive here.
       managerSeasons: source.manager.seasons
           .where((season) => season.seasonIndex >= resumeStartSeasonIndex),
     );
