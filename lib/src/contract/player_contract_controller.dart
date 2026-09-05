@@ -21,6 +21,24 @@ class PlayerContractController implements WorldRosterHooks {
     this.wageModel = const WageModel(),
   });
 
+  PlayerContractController.restore({
+    required this.careerSeed,
+    required this.simulationVersion,
+    required this.initialSeasonIndex,
+    required Iterable<PlayerContract> activeContracts,
+    required Iterable<ContractEvent> events,
+    this.wageModel = const WageModel(),
+  }) {
+    for (final contract in activeContracts) {
+      if (_contracts.containsKey(contract.playerId)) {
+        throw ArgumentError('Duplicate restored contract ${contract.playerId}.');
+      }
+      _contracts[contract.playerId] = contract;
+    }
+    _events.addAll(events);
+    _initialized = true;
+  }
+
   final int careerSeed;
   final int simulationVersion;
   final int initialSeasonIndex;

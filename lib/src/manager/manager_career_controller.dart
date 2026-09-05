@@ -28,6 +28,45 @@ class ManagerCareerController implements WorldCareerHooks {
     this.dismissalPolicy = const ManagerDismissalPolicy(),
   });
 
+  ManagerCareerController.restore({
+    required this.careerSeed,
+    required this.simulationVersion,
+    required this.initialSeasonIndex,
+    required Iterable<Manager> managers,
+    required Iterable<ManagerAssignment> assignments,
+    required Iterable<ManagerCareerSeason> seasons,
+    this.poolGenerator = const ManagerPoolGenerator(),
+    this.fitModel = const ManagerFitModel(),
+    this.impactModel = const ManagerImpactModel(),
+    this.patienceProvider,
+    this.dismissalPolicy = const ManagerDismissalPolicy(),
+  }) {
+    _managers = List.unmodifiable(managers);
+    final managerById = <String, Manager>{};
+    for (final manager in _managers) {
+      if (managerById.containsKey(manager.id)) {
+        throw ArgumentError('Duplicate restored manager ${manager.id}.');
+      }
+      managerById[manager.id] = manager;
+    }
+    _managerById = Map.unmodifiable(managerById);
+
+    final assignmentByClub = <String, ManagerAssignment>{};
+    for (final assignment in assignments) {
+      if (!_managerById.containsKey(assignment.managerId) ||
+          assignmentByClub.containsKey(assignment.clubId)) {
+        throw ArgumentError(
+          'Invalid restored manager assignment ${assignment.clubId}.',
+        );
+      }
+      assignmentByClub[assignment.clubId] = assignment;
+    }
+    _assignments = Map.unmodifiable(assignmentByClub);
+    _seasons.addAll(seasons);
+    _pending = const {};
+    _initialized = true;
+  }
+
   final int careerSeed;
   final int simulationVersion;
   final int initialSeasonIndex;

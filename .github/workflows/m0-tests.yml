@@ -100,3 +100,6 @@ jobs:
 
       - name: Run M26 world save continuation
         run: dart run tool/run_m26_world_save.dart 20260903
+
+      - name: Run M27 advanced runtime save continuation
+        run: dart run tool/run_m27_advanced_runtime_save.dart 20260903

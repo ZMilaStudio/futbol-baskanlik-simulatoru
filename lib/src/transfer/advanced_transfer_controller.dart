@@ -29,6 +29,35 @@ class AdvancedTransferController
           initialSeasonIndex: initialSeasonIndex,
         );
 
+  AdvancedTransferController.restore({
+    required int careerSeed,
+    required int simulationVersion,
+    required int initialSeasonIndex,
+    required Iterable<PlayerContract> activeContracts,
+    required Iterable<ContractEvent> contractEvents,
+    required Iterable<LoanAgreement> activeLoans,
+    required Iterable<LoanAgreement> loanHistory,
+    required Iterable<TransferInstallmentObligation> installmentObligations,
+    this.loanMarketEngine = const LoanMarketEngine(),
+  })  : careerSeed = careerSeed,
+        simulationVersion = simulationVersion,
+        contractController = PlayerContractController.restore(
+          careerSeed: careerSeed,
+          simulationVersion: simulationVersion,
+          initialSeasonIndex: initialSeasonIndex,
+          activeContracts: activeContracts,
+          events: contractEvents,
+        ) {
+    for (final loan in activeLoans) {
+      if (_activeLoans.containsKey(loan.playerId)) {
+        throw ArgumentError('Duplicate restored active loan ${loan.playerId}.');
+      }
+      _activeLoans[loan.playerId] = loan;
+    }
+    _loanHistory.addAll(loanHistory);
+    _installmentObligations.addAll(installmentObligations);
+  }
+
   final int careerSeed;
   final int simulationVersion;
   final PlayerContractController contractController;

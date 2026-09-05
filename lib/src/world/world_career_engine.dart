@@ -86,14 +86,19 @@ class WorldCareerEngine {
     ).report;
   }
 
-  /// Core-world checkpoint path for M26. It deliberately owns only state that
-  /// belongs to [WorldCareerEngine] itself. Stateful contract/manager/etc.
-  /// controllers are added by later runtime-snapshot milestones.
+  /// Core-world checkpoint path for M26+. The checkpoint owns world state;
+  /// optional hooks let later runtime snapshot layers preserve their own state
+  /// without changing the legacy [simulate] behavior.
   WorldCareerSimulationResult simulateWithCheckpoint({
     required List<Club> clubs,
     required List<WorldLeague> leagues,
     required SimulationConfig config,
     int seasonCount = 20,
+    WorldCareerHooks hooks = const NoopWorldCareerHooks(),
+    WorldRosterHooks rosterHooks = const NoopWorldRosterHooks(),
+    WorldFinanceHooks financeHooks = const NoopWorldFinanceHooks(),
+    WorldTransferHooks transferHooks = const NoopWorldTransferHooks(),
+    bool enableTransferInstallments = false,
   }) {
     _validateSeasonCount(seasonCount);
     _validateSetup(clubs, leagues);
@@ -119,6 +124,11 @@ class WorldCareerEngine {
       completedBefore: 0,
       seasonCount: seasonCount,
       advanceAfterFinalSeason: true,
+      hooks: hooks,
+      rosterHooks: rosterHooks,
+      financeHooks: financeHooks,
+      transferHooks: transferHooks,
+      enableTransferInstallments: enableTransferInstallments,
     );
 
     return WorldCareerSimulationResult(
@@ -134,6 +144,11 @@ class WorldCareerEngine {
   WorldCareerSimulationResult resume({
     required WorldCheckpoint checkpoint,
     required int seasonCount,
+    WorldCareerHooks hooks = const NoopWorldCareerHooks(),
+    WorldRosterHooks rosterHooks = const NoopWorldRosterHooks(),
+    WorldFinanceHooks financeHooks = const NoopWorldFinanceHooks(),
+    WorldTransferHooks transferHooks = const NoopWorldTransferHooks(),
+    bool enableTransferInstallments = false,
   }) {
     _validateSeasonCount(seasonCount);
     checkpoint.validate();
@@ -148,6 +163,11 @@ class WorldCareerEngine {
       completedBefore: checkpoint.completedSeasons,
       seasonCount: seasonCount,
       advanceAfterFinalSeason: true,
+      hooks: hooks,
+      rosterHooks: rosterHooks,
+      financeHooks: financeHooks,
+      transferHooks: transferHooks,
+      enableTransferInstallments: enableTransferInstallments,
     );
 
     return WorldCareerSimulationResult(
