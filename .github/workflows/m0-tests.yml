@@ -127,3 +127,6 @@ jobs:
 
       - name: Run M35 academy runtime youth integration
         run: dart run tool/run_m35_academy_runtime_youth_integration.dart 20260903
+
+      - name: Run M36 president youth academy investment orchestration
+        run: dart run tool/run_m36_president_academy_investment.dart 20260903
