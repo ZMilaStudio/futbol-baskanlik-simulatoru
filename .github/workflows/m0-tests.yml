@@ -115,3 +115,6 @@ jobs:
 
       - name: Run M31 president domain resume orchestration
         run: dart run tool/run_m31_president_domain_resume.dart 20260903
+
+      - name: Run M32 long-career save resume stress
+        run: dart run tool/run_m32_long_career_save_resume_stress.dart 20260903
