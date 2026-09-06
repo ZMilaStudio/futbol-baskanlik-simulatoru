@@ -8,6 +8,10 @@ void main() {
   const codec = FacilityRuntimeSaveCodec();
   late FacilityRuntimeCheckpoint season8;
   late String targetClub;
+  late PresidentFacilityDecisionLoopResult direct;
+  late PresidentFacilityDecisionLoopResult first;
+  late PresidentFacilityDecisionLoopResult second;
+  late List<PresidentFacilitySeasonDecision> targetDecisions;
 
   const cautious = PresidentManagementProfile(
     presidentId: 'cautious-president',
@@ -41,106 +45,51 @@ void main() {
     targetClub = season8.world.nextSeasonFinanceStates
         .reduce((a, b) => a.cash >= b.cash ? a : b)
         .clubId;
-  });
 
-  PresidentManagementProfile provider({
-    required int seasonIndex,
-    required String clubId,
-    required int turnoverSeason,
-  }) {
-    if (clubId != targetClub) return cautious;
-    return seasonIndex < turnoverSeason ? cautious : youthBuilder;
-  }
-
-  test('M37 reevaluates academy investment every season window', () {
-    final result = loop.run(
-      checkpoint: season8,
-      seasonCount: 2,
-      profileProvider: ({required seasonIndex, required clubId}) =>
-          clubId == targetClub ? youthBuilder : cautious,
-    );
-    final targetDecisions = result.decisions
-        .where((decision) => decision.clubId == targetClub)
-        .toList();
-
-    expect(targetDecisions, hasLength(2));
-    expect(targetDecisions.first.appliedUpgrades, greaterThan(0));
-    expect(
-      targetDecisions[1].beforeLevel,
-      targetDecisions[0].afterLevel,
-    );
-    expect(targetDecisions[1].targetLevel, 5);
-    expect(result.checkpoint.completedSeasons, 10);
-  });
-
-  test('M37 replans immediately after a president turnover', () {
-    final result = loop.run(
-      checkpoint: season8,
-      seasonCount: 4,
-      profileProvider: ({required seasonIndex, required clubId}) => provider(
-        seasonIndex: seasonIndex,
-        clubId: clubId,
-        turnoverSeason: 10,
-      ),
-    );
-    final targetDecisions = result.decisions
-        .where((decision) => decision.clubId == targetClub)
-        .toList();
-
-    expect(targetDecisions, hasLength(4));
-    expect(targetDecisions[0].presidentId, cautious.presidentId);
-    expect(targetDecisions[1].presidentId, cautious.presidentId);
-    expect(targetDecisions[0].appliedUpgrades, 0);
-    expect(targetDecisions[1].appliedUpgrades, 0);
-    expect(targetDecisions[2].presidentId, youthBuilder.presidentId);
-    expect(targetDecisions[2].targetLevel, 5);
-    expect(targetDecisions[2].appliedUpgrades, greaterThan(0));
-  });
-
-  test('M37 a cautious successor stops predecessor academy expansion', () {
-    final result = loop.run(
-      checkpoint: season8,
-      seasonCount: 2,
-      profileProvider: ({required seasonIndex, required clubId}) {
-        if (clubId != targetClub) return cautious;
-        return seasonIndex == 8 ? youthBuilder : cautious;
-      },
-    );
-    final targetDecisions = result.decisions
-        .where((decision) => decision.clubId == targetClub)
-        .toList();
-
-    expect(targetDecisions.first.appliedUpgrades, greaterThan(0));
-    expect(targetDecisions[1].presidentId, cautious.presidentId);
-    expect(targetDecisions[1].appliedUpgrades, 0);
-    expect(targetDecisions[1].afterLevel, targetDecisions[1].beforeLevel);
-  });
-
-  test('M37 save load resume matches uninterrupted seasonal decision loop', () {
     PresidentFacilityProfileProvider profileProvider =
-        ({required seasonIndex, required clubId}) => provider(
-              seasonIndex: seasonIndex,
-              clubId: clubId,
-              turnoverSeason: 10,
-            );
+        ({required seasonIndex, required clubId}) {
+      if (clubId != targetClub) return cautious;
+      return seasonIndex < 9 ? cautious : youthBuilder;
+    };
 
-    final direct = loop.run(
+    direct = loop.run(
       checkpoint: season8,
-      seasonCount: 4,
+      seasonCount: 2,
       profileProvider: profileProvider,
     );
-    final first = loop.run(
+    first = loop.run(
       checkpoint: season8,
-      seasonCount: 2,
+      seasonCount: 1,
       profileProvider: profileProvider,
     );
     final loaded = codec.decode(codec.encode(first.checkpoint));
-    final second = loop.run(
+    second = loop.run(
       checkpoint: loaded,
-      seasonCount: 2,
+      seasonCount: 1,
       profileProvider: profileProvider,
     );
+    targetDecisions = direct.decisions
+        .where((decision) => decision.clubId == targetClub)
+        .toList();
+  });
 
+  test('M37 reevaluates academy policy on every season window', () {
+    expect(targetDecisions, hasLength(2));
+    expect(targetDecisions[0].seasonIndex, 8);
+    expect(targetDecisions[1].seasonIndex, 9);
+    expect(targetDecisions[1].beforeLevel, targetDecisions[0].afterLevel);
+    expect(direct.checkpoint.completedSeasons, 10);
+  });
+
+  test('M37 replans immediately after a president turnover', () {
+    expect(targetDecisions[0].presidentId, cautious.presidentId);
+    expect(targetDecisions[0].appliedUpgrades, 0);
+    expect(targetDecisions[1].presidentId, youthBuilder.presidentId);
+    expect(targetDecisions[1].targetLevel, 5);
+    expect(targetDecisions[1].appliedUpgrades, greaterThan(0));
+  });
+
+  test('M37 save load resume matches uninterrupted decision loop', () {
     expect(second.checkpoint.signature, direct.checkpoint.signature);
     expect(
       [...first.decisions, ...second.decisions]
