@@ -1,9 +1,7 @@
 import '../election/president_management_profile.dart';
 import '../election/president_reputation_career_engine.dart';
 import '../election/president_reputation_career_report.dart';
-import '../fan/fan_state.dart';
 import '../manager/manager_career_report.dart';
-import '../media/media_state.dart';
 import '../promise/promise_media_career_engine.dart';
 import '../transfer/advanced_transfer_career_report.dart';
 import 'advanced_history_compaction.dart';
@@ -145,8 +143,8 @@ class PresidentDomainResumeEngine {
     );
 
     final nextSummary = PresidentDomainHistorySummary(
-      fanSnapshots:
-          checkpoint.summary.fanSnapshots + reputation.fanTemplateReport.snapshots.length,
+      fanSnapshots: checkpoint.summary.fanSnapshots +
+          reputation.fanTemplateReport.snapshots.length,
       fanReasons:
           checkpoint.summary.fanReasons + reputation.fanTemplateReport.reasonCount,
       mediaStatements: checkpoint.summary.mediaStatements +
