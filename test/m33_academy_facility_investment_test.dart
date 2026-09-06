@@ -12,7 +12,7 @@ void main() {
   const config = SimulationConfig(careerSeed: 20260903);
 
   test('M33 academy investment cost and target level are bounded', () {
-    final state = const AcademyFacilityState(clubId: 'club', level: 0);
+    final state = AcademyFacilityState(clubId: 'club', level: 0);
     var current = state;
     var total = 0;
     for (var level = 1; level <= AcademyInvestmentPolicy.maxLevel; level++) {
