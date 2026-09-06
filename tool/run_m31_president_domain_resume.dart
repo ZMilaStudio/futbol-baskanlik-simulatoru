@@ -4,81 +4,62 @@ void main(List<String> args) {
   final seed = args.isEmpty ? 20260903 : int.parse(args.first);
   final config = SimulationConfig(careerSeed: seed);
   final world = const FictionalWorldFactory().build();
+  const engine = PresidentDomainCareerEngine();
 
-  final fullRuntime = const CompactAdvancedRuntimeCareerEngine()
-      .simulateWithCheckpoint(
+  final full = engine.simulateWithCheckpoint(
     clubs: world.clubs,
     leagues: world.leagues,
     config: config,
     seasonCount: 20,
   );
-  final fullReputation = const PresidentReputationCareerEngine().simulate(
-    clubs: world.clubs,
-    leagues: world.leagues,
-    config: config,
-    seasonCount: 20,
-  );
-  final fullDomain = PresidentDomainMemoryCheckpoint.capture(
-    presidentRuntime: PresidentRuntimeCheckpoint.capture(
-      runtime: fullRuntime.checkpoint,
-      report: fullReputation,
-    ),
-    report: fullReputation,
-  );
-
-  final firstRuntime = const CompactAdvancedRuntimeCareerEngine()
-      .simulateWithCheckpoint(
-    clubs: world.clubs,
-    leagues: world.leagues,
-    config: config,
-    seasonCount: 8,
-  );
-  final firstReputation = const PresidentReputationCareerEngine().simulate(
+  final first = engine.simulateWithCheckpoint(
     clubs: world.clubs,
     leagues: world.leagues,
     config: config,
     seasonCount: 8,
     hasFutureSeasonAfterReport: true,
   );
-  final firstDomain = PresidentDomainMemoryCheckpoint.capture(
-    presidentRuntime: PresidentRuntimeCheckpoint.capture(
-      runtime: firstRuntime.checkpoint,
-      report: firstReputation,
-    ),
-    report: firstReputation,
-  );
-  final resumed = const PresidentDomainResumeEngine().resume(
-    checkpoint: firstDomain,
+  final resumed = engine.resume(
+    checkpoint: first.checkpoint,
     seasonCount: 12,
   );
 
   final presidentMatch = resumed.checkpoint.presidentRuntime.clubs
           .map((item) => item.signature)
           .join('|') ==
-      fullDomain.presidentRuntime.clubs
+      full.checkpoint.presidentRuntime.clubs
           .map((item) => item.signature)
           .join('|');
   final memoryMatch = resumed.checkpoint.summary.signature ==
-          fullDomain.summary.signature &&
+          full.checkpoint.summary.signature &&
       resumed.checkpoint.recentFan.map((item) => item.signature).join('|') ==
-          fullDomain.recentFan.map((item) => item.signature).join('|') &&
+          full.checkpoint.recentFan.map((item) => item.signature).join('|') &&
       resumed.checkpoint.recentMedia.map((item) => item.signature).join('|') ==
-          fullDomain.recentMedia.map((item) => item.signature).join('|') &&
+          full.checkpoint.recentMedia.map((item) => item.signature).join('|') &&
       resumed.checkpoint.currentTermPromises
               .map((item) => item.signature)
               .join('|') ==
-          fullDomain.currentTermPromises
+          full.checkpoint.currentTermPromises
               .map((item) => item.signature)
               .join('|');
   final runtimeMatch = const CompactAdvancedWorldSaveCodec().encode(
         resumed.checkpoint.presidentRuntime.runtime,
       ) ==
-      const CompactAdvancedWorldSaveCodec().encode(fullRuntime.checkpoint);
+      const CompactAdvancedWorldSaveCodec().encode(
+        full.checkpoint.presidentRuntime.runtime,
+      );
+  final electionMatch = resumed.report.elections
+          .map((item) => item.signature)
+          .join('|') ==
+      full.report.elections
+          .where((item) => item.seasonIndex >= 8)
+          .map((item) => item.signature)
+          .join('|');
 
-  if (!presidentMatch || !memoryMatch || !runtimeMatch) {
+  if (!presidentMatch || !memoryMatch || !runtimeMatch || !electionMatch) {
     throw StateError(
       'M31 continuation mismatch: runtime=$runtimeMatch '
-      'president=$presidentMatch memory=$memoryMatch',
+      'president=$presidentMatch memory=$memoryMatch elections=$electionMatch',
     );
   }
 
@@ -94,5 +75,6 @@ void main(List<String> args) {
   print('Advanced runtime match: $runtimeMatch');
   print('President state match: $presidentMatch');
   print('President memory match: $memoryMatch');
+  print('Election match: $electionMatch');
   print('8 + 12 == 20: PASS');
 }
