@@ -87,7 +87,21 @@ class FacilityRuntimeSaveCodec {
         'Facility save payload must be a map.',
       );
     }
-    final map = Map<String, Object?>.from(payload);
+
+    var map = Map<String, Object?>.from(payload);
+    if (version == 0) {
+      map = _migrateV0ToV1(map);
+    }
+    return _decodeV1(map);
+  }
+
+  Map<String, Object?> _migrateV0ToV1(Map<String, Object?> legacy) => {
+        'worldSave': legacy['world'],
+        'academyFacilities': legacy['facilities'],
+        'totalInvestmentSpentMinorUnits': legacy['spentMinorUnits'] ?? 0,
+      };
+
+  FacilityRuntimeCheckpoint _decodeV1(Map<String, Object?> map) {
     final worldSave = map['worldSave'];
     final facilitiesJson = map['academyFacilities'];
     final spent = map['totalInvestmentSpentMinorUnits'];
