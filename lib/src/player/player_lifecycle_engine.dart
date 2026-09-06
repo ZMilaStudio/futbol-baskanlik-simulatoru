@@ -1,5 +1,6 @@
 import '../core/seeded_rng.dart';
 import '../core/stable_hash.dart';
+import '../facility/academy_facility.dart';
 import '../league/club.dart';
 import 'player.dart';
 import 'player_position.dart';
@@ -19,7 +20,11 @@ class PlayerLifecycleResult {
 }
 
 class PlayerLifecycleEngine {
-  const PlayerLifecycleEngine();
+  const PlayerLifecycleEngine({
+    this.academyInvestmentPolicy = const AcademyInvestmentPolicy(),
+  });
+
+  final AcademyInvestmentPolicy academyInvestmentPolicy;
 
   PlayerLifecycleResult advance({
     required List<Player> currentPlayers,
@@ -28,6 +33,7 @@ class PlayerLifecycleEngine {
     required int careerSeed,
     required int nextSeasonIndex,
     required int simulationVersion,
+    Map<String, AcademyFacilityState> academyFacilities = const {},
   }) {
     final evolved = <Player>[];
     final retired = <Player>[];
@@ -59,6 +65,10 @@ class PlayerLifecycleEngine {
       if (referenceClub == null) {
         throw StateError('Missing reference club ${club.id}.');
       }
+      final facility = academyFacilities[club.id];
+      if (facility != null && facility.clubId != club.id) {
+        throw ArgumentError('Academy facility key must match its clubId.');
+      }
       final clubPlayers =
           evolved.where((player) => player.clubId == club.id).toList();
       final intake = _generateYouth(
@@ -67,6 +77,7 @@ class PlayerLifecycleEngine {
         careerSeed: careerSeed,
         nextSeasonIndex: nextSeasonIndex,
         simulationVersion: simulationVersion,
+        academyLevel: facility?.level ?? 0,
       );
       youth.add(intake);
       evolved.add(intake);
@@ -106,6 +117,7 @@ class PlayerLifecycleEngine {
     required int careerSeed,
     required int nextSeasonIndex,
     required int simulationVersion,
+    required int academyLevel,
   }) {
     final seed = StableHash.combine32([
       careerSeed,
@@ -118,14 +130,24 @@ class PlayerLifecycleEngine {
     final position = _chooseYouthPosition(activeClubPlayers, rng);
     final age = 16 + (rng.nextDouble() * 3).floor();
     final rareTalent = rng.nextDouble() > 0.94;
+    final academyAbilityBonus =
+        academyInvestmentPolicy.abilityBonus(academyLevel);
+    final academyPotentialBonus =
+        academyInvestmentPolicy.potentialBonus(academyLevel);
     final ability =
-        (club.strength - 7.0 + (rng.nextDouble() * 8.0 - 4.0) +
-                (rareTalent ? 2.5 : 0.0))
+        (club.strength -
+                7.0 +
+                (rng.nextDouble() * 8.0 - 4.0) +
+                (rareTalent ? 2.5 : 0.0) +
+                academyAbilityBonus)
             .clamp(42.0, 78.0)
             .toDouble();
     final potential =
-        (ability + 8.0 + rng.nextDouble() * 15.0 +
-                (rareTalent ? 5.0 : 0.0))
+        (ability +
+                8.0 +
+                rng.nextDouble() * 15.0 +
+                (rareTalent ? 5.0 : 0.0) +
+                academyPotentialBonus)
             .clamp(ability, 95.0)
             .toDouble();
     final retirementAge = 34 + (rng.nextDouble() * 5).floor();
