@@ -81,9 +81,11 @@ class PresidentDomainCareerEngine {
       presidentRuntime: presidentRuntime,
       report: reputation,
     );
-    return PresidentDomainResumeResult(
-      report: reputation,
-      checkpoint: domain,
+    return _normalizeRecentFan(
+      PresidentDomainResumeResult(
+        report: reputation,
+        checkpoint: domain,
+      ),
     );
   }
 
@@ -91,10 +93,49 @@ class PresidentDomainCareerEngine {
     required PresidentDomainMemoryCheckpoint checkpoint,
     required int seasonCount,
     bool hasFutureSeasonAfterReport = false,
-  }) =>
-      resumeEngine.resume(
-        checkpoint: checkpoint,
-        seasonCount: seasonCount,
-        hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
-      );
+  }) {
+    final result = resumeEngine.resume(
+      checkpoint: checkpoint,
+      seasonCount: seasonCount,
+      hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
+    );
+    return _normalizeRecentFan(result);
+  }
+
+  PresidentDomainResumeResult _normalizeRecentFan(
+    PresidentDomainResumeResult result,
+  ) {
+    final stateByKey = <String, String>{};
+    for (final season in result.report.seasons) {
+      for (final item in season.clubs) {
+        stateByKey['${item.seasonIndex}|${item.clubId}'] =
+            item.fanAfter.signature;
+      }
+    }
+    final normalized = result.checkpoint.recentFan
+        .map(
+          (item) => RecentFanMemory(
+            clubId: item.clubId,
+            seasonIndex: item.seasonIndex,
+            expectationSignature: item.expectationSignature,
+            stateSignature:
+                stateByKey['${item.seasonIndex}|${item.clubId}'] ??
+                    item.stateSignature,
+            reasonSignatures: item.reasonSignatures,
+          ),
+        )
+        .toList();
+    final checkpoint = PresidentDomainMemoryCheckpoint(
+      presidentRuntime: result.checkpoint.presidentRuntime,
+      summary: result.checkpoint.summary,
+      rawHistorySeasons: result.checkpoint.rawHistorySeasons,
+      recentFan: normalized,
+      recentMedia: result.checkpoint.recentMedia,
+      currentTermPromises: result.checkpoint.currentTermPromises,
+    );
+    return PresidentDomainResumeResult(
+      report: result.report,
+      checkpoint: checkpoint,
+    );
+  }
 }
