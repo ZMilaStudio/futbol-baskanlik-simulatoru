@@ -124,3 +124,6 @@ jobs:
 
       - name: Run M34 facility persistence finance orchestration
         run: dart run tool/run_m34_facility_persistence_finance.dart 20260903
+
+      - name: Run M35 academy runtime youth integration
+        run: dart run tool/run_m35_academy_runtime_youth_integration.dart 20260903
