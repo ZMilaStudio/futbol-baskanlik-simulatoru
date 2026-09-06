@@ -109,3 +109,6 @@ jobs:
 
       - name: Run M29 president runtime snapshot
         run: dart run tool/run_m29_president_runtime_snapshot.dart 20260903
+
+      - name: Run M30 president domain memory snapshot
+        run: dart run tool/run_m30_president_domain_memory_snapshot.dart 20260903
