@@ -59,6 +59,7 @@ export 'src/election/president_youth_orientation_feedback_validator.dart';
 export 'src/election/president_youth_orientation_transfer_policy.dart';
 export 'src/facility/academy_facility.dart';
 export 'src/facility/facility_investment_orchestrator.dart';
+export 'src/facility/president_academy_investment_orchestrator.dart';
 export 'src/fan/fan_career_engine.dart';
 export 'src/fan/fan_career_report.dart';
 export 'src/fan/fan_career_validator.dart';
