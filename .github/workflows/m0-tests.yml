@@ -112,3 +112,6 @@ jobs:
 
       - name: Run M30 president domain memory snapshot
         run: dart run tool/run_m30_president_domain_memory_snapshot.dart 20260903
+
+      - name: Run M31 president domain resume orchestration
+        run: dart run tool/run_m31_president_domain_resume.dart 20260903
