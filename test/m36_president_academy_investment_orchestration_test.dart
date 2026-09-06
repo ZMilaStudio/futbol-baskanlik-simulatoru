@@ -1,5 +1,4 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
-import 'package:futbol_baskanlik_m0/src/facility/president_academy_investment_orchestrator.dart';
 import 'package:test/test.dart';
 
 void main() {
