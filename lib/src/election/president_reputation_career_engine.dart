@@ -9,7 +9,6 @@ import '../promise/promise_fan_impact_engine.dart';
 import '../promise/promise_media_career_engine.dart';
 import '../promise/promise_media_career_report.dart';
 import '../promise/promise_media_impact_engine.dart';
-import '../promise/promise_season_snapshot.dart';
 import '../world/world_league.dart';
 import 'president_election.dart';
 import 'president_election_engine.dart';
@@ -200,9 +199,21 @@ class PresidentReputationCareerEngine {
     if (initialTenure.length != clubIds.length ||
         initialFan.length != clubIds.length ||
         initialMedia.length != clubIds.length ||
-        initialTenure.map((item) => item.clubId).toSet().difference(clubIds.toSet()).isNotEmpty ||
-        initialFan.map((item) => item.clubId).toSet().difference(clubIds.toSet()).isNotEmpty ||
-        initialMedia.map((item) => item.clubId).toSet().difference(clubIds.toSet()).isNotEmpty) {
+        initialTenure
+            .map((item) => item.clubId)
+            .toSet()
+            .difference(clubIds.toSet())
+            .isNotEmpty ||
+        initialFan
+            .map((item) => item.clubId)
+            .toSet()
+            .difference(clubIds.toSet())
+            .isNotEmpty ||
+        initialMedia
+            .map((item) => item.clubId)
+            .toSet()
+            .difference(clubIds.toSet())
+            .isNotEmpty) {
       throw ArgumentError('President resume state must cover every club exactly once.');
     }
 
