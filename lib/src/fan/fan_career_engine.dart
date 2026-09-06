@@ -53,6 +53,7 @@ class FanCareerEngine {
   FanCareerReport simulateFromAdvancedReport({
     required AdvancedTransferCareerReport advancedReport,
     FanExtraReasonProvider? extraReasonProvider,
+    bool hasFutureSeasonAfterReport = false,
   }) {
     final worldReport = advancedReport.worldReport;
     final clubIds = worldReport.initialLeagues
@@ -74,6 +75,7 @@ class FanCareerEngine {
           season: season,
           clubId: clubId,
           lastSeasonIndex: lastSeasonIndex,
+          hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
         );
         final expectation = expectationEngine.generate(context);
         final reasons = <FanTrustReason>[
@@ -108,6 +110,7 @@ class FanCareerEngine {
     required WorldCareerSeason season,
     required String clubId,
     required int lastSeasonIndex,
+    required bool hasFutureSeasonAfterReport,
   }) {
     final league = season.leaguesBeforeSeason.firstWhere(
       (item) => item.clubIds.contains(clubId),
@@ -181,7 +184,8 @@ class FanCareerEngine {
       transferIncome: transferIncome,
       promoted: promoted,
       relegated: relegated,
-      hasTransferWindow: season.seasonIndex < lastSeasonIndex,
+      hasTransferWindow:
+          season.seasonIndex < lastSeasonIndex || hasFutureSeasonAfterReport,
     );
   }
 }
