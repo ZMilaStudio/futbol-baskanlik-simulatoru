@@ -52,110 +52,52 @@ Dünya ölçeği:
 
 ## 3. CANLI DURUM — yeni sohbet buradan devam etmeli
 
-**M0–M29 PASS ve `main` üzerindedir.**
+**M0–M30 PASS ve `main` üzerindedir.**
 
-Son kapalı milestone: **M29 — President Runtime Snapshot I**.
+Son kapalı milestone: **M30 — Fan / Media / Promise Runtime Memory Snapshot I**.
 
-M29 PR:
-- PR `#30` — MERGED
-- final PR HEAD: `8c1de528e0d7ef6d3671e0e71064b03bc1c9802e`
-- squash merge commit: `467689aa29e4805dcd93f9448cc7a1c21ba8e8d1`
-- final PR CI: run `33999480197`, job `101395663903` — SUCCESS
-- merge sonrası `main` CI: run `34027200080`, job `101470178756` — SUCCESS
+M30 kapanış:
+- PR `#31` — MERGED
+- final PR HEAD: `acdb4a47d970fb11a007b0f85d7bd4f26dab806a`
+- PR CI: run `34027937181`, job `101472145609` — SUCCESS
+- squash merge commit: `f18b7850218c638f9692630509c03820d5652e5a`
+- merge sonrası `main` CI: run `34033939065`, job `101488464335` — SUCCESS
 - analyzer PASS
-- normal/non-canonical tests: `118` PASS
-- M0–M18 runner zinciri PASS
-- combined M19–M24 canonical profile feedback PASS
-- M25 save/load PASS
-- M26 world snapshot PASS
-- M27 advanced runtime snapshot PASS
-- M28 save history compaction PASS
-- M29 president runtime snapshot PASS
+- normal/non-canonical tests: `125` PASS
+- M0–M30 runner zinciri PASS
 - artifact `0`
 - CI timeout `7 dk`
 
-M29 canonical ölçümü:
+M30 canonical ölçümü:
 - completed seasons: `8`
-- next season index: `8`
-- president club states: `48`
-- completed election terms: `2`
-- term offset: `0`
-- M28 compact save: `736.274 bytes`
+- raw history seasons: `2`
+- recent fan records: `96`
+- recent media records: `96`
+- current-term promises: `0` (season 8 election boundary)
+- all-time fan reasons: `1195`
+- all-time media statements: `217`
+- all-time media contradictions: `7`
+- all-time promises: `384`
 - M29 president save: `754.721 bytes`
-- president-state overhead: `18.447 bytes`
+- M30 memory save: `802.906 bytes`
+- memory overhead: `48.185 bytes`
 - codec round-trip: PASS
 
 Aktif teknik yön:
 
-> **M29 kapandı. Sıradaki mantıklı save milestone'u fan/media/promise continuation memory katmanıdır.**
+> **M31 adayı — President Domain Resume Orchestration I.**
 
-Önemli sınır: M29, current president/tenure/profile/reputation/election-cursor state'ini saklar; ayrıntılı fan/media/promise geçmişini henüz resumable yapmaz. Bu nedenle M29 tek başına tam president-domain 8+12 continuation iddiası taşımaz.
+Amaç, M30’da snapshot edilen president/fan/media/promise state’ini gerçek resume orchestration’a bağlayıp president-domain için split-career `8 + 12 == 20` kanıtı üretmektir.
 
 Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 
-## 4. M29 — President Runtime Snapshot I — PASS
-
-M28 compact advanced runtime üzerine continuation-critical başkan state'i eklendi.
-
-Ana parçalar:
-- `PresidentClubRuntimeState`
-- `PresidentRuntimeCheckpoint`
-- `PresidentRuntimeSaveCodec`
-- `test/m29_president_runtime_snapshot_test.dart`
-- `tool/run_m29_president_runtime_snapshot.dart`
-- workflow M29 runner adımı
-
-Checkpoint state:
-- nested M28 compact advanced runtime
-- her 48 kulüp için current `PresidentTenureState`
-- current `PresidentManagementProfile`
-- current fan reputation skorları
-- current media credibility
-- election cursor: `electionInterval`, `completedElectionTerms`, `seasonsIntoCurrentTerm`
-
-Codec:
-- format `zmila-fbs-president-runtime`
-- save version `1`
-- canonical JSON
-- FNV-1a checksum
-- unsupported future version rejection
-- sentetik `v0 → v1` migration
-- checksum corruption rejection
-- structural validation
-
-M29 sırasında bulunan gerçek save-size sorunu:
-- ilk tasarım M28 JSON save'ini M29 payload içinde string olarak tekrar JSON'a gömüyordu
-- bu double-encoding nedeniyle overhead `222.895 bytes` oldu ve `<50.000` guard'ı kırıldı
-- eşik gevşetilmedi
-- nested M28 save doğrudan JSON object olarak saklandı
-- düzeltme commit'i: `8c1de528e0d7ef6d3671e0e71064b03bc1c9802e`
-- gerçek overhead `18.447 bytes` oldu
-
-M29 kabul kriterleri:
-- 48 current president state — PASS
-- deterministic election cursor — PASS
-- current management profile preservation — PASS
-- current fan/media reputation preservation — PASS
-- deterministic encode/decode round-trip — PASS
-- checksum corruption rejection — PASS
-- future version rejection — PASS
-- v0→v1 migration — PASS
-- M29 overhead `<50.000 bytes` — PASS
-- analyzer — PASS
-- normal tests — PASS
-- M0–M29 runners — PASS
-- artifact — `0`
-
-Ayrıntı: `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
-
-## 5. Save/runtime zinciri
+## 4. Save/runtime zinciri
 
 ### M25 — Save/Load + Kayıt Versiyonlama I — PASS
 - temel `CareerCheckpoint`
 - canonical JSON / checksum / versioning / migration
 - canonical save `1.039 bytes`
 - `8 + 12 == 20`
-- squash `c46d5fc99655476f389de82d861ce7a5e6a93aec`
 
 ### M26 — World Save Snapshot I — PASS
 - 48 base club
@@ -163,36 +105,41 @@ Ayrıntı: `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
 - players + finance + config
 - canonical save `187.664 bytes`
 - `8 + 12 == 20`
-- squash `c721588f998f5d29495c8074d956e48e306a1dc8`
 
 ### M27 — Advanced World Runtime Snapshot I — PASS
-- active contracts
-- contract history
-- loans + loan history
-- installments
-- manager pool/assignments/history
-- canonical save `1.013.092 bytes`
+- contracts / loans / installments / manager runtime
+- canonical season-8 save `1.013.092 bytes`
 - `8 + 12 == 20`
-- squash `46e52be2b65910f200b4dee85647d1ae982b5d94`
 
 ### M28 — Save History Compaction / Historical Memory Policy I — PASS
 - son 2 sezon contract/loan raw detail
-- all-time aggregate history summary
-- active state eksiksiz
+- all-time aggregate summary
 - season-8 `1.013.092 → 736.274 bytes`
 - küçülme `%27,3`
 - season-20 compact `915.648 bytes`
 - `8 + 12 == 20`
-- squash `8fb9846c70b438641521a4023068a5a707d0ea38`
 
 ### M29 — President Runtime Snapshot I — PASS
 - current president tenure/profile/reputation/election cursor
 - 48 club state
 - season-8 `754.721 bytes`
 - M28 üzerine `18.447 bytes` overhead
-- squash `467689aa29e4805dcd93f9448cc7a1c21ba8e8d1`
 
-## 6. Başkan trait durumu
+### M30 — Fan / Media / Promise Runtime Memory Snapshot I — PASS
+- nested M29 president runtime
+- exactly last 2 seasons raw fan detail
+- exactly last 2 seasons raw media detail
+- all-time bounded fan/media/promise summaries
+- current election-term promise resolutions continuation-critical memory
+- season-8 `802.906 bytes`
+- M29 üzerine `48.185 bytes` overhead
+- deterministic round-trip / checksum / migration guards PASS
+
+Ayrıntı:
+- `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
+- `M30_FAN_MEDIA_PROMISE_RUNTIME_MEMORY_SNAPSHOT_I.md`
+
+## 5. Başkan trait durumu
 
 Beş trait'in tamamı gerçek davranışa bağlıdır:
 
@@ -203,8 +150,6 @@ Beş trait'in tamamı gerçek davranışa bağlıdır:
 | `transferAmbition` | completed transfer slots | M21 |
 | `riskAppetite` | buyer max-bid ceiling | M23 |
 | `youthOrientation` | youth/potential candidate preference | M24 |
-
-M25–M29 yeni trait davranışı eklemez; save/runtime güvenilirliği üzerinde çalışır.
 
 Canonical M24 seed `20260903`:
 - convergence `4`
@@ -221,7 +166,7 @@ Canonical M24 seed `20260903`:
 - emergency `144,39M`
 - validation `0`
 
-## 7. Milestone geçmişi — kısa
+## 6. Milestone geçmişi — kısa
 
 - M0 Deterministik sezon çekirdeği — PASS
 - M1 20 sezon kariyer — PASS
@@ -253,8 +198,9 @@ Canonical M24 seed `20260903`:
 - M27 advanced runtime snapshot — PASS
 - M28 history compaction — PASS
 - M29 president runtime snapshot — PASS
+- M30 fan/media/promise runtime memory snapshot — PASS
 
-## 8. Kalıcı teknik kurallar
+## 7. Kalıcı teknik kurallar
 
 - deterministic seed/replay
 - cihaz saatinden bağımsız `GameDate`
@@ -276,7 +222,7 @@ Canonical M24 seed `20260903`:
 - `actions/upload-artifact` kullanılmaz
 - CI timeout `7 dk`
 
-## 9. CI politikası
+## 8. CI politikası
 
 Ana workflow:
 - `dart analyze`
@@ -288,9 +234,7 @@ Ana workflow:
 - M27 advanced runtime save
 - M28 history compaction
 - M29 president runtime snapshot
-
-Current profile runner:
-`tool/run_m24_president_youth_orientation_feedback.dart 20260903`
+- M30 president domain memory snapshot
 
 Save/runtime runners:
 - `tool/run_m25_save_load.dart 20260903`
@@ -298,11 +242,12 @@ Save/runtime runners:
 - `tool/run_m27_advanced_runtime_save.dart 20260903`
 - `tool/run_m28_save_history_compaction.dart 20260903`
 - `tool/run_m29_president_runtime_snapshot.dart 20260903`
+- `tool/run_m30_president_domain_memory_snapshot.dart 20260903`
 
-## 10. Açık teknik borç / sıradaki yön
+## 9. Açık teknik borç / sıradaki yön
 
-- fan/media/promise historical/resumable memory henüz save kapsamında değil
-- M29 current reputation skorlarını taşır ama detailed memory continuation sağlamaz
+- M30 memory snapshot var, fakat president-domain resume orchestration henüz explicit bağlanmadı
+- full president-domain `8 + 12 == 20` kanıtı henüz yok
 - M28 manager season history M27 strict invariantı nedeniyle hâlen tam tutulur
 - Android file system / save-slot UI / autosave / backup / cloud save daha sonra
 - tesis yatırımının youth intake kalitesine etkisi henüz yok
@@ -311,9 +256,11 @@ Save/runtime runners:
 
 Sıradaki mantıklı milestone:
 
-> **M30 adayı — Fan / Media / Promise Runtime Memory Snapshot I**
+> **M31 — President Domain Resume Orchestration I**
 
-Amaç, M29'un sakladığı current president/reputation state'in arkasındaki continuation-critical fan/media/promise memory'yi deterministik ve migration-safe biçimde snapshot ederek gerçek president-domain resume zincirini genişletmektir.
+Hedef:
+
+> **M30 checkpoint’inden yüklenen başkan/fan/media/vaat state’iyle 8 sezon + save/load + 12 sezon devamın kesintisiz 20 sezon president-domain sonucuyla deterministik olarak eşleşmesi.**
 
 Uzun vadeli hedef:
 
