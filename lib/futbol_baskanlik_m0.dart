@@ -141,6 +141,7 @@ export 'src/save/compact_advanced_runtime_career_engine.dart';
 export 'src/save/compact_advanced_world_save_codec.dart';
 export 'src/save/president_domain_memory_checkpoint.dart';
 export 'src/save/president_domain_memory_save_codec.dart';
+export 'src/save/president_domain_resume_engine.dart';
 export 'src/save/president_runtime_checkpoint.dart';
 export 'src/save/president_runtime_save_codec.dart';
 export 'src/save/save_checksum.dart';
