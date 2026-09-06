@@ -1,4 +1,5 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/src/facility/president_academy_investment_orchestrator.dart';
 
 void main(List<String> args) {
   final seed = args.isEmpty ? 20260903 : int.parse(args.first);
