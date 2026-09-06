@@ -18,7 +18,7 @@ Alternatif slogan:
 
 > **Hoca gider. Futbolcu gider. Borç kalır. Başkan sensin.**
 
-Başkanın alanı: ekonomi/nakit/borç, teknik direktör seçimi ve görev güvenliği, transfer stratejisi, sözleşme/maaş politikası, kiralık/taksit, taraftar güveni, medya hafızası, vaatler, seçimler ve görev süresi. Football Manager benzeri maç içi taktik yönetimi yoktur. Gerçek kulüp/futbolcu/logo/lisanslı materyal kullanılmaz.
+Başkanın alanı: ekonomi/nakit/borç, teknik direktör seçimi ve görev güvenliği, transfer stratejisi, sözleşme/maaş politikası, kiralık/taksit, taraftar güveni, medya hafızası, vaatler, seçimler, görev süresi ve tesis yatırımları. Football Manager benzeri maç içi taktik yönetimi yoktur. Gerçek kulüp/futbolcu/logo/lisanslı materyal kullanılmaz.
 
 ## 2. Geliştirme stratejisi
 
@@ -37,57 +37,55 @@ Dünya ölçeği:
 
 ## 3. CANLI DURUM — yeni sohbet buradan devam etmeli
 
-**M0–M35 PASS ve `main` üzerindedir.**
+**M0–M36 PASS ve `main` üzerindedir.**
 
-Son kapalı milestone: **M35 — Academy Runtime Youth Integration I**.
+Son kapalı milestone: **M36 — President Youth Orientation → Academy Investment Orchestration I**.
 
-M35 kapanış:
-- PR `#36` — MERGED
-- final PR HEAD: `ca72c880f68543321c5ce03d9bfe11166dd40c0e`
-- PR CI: run `34050440949`, job `101532971925` — SUCCESS
-- squash merge commit: `20fc9636ff2993eede5667365d34c722f23aadc2`
-- merge sonrası `main` CI: run `34056184347`, job `101548394932` — SUCCESS
+M36 kapanış:
+- PR `#37` — MERGED
+- final PR HEAD: `67a1996202a4fca6c6b9fc3998c18f0ac5daa1ba`
+- PR CI: run `34057110415`, job `101550909615` — SUCCESS
+- squash merge commit: `545a0c10345cbf12826c2bf615c5a5a20d2e99db`
+- merge sonrası `main` CI: run `34057573190`, job `101552160184` — SUCCESS
 - analyzer PASS
-- normal/non-canonical tests: `140` PASS
-- M0–M35 runner zinciri PASS
+- normal/non-canonical tests: `144` PASS
+- M0–M36 runner zinciri PASS
 - artifact `0`
 - CI timeout `7 dk`
 
-M35 canonical sonucu:
+M36 canonical sonucu:
 - investment checkpoint season: `8`
 - investment club: `t3_05`
-- academy level: `2`
-- baseline youth ability: `52,93`
-- upgraded youth ability: `54,13`
-- ability delta: `+1,20`
-- baseline youth potential: `69,69`
-- upgraded youth potential: `73,29`
-- potential delta: `+3,60`
+- youth orientation: `90`
+- financial discipline: `60`
+- target academy level: `5`
+- window upgrade cap: `2`
+- cash reserve: `1500 bps` (`%15`)
+- applied upgrades: `2`
+- academy level: `0 → 2`
+- investment spend: `9,00M`
 - resume sonrası tamamlanan sezon: `20`
 - youth history match: `true`
 - final checkpoint match: `true`
-- academy runtime youth integration: PASS
+- president-driven academy investment: PASS
 
-M35 kapsamı:
-- M34'te persistent olan academy facility level gerçek offseason `PlayerLifecycleEngine` akışına bağlandı
-- persisted academy level gerçek deterministic youth intake kalitesini değiştiriyor
-- ayrı/ikinci youth generator oluşturulmadı
-- academy level 0 legacy world resume davranışını birebir koruyor
-- save/load/resume youth history ve final facility/world checkpoint direct continuation ile eşleşiyor
-- mevcut custom player-lifecycle davranışı delegation ile korunuyor
-- test + canonical runner + CI gate eklendi
+M36 kapsamı:
+- `PresidentManagementProfile.youthOrientation` gerçek academy yatırım kararına bağlandı
+- düşük youth orientation daha tutucu; yüksek değer daha agresif yatırım üretir
+- tek yatırım penceresindeki upgrade sayısı profile göre sınırlandırılır
+- `financialDiscipline` korunacak nakit rezervini yükseltir
+- harcama mevcut gerçek-cash `FacilityInvestmentOrchestrator` yolunu kullanır
+- yetersiz nakitte gizli borç yaratılmaz
+- M35 facility-driven youth etkileri korunur
+- save/load/resume direct continuation ile deterministic eşleşir
+- eski/default simulation semantiği orchestration açıkça çağrılmadıkça değişmez
 
-M35 ile kapanan M34 açığı:
-- academy facility state artık yalnız save/finance verisi değil; gerçek kariyer offseason youth üretimine end-to-end etki ediyor
-
-M35'te bilinçli olarak ertelenen:
-- `youthOrientation` trait'inin persistent academy yatırım kararını otomatik sürmesi
-- stadium / training-ground facility türleri
-- Flutter/Android tesis yönetim ekranları
+M36 ile kapanan açık:
+- `youthOrientation` artık yalnız transfer adayı tercihine ve soyut academy target policy'ye etki etmiyor; gerçek persistent academy yatırım kararını da sürüyor
 
 Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 
-## 4. Save/runtime zinciri
+## 4. Save/runtime/facility zinciri
 
 ### M25 — Save/Load + Versioning I — PASS
 - temel checkpoint
@@ -164,6 +162,14 @@ Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 - save/load/resume youth history direct continuation ile eşleşir
 - final facility/world checkpoint eşleşir
 
+### M36 — President Youth Orientation → Academy Investment Orchestration I — PASS
+- `youthOrientation` → gerçek academy target + yatırım yoğunluğu
+- yüksek youth profile aynı kulüpte daha agresif upgrade yapar
+- `financialDiscipline` protected cash reserve üretir
+- gerçek cash/affordability yolu korunur
+- canonical academy `0 → 2`, spend `9,00M`
+- save/load/resume youth history + final checkpoint eşleşir
+
 Ayrıntı:
 - `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
 - `M30_FAN_MEDIA_PROMISE_RUNTIME_MEMORY_SNAPSHOT_I.md`
@@ -171,6 +177,7 @@ Ayrıntı:
 - `M32_LONG_CAREER_SAVE_GROWTH_RESUME_STRESS_I.md`
 - `M34_FACILITY_PERSISTENCE_FINANCE_ORCHESTRATION_I.md`
 - `M35_ACADEMY_RUNTIME_YOUTH_INTEGRATION_I.md`
+- `M36_PRESIDENT_YOUTH_ACADEMY_INVESTMENT_ORCHESTRATION_I.md`
 
 ## 5. Başkan trait durumu
 
@@ -179,12 +186,10 @@ Beş trait gerçek davranışa bağlıdır:
 | Trait | Gerçek etki | Milestone |
 |---|---|---|
 | `managerPatience` | manager dismissal threshold | M18 |
-| `financialDiscipline` | transfer affordability/budget | M20 |
+| `financialDiscipline` | transfer affordability/budget + academy cash reserve | M20 + M36 |
 | `transferAmbition` | completed transfer slots | M21 |
 | `riskAppetite` | buyer max-bid ceiling | M23 |
-| `youthOrientation` | youth/potential candidate preference + academy target policy | M24 + M33 |
-
-Not: academy target policy vardır; bu target'ın gerçek persistent yatırım kararına otomatik uygulanması henüz yapılmamıştır.
+| `youthOrientation` | youth/potential candidate preference + academy target + gerçek academy yatırım yoğunluğu | M24 + M33 + M36 |
 
 ## 6. Milestone geçmişi — kısa
 
@@ -224,6 +229,7 @@ Not: academy target policy vardır; bu target'ın gerçek persistent yatırım k
 - M33 Facilities / Academy Investment Core I — PASS
 - M34 Facility Persistence / Finance Orchestration I — PASS
 - M35 Academy Runtime Youth Integration I — PASS
+- M36 President Youth Orientation → Academy Investment Orchestration I — PASS
 
 ## 7. Kalıcı teknik kurallar
 
@@ -247,6 +253,8 @@ Not: academy target policy vardır; bu target'ın gerçek persistent yatırım k
 - facility yatırımı gerçek cash ile finanse edilir; yetersiz nakitte gizli borç yaratılmaz
 - persistent academy level gerçek offseason youth generation'a etki eder
 - facility-aware continuation ayrı bir youth generator kurmaz; mevcut lifecycle davranışını delegate eder
+- president academy investment gerçek facility finance path'ini kullanır
+- `financialDiscipline` academy investment sırasında protected cash reserve üretir
 - PASS yalnız canlı CI kanıtıyla yazılır
 - artifact hedefi `0`
 - `actions/upload-artifact` kullanılmaz
@@ -270,14 +278,16 @@ Ana workflow:
 - M33 facilities / academy investment core
 - M34 facility persistence / finance orchestration
 - M35 academy runtime youth integration
+- M36 president youth academy investment orchestration
 
 ## 9. Açık teknik borç / sıradaki yön
 
-World + advanced runtime + president domain için 20 sezon split-career continuation ve 30 sezon multi-checkpoint stress kanıtı vardır. Save büyümesi bounded kalır. Academy facility artık gerçek persistent state'tir, gerçek kulüp kasasından finanse edilir ve gerçek offseason youth intake kalitesini değiştirir. Save/load/resume sonrası youth history deterministik olarak korunur.
+World + advanced runtime + president domain için 20 sezon split-career continuation ve 30 sezon multi-checkpoint stress kanıtı vardır. Save büyümesi bounded kalır. Academy facility artık gerçek persistent state'tir, gerçek kulüp kasasından finanse edilir, gerçek offseason youth intake kalitesini değiştirir ve başkanın `youthOrientation` + `financialDiscipline` profiline göre gerçek yatırım kararı üretebilir.
 
 Açık konular:
 - Android file system / save-slot UI / autosave / backup / cloud save daha sonra
-- `youthOrientation` henüz academy yatırımını gerçek persistent kariyerde otomatik tetiklemiyor
+- academy investment orchestration şu an explicit yatırım penceresinde çalışır; tam sezonluk/periodik president facility decision loop henüz yok
+- başkan değişiminde yeni profile göre academy yatırım yönünün otomatik yeniden planlanması henüz end-to-end kanıtlanmadı
 - stadium / training-ground facility türleri henüz yok
 - sponsor ve kriz sistemleri henüz çekirdek milestone olarak uygulanmadı
 - seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
@@ -285,8 +295,8 @@ Açık konular:
 
 Sıradaki mantıklı yön:
 
-> **M36 adayı — President Youth Orientation → Academy Investment Orchestration I**
+> **M37 adayı — President Facility Decision Loop / Turnover Replanning I**
 
 Hedef:
 
-> **Başkanın `youthOrientation` trait'inden çıkan academy target level'i gerçek persistent facility yatırım kararına bağlamak; yatırım gerçek nakit/affordability kurallarına uymalı, başkan değişimlerinde yeni profile göre yön değiştirebilmeli ve save/load/resume sonrası kesintisiz kariyerle deterministik eşit kalmalıdır.**
+> **Academy yatırım kararını tek explicit checkpoint'ten çıkarıp başkan görev süresi boyunca sezonluk/periodik facility decision loop'a bağlamak; başkan değişiminde yeni profile göre hedef ve yatırım yoğunluğunu yeniden planlamak; tüm bunların save/load/resume ve multi-president kariyerde deterministik olarak korunmasını kanıtlamak.**
