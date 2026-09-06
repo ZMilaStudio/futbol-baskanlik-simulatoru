@@ -106,3 +106,6 @@ jobs:
 
       - name: Run M28 save history compaction
         run: dart run tool/run_m28_save_history_compaction.dart 20260903
+
+      - name: Run M29 president runtime snapshot
+        run: dart run tool/run_m29_president_runtime_snapshot.dart 20260903
