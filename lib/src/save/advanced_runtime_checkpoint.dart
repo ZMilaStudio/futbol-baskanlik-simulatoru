@@ -162,14 +162,31 @@ class ManagerRuntimeState {
       throw ArgumentError('Manager state must assign every club exactly once.');
     }
 
-    if (seasons.length != world.completedSeasons) {
+    final initialSeasonIndex = world.config.seasonIndex;
+    final fullHistoryRequired = world.completedSeasons <= 20;
+    if (fullHistoryRequired && seasons.length != world.completedSeasons) {
       throw ArgumentError(
-        'Manager history must contain one entry per completed season.',
+        'Manager history must contain one entry per completed season through season 20.',
       );
     }
+    if (!fullHistoryRequired && seasons.isEmpty) {
+      throw ArgumentError('Long-career manager history must retain a non-empty suffix.');
+    }
+    final historyStartSeasonIndex = seasons.isEmpty
+        ? world.nextSeasonIndex
+        : seasons.first.seasonIndex;
+    if (historyStartSeasonIndex < initialSeasonIndex ||
+        historyStartSeasonIndex > world.nextSeasonIndex ||
+        seasons.length != world.nextSeasonIndex - historyStartSeasonIndex) {
+      throw ArgumentError('Manager history must be a contiguous completed-season suffix.');
+    }
+    if (fullHistoryRequired && historyStartSeasonIndex != initialSeasonIndex) {
+      throw ArgumentError('Manager history cannot be compacted through season 20.');
+    }
+
     for (var index = 0; index < seasons.length; index++) {
       final season = seasons[index];
-      final expectedIndex = world.config.seasonIndex + index;
+      final expectedIndex = historyStartSeasonIndex + index;
       if (season.seasonIndex != expectedIndex || season.clubs.length != 48) {
         throw ArgumentError('Invalid manager season ${season.seasonIndex}.');
       }
