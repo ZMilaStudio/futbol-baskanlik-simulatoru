@@ -4,7 +4,7 @@ Son güncelleme: 6 Eylül 2026
 
 ## 1. Proje kimliği
 
-ZMila Studio için geliştirilen tam kapsamlı Android mobil futbol kulübü başkanlığı simülasyonu.
+ZMila Studio için geliştirilen Android futbol kulübü başkanlığı simülasyonu.
 
 Değişmez ana kimlik:
 
@@ -18,299 +18,21 @@ Alternatif slogan:
 
 > **Hoca gider. Futbolcu gider. Borç kalır. Başkan sensin.**
 
-Başkanın ana sorumlulukları:
+Başkanın alanı: ekonomi/nakit/borç, teknik direktör seçimi ve görev güvenliği, transfer stratejisi, sözleşme/maaş politikası, kiralık/taksit, taraftar güveni, medya hafızası, vaatler, seçimler ve görev süresi. İlerleyen aşamalarda altyapı, tesis, sponsor ve krizler eklenecek.
 
-- ekonomi, nakit ve borç
-- teknik direktör seçimi ve görev güvenliği
-- transfer stratejisi
-- sözleşme/maaş politikası
-- kiralık/taksit seçenekleri
-- taraftar beklentisi ve güveni
-- medya açıklamaları ve hafıza
-- başkan vaatleri
-- başkanlık seçimleri ve görev süresi
-- ilerleyen aşamalarda altyapı, tesis, sponsor ve krizler
-- uzun vadeli kulüp sağlığı
-
-Football Manager benzeri maç içi taktik yönetimi yapılmaz. Oyuncu diziliş, antrenman, dakika bazlı oyuncu değişikliği veya duran top planlamaz.
-
-Gerçek kulüp, futbolcu, logo veya lisanslı materyal kullanılmaz.
+Football Manager benzeri maç içi taktik yönetimi yoktur. Gerçek kulüp/futbolcu/logo/lisanslı materyal kullanılmaz.
 
 ## 2. Geliştirme stratejisi
 
-Şu aşamada görsel ekran veya APK ana hedef değildir.
+Öncelik görsel ekran veya APK değil; önce deterministik, headless ve uzun kariyerde otomatik test edilebilir saf Dart simülasyon çekirdeğidir. Flutter mobil kabuk daha sonra gelir.
 
-> **Önce sağlam, deterministik, uzun kariyerde otomatik test edilebilir simülasyon çekirdeği.**
+Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
 
-Repo:
+Repo public; açık kaynak lisansı yoktur (`LICENSE.md`).
 
-`ZMilaStudio/futbol-baskanlik-simulatoru`
-
-Repo public tutulur; kaynak kod açık kaynak lisansı altında değildir (`LICENSE.md`).
-
-Saf Dart simülasyon çekirdeği önce tamamlanır; Flutter mobil kabuk daha sonra gelir.
-
-Codex gereksiz tüketilmez. Büyük çok-dosyalı refactor/test/migration işlerinde gerekirse kullanılır; çekirdek milestone'ların önemli bölümü doğrudan GitHub araçlarıyla yürütülür.
-
-## 3. CANLI DURUM — yeni sohbet buradan devam etmeli
-
-**M0–M28 PASS ve `main` üzerindedir.**
-
-M28 PR:
-
-- PR `#29` — MERGED
-- squash merge commit: `8fb9846c70b438641521a4023068a5a707d0ea38`
-- merge sonrası `main` CI: run `33998088249`
-- job `101392009597`
-- workflow conclusion: **SUCCESS**
-- analyzer PASS
-- normal/non-canonical tests PASS
-- M0–M18 runner zinciri PASS
-- combined M19–M24 canonical profile feedback PASS
-- M25 save/load continuation PASS
-- M26 world save continuation PASS
-- M27 advanced runtime save continuation PASS
-- M28 save history compaction PASS
-- artifact `0`
-- CI timeout `7 dk`
-
-Aktif durum:
-
-> **M28 tamamen kapandı. Sıradaki teknik milestone M29 için hazırlık yapılabilir.**
-
-M28 canonical sonuçları:
-
-- M27 season-8 full save: `1.013.092 bytes`
-- M28 season-8 compact save: `736.274 bytes`
-- azalma: `%27,3`
-- M28 season-20 compact save: `915.648 bytes`
-- 8 sezon save/load + 12 sezon resume: kesintisiz 20 sezonla birebir PASS
-- final compact checkpoint: birebir PASS
-
-Ayrıntılı eski sohbet devri:
-
-`SOHBET_DEVRI_2026-09-05_M28.md`
-
-Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
-
-## 4. Son kapalı milestone — M28
-
-### M28 — Save History Compaction / Historical Memory Policy I — PASS
-
-M27 correctness temelini değiştirmeden append-only advanced runtime history'nin save boyutunu sınırlayan ayrı compact save katmanı eklendi.
-
-Eklenen ana parçalar:
-
-- `AdvancedHistorySummary`
-- `CompactAdvancedRuntimeCheckpoint`
-- `AdvancedRuntimeHistoryCompactor`
-- `CompactAdvancedRuntimeCareerEngine`
-- `CompactAdvancedWorldSaveCodec`
-- `test/m28_save_history_compaction_test.dart`
-- `tool/run_m28_save_history_compaction.dart`
-- workflow M28 runner adımı
-
-Uygulanan policy:
-
-- son `2` sezonun contract/loan ham history detayı tutulur
-- bütün kariyer için all-time aggregate summary tutulur
-- active contract/loan/installment ve current manager state eksiksiz tutulur
-- active loan detayı yaşından bağımsız korunur
-- M27 strict manager full-history checkpoint invariantı korunur
-- M27 `AdvancedWorldSaveCodec` geriye uyumlu kalır
-- compact codec canonical JSON, checksum, explicit failure code ve v0→v1 migration sağlar
-
-Compact save formatı:
-
-`zmila-fbs-advanced-world-compact`
-
-Save version:
-
-`1`
-
-İlk gerçek M28 failure:
-
-- run `33962416197`
-- job `101296509828`
-- resume boundary'deki opening transfer history ikinci kez all-time summary'ye ekleniyordu
-- overcount: contract event `+380`, loan `+23`
-
-Düzeltme:
-
-- commit `f2a3cc4bf8b6ca0d516ca3ab7c94e9817c6db5fb`
-- contract/loan resume delta sınırı exclusive (`>`) yapıldı
-- manager completed-season aralığı doğru olarak inclusive (`>=`) bırakıldı
-
-Tam zincir 5 dakikalık limite dayandığı için timeout:
-
-- commit `ac3f32c79e2b4053743ecd98e41f18b1b51dc71c`
-- `7 dk`
-
-Final PR HEAD:
-
-`433a5caf168bf92bdbe474efa0d8c0ba46263a04`
-
-Final PR CI:
-
-- run `33997254719`
-- job `101389831400`
-- PASS
-- artifact `0`
-
-Squash merge:
-
-`8fb9846c70b438641521a4023068a5a707d0ea38`
-
-Merge sonrası `main` kapanış CI:
-
-- run `33998088249`
-- job `101392009597`
-- PASS
-- M0–M28 tüm adımlar PASS
-- artifact `0`
-
-## 5. M28 kabul kriterleri — PASS
-
-- continuation-critical state açık sınıflandırıldı — PASS
-- history compact/archive policy tanımlandı — PASS
-- compact save → load → resume deterministic eşitlik — PASS
-- aktif contract/loan/installment/manager state korunumu — PASS
-- yakın dönem ham kullanıcı tarihçesi — PASS
-- eski dönem all-time summary sözleşmesi — PASS
-- canonical save boyutu ölçümü — PASS
-- season-8 `< 750.000 bytes` ve `>%25` küçülme guard'ı — PASS
-- save version/migration/checksum güvenliği — PASS
-- M0–M27 baseline — PASS
-- analyzer — PASS
-- normal tests — PASS
-- M0–M28 runners — PASS
-- artifact — `0`
-- timeout — gerçek zincire uygun `7 dk`
-
-M28 kapsamı değildir:
-
-- Android file picker
-- cloud save
-- save-slot UI
-- encryption / anti-cheat
-
-## 6. M27 — Advanced World Runtime Snapshot I — PASS
-
-M27, M26 core world state'ini gerçek hook/controller-owned sezonlar-arası state'e genişletti.
-
-Yeni çekirdek:
-
-- `AdvancedRuntimeCheckpoint`
-- `AdvancedTransferRuntimeState`
-- `ManagerRuntimeState`
-- `AdvancedRuntimeSimulationResult`
-- `AdvancedRuntimeCareerEngine`
-- `AdvancedWorldSaveCodec`
-- `PlayerContractController.restore(...)`
-- `AdvancedTransferController.restore(...)`
-- `ManagerCareerController.restore(...)`
-
-Snapshot state:
-
-- nested M26 `WorldCheckpoint`
-- active contracts
-- contract event history
-- active loans
-- loan history
-- installment obligations
-- manager pool
-- 48 current manager assignment
-- manager season history
-
-Checkpoint yalnız temiz sezon sınırında üretilir; manager `_pending` state'i save'e yazılmaz ve restore sonrası boş başlar.
-
-`AdvancedWorldSaveCodec`:
-
-- format `zmila-fbs-advanced-world`
-- save version `1`
-- nested `WorldSaveCodec`
-- canonical JSON
-- FNV-1a corruption checksum
-- future version rejection
-- checksum-valid structural corruption rejection
-- sentetik `v0 → v1` migration
-
-Canonical seed `20260903`:
-
-`20 sezon advanced runtime` ile `8 sezon → save → load → 12 sezon resume` birebir eşittir.
-
-M27 canonical runner:
-
-- checksum `49e9d08e`
-- save boyutu `1.013.092 bytes`
-- split `8 + 12`
-- loaded next season index `8`
-- season replay match `true`
-- final runtime checkpoint match `true`
-- active contracts `897`
-- contract events `3496`
-- active loans `23`
-- loan history `186`
-- installment obligations `36`
-- manager pool `96`
-- manager assignments `48`
-- manager seasons `8`
-- legacy fixture `v0 → v1`
-
-M27 final PR CI:
-
-`33933550850` — PASS
-
-M27 squash merge:
-
-`46e52be2b65910f200b4dee85647d1ae982b5d94`
-
-Merge sonrası `main` CI:
-
-`33933781498` — PASS
-
-Canonical kapanış docs CI:
-
-`33944395011` — PASS
-
-Tüm kapanış doğrulamalarında artifact `0`.
-
-Ayrıntı:
-
-`M27_ADVANCED_WORLD_RUNTIME_SNAPSHOT_I.md`
-
-## 7. Teknik mimari ve kalıcı kurallar
-
-- saf Dart simülasyon çekirdeği
-- Flutter shell daha sonra
-- deterministik seed/replay
-- cihaz saatinden bağımsız `GameDate`
-- integer minor-unit `Money`
-- headless runner + invariant/balance guard
-- profile feedback için deterministic fixed-point replay
-- convergence/cycle kontrolü
-- neutral trait eski davranışı korur
-- checkpoint save bir sonraki sezonun opening state'idir
-- save version açık olmalıdır
-- unsupported future version güvenli reddedilmelidir
-- migration fixture/test zorunludur
-- checksum accidental corruption detection içindir; kriptografik güvenlik değildir
-- state sahipliği farklı controller/hook katmanlarında ise tek milestone'a zorla yığılmaz
-- eski public simülasyon API semantiği save uğruna sessizce değişmez
-- continuation-critical state ile append-only historical state aynı kabul edilmez
-- yeni historical subsystem eklenmeden önce uzun kariyer save büyümesi ölçülür
-- canlı GitHub durumu eski sohbet notlarından üstündür
-- PASS yalnız canlı CI kanıtıyla yazılır
-- aynı canonical full-career hesaplar gereksiz tekrar edilmez
-- artifact hedefi `0`
-- `actions/upload-artifact` kullanılmaz
-
-Canonical kariyer seed'i:
-
-`20260903`
+Canonical seed: `20260903`
 
 Dünya ölçeği:
-
 - 48 özgün kulüp
 - 3 lig × 16 kulüp
 - 720 lig maçı / sezon
@@ -321,92 +43,170 @@ Dünya ölçeği:
 - oyuncu yaşam döngüsü
 - kontrat
 - transfer
-- manager
+- teknik direktör
 - taraftar
 - medya
 - vaat
 - seçim
 - başkan profili
 
-## 8. Milestone geçmişi — özet
+## 3. CANLI DURUM — yeni sohbet buradan devam etmeli
 
-### M0 — Deterministik sezon çekirdeği — PASS
-Lig/fixture/match simülasyonu, deterministic replay, 100 sezon batch invariant.
+**M0–M29 PASS ve `main` üzerindedir.**
 
-### M1 — 20 sezon kariyer — PASS
-Ardışık sezon kariyeri, custom başlangıç sezonu/tarih.
+Son kapalı milestone: **M29 — President Runtime Snapshot I**.
 
-### M2 — Oyuncu yaşam döngüsü — PASS
-Yaşlanma, emeklilik, genç oyuncu üretimi, uzun vadeli kadro devamlılığı.
+M29 PR:
+- PR `#30` — MERGED
+- final PR HEAD: `8c1de528e0d7ef6d3671e0e71064b03bc1c9802e`
+- squash merge commit: `467689aa29e4805dcd93f9448cc7a1c21ba8e8d1`
+- final PR CI: run `33999480197`, job `101395663903` — SUCCESS
+- merge sonrası `main` CI: run `34027200080`, job `101470178756` — SUCCESS
+- analyzer PASS
+- normal/non-canonical tests: `118` PASS
+- M0–M18 runner zinciri PASS
+- combined M19–M24 canonical profile feedback PASS
+- M25 save/load PASS
+- M26 world snapshot PASS
+- M27 advanced runtime snapshot PASS
+- M28 save history compaction PASS
+- M29 president runtime snapshot PASS
+- artifact `0`
+- CI timeout `7 dk`
 
-### M3 — Ekonomi — PASS
-Exact `Money`, gelir/gider, nakit/borç/financial health, emergency borrowing.
+M29 canonical ölçümü:
+- completed seasons: `8`
+- next season index: `8`
+- president club states: `48`
+- completed election terms: `2`
+- term offset: `0`
+- M28 compact save: `736.274 bytes`
+- M29 president save: `754.721 bytes`
+- president-state overhead: `18.447 bytes`
+- codec round-trip: PASS
 
-### M4 — Transfer pazarı — PASS
-Market value, buyer/seller mantığı, ihtiyaç, teklif/ask pazarlığı.
+Aktif teknik yön:
 
-### M5 — 48 kulüp / 3 lig world — PASS
-3×16 lig, 20 sezon world simulation, terfi/düşme, ortak ekonomi/transfer ölçeği.
+> **M29 kapandı. Sıradaki mantıklı save milestone'u fan/media/promise continuation memory katmanıdır.**
 
-### M6 — Teknik direktör sistemi — PASS
-Deterministik manager pool, manager profilleri, dismissal/retirement, manager strength impact.
+Önemli sınır: M29, current president/tenure/profile/reputation/election-cursor state'ini saklar; ayrıntılı fan/media/promise geçmişini henüz resumable yapmaz. Bu nedenle M29 tek başına tam president-domain 8+12 continuation iddiası taşımaz.
 
-### M7 — Oyuncu sözleşmesi + gerçek maaş — PASS
-Contract lifecycle, wage bill, renewal/release/free-agent signing, transfer sonrası yeni kontrat.
+Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 
-### M8 — Kiralık + taksit — PASS
-Loan fee, wage share, parent contract korunumu, auto-return, installments.
+## 4. M29 — President Runtime Snapshot I — PASS
 
-### M9 — Taraftar beklentisi + güven — PASS
-Sporting / financial / transfer / identity trust ve reason codes.
+M28 compact advanced runtime üzerine continuation-critical başkan state'i eklendi.
 
-### M10 — Medya hafızası — PASS
-Statements, stance, credibility, contradiction memory.
+Ana parçalar:
+- `PresidentClubRuntimeState`
+- `PresidentRuntimeCheckpoint`
+- `PresidentRuntimeSaveCodec`
+- `test/m29_president_runtime_snapshot_test.dart`
+- `tool/run_m29_president_runtime_snapshot.dart`
+- workflow M29 runner adımı
 
-### M11 — Başkan vaatleri — PASS
-Preseason promise üretimi ve fulfilled/partial/broken çözümü.
+Checkpoint state:
+- nested M28 compact advanced runtime
+- her 48 kulüp için current `PresidentTenureState`
+- current `PresidentManagementProfile`
+- current fan reputation skorları
+- current media credibility
+- election cursor: `electionInterval`, `completedElectionTerms`, `seasonsIntoCurrentTerm`
 
-### M12 — Vaat → taraftar güveni — PASS
-Promise sonucu trust katmanına kontrollü etki eder.
+Codec:
+- format `zmila-fbs-president-runtime`
+- save version `1`
+- canonical JSON
+- FNV-1a checksum
+- unsupported future version rejection
+- sentetik `v0 → v1` migration
+- checksum corruption rejection
+- structural validation
 
-### M13 — Vaat → medya güvenilirliği — PASS
-Promise sonucu media credibility'ye kontrollü etki eder.
+M29 sırasında bulunan gerçek save-size sorunu:
+- ilk tasarım M28 JSON save'ini M29 payload içinde string olarak tekrar JSON'a gömüyordu
+- bu double-encoding nedeniyle overhead `222.895 bytes` oldu ve `<50.000` guard'ı kırıldı
+- eşik gevşetilmedi
+- nested M28 save doğrudan JSON object olarak saklandı
+- düzeltme commit'i: `8c1de528e0d7ef6d3671e0e71064b03bc1c9802e`
+- gerçek overhead `18.447 bytes` oldu
 
-### M14 — Başkanlık seçimi I — PASS
-4 sezonda bir deterministik election.
+M29 kabul kriterleri:
+- 48 current president state — PASS
+- deterministic election cursor — PASS
+- current management profile preservation — PASS
+- current fan/media reputation preservation — PASS
+- deterministic encode/decode round-trip — PASS
+- checksum corruption rejection — PASS
+- future version rejection — PASS
+- v0→v1 migration — PASS
+- M29 overhead `<50.000 bytes` — PASS
+- analyzer — PASS
+- normal tests — PASS
+- M0–M29 runners — PASS
+- artifact — `0`
 
-### M15 — Başkan görev süresi + devir — PASS
-Reelection/incumbent ve election loss/turnover gerçek president profile üretir.
+Ayrıntı: `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
 
-### M16 — Başkan devrinde kişisel itibar — PASS
-Kurumsal trust korunur; kişisel reputation kontrollü nötre yaklaşır.
+## 5. Save/runtime zinciri
 
-### M17 — Başkan yönetim profili — PASS
-6 archetype + 5 trait.
+### M25 — Save/Load + Kayıt Versiyonlama I — PASS
+- temel `CareerCheckpoint`
+- canonical JSON / checksum / versioning / migration
+- canonical save `1.039 bytes`
+- `8 + 12 == 20`
+- squash `c46d5fc99655476f389de82d861ce7a5e6a93aec`
 
-### M18 — Manager patience → dismissal threshold — PASS
-İlk davranış bağlı trait.
+### M26 — World Save Snapshot I — PASS
+- 48 base club
+- 3×16 next-season league membership
+- players + finance + config
+- canonical save `187.664 bytes`
+- `8 + 12 == 20`
+- squash `c721588f998f5d29495c8074d956e48e306a1dc8`
 
-### M19 — Manager/world ↔ election fixed-point — PASS
-President timeline ile world/election deterministic feedback loop.
+### M27 — Advanced World Runtime Snapshot I — PASS
+- active contracts
+- contract history
+- loans + loan history
+- installments
+- manager pool/assignments/history
+- canonical save `1.013.092 bytes`
+- `8 + 12 == 20`
+- squash `46e52be2b65910f200b4dee85647d1ae982b5d94`
 
-### M20 — Financial discipline → transfer affordability — PASS
-Trait yalnız budget/affordability alanına bağlandı.
+### M28 — Save History Compaction / Historical Memory Policy I — PASS
+- son 2 sezon contract/loan raw detail
+- all-time aggregate history summary
+- active state eksiksiz
+- season-8 `1.013.092 → 736.274 bytes`
+- küçülme `%27,3`
+- season-20 compact `915.648 bytes`
+- `8 + 12 == 20`
+- squash `8fb9846c70b438641521a4023068a5a707d0ea38`
 
-### M21 — Transfer ambition → aktivite — PASS
-Trait completed transfer slot sayısını etkiler.
+### M29 — President Runtime Snapshot I — PASS
+- current president tenure/profile/reputation/election cursor
+- 48 club state
+- season-8 `754.721 bytes`
+- M28 üzerine `18.447 bytes` overhead
+- squash `467689aa29e4805dcd93f9448cc7a1c21ba8e8d1`
 
-### M22 — Profile Feedback Orchestration I — PASS
-Canonical duplicate computation azaltıldı; CI yaklaşık 6+ dakikadan ~3 dakika bandına çekildi.
+## 6. Başkan trait durumu
 
-### M23 — Risk appetite → buyer max-bid ceiling — PASS
-Causal invariant: low risk < neutral < high risk max bid.
+Beş trait'in tamamı gerçek davranışa bağlıdır:
 
-### M24 — Youth orientation → genç/potansiyel transfer tercihi — PASS
-Son davranışsız trait gerçek candidate scoring kararına bağlandı.
+| Trait | Gerçek etki | Milestone |
+|---|---|---|
+| `managerPatience` | manager dismissal threshold | M18 |
+| `financialDiscipline` | transfer affordability/budget | M20 |
+| `transferAmbition` | completed transfer slots | M21 |
+| `riskAppetite` | buyer max-bid ceiling | M23 |
+| `youthOrientation` | youth/potential candidate preference | M24 |
+
+M25–M29 yeni trait davranışı eklemez; save/runtime güvenilirliği üzerinde çalışır.
 
 Canonical M24 seed `20260903`:
-
 - convergence `4`
 - cycle `false`
 - elections `240`
@@ -421,147 +221,100 @@ Canonical M24 seed `20260903`:
 - emergency `144,39M`
 - validation `0`
 
-M24 squash merge:
+## 7. Milestone geçmişi — kısa
 
-`cfdca8f63dfa6c91fd2432031e0e2c34a8101a06`
+- M0 Deterministik sezon çekirdeği — PASS
+- M1 20 sezon kariyer — PASS
+- M2 Oyuncu yaşam döngüsü — PASS
+- M3 Ekonomi — PASS
+- M4 Transfer pazarı — PASS
+- M5 48 kulüp / 3 lig world — PASS
+- M6 Teknik direktör sistemi — PASS
+- M7 Oyuncu sözleşmesi + maaş — PASS
+- M8 Kiralık + taksit — PASS
+- M9 Taraftar beklentisi + güven — PASS
+- M10 Medya hafızası — PASS
+- M11 Başkan vaatleri — PASS
+- M12 Vaat → taraftar güveni — PASS
+- M13 Vaat → medya güvenilirliği — PASS
+- M14 Başkanlık seçimi — PASS
+- M15 Başkan görev süresi + devir — PASS
+- M16 Başkan devrinde kişisel itibar — PASS
+- M17 Başkan yönetim profili — PASS
+- M18 Manager patience feedback — PASS
+- M19 Manager/world ↔ election fixed-point — PASS
+- M20 Financial discipline feedback — PASS
+- M21 Transfer ambition feedback — PASS
+- M22 Profile feedback orchestration — PASS
+- M23 Risk appetite feedback — PASS
+- M24 Youth orientation feedback — PASS
+- M25 temel save/load — PASS
+- M26 world snapshot — PASS
+- M27 advanced runtime snapshot — PASS
+- M28 history compaction — PASS
+- M29 president runtime snapshot — PASS
 
-### M25 — Save/Load + Kayıt Versiyonlama I — PASS
+## 8. Kalıcı teknik kurallar
 
-- `CareerCheckpoint`
-- `CareerSimulationResult`
-- `simulateWithCheckpoint`
-- `resume`
-- `CareerSaveCodec`
-- save version `1`
-- canonical JSON
-- FNV-1a checksum
-- explicit failures
-- v0→v1 migration
+- deterministic seed/replay
+- cihaz saatinden bağımsız `GameDate`
+- integer minor-unit `Money`
+- headless runner + invariant/balance guard
+- deterministic fixed-point profile feedback
+- convergence/cycle detection
+- neutral trait eski davranışı korur
+- checkpoint bir sonraki sezonun opening state'idir
+- explicit save version + migration + checksum
+- unsupported future version güvenli reddedilir
+- migration fixture/test zorunludur
+- eski public simulation semantiği save uğruna sessizce değişmez
+- farklı controller-owned state tek milestone'a zorla yığılmaz
+- continuation-critical state ile append-only historical state ayrılır
+- historical state eklenmeden önce save büyümesi ölçülür
+- PASS yalnız canlı CI kanıtıyla yazılır
+- artifact hedefi `0`
+- `actions/upload-artifact` kullanılmaz
+- CI timeout `7 dk`
 
-Canonical:
+## 9. CI politikası
 
-- checksum `536de64d`
-- save `1039 bytes`
-- next season index `8`
-- next date `2034-07-01`
-- `8 + 12 == 20`
-
-Squash merge:
-
-`c46d5fc99655476f389de82d861ce7a5e6a93aec`
-
-### M26 — World Save Snapshot I — PASS
-
-Core world checkpoint:
-
-- config
-- 48 base clubs
-- 3×16 next-season league membership
-- next-season players
-- 48 finance states
-
-Canonical:
-
-- checksum `0645c8a5`
-- save `187.664 bytes`
-- `8 + 12 == 20`
-
-Squash merge:
-
-`c721588f998f5d29495c8074d956e48e306a1dc8`
-
-### M27 — Advanced World Runtime Snapshot I — PASS
-Detayı bu dosyanın 6. bölümündedir.
-
-### M28 — Save History Compaction / Historical Memory Policy I — PASS
-
-- compact advanced checkpoint + codec
-- son iki sezon contract/loan detayı
-- all-time aggregate history summary
-- season-8 save `1.013.092 → 736.274 bytes`
-- 8+12 deterministic continuation PASS
-- PR #29 squash merge `8fb9846c70b438641521a4023068a5a707d0ea38`
-- merge sonrası main run `33998088249` PASS
-- artifact `0`
-
-## 9. Başkan trait durumu
-
-Beş trait'in tamamı gerçek davranışa bağlıdır:
-
-| Trait | Gerçek etki | Milestone |
-|---|---|---|
-| `managerPatience` | manager dismissal threshold | M18 |
-| `financialDiscipline` | transfer affordability/budget | M20 |
-| `transferAmbition` | completed transfer slots | M21 |
-| `riskAppetite` | buyer max-bid ceiling | M23 |
-| `youthOrientation` | youth/potential candidate preference | M24 |
-
-M25–M28 yeni trait davranışı eklemiyor; save/runtime güvenilirliği üzerinde çalışıyor.
-
-## 10. CI politikası
-
-Workflow ana zinciri:
-
+Ana workflow:
 - `dart analyze`
 - `dart test --exclude-tags canonical-feedback`
-- M0 100-season batch
-- M1–M18 ayrı headless runner
-- tek en yeni profile-feedback runner ile nested M19–M24 canonical guards
-- M25 save/load runner
-- M26 world save runner
-- M27 advanced runtime save runner
-- M28 save history compaction runner
+- M0–M18 headless runner zinciri
+- tek combined M19–M24 canonical profile-feedback runner
+- M25 save/load
+- M26 world save
+- M27 advanced runtime save
+- M28 history compaction
+- M29 president runtime snapshot
 
 Current profile runner:
-
 `tool/run_m24_president_youth_orientation_feedback.dart 20260903`
 
-Save runners:
-
+Save/runtime runners:
 - `tool/run_m25_save_load.dart 20260903`
 - `tool/run_m26_world_save.dart 20260903`
 - `tool/run_m27_advanced_runtime_save.dart 20260903`
 - `tool/run_m28_save_history_compaction.dart 20260903`
+- `tool/run_m29_president_runtime_snapshot.dart 20260903`
 
-Kurallar:
+## 10. Açık teknik borç / sıradaki yön
 
-- artifact `0`
-- `actions/upload-artifact` yok
-- timeout `7 dk`
-- duplicate canonical full-career koşuları yok
-- save/load resume uninterrupted career ile aynı deterministic sonucu verir
-- future save version güvenli reddedilir
-- migration fixture test edilir
-- checksum-valid structural corruption validator tarafından reddedilir
-- checkpoint eklenirken eski public simulation semantiği korunur
-- save boyutu ayrıca ölçülür
+- fan/media/promise historical/resumable memory henüz save kapsamında değil
+- M29 current reputation skorlarını taşır ama detailed memory continuation sağlamaz
+- M28 manager season history M27 strict invariantı nedeniyle hâlen tam tutulur
+- Android file system / save-slot UI / autosave / backup / cloud save daha sonra
+- tesis yatırımının youth intake kalitesine etkisi henüz yok
+- sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı
+- seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
 
-## 11. Açık teknik borçlar
+Sıradaki mantıklı milestone:
 
-- M19+ literal single-pass orchestration değil; fixed-point replay.
-- President/reputation/election runtime state henüz save kapsamında değil.
-- Fan/media/promise runtime memory henüz save kapsamında değil.
-- M28 manager season history, M27 strict invariantı nedeniyle halen tam tutulur; 20-sezon compact save `915.648 bytes` olduğundan ileride current manager state/history ayrımı ayrıca optimize edilebilir.
-- Android file system / save-slot UI / cloud save daha sonra.
-- Autosave/yedek slot politikası henüz platforma bağlanmadı.
-- Tesis yatırımının youth intake kalitesine etkisi henüz yok.
-- Sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı.
-- Seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok.
+> **M30 adayı — Fan / Media / Promise Runtime Memory Snapshot I**
 
-## 12. Uzun vadeli teknik yön
-
-Save zinciri:
-
-- M25: temel `CareerEngine` checkpoint — PASS
-- M26: core `WorldCareerEngine` checkpoint — PASS
-- M27: contract/loan/installment/manager runtime checkpoint — PASS
-- M28: save history compaction + historical memory policy — PASS
-- M29 adayı: president/reputation/election runtime snapshot
-- sonraki katman: fan/media/promise memory snapshot
-- daha sonra platform save slotları, autosave/yedek policy ve gerekirse cloud save
+Amaç, M29'un sakladığı current president/reputation state'in arkasındaki continuation-critical fan/media/promise memory'yi deterministik ve migration-safe biçimde snapshot ederek gerçek president-domain resume zincirini genişletmektir.
 
 Uzun vadeli hedef:
 
 > **20–30 sezonluk kariyerin tüm kritik state'iyle deterministic, migration-safe ve makul boyutta kaydedilip devam ettirilebilmesi.**
-
-Sonrasında 100/500/1000 kariyer batch QA genişletilecektir.
