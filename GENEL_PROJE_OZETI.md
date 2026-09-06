@@ -37,43 +37,45 @@ Dünya ölçeği:
 
 ## 3. CANLI DURUM — yeni sohbet buradan devam etmeli
 
-**M0–M31 PASS ve `main` üzerindedir.**
+**M0–M32 PASS ve `main` üzerindedir.**
 
-Son kapalı milestone: **M31 — President Domain Resume Orchestration I**.
+Son kapalı milestone: **M32 — Long-Career Save Growth / Resume Stress I**.
 
-M31 kapanış:
-- PR `#32` — MERGED
-- final PR HEAD: `8740c9fdcc15585d0696b1f725837618fb412622`
-- final PR CI: run `34037474747`, job `101498068230` — SUCCESS
-- squash merge commit: `97147444dad1b267d7d12d2033d9ccd6cb36e60e`
-- merge sonrası `main` CI: run `34037837611`, job `101499052721` — SUCCESS
+M32 kapanış:
+- PR `#33` — MERGED
+- final PR HEAD: `6aad9a828c7a14b307110a2c42243c79ca2ab1e6`
+- final PR CI: run `34040555580`, job `101506407496` — SUCCESS
+- squash merge commit: `e2db172feda810173b1710a37e53c7550823ba6f`
+- merge sonrası `main` CI: run `34043191414`, job `101513506266` — SUCCESS
 - analyzer PASS
-- normal/non-canonical tests: `127` PASS
-- M0–M31 runner zinciri PASS
+- normal/non-canonical tests: `129` PASS
+- M0–M32 runner zinciri PASS
 - artifact `0`
 - CI timeout `7 dk`
 
-M31 canonical sonucu:
-- split: `8 + 12 sezon`
-- completed seasons: `20`
+M32 canonical sonucu:
+- stres kariyeri: `30 sezon`
+- split zinciri: `6 + 7 + 9 + 8`
+- checkpoint sezonları: `6, 13, 22, 30`
+- save bytes: `793.813, 898.786, 741.371, 762.296`
+- ilk → final büyüme: `-31.517 bytes`
+- maksimum save: `898.786 bytes`
+- final checkpoint == kesintisiz 30 sezon: PASS
+- repeated encode/decode idempotency: PASS
+- bounded save size: PASS
 - final president states: `48`
-- final recent fan records: `96`
-- final recent media records: `96`
-- final current-term promises: `0`
-- resumed elections: `144`
-- advanced runtime match: `true`
-- president state match: `true`
-- president memory match: `true`
-- election match: `true`
-- **8 + 12 == 20: PASS**
-- mid-term `5 + 3` election resume using saved promise scores: PASS
+- recent fan records: `96`
+- recent media records: `96`
+- season 30 manager pool: `117`
+- season 22+ compact manager raw history: son `2 sezon`
 
-M31 önemli düzeltmeleri:
-- fan checkpoint boundary artık continuation-aware; ara checkpoint son sezon gibi davranmıyor
-- `PresidentReputationCareerEngine` saved tenure/fan/media state + election cursor üzerinden resume edebiliyor
-- current election-term promise score’ları seçim hesabına taşınıyor
-- bounded `recentFan` ve `recentMedia` state imzaları gerçek president reputation state’iyle normalize ediliyor
-- start ve resume aynı advanced runtime orchestration üzerinden çalışıyor
+M32 önemli düzeltmeleri:
+- eski manager pool gerçekten tükendiğinde deterministic successor manager üretimi eklendi
+- 20 sezon ve altındaki eski M27/M28 manager semantiği korunur
+- 21+ sezon compact save’lerde manager raw season detail yalnız son 2 sezon tutulur
+- all-time manager summary sayıları korunur
+- long-career manager checkpoint validator contiguous suffix’i destekler
+- future entrant manager `startAge` kariyer başlangıcındaki biyolojik yaş olarak doğrulanır
 
 Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 
@@ -98,6 +100,7 @@ Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 - son 2 sezon contract/loan detail + all-time summary
 - season-8 `1.013.092 → 736.274 bytes`
 - `%27,3` küçülme
+- season-20 compact save `915.648 bytes`
 - `8 + 12 == 20`
 
 ### M29 — President Runtime Snapshot I — PASS
@@ -119,10 +122,21 @@ Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 - canonical `8 + 12 == 20`
 - mid-term `5 + 3` resume PASS
 
+### M32 — Long-Career Save Growth / Resume Stress I — PASS
+- 30 sezon president-domain stress
+- multi-checkpoint `6 + 7 + 9 + 8`
+- her checkpoint’te encode/decode
+- final state kesintisiz 30 sezonla birebir aynı
+- save boyutu `<1.300.000 bytes`
+- ilk → final büyüme `-31.517 bytes`
+- 20 sezondan sonra manager detail compaction
+- manager pool tükenmesine deterministic replenishment
+
 Ayrıntı:
 - `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
 - `M30_FAN_MEDIA_PROMISE_RUNTIME_MEMORY_SNAPSHOT_I.md`
 - `M31_PRESIDENT_DOMAIN_RESUME_ORCHESTRATION_I.md`
+- `M32_LONG_CAREER_SAVE_GROWTH_RESUME_STRESS_I.md`
 
 ## 5. Başkan trait durumu
 
@@ -170,6 +184,7 @@ Beş trait gerçek davranışa bağlıdır:
 - M29 President runtime snapshot — PASS
 - M30 Fan/media/promise runtime memory — PASS
 - M31 President domain resume orchestration — PASS
+- M32 Long-career save/resume stress — PASS
 
 ## 7. Kalıcı teknik kurallar
 
@@ -187,6 +202,8 @@ Beş trait gerçek davranışa bağlıdır:
 - eski public simulation semantiği sessizce değiştirilmez
 - continuation-critical state ile append-only historical state ayrılır
 - history eklenmeden save büyümesi ölçülür
+- ilk 20 sezonun canonical manager davranışı korunur
+- 21+ sezon compact manager history bounded tutulabilir; all-time summary kaybolmaz
 - PASS yalnız canlı CI kanıtıyla yazılır
 - artifact hedefi `0`
 - `actions/upload-artifact` kullanılmaz
@@ -206,22 +223,23 @@ Ana workflow:
 - M29 president runtime snapshot
 - M30 president domain memory snapshot
 - M31 president domain resume orchestration
+- M32 long-career save/resume stress
 
 ## 9. Açık teknik borç / sıradaki yön
 
-Artık world + advanced runtime + president domain için gerçek split-career continuation kanıtı vardır.
+Artık world + advanced runtime + president domain için hem 20 sezon split-career continuation hem 30 sezon multi-checkpoint stress kanıtı vardır. Save büyümesi bounded kalır ve manager pool uzun kariyerde deterministic biçimde yenilenebilir.
 
 Açık konular:
-- M28 manager season history M27 strict invariantı nedeniyle hâlen tam tutulur
 - Android file system / save-slot UI / autosave / backup / cloud save daha sonra
 - tesis yatırımının youth intake kalitesine etkisi henüz yok
 - sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı
 - seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
+- long-career player/economy/manager denge metrikleri 30+ sezonda ayrıca ürün-balance milestone’u olarak sertleştirilebilir
 
-Sıradaki mantıklı teknik yön:
+Sıradaki mantıklı yön:
 
-> **M32 adayı — Long-Career Save Growth / Resume Stress I**
+> **M33 adayı — Facilities / Academy Investment Core I**
 
 Hedef:
 
-> **President-domain dahil tüm continuation-critical state’i 20–30 sezonluk split/resume stresinde doğrulamak; save boyutunun bounded kaldığını ve tekrar tekrar save/load zincirinde deterministik eşitliğin bozulmadığını kanıtlamak.**
+> **Başkanın uzun vadeli yatırım kararını gerçek oyun sistemine bağlamak: tesis/altyapı harcaması nakit ve borcu etkilesin; altyapı seviyesi sonraki sezonların youth intake kalitesine deterministic ve ölçülebilir etki etsin; yatırım kararının kısa vadeli finansal bedeli ile uzun vadeli kadro faydası arasında gerçek başkanlık trade-off’u oluşsun.**
