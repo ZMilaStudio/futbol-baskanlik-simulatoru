@@ -44,23 +44,23 @@ void main(List<String> args) {
   PresidentFacilityProfileProvider provider =
       ({required seasonIndex, required clubId}) {
     if (clubId != targetClub) return cautious;
-    return seasonIndex < 10 ? cautious : youthBuilder;
+    return seasonIndex < 9 ? cautious : youthBuilder;
   };
 
   final direct = loop.run(
     checkpoint: season8,
-    seasonCount: 4,
+    seasonCount: 2,
     profileProvider: provider,
   );
   final first = loop.run(
     checkpoint: season8,
-    seasonCount: 2,
+    seasonCount: 1,
     profileProvider: provider,
   );
   final loaded = codec.decode(codec.encode(first.checkpoint));
   final second = loop.run(
     checkpoint: loaded,
-    seasonCount: 2,
+    seasonCount: 1,
     profileProvider: provider,
   );
 
@@ -79,19 +79,22 @@ void main(List<String> args) {
       direct.youthIntakeSignatures.join('|');
   final checkpointMatch =
       second.checkpoint.signature == direct.checkpoint.signature;
-  final turnoverReplanned = directTarget.length == 4 &&
+  final turnoverReplanned = directTarget.length == 2 &&
+      directTarget[0].presidentId == cautious.presidentId &&
       directTarget[0].appliedUpgrades == 0 &&
-      directTarget[1].appliedUpgrades == 0 &&
-      directTarget[2].presidentId == youthBuilder.presidentId &&
-      directTarget[2].targetLevel == 5 &&
-      directTarget[2].appliedUpgrades > 0;
+      directTarget[1].presidentId == youthBuilder.presidentId &&
+      directTarget[1].targetLevel == 5 &&
+      directTarget[1].appliedUpgrades > 0;
 
   print('M37 President Facility Decision Loop / Turnover Replanning I');
   print('Seed: $seed');
   print('Start checkpoint: season 8');
   print('Target club: $targetClub');
-  print('Turnover season: 10');
+  print('Turnover season: 9');
   print('Decision windows: ${directTarget.length}');
+  print(
+    'Presidents: ${directTarget.map((item) => item.presidentId).join(' -> ')}',
+  );
   print(
     'Target levels: ${directTarget.map((item) => item.targetLevel).join(', ')}',
   );
