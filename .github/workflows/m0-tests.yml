@@ -118,3 +118,6 @@ jobs:
 
       - name: Run M32 long-career save resume stress
         run: dart run tool/run_m32_long_career_save_resume_stress.dart 20260903
+
+      - name: Run M33 facilities academy investment core
+        run: dart run tool/run_m33_academy_facility_investment.dart 20260903
