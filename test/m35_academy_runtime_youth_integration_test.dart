@@ -6,6 +6,7 @@ void main() {
   final world = const FictionalWorldFactory().build();
   final config = SimulationConfig(careerSeed: seed);
   const worldEngine = WorldCareerEngine();
+  const worldCodec = WorldSaveCodec();
   const investment = FacilityInvestmentOrchestrator();
   const facilityCareer = FacilityRuntimeCareerEngine();
   const codec = FacilityRuntimeSaveCodec();
@@ -33,8 +34,8 @@ void main() {
     );
 
     expect(
-      facility.checkpoint.world.signature,
-      legacy.checkpoint.signature,
+      worldCodec.encode(facility.checkpoint.world),
+      worldCodec.encode(legacy.checkpoint),
     );
     expect(
       facility.report.seasons
