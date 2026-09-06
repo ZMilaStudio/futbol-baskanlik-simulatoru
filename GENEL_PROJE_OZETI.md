@@ -37,45 +37,46 @@ Dünya ölçeği:
 
 ## 3. CANLI DURUM — yeni sohbet buradan devam etmeli
 
-**M0–M32 PASS ve `main` üzerindedir.**
+**M0–M33 PASS ve `main` üzerindedir.**
 
-Son kapalı milestone: **M32 — Long-Career Save Growth / Resume Stress I**.
+Son kapalı milestone: **M33 — Facilities / Academy Investment Core I**.
 
-M32 kapanış:
-- PR `#33` — MERGED
-- final PR HEAD: `6aad9a828c7a14b307110a2c42243c79ca2ab1e6`
-- final PR CI: run `34040555580`, job `101506407496` — SUCCESS
-- squash merge commit: `e2db172feda810173b1710a37e53c7550823ba6f`
-- merge sonrası `main` CI: run `34043191414`, job `101513506266` — SUCCESS
+M33 kapanış:
+- PR `#34` — MERGED
+- final PR HEAD: `fbfa0a4bae31634e6c1dff12da656aed03372f27`
+- final PR CI: run `34045697755`, job `101520237716` — SUCCESS
+- squash merge commit: `0564977288086784402818b4b65dde1829b82ad8`
+- merge sonrası `main` CI: run `34046875402`, job `101523383676` — SUCCESS
 - analyzer PASS
-- normal/non-canonical tests: `129` PASS
-- M0–M32 runner zinciri PASS
+- normal/non-canonical tests: `132` PASS
+- M0–M33 runner zinciri PASS
 - artifact `0`
 - CI timeout `7 dk`
 
-M32 canonical sonucu:
-- stres kariyeri: `30 sezon`
-- split zinciri: `6 + 7 + 9 + 8`
-- checkpoint sezonları: `6, 13, 22, 30`
-- save bytes: `793.813, 898.786, 741.371, 762.296`
-- ilk → final büyüme: `-31.517 bytes`
-- maksimum save: `898.786 bytes`
-- final checkpoint == kesintisiz 30 sezon: PASS
-- repeated encode/decode idempotency: PASS
-- bounded save size: PASS
-- final president states: `48`
-- recent fan records: `96`
-- recent media records: `96`
-- season 30 manager pool: `117`
-- season 22+ compact manager raw history: son `2 sezon`
+M33 canonical sonucu:
+- youth intake kulüpleri: `48`
+- akademi level 0 ortalama ability: `57,97`
+- akademi level 5 ortalama ability: `60,87`
+- ability delta: `+2,90`
+- akademi level 0 ortalama potential: `72,74`
+- akademi level 5 ortalama potential: `81,51`
+- potential delta: `+8,76`
+- level 0 legacy youth-generation semantiği: PRESERVED
+- academy investment → youth quality: PASS
 
-M32 önemli düzeltmeleri:
-- eski manager pool gerçekten tükendiğinde deterministic successor manager üretimi eklendi
-- 20 sezon ve altındaki eski M27/M28 manager semantiği korunur
-- 21+ sezon compact save’lerde manager raw season detail yalnız son 2 sezon tutulur
-- all-time manager summary sayıları korunur
-- long-career manager checkpoint validator contiguous suffix’i destekler
-- future entrant manager `startAge` kariyer başlangıcındaki biyolojik yaş olarak doğrulanır
+M33 kapsamı:
+- academy facility level `0..5`
+- deterministic upgrade maliyetleri
+- `youthOrientation` için deterministic hedef seviye politikası
+- akademi seviyesinin youth intake ability/potential kalitesine doğrudan etkisi
+- level 0 yolunda eski M0–M32 davranışının korunması
+- public API export + test + canonical runner + CI gate
+
+M33'te bilinçli olarak ertelenenler:
+- facility state'in save checkpoint zincirine yazılması
+- upgrade bedelinin tam kulüp finans akışından düşülmesi
+- stadium/training-ground facility türleri
+- Flutter/Android tesis yönetim ekranları
 
 Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 
@@ -148,7 +149,7 @@ Beş trait gerçek davranışa bağlıdır:
 | `financialDiscipline` | transfer affordability/budget | M20 |
 | `transferAmbition` | completed transfer slots | M21 |
 | `riskAppetite` | buyer max-bid ceiling | M23 |
-| `youthOrientation` | youth/potential candidate preference | M24 |
+| `youthOrientation` | youth/potential candidate preference + academy target policy | M24 + M33 |
 
 ## 6. Milestone geçmişi — kısa
 
@@ -185,6 +186,7 @@ Beş trait gerçek davranışa bağlıdır:
 - M30 Fan/media/promise runtime memory — PASS
 - M31 President domain resume orchestration — PASS
 - M32 Long-career save/resume stress — PASS
+- M33 Facilities / Academy Investment Core I — PASS
 
 ## 7. Kalıcı teknik kurallar
 
@@ -204,6 +206,7 @@ Beş trait gerçek davranışa bağlıdır:
 - history eklenmeden save büyümesi ölçülür
 - ilk 20 sezonun canonical manager davranışı korunur
 - 21+ sezon compact manager history bounded tutulabilir; all-time summary kaybolmaz
+- facility level 0 eski youth-generation davranışını korur
 - PASS yalnız canlı CI kanıtıyla yazılır
 - artifact hedefi `0`
 - `actions/upload-artifact` kullanılmaz
@@ -224,22 +227,25 @@ Ana workflow:
 - M30 president domain memory snapshot
 - M31 president domain resume orchestration
 - M32 long-career save/resume stress
+- M33 facilities / academy investment core
 
 ## 9. Açık teknik borç / sıradaki yön
 
-Artık world + advanced runtime + president domain için hem 20 sezon split-career continuation hem 30 sezon multi-checkpoint stress kanıtı vardır. Save büyümesi bounded kalır ve manager pool uzun kariyerde deterministic biçimde yenilenebilir.
+Artık world + advanced runtime + president domain için hem 20 sezon split-career continuation hem 30 sezon multi-checkpoint stress kanıtı vardır. Save büyümesi bounded kalır ve manager pool uzun kariyerde deterministic biçimde yenilenebilir. Akademi yatırım seviyesi de youth intake kalitesine gerçek, deterministic ve ölçülebilir etki yapmaktadır.
 
 Açık konular:
 - Android file system / save-slot UI / autosave / backup / cloud save daha sonra
-- tesis yatırımının youth intake kalitesine etkisi henüz yok
-- sponsor/tesis/kriz sistemleri henüz çekirdek milestone olarak uygulanmadı
+- academy facility state henüz save checkpoint zincirine dahil değil
+- academy upgrade maliyeti henüz tam club-finance orchestration üzerinden uygulanmıyor
+- stadium / training-ground facility türleri henüz yok
+- sponsor ve kriz sistemleri henüz çekirdek milestone olarak uygulanmadı
 - seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
 - long-career player/economy/manager denge metrikleri 30+ sezonda ayrıca ürün-balance milestone’u olarak sertleştirilebilir
 
 Sıradaki mantıklı yön:
 
-> **M33 adayı — Facilities / Academy Investment Core I**
+> **M34 adayı — Facility Persistence / Finance Orchestration I**
 
 Hedef:
 
-> **Başkanın uzun vadeli yatırım kararını gerçek oyun sistemine bağlamak: tesis/altyapı harcaması nakit ve borcu etkilesin; altyapı seviyesi sonraki sezonların youth intake kalitesine deterministic ve ölçülebilir etki etsin; yatırım kararının kısa vadeli finansal bedeli ile uzun vadeli kadro faydası arasında gerçek başkanlık trade-off’u oluşsun.**
+> **M33 akademi yatırımını gerçek kariyer state'ine bağlamak: academy facility level save/load/resume zincirinde korunmalı; upgrade kararı kulüp kasasından gerçek Money harcaması yapmalı ve gerekiyorsa finansal sıkışıklık/borç trade-off'u üretmeli; 8+12 ve multi-checkpoint resume sırasında facility state ve finans sonucu kesintisiz kariyerle birebir aynı kalmalı.**
