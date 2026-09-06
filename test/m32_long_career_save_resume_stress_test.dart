@@ -4,6 +4,8 @@ import 'package:test/test.dart';
 void main() {
   const engine = PresidentDomainCareerEngine();
   const codec = PresidentDomainMemorySaveCodec();
+  const presidentCodec = PresidentRuntimeSaveCodec();
+  const compactCodec = CompactAdvancedWorldSaveCodec();
 
   test('M32 6+7+9+8 multi-save chain matches uninterrupted 30 seasons', () {
     const config = SimulationConfig(careerSeed: 20260903);
@@ -25,17 +27,35 @@ void main() {
     );
     final saveSizes = <int>[];
 
+    void recordSize() {
+      final total = codec.encode(chained.checkpoint).length;
+      final president =
+          presidentCodec.encode(chained.checkpoint.presidentRuntime).length;
+      final compact = compactCodec
+          .encode(chained.checkpoint.presidentRuntime.runtime)
+          .length;
+      final manager = chained
+          .checkpoint.presidentRuntime.runtime.runtime.manager;
+      saveSizes.add(total);
+      print(
+        'M32_SIZE season=${chained.checkpoint.completedSeasons} '
+        'total=$total president=$president compact=$compact '
+        'managers=${manager.managers.length} managerSeasons=${manager.seasons.length}',
+      );
+    }
+
     for (final segment in const [7, 9, 8]) {
+      recordSize();
       final encoded = codec.encode(chained.checkpoint);
-      saveSizes.add(encoded.length);
       final decoded = codec.decode(encoded);
       chained = engine.resume(
         checkpoint: decoded,
         seasonCount: segment,
-        hasFutureSeasonAfterReport: chained.checkpoint.completedSeasons + segment < 30,
+        hasFutureSeasonAfterReport:
+            chained.checkpoint.completedSeasons + segment < 30,
       );
     }
-    saveSizes.add(codec.encode(chained.checkpoint).length);
+    recordSize();
 
     expect(chained.checkpoint.completedSeasons, 30);
     expect(chained.checkpoint.nextSeasonIndex, 30);
