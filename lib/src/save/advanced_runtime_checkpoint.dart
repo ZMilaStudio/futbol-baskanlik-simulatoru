@@ -133,7 +133,7 @@ class ManagerRuntimeState {
     for (final manager in managers) {
       if (manager.id.isEmpty ||
           manager.name.isEmpty ||
-          manager.startAge < 20 ||
+          manager.startAge < 0 ||
           manager.retirementAge <= manager.startAge ||
           !managerIds.add(manager.id)) {
         throw ArgumentError('Invalid or duplicate manager ${manager.id}.');
