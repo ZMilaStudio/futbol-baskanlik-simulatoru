@@ -121,3 +121,6 @@ jobs:
 
       - name: Run M33 facilities academy investment core
         run: dart run tool/run_m33_academy_facility_investment.dart 20260903
+
+      - name: Run M34 facility persistence finance orchestration
+        run: dart run tool/run_m34_facility_persistence_finance.dart 20260903
