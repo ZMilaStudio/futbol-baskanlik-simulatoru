@@ -1,5 +1,6 @@
 import 'package:futbol_baskanlik_m0/src/core/simulation_config.dart';
 import 'package:futbol_baskanlik_m0/src/facility/academy_facility.dart';
+import 'package:futbol_baskanlik_m0/src/player/player.dart';
 import 'package:futbol_baskanlik_m0/src/player/player_lifecycle_engine.dart';
 import 'package:futbol_baskanlik_m0/src/player/player_pool_generator.dart';
 import 'package:futbol_baskanlik_m0/src/player/team_strength_calculator.dart';
@@ -41,11 +42,11 @@ void main(List<String> args) {
     },
   );
 
-  double averageAbility(Iterable<dynamic> intake) =>
-      intake.map<double>((player) => player.ability as double).reduce((a, b) => a + b) /
+  double averageAbility(Iterable<Player> intake) =>
+      intake.map((player) => player.ability).reduce((a, b) => a + b) /
       intake.length;
-  double averagePotential(Iterable<dynamic> intake) =>
-      intake.map<double>((player) => player.potential as double).reduce((a, b) => a + b) /
+  double averagePotential(Iterable<Player> intake) =>
+      intake.map((player) => player.potential).reduce((a, b) => a + b) /
       intake.length;
 
   final baselineAbility = averageAbility(baseline.youthIntake);
