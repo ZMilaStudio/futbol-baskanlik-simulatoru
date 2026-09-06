@@ -189,6 +189,13 @@ class CompactAdvancedRuntimeCheckpoint {
         throw ArgumentError('Old inactive loan escaped the history window.');
       }
     }
+    if (runtime.completedSeasons > 20) {
+      for (final season in runtime.manager.seasons) {
+        if (season.seasonIndex < recentHistoryStartSeasonIndex) {
+          throw ArgumentError('Old manager detail escaped the long-career history window.');
+        }
+      }
+    }
   }
 }
 
@@ -235,7 +242,8 @@ class AdvancedRuntimeHistoryCompactor {
       loanHistory: source.transfer.loanHistory
           .where((loan) => loan.startSeasonIndex > resumeStartSeasonIndex),
       // Manager history is recorded for completed seasons, so the resumed
-      // season itself is new and remains inclusive here.
+      // season itself is new and remains inclusive here. Old compacted detail
+      // is already represented by previousHistory.
       managerSeasons: source.manager.seasons
           .where((season) => season.seasonIndex >= resumeStartSeasonIndex),
     );
@@ -252,6 +260,10 @@ class AdvancedRuntimeHistoryCompactor {
         .toInt();
     final activeLoanSignatures =
         source.transfer.activeLoans.map((loan) => loan.signature).toSet();
+    final managerSeasons = source.completedSeasons > 20
+        ? source.manager.seasons
+            .where((season) => season.seasonIndex >= start)
+        : source.manager.seasons;
 
     final runtime = AdvancedRuntimeCheckpoint(
       world: source.world,
@@ -270,7 +282,7 @@ class AdvancedRuntimeHistoryCompactor {
       manager: ManagerRuntimeState(
         managers: source.manager.managers,
         assignments: source.manager.assignments,
-        seasons: source.manager.seasons,
+        seasons: managerSeasons,
       ),
     );
 

@@ -269,11 +269,7 @@ class ManagerCareerController implements WorldCareerHooks {
           .toSet();
       final nextSeasonIndex = seasonIndex + 1;
       final available = _managers
-          .where(
-            (manager) =>
-                !retainedManagerIds.contains(manager.id) &&
-                _ageAt(manager, nextSeasonIndex) < manager.retirementAge,
-          )
+          .where((manager) => !retainedManagerIds.contains(manager.id))
           .map((manager) => manager.id)
           .toSet();
 
@@ -452,9 +448,56 @@ class ManagerCareerController implements WorldCareerHooks {
       }
     }
     if (best == null) {
-      throw StateError('No eligible manager available for ${club.id}.');
+      return _createSuccessorManager(
+        seasonIndex: seasonIndex,
+        templateManagerIds: candidateIds,
+      );
     }
     return best;
+  }
+
+  Manager _createSuccessorManager({
+    required int seasonIndex,
+    required List<String> templateManagerIds,
+  }) {
+    if (_managers.isEmpty) {
+      throw StateError('Cannot replenish an empty manager pool.');
+    }
+    final index = _managers.length;
+    final template = templateManagerIds.isEmpty
+        ? _managers[index % _managers.length]
+        : _managerById[templateManagerIds.first]!;
+    final seed = StableHash.combine32([
+      careerSeed,
+      simulationVersion,
+      seasonIndex,
+      index,
+      StableHash.string32('manager_successor'),
+    ]);
+    final rng = SeededRng(seed);
+    int range(int min, int max) =>
+        min + (rng.nextDouble() * (max - min + 1)).floor();
+    final entryAge = range(34, 44);
+    final elapsedSeasons = seasonIndex - initialSeasonIndex;
+    final successor = Manager(
+      id: 'manager_${index.toString().padLeft(3, '0')}',
+      name: 'Yeni Nesil ${index.toString().padLeft(3, '0')}',
+      profile: template.profile,
+      startAge: entryAge - elapsedSeasons,
+      retirementAge: range(67, 74),
+      reputation: range(45, 84),
+      coaching: range(50, 86),
+      youthDevelopment: range(45, 88),
+      manManagement: range(45, 88),
+      boardCooperation: range(40, 90),
+      budgetDemand: range(30, 88),
+    );
+    final managers = List<Manager>.of(_managers)..add(successor);
+    final managerById = Map<String, Manager>.of(_managerById)
+      ..[successor.id] = successor;
+    _managers = List.unmodifiable(managers);
+    _managerById = Map.unmodifiable(managerById);
+    return successor;
   }
 
   double _initialRelationship({
