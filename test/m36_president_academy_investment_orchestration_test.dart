@@ -1,4 +1,5 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/src/facility/president_academy_investment_orchestrator.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -73,27 +74,30 @@ void main() {
     expect(high.spend, greaterThan(low.spend));
   });
 
-  test('M36 financial discipline preserves a cash reserve', () {
+  test('M36 stricter finance profile retains at least as much cash', () {
     final before = season8();
     final richest = before.world.nextSeasonFinanceStates.reduce(
       (a, b) => a.cash >= b.cash ? a : b,
     );
-    final strict = profile(id: 'strict', youth: 90, finance: 90);
-    final plan = presidentInvestment.planFor(strict);
-    final result = presidentInvestment.apply(
+    final relaxed = presidentInvestment.apply(
       checkpoint: before,
       clubId: richest.clubId,
-      profile: strict,
+      profile: profile(id: 'relaxed', youth: 90, finance: 20),
     );
-    final finalCash = result.checkpoint.world.nextSeasonFinanceStates
+    final strict = presidentInvestment.apply(
+      checkpoint: before,
+      clubId: richest.clubId,
+      profile: profile(id: 'strict', youth: 90, finance: 90),
+    );
+    final relaxedCash = relaxed.checkpoint.world.nextSeasonFinanceStates
+        .singleWhere((state) => state.clubId == richest.clubId)
+        .cash;
+    final strictCash = strict.checkpoint.world.nextSeasonFinanceStates
         .singleWhere((state) => state.clubId == richest.clubId)
         .cash;
 
-    expect(
-      finalCash,
-      greaterThanOrEqualTo(finalCash.scaleBasisPoints(plan.cashReserveBasisPoints)),
-    );
-    expect(result.spend.isNegative, isFalse);
+    expect(strictCash, greaterThanOrEqualTo(relaxedCash));
+    expect(strict.spend, lessThanOrEqualTo(relaxed.spend));
   });
 
   test('M36 profile-driven investment survives save load resume deterministically', () {
