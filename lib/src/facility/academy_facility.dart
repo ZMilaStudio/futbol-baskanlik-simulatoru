@@ -1,7 +1,7 @@
 import '../core/money.dart';
 
 class AcademyFacilityState {
-  const AcademyFacilityState({required this.clubId, required this.level}) {
+  AcademyFacilityState({required this.clubId, required this.level}) {
     if (clubId == '') {
       throw ArgumentError('Academy clubId cannot be empty.');
     }
