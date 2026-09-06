@@ -81,7 +81,7 @@ class PresidentDomainCareerEngine {
       presidentRuntime: presidentRuntime,
       report: reputation,
     );
-    return _normalizeRecentFan(
+    return _normalizeRecentMemory(
       PresidentDomainResumeResult(
         report: reputation,
         checkpoint: domain,
@@ -99,38 +99,62 @@ class PresidentDomainCareerEngine {
       seasonCount: seasonCount,
       hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
     );
-    return _normalizeRecentFan(result);
+    return _normalizeRecentMemory(result);
   }
 
-  PresidentDomainResumeResult _normalizeRecentFan(
+  PresidentDomainResumeResult _normalizeRecentMemory(
     PresidentDomainResumeResult result,
   ) {
-    final stateByKey = <String, String>{};
+    final fanStateByKey = <String, String>{};
+    final mediaBeforeByKey = <String, int>{};
+    final mediaAfterStatementByKey = <String, int>{};
+    final mediaChangeByKey = <String, String?>{};
     for (final season in result.report.seasons) {
       for (final item in season.clubs) {
-        stateByKey['${item.seasonIndex}|${item.clubId}'] =
-            item.fanAfter.signature;
+        final key = '${item.seasonIndex}|${item.clubId}';
+        fanStateByKey[key] = item.fanAfter.signature;
+        mediaBeforeByKey[key] = item.mediaBefore;
+        mediaAfterStatementByKey[key] = item.mediaAfterStatement;
+        mediaChangeByKey[key] = item.statementChange?.signature;
       }
     }
-    final normalized = result.checkpoint.recentFan
+
+    final normalizedFan = result.checkpoint.recentFan
         .map(
           (item) => RecentFanMemory(
             clubId: item.clubId,
             seasonIndex: item.seasonIndex,
             expectationSignature: item.expectationSignature,
             stateSignature:
-                stateByKey['${item.seasonIndex}|${item.clubId}'] ??
+                fanStateByKey['${item.seasonIndex}|${item.clubId}'] ??
                     item.stateSignature,
             reasonSignatures: item.reasonSignatures,
           ),
         )
         .toList();
+    final normalizedMedia = result.checkpoint.recentMedia
+        .map((item) {
+          final key = '${item.seasonIndex}|${item.clubId}';
+          if (!mediaBeforeByKey.containsKey(key)) return item;
+          return RecentMediaMemory(
+            clubId: item.clubId,
+            seasonIndex: item.seasonIndex,
+            managerId: item.managerId,
+            managerChanged: item.managerChanged,
+            credibilityBefore: mediaBeforeByKey[key]!,
+            credibilityAfter: mediaAfterStatementByKey[key]!,
+            statementSignature: item.statementSignature,
+            changeSignature: mediaChangeByKey[key],
+          );
+        })
+        .toList();
+
     final checkpoint = PresidentDomainMemoryCheckpoint(
       presidentRuntime: result.checkpoint.presidentRuntime,
       summary: result.checkpoint.summary,
       rawHistorySeasons: result.checkpoint.rawHistorySeasons,
-      recentFan: normalized,
-      recentMedia: result.checkpoint.recentMedia,
+      recentFan: normalizedFan,
+      recentMedia: normalizedMedia,
       currentTermPromises: result.checkpoint.currentTermPromises,
     );
     return PresidentDomainResumeResult(
