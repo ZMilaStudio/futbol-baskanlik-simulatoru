@@ -148,3 +148,6 @@ jobs:
 
       - name: Run M37 president facility decision loop turnover replanning
         run: dart run tool/run_m37_president_facility_decision_loop.dart 20260903
+
+      - name: Run M38 facility portfolio core
+        run: dart run tool/run_m38_facility_portfolio_core.dart 20260903
