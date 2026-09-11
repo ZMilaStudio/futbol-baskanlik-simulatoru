@@ -43,19 +43,49 @@ Dünya: 48 özgün kulüp, 3 lig × 16 kulüp, 720 lig maçı/sezon, 14.400 maç
 
 ## 3. CANLI DURUM — buradan devam et
 
-**M0–M40 PASS ve `main` üzerindedir.**
+**M0–M41 PASS ve `main` üzerindedir.**
 
-Aktif ürün milestone'u:
+Son kapalı ürün milestone'u:
 **M41 — Attendance Demand & Fan Trust Integration II**.
 
+Şu anda aktif yeni ürün milestone'u yoktur. **M42 kullanıcı yönü olmadan otomatik başlatılmaz.**
+
+### M41 — CLOSED / MERGED / PASS
+
 Branch: `feat/m41-fan-trust-attendance-integration`
-PR: `#44` — **OPEN / NOT MERGED / MERGE-READY**
+PR: `#44` — **CLOSED / MERGED**
 
-Kullanıcı M41 yönünü açıkça onayladı. Code-bearing ve docs-inclusive HEAD canlı CI ile doğrulandı. PR mergeable durumdadır. Merge için kullanıcıdan ayrıca explicit onay gerekir.
+Kullanıcı açıkça merge onayı verdi. PR #44 exact verified HEAD üzerinden squash merge edildi.
 
-### M41 kapsamı
+Final PR HEAD:
+- `41c8c54b59df03089d3483acec4828a5522a76d0`
 
-- mevcut `FanState.overallTrust` stadium talebine bağlanır
+Final PR CI:
+- run `34655656524` — **SUCCESS**
+- test job `103447366209` — **SUCCESS**
+- canonical job `103447366453` — **SUCCESS**
+- analyzer: `No issues found!`
+- **167 normal/non-canonical test PASS**
+- **M0–M41 canonical PASS**
+- artifacts: **0**
+- iki job da sabit `timeout-minutes: 7` sınırının altında
+
+Squash merge:
+- `8d1e901ceb4e13087b75f7df948a4cbe53c429ce`
+
+Post-merge `main` CI:
+- run `34656211019` — **SUCCESS**
+- test job `103449085096` — **SUCCESS**
+- canonical job `103449085129` — **SUCCESS**
+- `dart analyze`: **No issues found!**
+- `dart test --exclude-tags canonical-feedback`: **167 tests passed**
+- **M0–M41 canonical runner zinciri: PASS**
+- M41 canonical adımı: **SUCCESS / PASS**
+- artifacts: **0**
+- iki job da sabit `timeout-minutes: 7` sınırının altında
+
+M41 davranışı:
+- mevcut `FanState.overallTrust` stadium talebine bağlandı
 - neutral fan trust `60`; bu değer M40 davranışını birebir korur
 - fan trust demand multiplier: `7000 + fanTrust * 50 bps`
 - trust `0 → 7000 bps`, `60 → 10000 bps`, `100 → 12000 bps`
@@ -67,28 +97,6 @@ Kullanıcı M41 yönünü açıkça onayladı. Code-bearing ve docs-inclusive HE
 - aynı fan state save/load sonrası tekrar verildiğinde continuation deterministiktir
 - 5 yeni normal test ve M41 canonical runner eklendi
 - workflow'a M40 sonrasında `Run M41 fan trust attendance integration` gate'i eklendi
-- `timeout-minutes: 7` ve artifact `0` kuralları korunur
-
-### M41 PR CI kanıtı
-
-Code-bearing HEAD: `215e5a0eed817037badfd5fc5086b8e4ff933756`
-Run `34654802377` — **SUCCESS**
-- test job `103444747764` — **SUCCESS**, ≈ `3m01s`
-- canonical job `103444747982` — **SUCCESS**, ≈ `4m29s`
-- analyzer: `No issues found!`
-- **167 normal/non-canonical test PASS**
-- **M0–M41 canonical PASS**
-- artifacts: **0**
-
-Docs-inclusive verified HEAD: `2a4bccdbde22f5f37a5893e20548ab6b022bf736`
-Run `34655222974` — **SUCCESS**
-- test job `103446093271` — **SUCCESS**
-- canonical job `103446093339` — **SUCCESS**
-- analyzer / normal tests SUCCESS
-- M0–M41 canonical adımlarının tamamı SUCCESS
-- artifacts: **0**
-- PR #44 mergeable: `true`
-- iki CI job'ı da sabit 7 dakika sınırının altında tamamlandı
 
 M41 canonical:
 - target club `t1_01`
@@ -99,7 +107,7 @@ M41 canonical:
 - real matchday revenue low → high: `10.29M → 12.06M`
 - real fan revenue effect `true`
 - save/load continuation match `true`
-- result **PASS**
+- canonical result **PASS**
 
 Kalıcı M41 dokümanı: `M41_ATTENDANCE_DEMAND_FAN_TRUST_INTEGRATION_II.md`.
 
@@ -143,7 +151,7 @@ M39: academy legacy first; president profile stadium/training targetları; `fina
 - **M38** Facility Portfolio Core — academy + stadium + training; real effects; save v2
 - **M39** President Facility Portfolio Decision Loop — president-driven portfolio investment
 - **M40** Stadium Capacity & Attendance Core I — CLOSED / PASS / main
-- **M41** Attendance Demand & Fan Trust Integration II — **PR #44 MERGE-READY / NOT MERGED**
+- **M41** Attendance Demand & Fan Trust Integration II — **CLOSED / PASS / main**
 
 ## 5. Başkan / taraftar trait wiring
 
@@ -158,9 +166,9 @@ M39: academy legacy first; president profile stadium/training targetları; `fina
 
 ## 6. Milestone geçmişi
 
-**M0–M40 PASS / main. M41 PR #44 MERGE-READY / NOT MERGED.**
+**M0–M41 PASS / main.**
 
-M0 deterministik sezon; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya; M11 vaatler; M12 vaat→taraftar; M13 vaat→medya; M14 seçim; M15 görev süresi/devir; M16 itibar handover; M17 yönetim profili; M18 manager patience; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility zinciri; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance (PR #44).
+M0 deterministik sezon; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya; M11 vaatler; M12 vaat→taraftar; M13 vaat→medya; M14 seçim; M15 görev süresi/devir; M16 itibar handover; M17 yönetim profili; M18 manager patience; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility zinciri; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance.
 
 ## 7. CI ve teknik borç durumu
 
@@ -169,15 +177,14 @@ M0 deterministik sezon; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4
 - Hiçbir canonical/test kontrolü kaldırılmaz.
 - Artifact hedefi `0`; `actions/upload-artifact` eklenmez.
 - CI kırmızıysa gerçek log okunmadan patch atılmaz.
-- Son kapalı main doğrulaması: M40 docs-only run `34653341164` — test SUCCESS, canonical SUCCESS, M0–M40 SUCCESS, artifact 0.
-- M41 code-bearing PR run `34654802377` — analyzer clean, 167 test PASS, M0–M41 PASS, artifact 0.
-- M41 docs-inclusive PR run `34655222974` — test SUCCESS, canonical SUCCESS, M0–M41 PASS, artifact 0.
+- M41 final PR HEAD run `34655656524` — analyzer clean, 167 test PASS, M0–M41 PASS, artifact 0.
+- M41 post-merge main run `34656211019` — analyzer clean, 167 test PASS, M0–M41 PASS, artifact 0.
 
 ## 8. Sonraki ürün yönü
 
-Aktif çalışma **M41**'dir. PR #44 kullanıcı açıkça merge onayı vermeden ve post-merge main CI yeşil olmadan M41 CLOSED/PASS yapılmaz ve M42 başlatılmaz.
+M41 kapanmıştır. Şu anda aktif yeni milestone yoktur. **M42 kullanıcı yönü olmadan otomatik seçilmez veya başlatılmaz.**
 
-M41 sonrası yeni ürün milestone'u yine kullanıcı yönüyle seçilir.
+Olası yönler canlı kod mimarisine göre yeniden değerlendirilmelidir; önce `main` ve bu özet okunur, ardından kullanıcı ürün yönü verir.
 
 ## 9. Devir / çalışma talimatı
 
