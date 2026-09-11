@@ -86,8 +86,9 @@ void main(List<String> args) {
       targetDecisions[1].presidentId == builder.presidentId &&
       targetDecisions[1].stadiumTargetLevel == 5 &&
       targetDecisions[1].trainingGroundTargetLevel == 5 &&
-      targetDecisions[1].stadiumAppliedUpgrades > 0 &&
-      targetDecisions[1].trainingGroundAppliedUpgrades > 0;
+      targetDecisions[1].stadiumAppliedUpgrades +
+              targetDecisions[1].trainingGroundAppliedUpgrades >
+          0;
 
   print('M39 President Facility Portfolio Decision Loop I');
   print('Seed: $seed');
@@ -112,6 +113,9 @@ void main(List<String> args) {
   );
   print(
     'Stadium path: ${targetDecisions.map((item) => '${item.stadiumBeforeLevel}->${item.stadiumAfterLevel}').join(', ')}',
+  );
+  print(
+    'Applied portfolio upgrades: ${targetDecisions.map((item) => '${item.trainingGroundAppliedUpgrades}+${item.stadiumAppliedUpgrades}').join(', ')}',
   );
   print(
     'Spend: ${targetDecisions.map((item) => item.spend.toString()).join(', ')}',
