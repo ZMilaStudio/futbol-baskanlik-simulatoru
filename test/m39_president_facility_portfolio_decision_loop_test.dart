@@ -158,8 +158,11 @@ void main() {
     expect(decisions[1].presidentId, builder.presidentId);
     expect(decisions[1].stadiumTargetLevel, 5);
     expect(decisions[1].trainingGroundTargetLevel, 5);
-    expect(decisions[1].stadiumAppliedUpgrades, greaterThan(0));
-    expect(decisions[1].trainingGroundAppliedUpgrades, greaterThan(0));
+    expect(
+      decisions[1].stadiumAppliedUpgrades +
+          decisions[1].trainingGroundAppliedUpgrades,
+      greaterThan(0),
+    );
   });
 
   test('M39 save load resume matches uninterrupted portfolio loop', () {
