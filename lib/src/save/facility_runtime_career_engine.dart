@@ -1,7 +1,14 @@
+import '../core/money.dart';
 import '../facility/academy_facility.dart';
+import '../facility/stadium_facility.dart';
+import '../facility/training_ground_facility.dart';
+import '../finance/basic_economy_engine.dart';
+import '../finance/club_finance_season.dart';
+import '../finance/club_finance_state.dart';
 import '../league/club.dart';
 import '../player/player.dart';
 import '../player/player_lifecycle_engine.dart';
+import '../season/season_report.dart';
 import '../world/world_career_engine.dart';
 import '../world/world_career_report.dart';
 import 'facility_runtime_checkpoint.dart';
@@ -35,8 +42,17 @@ class FacilityRuntimeCareerEngine {
     required int seasonCount,
   }) {
     checkpoint.validate();
-    final facilitiesByClub = Map<String, AcademyFacilityState>.unmodifiable({
+    final academiesByClub = Map<String, AcademyFacilityState>.unmodifiable({
       for (final facility in checkpoint.academyFacilities)
+        facility.clubId: facility,
+    });
+    final stadiumsByClub = Map<String, StadiumFacilityState>.unmodifiable({
+      for (final facility in checkpoint.stadiumFacilities)
+        facility.clubId: facility,
+    });
+    final trainingGroundsByClub =
+        Map<String, TrainingGroundFacilityState>.unmodifiable({
+      for (final facility in checkpoint.trainingGroundFacilities)
         facility.clubId: facility,
     });
     final integratedWorldEngine = WorldCareerEngine(
@@ -44,10 +60,14 @@ class FacilityRuntimeCareerEngine {
       poolGenerator: worldEngine.poolGenerator,
       lifecycleEngine: _FacilityAwareLifecycleEngine(
         delegate: worldEngine.lifecycleEngine,
-        academyFacilities: facilitiesByClub,
+        academyFacilities: academiesByClub,
+        trainingGroundFacilities: trainingGroundsByClub,
       ),
       strengthCalculator: worldEngine.strengthCalculator,
-      economyEngine: worldEngine.economyEngine,
+      economyEngine: _FacilityAwareEconomyEngine(
+        delegate: worldEngine.economyEngine,
+        stadiumFacilities: stadiumsByClub,
+      ),
       transferMarketEngine: worldEngine.transferMarketEngine,
     );
     final resumed = integratedWorldEngine.resume(
@@ -59,6 +79,8 @@ class FacilityRuntimeCareerEngine {
       checkpoint: FacilityRuntimeCheckpoint(
         world: resumed.checkpoint,
         academyFacilities: checkpoint.academyFacilities,
+        stadiumFacilities: checkpoint.stadiumFacilities,
+        trainingGroundFacilities: checkpoint.trainingGroundFacilities,
         totalInvestmentSpent: checkpoint.totalInvestmentSpent,
       ),
     );
@@ -69,10 +91,12 @@ class _FacilityAwareLifecycleEngine extends PlayerLifecycleEngine {
   _FacilityAwareLifecycleEngine({
     required this.delegate,
     required this.academyFacilities,
+    required this.trainingGroundFacilities,
   });
 
   final PlayerLifecycleEngine delegate;
   final Map<String, AcademyFacilityState> academyFacilities;
+  final Map<String, TrainingGroundFacilityState> trainingGroundFacilities;
 
   @override
   PlayerLifecycleResult advance({
@@ -83,6 +107,8 @@ class _FacilityAwareLifecycleEngine extends PlayerLifecycleEngine {
     required int nextSeasonIndex,
     required int simulationVersion,
     Map<String, AcademyFacilityState> academyFacilities = const {},
+    Map<String, TrainingGroundFacilityState> trainingGroundFacilities =
+        const {},
   }) =>
       delegate.advance(
         currentPlayers: currentPlayers,
@@ -92,5 +118,52 @@ class _FacilityAwareLifecycleEngine extends PlayerLifecycleEngine {
         nextSeasonIndex: nextSeasonIndex,
         simulationVersion: simulationVersion,
         academyFacilities: this.academyFacilities,
+        trainingGroundFacilities: this.trainingGroundFacilities,
       );
+}
+
+class _FacilityAwareEconomyEngine extends BasicEconomyEngine {
+  _FacilityAwareEconomyEngine({
+    required this.delegate,
+    required this.stadiumFacilities,
+  });
+
+  final BasicEconomyEngine delegate;
+  final Map<String, StadiumFacilityState> stadiumFacilities;
+  final StadiumInvestmentPolicy stadiumPolicy = const StadiumInvestmentPolicy();
+
+  @override
+  List<ClubFinanceSeason> simulateSeason({
+    required List<Club> clubs,
+    required List<Player> players,
+    required SeasonReport seasonReport,
+    required List<ClubFinanceState> openingStates,
+    int economicScaleBps = 10000,
+    int costScaleBps = 10000,
+    Map<String, Money>? annualWagesByClub,
+    Map<String, Money>? transferInstallmentIncomeByClub,
+    Map<String, Money>? transferInstallmentExpenseByClub,
+    Map<String, int> matchdayRevenueMultiplierBpsByClub = const {},
+  }) {
+    final multipliers = <String, int>{};
+    for (final entry in stadiumFacilities.entries) {
+      if (entry.key != entry.value.clubId) {
+        throw ArgumentError('Stadium facility key must match its clubId.');
+      }
+      multipliers[entry.key] =
+          stadiumPolicy.matchdayRevenueMultiplierBps(entry.value.level);
+    }
+    return delegate.simulateSeason(
+      clubs: clubs,
+      players: players,
+      seasonReport: seasonReport,
+      openingStates: openingStates,
+      economicScaleBps: economicScaleBps,
+      costScaleBps: costScaleBps,
+      annualWagesByClub: annualWagesByClub,
+      transferInstallmentIncomeByClub: transferInstallmentIncomeByClub,
+      transferInstallmentExpenseByClub: transferInstallmentExpenseByClub,
+      matchdayRevenueMultiplierBpsByClub: multipliers,
+    );
+  }
 }
