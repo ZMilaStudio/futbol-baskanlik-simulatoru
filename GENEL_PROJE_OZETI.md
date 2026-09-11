@@ -58,6 +58,10 @@ Son kapalı milestone: **M37 — President Facility Decision Loop / Turnover Rep
 - main CI M37 deterministic continuation: split decisions / youth history / final checkpoint parity = **true / true / true**
 - main CI job süresi yaklaşık `4m49s`; 7 dk timeout sınırının altındadır
 - `dart analyze` adımı SUCCESS; logda failure olmayan 10 adet `unnecessary_import` info bildirimi vardır
+- devir kapanış commit'i: `ce155658128b4b6b9a7ba6377d61730f97c6bf5e`
+- devir kapanış commit'i CI: run `34609665300`, job `103296681707` — **SUCCESS**
+- kapanış commit'i CI: **147 tests passed**, M0–M37 runner zinciri PASS, artifact `0`
+- kapanış commit'i job süresi yaklaşık `6m58s`; 7 dk timeout sınırının altındadır
 
 M37 amacı:
 - academy yatırım kararını tek explicit checkpoint'ten çıkarıp sezonluk president facility decision loop'a bağlamak
@@ -343,6 +347,7 @@ Zorunlu çalışma biçimi:
 12. Her kapanan milestone için ilgili kapanış `.md` dosyasını ve bu özeti güncelle; kapanışı canlı CI kanıtına bağla.
 13. Yeni milestone'a başlamadan önce ürün kapsamını ve mevcut runtime/save mimarisini bozacak gereksiz refactor yapma.
 14. Kodda değişiklik yaparken minimum, hedefli ve test edilebilir değişiklik tercih et.
+15. Bu proje sohbetinde her kullanıcı mesajından sonra, assistant yanıtı tamamlanmadan önce `GENEL_PROJE_OZETI.md` güncel tutulur. Yeni teknik durum/karar yoksa dosya gereksiz tekrarlarla şişirilmez; ancak yeni kararlar, CI kanıtları, commit/PR durumu ve aktif çalışma kuralları özet içinde korunur.
 
 ### Geçici devir tamamlandı
 
