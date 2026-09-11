@@ -24,11 +24,10 @@ Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
 Canonical seed: `20260903`
 Dünya: 48 özgün kulüp, 3 lig × 16 kulüp, 720 lig maçı/sezon, 14.400 maç/20 sezon, 864 başlangıç oyuncusu.
 
-## 2. Geliştirme stratejisi
+## 2. Geliştirme stratejisi ve kalıcı ilkeler
 
 Öncelik deterministik, headless ve uzun kariyerde otomatik test edilebilir saf Dart simülasyon çekirdeğidir. Flutter/Android mobil kabuk daha sonra gelir.
 
-Kalıcı ilkeler:
 - deterministic seed/replay
 - device-clock-independent `GameDate`
 - integer minor-unit `Money`
@@ -44,43 +43,58 @@ Kalıcı ilkeler:
 
 ## 3. CANLI DURUM — buradan devam et
 
-**M0–M38 PASS ve `main` üzerindedir.**
+**M0–M39 PASS ve `main` üzerindedir.**
 
-Aktif ürün milestone'u:
+Son kapalı ürün milestone'u:
 **M39 — President Facility Portfolio Decision Loop I**.
 
-### PR #42 — M39 President Facility Portfolio Decision Loop I — OPEN / MERGE-READY
+Yeni M40 kapsamı henüz seçilmemiştir. Yeni ürün milestone'u kullanıcı yönü olmadan otomatik başlatılmaz.
+
+### PR #42 — M39 President Facility Portfolio Decision Loop I — CLOSED / MERGED
 
 Branch: `feat/m39-president-facility-portfolio-loop`
 
-PR:
-- `#42` — **OPEN / NOT MERGED / MERGE-READY**
-- başlık: `M39: president facility portfolio decision loop`
-- code-bearing final HEAD: `712f8165ef66d11bc4f8f435820cfc3669073807`
-- final docs-inclusive verified HEAD: `cfae0af3bb45fb90849c3ff58cb46a028f87d73d`
-- final PR CI run `34637005550` — **SUCCESS**
-- test job `103387495349` — **SUCCESS**
-- canonical job `103387494918` — **SUCCESS**
+Final PR doğrulaması:
+- final PR HEAD: `ea4f1481b563cdd5d8386eb253c476cfb980194c`
+- final PR CI run `34648104716` — **SUCCESS**
+- test job `103423632663` — **SUCCESS**
+- canonical job `103423632885` — **SUCCESS**
 - analyzer: `No issues found!`
 - **157 normal/non-canonical test PASS**
 - **M0–M39 canonical PASS**
 - M39 canonical step — **SUCCESS**
 - artifacts `0`
-- test job ≈ `2m57s`
+- iki job da sabit `timeout-minutes: 7` sınırının altında
+
+Kullanıcı açıkça merge onayı verdi. PR #42 squash merge edildi.
+
+Squash merge:
+- `ea95f767eb95194455e012cb0b9ec5cc6e81667f`
+
+Post-merge `main` CI:
+- run `34649669246` — **SUCCESS**
+- test job `103428619127` — **SUCCESS**
+- canonical job `103428619421` — **SUCCESS**
+- `dart analyze`: **No issues found!**
+- `dart test --exclude-tags canonical-feedback`: **157 tests passed**
+- M0–M39 canonical runner zinciri: **PASS**
+- M39 canonical adımı: **SUCCESS**
+- artifacts: **0**
+- test job ≈ `3m00s`
 - canonical job ≈ `4m21s`
 - iki job da sabit `timeout-minutes: 7` sınırının altında
 
-PR #42 teknik olarak merge-ready durumdadır. Merge için kullanıcıdan explicit onay alınmalıdır; PR merge sonrası `main` CI canlı doğrulanmadan M39 CLOSED/PASS sayılmaz. Bu durum satırını güncelleyen docs-only commit kendi CI run numarasıyla tekrar dosyaya işlenmez; anti-loop kuralı korunur.
+M39 artık **CLOSED / PASS / main** durumundadır.
 
 ### M39 davranışı
 
-- M37 academy kararı **aynı orchestrator ile önce** uygulanır; legacy academy target/before/after/upgrades/reserve semantiği korunur.
+- M37 academy kararı aynı orchestrator ile önce uygulanır; legacy academy target/before/after/upgrades/reserve semantiği korunur.
 - stadium priority: `(transferAmbition * 2 + riskAppetite) ~/ 3`
 - training-ground priority: `(youthOrientation * 2 + managerPatience) ~/ 3`
 - `financialDiscipline` gerçek cash reserve politikasına girer.
 - stadium/training target level `0..5` bounded'dır.
 - portfolio upgrade denemeleri deterministic round-robin `training → stadium` sırasındadır.
-- bir facility aynı penceredeki tüm upgrade slotlarını tek başına tüketmez; ancak cash reserve ikinci yatırımı yine meşru biçimde engelleyebilir.
+- cash reserve meşru biçimde sonraki yatırımı engelleyebilir; reserve/debt invariant gevşetilmez.
 - gerçek cash kullanılır; gizli debt yaratılmaz.
 - downgrade yoktur.
 - president turnover sonrasında iki portfolio target'ı bir sonraki season window'da yeniden hesaplanır.
@@ -106,106 +120,9 @@ M39 canonical:
 - final checkpoint match `true`
 - canonical result `PASS`
 
-Not: builder window'da academy `9M` harcadıktan sonra reserve yalnız training upgrade'ine izin verir; stadium target `5` olarak yeniden planlanmış olsa da o pencerede uygulanmaz. Ayrı affordable M39 testi aynı portfolio policy altında hem stadium hem training yatırımının gerçekleşebildiğini doğrular. Reserve/debt invariant bu nedenle gevşetilmemiştir.
-
-İlk iki PR CI denemesinde turnover testi aynı dar cash-reserve penceresinde iki portfolio yatırımını birden zorunlu beklediği için kırmızıydı. Gerçek failure logu okunarak acceptance finans invariant'ıyla uyumlu hale getirildi; tahminle reserve kaldırılmadı.
+Not: builder window'da academy `9M` harcadıktan sonra reserve yalnız training upgrade'ine izin verir; stadium target `5` olarak yeniden planlanmış olsa da aynı pencerede uygulanmaz. Ayrı affordable M39 testi aynı portfolio policy altında hem stadium hem training yatırımının gerçekleşebildiğini doğrular.
 
 Kalıcı M39 dokümanı: `M39_PRESIDENT_FACILITY_PORTFOLIO_DECISION_LOOP_I.md`.
-
-### PR #41 — M38 Facility Portfolio Core I — CLOSED / MERGED
-
-Branch: `feat/m38-facility-portfolio-core`
-
-PR:
-- `#41` — **MERGED**
-- başlık: `M38: facility portfolio core with stadium and training ground`
-- final PR HEAD: `a85e2bc050bb3d40984afcd588042547bc2b3730`
-- final PR CI run `34621413329` — **SUCCESS**
-- test job `103336318547` — SUCCESS
-- canonical job `103336319004` — SUCCESS
-- analyzer: `No issues found!`
-- 152 normal/non-canonical test PASS
-- M0–M38 canonical PASS
-- artifacts `0`
-
-Kullanıcı açıkça merge onayı verdi. PR squash merge edildi.
-
-Squash merge:
-- `4a5c0b6585dffe3944dc8b9e4759a461c490b033`
-
-Post-merge `main` CI:
-- run `34624529493` — **SUCCESS**
-- test job `103346289415` — **SUCCESS**
-- canonical job `103346289304` — **SUCCESS**
-- `dart analyze`: **No issues found!**
-- `dart test --exclude-tags canonical-feedback`: **152 tests passed**
-- M0–M38 canonical runner zinciri: **PASS**
-- M38 canonical adımı: **SUCCESS**
-- artifacts: **0**
-- iki job da sabit `timeout-minutes: 7` sınırının altında tamamlandı
-
-### M38 davranışı
-
-- 48 kulübün tamamında persistent `academy + stadium + training ground` portfolio
-- stadium level `0..5`
-- training-ground level `0..5`
-- stadium/training upgrade maliyeti gerçek club cash'ten düşer
-- gizli borç yaratılmaz; yetersiz nakitte state değişmez
-- stadium gerçek `matchdayRevenue` hattını etkiler
-- training ground gerçek offseason player-development hattını etkiler
-- training yalnız pozitif gelişim delta'sını artırır; yaşa bağlı gerilemeyi tersine çevirmez
-- level `0` legacy davranışını korur
-- eski academy yatırım API'si yeni facility state'lerini silmez
-- facility save formatı `v2`
-- `v0 → v1 → v2` ve `v1 → v2` neutral migration
-- eski save'lerde stadium/training level `0` ile açılır
-- full portfolio save/load/resume parity korunur
-
-M38 canonical:
-- seed `20260903`
-- investment checkpoint season `8`
-- club `t3_05`
-- stadium `0 → 1`
-- training ground `0 → 1`
-- total spend `9.00M`
-- immediate cash delta `9.00M`
-- debt unchanged `true`
-- matchday revenue `3.49M → 3.75M`
-- training player `y_t3_05_s4`
-- ability `57.4905 → 57.5290`
-- save version `2`
-- save bytes `217572`
-- v1 migration neutral `true`
-- direct vs save-load resume `true`
-
-Kalıcı M38 dokümanı: `M38_FACILITY_PORTFOLIO_CORE_I.md`.
-
-### PR #40 — CI timeout remediation — CLOSED / MERGED
-
-- squash merge `cba4e28bef09d4109a10380b4808eb39b7c1ffb4`
-- timeout artırılmadı; her job `7 dk`
-- workflow `test` ve `canonical` olarak iki paralel job'a ayrıldı
-- hiçbir test/canonical runner kaldırılmadı
-- `actions/upload-artifact` yok; artifact hedefi `0`
-- post-merge main run `34617471052` SUCCESS
-
-### PR #39 — M34 analyzer temizliği — CLOSED / MERGED
-
-- squash merge `4d49b67973b96424c2c73b9f25e3a1b2d636c829`
-- 10 redundant M34 import kaldırıldı
-- analyzer temiz, davranış değişmedi
-
-### M37 — President Facility Decision Loop / Turnover Replanning I — PASS
-
-- PR #38 merged
-- squash merge `ff1745671ce57fdaa56b937bf36f026f86b34ca5`
-- seasonal academy facility decision loop
-- president profile'e göre target/intensity/reserve recompute
-- turnover anında replanning
-- downgrade yok
-- gerçek cash path, gizli borç yok
-- derived decision history
-- save/load/resume parity
 
 ## 4. Save/runtime/facility zinciri
 
@@ -221,9 +138,23 @@ Kalıcı M38 dokümanı: `M38_FACILITY_PORTFOLIO_CORE_I.md`.
 - **M34** Facility Persistence/Finance — 48 academy states, real cash funding, no hidden debt
 - **M35** Academy Runtime Youth Integration — persistent academy affects real youth generation; level2 canonical ability `+1.20`, potential `+3.60`
 - **M36** President Youth → Academy Investment — youthOrientation + financialDiscipline drive real academy investment; canonical `0→2`, spend `9M`
-- **M37** President Facility Decision Loop — seasonal reevaluation + turnover replanning
-- **M38** Facility Portfolio Core — academy + stadium + training; real matchday/player-development effects; save v2; real cash; full parity
-- **M39** President Facility Portfolio Decision Loop — **MERGE-READY / NOT MERGED**; academy legacy korunarak stadium/training target + reserve-safe seasonal/turnover replanning
+- **M37** President Facility Decision Loop — seasonal academy reevaluation + turnover replanning
+- **M38** Facility Portfolio Core — academy + stadium + training; real matchday/player-development effects; save v2; full parity
+- **M39** President Facility Portfolio Decision Loop — president-driven stadium/training targets, reserve-safe seasonal investment, turnover replanning, save/resume parity
+
+### M38 temel davranışı
+
+- 48 kulübün tamamında persistent `academy + stadium + training ground` portfolio
+- stadium/training level `0..5`
+- facility upgrade maliyeti gerçek club cash'ten düşer; gizli debt yok
+- stadium gerçek `matchdayRevenue` hattını etkiler
+- training ground gerçek offseason player-development hattını etkiler
+- training yalnız pozitif gelişim delta'sını artırır
+- level `0` legacy davranışını korur
+- facility save formatı `v2`; `v0 → v1 → v2` ve `v1 → v2` neutral migration
+- full portfolio save/load/resume parity korunur
+
+M38 canonical: stadium `0→1`, training `0→1`, spend `9M`, debt unchanged, matchday `3.49M→3.75M`, player ability `57.4905→57.5290`, v1 migration neutral, direct/resume parity `true`.
 
 ## 5. Başkan trait wiring
 
@@ -237,34 +168,24 @@ Kalıcı M38 dokümanı: `M38_FACILITY_PORTFOLIO_CORE_I.md`.
 
 ## 6. Milestone geçmişi
 
-**M0–M38 PASS / main. M39 MERGE-READY / explicit kullanıcı onayı bekliyor.**
+**M0–M39 PASS / main.**
 
-M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer pazarı; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya hafızası; M11 başkan vaatleri; M12 vaat→taraftar; M13 vaat→medya; M14 başkanlık seçimi; M15 görev süresi/devir; M16 başkan devrinde itibar; M17 yönetim profili; M18 manager patience; M19 manager/world↔election fixed-point; M20 financial discipline; M21 transfer ambition; M22 profile feedback orchestration; M23 risk appetite; M24 youth orientation; M25 save/load; M26 world snapshot; M27 advanced runtime; M28 history compaction; M29 president runtime; M30 fan/media/promise memory; M31 president resume; M32 long-career stress; M33 academy core; M34 facility persistence/finance; M35 academy runtime youth; M36 president→academy investment; M37 seasonal facility decision loop; M38 facility portfolio core; M39 president facility portfolio decision loop (PR #42, not merged).
+M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer pazarı; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya hafızası; M11 başkan vaatleri; M12 vaat→taraftar; M13 vaat→medya; M14 başkanlık seçimi; M15 görev süresi/devir; M16 başkan devrinde itibar; M17 yönetim profili; M18 manager patience; M19 manager/world↔election fixed-point; M20 financial discipline; M21 transfer ambition; M22 profile feedback orchestration; M23 risk appetite; M24 youth orientation; M25 save/load; M26 world snapshot; M27 advanced runtime; M28 history compaction; M29 president runtime; M30 fan/media/promise memory; M31 president resume; M32 long-career stress; M33 academy core; M34 facility persistence/finance; M35 academy runtime youth; M36 president→academy investment; M37 seasonal academy facility decision loop; M38 facility portfolio core; M39 president facility portfolio decision loop.
 
-## 7. Kalıcı teknik kurallar
+## 7. CI ve teknik borç durumu
 
-- canonical seed `20260903`
-- determinism ve save/resume parity korunur
-- public legacy semantics sessizce değiştirilmez
-- neutral/default provider eski davranışı korur
-- fixed-point feedback deterministik; convergence/cycle detection korunur
-- checkpoint = sonraki sezonun opening state'i
-- future save version reddedilir
-- migration fixture/test zorunlu
-- level0 facility legacy davranışı korur
-- facility yatırımı gerçek nakitten düşer; gizli debt yok
-- financialDiscipline cash reserve'i korur
-- CI `test` + `canonical` iki paralel job
-- her job `timeout-minutes: 7`; artırılmaz
-- artifact hedefi `0`; `actions/upload-artifact` eklenmez
-- hiçbir CI hatası tahminle düzeltilmez; gerçek log okunur
-- PR merge için her zaman kullanıcıdan açık onay gerekir
+- PR #39: 10 redundant M34 import temizlendi; analyzer temiz.
+- PR #40: tek-job 7 dakika timeout riski giderildi; workflow `test` + `canonical` iki paralel job'a ayrıldı.
+- Her job `timeout-minutes: 7`; artırılmaz.
+- Hiçbir canonical/test kontrolü kaldırılmadı.
+- Artifact hedefi `0`; `actions/upload-artifact` eklenmez.
+- Son M39 post-merge main doğrulaması: run `34649669246` SUCCESS, 157 test PASS, M0–M39 PASS, artifact 0.
 
 ## 8. Sonraki ürün yönü
 
-Aktif çalışma **M39**'dur. PR #42 merge-ready durumdadır; explicit kullanıcı merge onayı alınmadan merge edilmez ve yeni M40 kapsamı başlatılmaz.
+M39 kapanmıştır. Yeni milestone **otomatik seçilmez**.
 
-M39 merge sonrası olası yönler:
+Olası yönler:
 - stadium capacity / attendance derinliği
 - sponsor sistemi
 - crisis sistemi
