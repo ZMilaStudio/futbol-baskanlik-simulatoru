@@ -102,52 +102,58 @@ class PresidentFacilityPortfolioInvestmentOrchestrator {
     var trainingUpgrades = 0;
     var stadiumUpgrades = 0;
 
-    // Fixed order is intentional: academy is applied by the outer M39 loop first,
-    // then training ground, then stadium. This protects the legacy academy path
-    // and makes cash competition deterministic.
-    while (current.trainingGroundFor(clubId).level <
-            plan.trainingGroundTargetLevel &&
-        trainingUpgrades < plan.maxTrainingGroundUpgradesThisWindow) {
-      final decision = investment.trainingGroundPolicy
-          .upgrade(current.trainingGroundFor(clubId));
-      if (!decision.upgraded ||
-          !_preservesReserve(
-            current,
-            clubId,
-            decision.cost,
-            plan.cashReserveBasisPoints,
-          )) {
-        break;
+    // Academy is applied by the outer M39 loop first. Portfolio upgrades then
+    // alternate training -> stadium per round so one facility cannot consume
+    // every upgrade slot before the other receives a reserve-safe attempt.
+    final rounds = plan.maxTrainingGroundUpgradesThisWindow >=
+            plan.maxStadiumUpgradesThisWindow
+        ? plan.maxTrainingGroundUpgradesThisWindow
+        : plan.maxStadiumUpgradesThisWindow;
+    for (var round = 0; round < rounds; round++) {
+      if (trainingUpgrades < plan.maxTrainingGroundUpgradesThisWindow &&
+          current.trainingGroundFor(clubId).level <
+              plan.trainingGroundTargetLevel) {
+        final decision = investment.trainingGroundPolicy
+            .upgrade(current.trainingGroundFor(clubId));
+        if (decision.upgraded &&
+            _preservesReserve(
+              current,
+              clubId,
+              decision.cost,
+              plan.cashReserveBasisPoints,
+            )) {
+          final applied = investment.upgradeTrainingGround(
+            checkpoint: current,
+            clubId: clubId,
+          );
+          if (applied.applied) {
+            current = applied.checkpoint;
+            trainingUpgrades++;
+          }
+        }
       }
-      final applied = investment.upgradeTrainingGround(
-        checkpoint: current,
-        clubId: clubId,
-      );
-      if (!applied.applied) break;
-      current = applied.checkpoint;
-      trainingUpgrades++;
-    }
 
-    while (current.stadiumFor(clubId).level < plan.stadiumTargetLevel &&
-        stadiumUpgrades < plan.maxStadiumUpgradesThisWindow) {
-      final decision =
-          investment.stadiumPolicy.upgrade(current.stadiumFor(clubId));
-      if (!decision.upgraded ||
-          !_preservesReserve(
-            current,
-            clubId,
-            decision.cost,
-            plan.cashReserveBasisPoints,
-          )) {
-        break;
+      if (stadiumUpgrades < plan.maxStadiumUpgradesThisWindow &&
+          current.stadiumFor(clubId).level < plan.stadiumTargetLevel) {
+        final decision =
+            investment.stadiumPolicy.upgrade(current.stadiumFor(clubId));
+        if (decision.upgraded &&
+            _preservesReserve(
+              current,
+              clubId,
+              decision.cost,
+              plan.cashReserveBasisPoints,
+            )) {
+          final applied = investment.upgradeStadium(
+            checkpoint: current,
+            clubId: clubId,
+          );
+          if (applied.applied) {
+            current = applied.checkpoint;
+            stadiumUpgrades++;
+          }
+        }
       }
-      final applied = investment.upgradeStadium(
-        checkpoint: current,
-        clubId: clubId,
-      );
-      if (!applied.applied) break;
-      current = applied.checkpoint;
-      stadiumUpgrades++;
     }
 
     return PresidentFacilityPortfolioInvestmentResult(
