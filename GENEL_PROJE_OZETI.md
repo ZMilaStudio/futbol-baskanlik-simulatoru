@@ -41,6 +41,15 @@ Dünya ölçeği:
 
 Son kapalı milestone: **M37 — President Facility Decision Loop / Turnover Replanning I**.
 
+### Aktif bakım çalışması — M34 analyzer import temizliği
+- canlı `main` başlangıç SHA: `08d99227c5a0dd96c91c61a046472bdbf9625ebd`
+- branch: `chore/cleanup-m34-analyzer-imports`
+- amaç: M34 test/tool dosyalarında analyzer tarafından raporlanan 10 adet `unnecessary_import` info bildirimini davranış değiştirmeden kaldırmak
+- etkilenen dosyalar: `test/m34_facility_persistence_finance_test.dart`, `test/m34_facility_save_migration_test.dart`, `tool/run_m34_facility_persistence_finance.dart`
+- değişiklik yalnız redundant `src/...` importlarının kaldırılmasıdır; kullanılan semboller zaten public `package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart` export'u üzerinden sağlanmaktadır
+- PR/CI kanıtı henüz bu kayıt anında doğrulanmamıştır; analyzer temizliği PASS sayılmamalıdır
+- PR merge için kullanıcı açık onayı zorunludur
+
 ### M37 kapanış
 - PR `#38` — MERGED
 - final PR HEAD: `0030caef1c292d4f1d249f9a8ed5a2abcca041fb`
@@ -324,7 +333,7 @@ Açık konular:
 - seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
 - long-career player/economy/manager denge metrikleri 30+ sezonda ayrıca ürün-balance milestone'u olarak sertleştirilebilir
 - academy/facility karar döngüsünün daha geniş facility türlerine yayılması sonraki ürün kararıdır
-- analyzer şu anda SUCCESS olmakla birlikte M34 test/tool importlarında 10 adet `unnecessary_import` info bildirimi vardır; bu M37 kapanış blocker'ı değildir
+- M34 test/tool importlarındaki 10 adet `unnecessary_import` info bildirimi `chore/cleanup-m34-analyzer-imports` branch'inde temizlenmektedir; CI doğrulanana ve kullanıcı onayıyla merge edilene kadar `main` üzerinde teknik borç açık kabul edilir
 
 Yeni milestone otomatik varsayılmamalıdır. Sonraki ürün kapsamı kullanıcı yönlendirmesiyle seçilmelidir.
 
