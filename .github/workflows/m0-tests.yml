@@ -151,3 +151,6 @@ jobs:
 
       - name: Run M38 facility portfolio core
         run: dart run tool/run_m38_facility_portfolio_core.dart 20260903
+
+      - name: Run M39 president facility portfolio decision loop
+        run: dart run tool/run_m39_president_facility_portfolio_decision_loop.dart 20260903
