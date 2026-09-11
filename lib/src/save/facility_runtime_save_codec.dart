@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import '../core/money.dart';
 import '../facility/academy_facility.dart';
+import '../facility/stadium_facility.dart';
+import '../facility/training_ground_facility.dart';
 import 'facility_runtime_checkpoint.dart';
 import 'save_checksum.dart';
 import 'save_load_exception.dart';
@@ -11,7 +13,7 @@ class FacilityRuntimeSaveCodec {
   const FacilityRuntimeSaveCodec({this.worldCodec = const WorldSaveCodec()});
 
   static const String format = 'zmila-fbs-facility-runtime';
-  static const int currentSaveVersion = 1;
+  static const int currentSaveVersion = 2;
 
   final WorldSaveCodec worldCodec;
 
@@ -20,6 +22,12 @@ class FacilityRuntimeSaveCodec {
     final payload = <String, Object?>{
       'worldSave': worldCodec.encode(checkpoint.world),
       'academyFacilities': checkpoint.academyFacilities
+          .map((state) => {'clubId': state.clubId, 'level': state.level})
+          .toList(growable: false),
+      'stadiumFacilities': checkpoint.stadiumFacilities
+          .map((state) => {'clubId': state.clubId, 'level': state.level})
+          .toList(growable: false),
+      'trainingGroundFacilities': checkpoint.trainingGroundFacilities
           .map((state) => {'clubId': state.clubId, 'level': state.level})
           .toList(growable: false),
       'totalInvestmentSpentMinorUnits': checkpoint.totalInvestmentSpent.minorUnits,
@@ -91,8 +99,11 @@ class FacilityRuntimeSaveCodec {
     var map = Map<String, Object?>.from(payload);
     if (version == 0) {
       map = _migrateV0ToV1(map);
+      map = _migrateV1ToV2(map);
+    } else if (version == 1) {
+      map = _migrateV1ToV2(map);
     }
-    return _decodeV1(map);
+    return _decodeV2(map);
   }
 
   Map<String, Object?> _migrateV0ToV1(Map<String, Object?> legacy) => {
@@ -101,39 +112,78 @@ class FacilityRuntimeSaveCodec {
         'totalInvestmentSpentMinorUnits': legacy['spentMinorUnits'] ?? 0,
       };
 
-  FacilityRuntimeCheckpoint _decodeV1(Map<String, Object?> map) {
+  Map<String, Object?> _migrateV1ToV2(Map<String, Object?> legacy) => {
+        ...legacy,
+        'stadiumFacilities': _neutralFacilities(legacy['academyFacilities']),
+        'trainingGroundFacilities':
+            _neutralFacilities(legacy['academyFacilities']),
+      };
+
+  Object? _neutralFacilities(Object? academyFacilities) {
+    if (academyFacilities is! List) return academyFacilities;
+    return academyFacilities
+        .map((item) {
+          if (item is! Map) return item;
+          final entry = Map<String, Object?>.from(item);
+          return {'clubId': entry['clubId'], 'level': 0};
+        })
+        .toList(growable: false);
+  }
+
+  FacilityRuntimeCheckpoint _decodeV2(Map<String, Object?> map) {
     final worldSave = map['worldSave'];
-    final facilitiesJson = map['academyFacilities'];
+    final academiesJson = map['academyFacilities'];
+    final stadiumsJson = map['stadiumFacilities'];
+    final trainingGroundsJson = map['trainingGroundFacilities'];
     final spent = map['totalInvestmentSpentMinorUnits'];
-    if (worldSave is! String || facilitiesJson is! List || spent is! int) {
+    if (worldSave is! String ||
+        academiesJson is! List ||
+        stadiumsJson is! List ||
+        trainingGroundsJson is! List ||
+        spent is! int) {
       throw const SaveLoadException(
         SaveLoadFailure.invalidPayload,
         'Facility save payload fields are invalid.',
       );
     }
-    final facilities = <AcademyFacilityState>[];
-    for (final item in facilitiesJson) {
-      if (item is! Map) {
-        throw const SaveLoadException(
-          SaveLoadFailure.invalidPayload,
-          'Academy facility entry must be a map.',
-        );
-      }
-      final entry = Map<String, Object?>.from(item);
-      final clubId = entry['clubId'];
-      final level = entry['level'];
-      if (clubId is! String || level is! int) {
-        throw const SaveLoadException(
-          SaveLoadFailure.invalidPayload,
-          'Academy facility fields are invalid.',
-        );
-      }
-      facilities.add(AcademyFacilityState(clubId: clubId, level: level));
+
+    final academies = <AcademyFacilityState>[];
+    for (final item in academiesJson) {
+      final entry = _facilityEntry(item, 'Academy');
+      academies.add(
+        AcademyFacilityState(
+          clubId: entry.$1,
+          level: entry.$2,
+        ),
+      );
     }
+    final stadiums = <StadiumFacilityState>[];
+    for (final item in stadiumsJson) {
+      final entry = _facilityEntry(item, 'Stadium');
+      stadiums.add(
+        StadiumFacilityState(
+          clubId: entry.$1,
+          level: entry.$2,
+        ),
+      );
+    }
+    final trainingGrounds = <TrainingGroundFacilityState>[];
+    for (final item in trainingGroundsJson) {
+      final entry = _facilityEntry(item, 'Training ground');
+      trainingGrounds.add(
+        TrainingGroundFacilityState(
+          clubId: entry.$1,
+          level: entry.$2,
+        ),
+      );
+    }
+
     try {
       return FacilityRuntimeCheckpoint(
         world: worldCodec.decode(worldSave),
-        academyFacilities: facilities,
+        academyFacilities: academies,
+        stadiumFacilities: stadiums,
+        trainingGroundFacilities: trainingGrounds,
         totalInvestmentSpent: Money.fromMinorUnits(spent),
       );
     } on SaveLoadException {
@@ -144,5 +194,24 @@ class FacilityRuntimeSaveCodec {
         'Invalid facility runtime payload: $error',
       );
     }
+  }
+
+  (String, int) _facilityEntry(Object? item, String label) {
+    if (item is! Map) {
+      throw SaveLoadException(
+        SaveLoadFailure.invalidPayload,
+        '$label facility entry must be a map.',
+      );
+    }
+    final entry = Map<String, Object?>.from(item);
+    final clubId = entry['clubId'];
+    final level = entry['level'];
+    if (clubId is! String || level is! int) {
+      throw SaveLoadException(
+        SaveLoadFailure.invalidPayload,
+        '$label facility fields are invalid.',
+      );
+    }
+    return (clubId, level);
   }
 }
