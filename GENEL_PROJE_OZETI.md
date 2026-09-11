@@ -49,9 +49,9 @@ Aktif ürün milestone'u:
 **M40 — Stadium Capacity & Attendance Core I**.
 
 Branch: `feat/m40-stadium-capacity-attendance`
-PR: `#43` — **OPEN / NOT MERGED**
+PR: `#43` — **OPEN / NOT MERGED / MERGE-READY**
 
-M40 code-bearing PR doğrulaması başarılıdır; kalıcı M40 dokümanı ve bu özet eklendiği için **final docs-inclusive HEAD CI yeniden doğrulanmadan merge-ready sayılmaz**.
+M40 kodu ve docs-inclusive PR HEAD canlı CI ile doğrulandı. Bu durum satırını yazan docs-only commit'in kendi CI run numarası anti-loop kuralı gereği tekrar bu dosyaya işlenmez; merge öncesi son HEAD CI ayrıca canlı doğrulanır. Merge için kullanıcıdan explicit onay gerekir.
 
 ### M40 kapsamı
 
@@ -72,17 +72,23 @@ M40 code-bearing PR doğrulaması başarılıdır; kalıcı M40 dokümanı ve bu
 - workflow'a M39 sonrasında `Run M40 stadium capacity attendance core` adımı eklendi
 - `timeout-minutes: 7` ve artifact `0` kuralları değişmedi
 
-### M40 code-bearing CI kanıtı
+### M40 PR CI kanıtı
 
-Run `34651546720` — **SUCCESS**
+Code-bearing run `34651546720` — **SUCCESS**
 - test job `103434615793` — **SUCCESS**, ≈ `2m58s`
 - canonical job `103434615903` — **SUCCESS**, ≈ `3m04s`
 - analyzer: `No issues found!`
 - **162 normal/non-canonical test PASS**
 - **M0–M40 canonical PASS**
-- M40 canonical step — **SUCCESS**
 - artifacts: **0**
-- iki job da sabit 7 dakika sınırının altında
+
+Docs-inclusive verified HEAD: `145abcd50e3c0ebb70ba797851d5825b982586b0`
+Final docs-inclusive run `34651879876` — **SUCCESS**
+- test job `103435737462` — **SUCCESS**
+- canonical job `103435737622` — **SUCCESS**
+- M0–M40 canonical adımlarının tamamı SUCCESS
+- artifacts: **0**
+- PR #43 mergeable: `true`
 
 M40 canonical:
 - target club `t1_01`
@@ -101,50 +107,36 @@ Kalıcı M40 dokümanı: `M40_STADIUM_CAPACITY_ATTENDANCE_CORE_I.md`.
 
 ### M39 — President Facility Portfolio Decision Loop I — CLOSED / MERGED / PASS
 
-PR #42 squash merge:
-- `ea95f767eb95194455e012cb0b9ec5cc6e81667f`
+PR #42 squash merge: `ea95f767eb95194455e012cb0b9ec5cc6e81667f`
 
-Post-merge `main` CI:
-- run `34649669246` — **SUCCESS**
-- test job `103428619127` — **SUCCESS**
-- canonical job `103428619421` — **SUCCESS**
-- analyzer: `No issues found!`
-- **157 normal/non-canonical test PASS**
-- **M0–M39 canonical PASS**
-- artifacts `0`
-- test job ≈ `3m00s`
-- canonical job ≈ `4m21s`
+Post-merge `main` CI `34649669246` — **SUCCESS**:
+- 157 normal/non-canonical test PASS
+- M0–M39 canonical PASS
+- artifacts 0
+- test ≈ `3m00s`, canonical ≈ `4m21s`
 
-M39 davranışı:
-- M37 academy kararı aynı orchestrator ile önce uygulanır
-- stadium priority: `(transferAmbition * 2 + riskAppetite) ~/ 3`
-- training-ground priority: `(youthOrientation * 2 + managerPatience) ~/ 3`
-- `financialDiscipline` gerçek cash reserve politikasına girer
-- portfolio upgrade denemeleri deterministic round-robin `training → stadium`
-- gerçek cash kullanılır, gizli debt ve downgrade yoktur
-- president turnover stadium/training target'larını yeniden planlar
-- direct `2 season` ile `1 + save/load + 1` decision/youth/final checkpoint parity korunur
+M39: academy legacy first; stadium priority `transferAmbition + riskAppetite`; training priority `youthOrientation + managerPatience`; `financialDiscipline` cash reserve; deterministic `training → stadium` round-robin; real cash/no hidden debt; turnover replanning; save/load parity.
 
 Kalıcı M39 dokümanı: `M39_PRESIDENT_FACILITY_PORTFOLIO_DECISION_LOOP_I.md`.
 
 ## 4. Save/runtime/facility zinciri
 
-- **M25** Save/Load + Versioning I — temel checkpoint/version/checksum/migration
-- **M26** World Save Snapshot I — 48 club/leagues/players/finance
-- **M27** Advanced Runtime Snapshot I — contracts/loans/installments/manager
-- **M28** History Compaction — bounded history/save
-- **M29** President Runtime Snapshot — 48 president states
-- **M30** Fan/Media/Promise Runtime Memory — bounded memory
-- **M31** President Domain Resume — canonical `8+12=20`, mid-term resume
-- **M32** 30-season stress — multi-save chain + final parity
-- **M33** Academy Investment Core — academy `0..5`, level0 legacy
-- **M34** Facility Persistence/Finance — real cash funding, no hidden debt
-- **M35** Academy Runtime Youth Integration — academy affects real youth generation
-- **M36** President Youth → Academy Investment — profile-driven real academy investment
-- **M37** President Facility Decision Loop — seasonal academy reevaluation + turnover replanning
-- **M38** Facility Portfolio Core — academy + stadium + training; real matchday/player-development effects; save v2; full parity
-- **M39** President Facility Portfolio Decision Loop — president-driven stadium/training targets, reserve-safe investment, turnover replanning
-- **M40** Stadium Capacity & Attendance Core I — **PR #43 / code CI verified / final docs HEAD CI pending**
+- **M25** Save/Load + Versioning I
+- **M26** World Save Snapshot I
+- **M27** Advanced Runtime Snapshot I
+- **M28** History Compaction
+- **M29** President Runtime Snapshot
+- **M30** Fan/Media/Promise Runtime Memory
+- **M31** President Domain Resume
+- **M32** 30-season stress
+- **M33** Academy Investment Core
+- **M34** Facility Persistence/Finance
+- **M35** Academy Runtime Youth Integration
+- **M36** President Youth → Academy Investment
+- **M37** President Facility Decision Loop
+- **M38** Facility Portfolio Core — academy + stadium + training; real effects; save v2
+- **M39** President Facility Portfolio Decision Loop — president-driven portfolio investment
+- **M40** Stadium Capacity & Attendance Core I — **PR #43 MERGE-READY / explicit onay bekliyor**
 
 ## 5. Başkan trait wiring
 
@@ -158,7 +150,7 @@ Kalıcı M39 dokümanı: `M39_PRESIDENT_FACILITY_PORTFOLIO_DECISION_LOOP_I.md`.
 
 ## 6. Milestone geçmişi
 
-**M0–M39 PASS / main. M40 PR #43 açık; code-bearing CI PASS, final docs-inclusive CI bekleniyor.**
+**M0–M39 PASS / main. M40 PR #43 MERGE-READY / NOT MERGED.**
 
 M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer pazarı; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya hafızası; M11 başkan vaatleri; M12 vaat→taraftar; M13 vaat→medya; M14 başkanlık seçimi; M15 görev süresi/devir; M16 başkan devrinde itibar; M17 yönetim profili; M18 manager patience; M19 manager/world↔election fixed-point; M20 financial discipline; M21 transfer ambition; M22 profile feedback orchestration; M23 risk appetite; M24 youth orientation; M25 save/load; M26 world snapshot; M27 advanced runtime; M28 history compaction; M29 president runtime; M30 fan/media/promise memory; M31 president resume; M32 long-career stress; M33 academy core; M34 facility persistence/finance; M35 academy runtime youth; M36 president→academy investment; M37 seasonal academy facility decision loop; M38 facility portfolio core; M39 president facility portfolio decision loop; M40 stadium capacity/attendance (PR #43).
 
@@ -170,11 +162,12 @@ M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3
 - Artifact hedefi `0`; `actions/upload-artifact` eklenmez.
 - CI kırmızıysa gerçek log okunmadan patch atılmaz.
 - Son kapalı main doğrulaması: docs-only run `34650277198` — test SUCCESS, canonical SUCCESS, M0–M39 SUCCESS, artifact 0.
-- M40 ilk code-bearing PR run `34651546720` — 162 test PASS, M0–M40 PASS, artifact 0.
+- M40 code-bearing run `34651546720` — 162 test PASS, M0–M40 PASS, artifact 0.
+- M40 docs-inclusive run `34651879876` — test SUCCESS, canonical SUCCESS, M0–M40 SUCCESS, artifact 0.
 
 ## 8. Sonraki ürün yönü
 
-Aktif çalışma **M40**'tır. M40 final PR HEAD doğrulanıp explicit kullanıcı merge onayı alınmadan yeni M41 başlatılmaz.
+Aktif çalışma **M40**'tır. PR #43 merge edilip post-merge `main` CI doğrulanmadan ve M40 CLOSED/PASS yapılmadan yeni M41 başlatılmaz.
 
 M40 sonrası olası yönler:
 - fan trust / demand bağlantısı ile attendance derinliği II
