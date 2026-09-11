@@ -66,6 +66,7 @@ class BasicEconomyEngine {
     Map<String, Money>? annualWagesByClub,
     Map<String, Money>? transferInstallmentIncomeByClub,
     Map<String, Money>? transferInstallmentExpenseByClub,
+    Map<String, int> matchdayRevenueMultiplierBpsByClub = const {},
   }) {
     _validateScale(economicScaleBps, 'economicScaleBps');
     _validateScale(costScaleBps, 'costScaleBps');
@@ -99,9 +100,21 @@ class BasicEconomyEngine {
       final sponsorRevenue = Money.fromUnits(
         4000000 + strengthDeltaHundredths * 3500,
       ).scaleBasisPoints(economicScaleBps);
-      final matchdayRevenue = Money.fromUnits(
+      final baseMatchdayRevenue = Money.fromUnits(
         4000000 + strengthDeltaHundredths * 2200,
       ).scaleBasisPoints(economicScaleBps);
+      final matchdayMultiplierBps =
+          matchdayRevenueMultiplierBpsByClub[clubId] ?? 10000;
+      if (matchdayMultiplierBps <= 0) {
+        throw ArgumentError.value(
+          matchdayMultiplierBps,
+          'matchdayRevenueMultiplierBpsByClub[$clubId]',
+          'Must be positive.',
+        );
+      }
+      final matchdayRevenue = matchdayMultiplierBps == 10000
+          ? baseMatchdayRevenue
+          : baseMatchdayRevenue.scaleBasisPoints(matchdayMultiplierBps);
       final prizeRevenue = Money.fromUnits(
         _prizeForPosition(positionByClub[clubId] ?? 16),
       ).scaleBasisPoints(economicScaleBps);
