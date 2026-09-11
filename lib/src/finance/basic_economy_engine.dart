@@ -67,6 +67,7 @@ class BasicEconomyEngine {
     Map<String, Money>? transferInstallmentIncomeByClub,
     Map<String, Money>? transferInstallmentExpenseByClub,
     Map<String, int> matchdayRevenueMultiplierBpsByClub = const {},
+    Map<String, Money>? sponsorRevenueByClub,
   }) {
     _validateScale(economicScaleBps, 'economicScaleBps');
     _validateScale(costScaleBps, 'costScaleBps');
@@ -97,9 +98,20 @@ class BasicEconomyEngine {
 
       final centralRevenue = const Money.fromUnits(12000000)
           .scaleBasisPoints(economicScaleBps);
-      final sponsorRevenue = Money.fromUnits(
+      final legacySponsorRevenue = Money.fromUnits(
         4000000 + strengthDeltaHundredths * 3500,
       ).scaleBasisPoints(economicScaleBps);
+      final sponsorRevenue = sponsorRevenueByClub == null
+          ? legacySponsorRevenue
+          : sponsorRevenueByClub[clubId] ??
+              (throw StateError('Missing sponsor revenue for $clubId.'));
+      if (sponsorRevenue.isNegative) {
+        throw ArgumentError.value(
+          sponsorRevenue,
+          'sponsorRevenueByClub[$clubId]',
+          'Must not be negative.',
+        );
+      }
       final baseMatchdayRevenue = Money.fromUnits(
         4000000 + strengthDeltaHundredths * 2200,
       ).scaleBasisPoints(economicScaleBps);
