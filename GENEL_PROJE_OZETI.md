@@ -45,14 +45,19 @@ Son kapalı milestone: **M37 — President Facility Decision Loop / Turnover Rep
 - PR `#38` — MERGED
 - final PR HEAD: `0030caef1c292d4f1d249f9a8ed5a2abcca041fb`
 - PR CI: run `34059375807`, job `101557067196` — SUCCESS
-- analyzer PASS
 - `147` normal/non-canonical test PASS
 - M0–M37 runner zinciri PASS
 - artifact `0`
 - ilk CI'da 7 dk workflow timeout nedeniyle overall cancelled olmuş ancak tüm test adımları SUCCESS; timeout yükseltilmemiştir
 - test runner optimize edilerek final PR CI `4m22s` içinde yeşil tamamlanmıştır
 - squash merge sonrası main SHA: `ff1745671ce57fdaa56b937bf36f026f86b34ca5`
-- merge sonrası main CI: run `34113979981` — **son doğrulama sırasında in_progress**
+- merge sonrası main CI: run `34113979981`, job `101716393026` — **SUCCESS**
+- main CI `dart test --exclude-tags canonical-feedback`: **147 tests passed**
+- main CI M0–M37 runner zinciri: **PASS**
+- main CI artifact: **0**
+- main CI M37 deterministic continuation: split decisions / youth history / final checkpoint parity = **true / true / true**
+- main CI job süresi yaklaşık `4m49s`; 7 dk timeout sınırının altındadır
+- `dart analyze` adımı SUCCESS; logda failure olmayan 10 adet `unnecessary_import` info bildirimi vardır
 
 M37 amacı:
 - academy yatırım kararını tek explicit checkpoint'ten çıkarıp sezonluk president facility decision loop'a bağlamak
@@ -177,7 +182,7 @@ Canlı GitHub durumu her zaman eski sohbet notlarından üstündür. **Bir miles
 - canonical academy `0 → 2`, spend `9,00M`
 - save/load/resume youth history + final checkpoint eşleşir
 
-### M37 — President Facility Decision Loop / Turnover Replanning I — MERGED; main CI son kontrol bekliyor
+### M37 — President Facility Decision Loop / Turnover Replanning I — PASS
 - sezonluk/periodik facility decision loop
 - her sezon başkan profiline göre target/upgrade intensity/reserve recompute
 - başkan değişiminde turnover replanning
@@ -185,6 +190,9 @@ Canlı GitHub durumu her zaman eski sohbet notlarından üstündür. **Bir miles
 - gerçek cash finance path korunur
 - decision history derived; save growth'a yeni persisted history eklenmez
 - split save/load/resume parity + multi-president turnover kanıtı
+- post-merge `main` CI run `34113979981` / job `101716393026` SUCCESS
+- canonical split decisions, youth history ve final checkpoint parity = true
+- artifact 0
 
 Ayrıntı dosyaları:
 - `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
@@ -194,6 +202,7 @@ Ayrıntı dosyaları:
 - `M34_FACILITY_PERSISTENCE_FINANCE_ORCHESTRATION_I.md`
 - `M35_ACADEMY_RUNTIME_YOUTH_INTEGRATION_I.md`
 - `M36_PRESIDENT_YOUTH_ACADEMY_INVESTMENT_ORCHESTRATION_I.md`
+- `M37_PRESIDENT_FACILITY_DECISION_LOOP_TURNOVER_REPLANNING_I.md`
 
 ## 5. Başkan trait durumu
 
@@ -209,7 +218,7 @@ Beş trait gerçek davranışa bağlıdır:
 
 ## 6. Milestone geçmişi — kısa
 
-M0–M36 PASS. M37 MERGED ve main CI doğrulaması sürüyor.
+M0–M37 PASS.
 
 - M0 Deterministik sezon çekirdeği — PASS
 - M1 20 sezon kariyer — PASS
@@ -248,7 +257,7 @@ M0–M36 PASS. M37 MERGED ve main CI doğrulaması sürüyor.
 - M34 Facility Persistence / Finance Orchestration I — PASS
 - M35 Academy Runtime Youth Integration I — PASS
 - M36 President Youth Orientation → Academy Investment Orchestration I — PASS
-- M37 President Facility Decision Loop / Turnover Replanning I — MERGED; post-merge CI pending at last verification
+- M37 President Facility Decision Loop / Turnover Replanning I — PASS
 
 ## 7. Kalıcı teknik kurallar
 
@@ -302,7 +311,7 @@ Ana workflow temel olarak:
 
 ## 9. Açık teknik borç / sıradaki yön
 
-M0–M36 için canlı PASS kanıtı vardır. M37 kodu merge edilmiştir; post-merge main CI tamamlanmadan M37 CLOSED/PASS etiketi kesinleştirilmemelidir.
+M0–M37 için canlı PASS kanıtı vardır. M37 post-merge `main` CI run `34113979981`, job `101716393026` SUCCESS; `147` normal/non-canonical test PASS; M0–M37 runner zinciri PASS; artifact `0`; save/load/resume decision/youth/final checkpoint parity true.
 
 Açık konular:
 - Android file system / save-slot UI / autosave / backup / cloud save daha sonra
@@ -311,8 +320,9 @@ Açık konular:
 - seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
 - long-career player/economy/manager denge metrikleri 30+ sezonda ayrıca ürün-balance milestone'u olarak sertleştirilebilir
 - academy/facility karar döngüsünün daha geniş facility türlerine yayılması sonraki ürün kararıdır
+- analyzer şu anda SUCCESS olmakla birlikte M34 test/tool importlarında 10 adet `unnecessary_import` info bildirimi vardır; bu M37 kapanış blocker'ı değildir
 
-Sıradaki yön, M37 main CI sonucu alındıktan sonra yeniden değerlendirilmelidir. Yeni milestone otomatik varsayılmamalıdır.
+Yeni milestone otomatik varsayılmamalıdır. Sonraki ürün kapsamı kullanıcı yönlendirmesiyle seçilmelidir.
 
 ## 10. DEVRALMA / ÇALIŞMA TALİMATI
 
@@ -321,9 +331,9 @@ Bu dosyayı okuyan başka bir ChatGPT/Codex oturumu projeyi **yarım bırakmadan
 Zorunlu çalışma biçimi:
 1. Önce `GENEL_PROJE_OZETI.md` ve ilgili milestone dokümanlarını oku.
 2. Eski sohbet anlatımlarını canlı GitHub durumunun yerine koyma. `main`, PR, commit ve Actions sonuçlarını canlı kontrol et.
-3. M37 için özellikle main run `34113979981` durumunu kontrol et. Yeşil değilse M37'yi CLOSED/PASS yazma.
+3. Bir milestone'ı CLOSED/PASS saymadan önce ilgili `main` CI run/job sonucunu canlı doğrula; eski doküman kaydı tek başına yeterli değildir.
 4. CI başarısızsa gerçek failure logunu çıkar; varsayım yapma; kök nedeni düzelt; yeni branch/PR aç; test et; kullanıcı onayı olmadan merge etme.
-5. CI yeşilse artifact `0` olduğunu doğrula ve ancak bundan sonra M37 kapanış dokümanını oluştur/güncelle ve bu özeti canlı kanıtla güncelle.
+5. CI yeşilse artifact `0` olduğunu doğrula; ilgili kapanış `.md` dosyasını ve bu özeti canlı kanıtla güncelle.
 6. Her milestone'da M0–önceki milestone davranışını koru. Yeni özellik eklerken eski public simulation semantiğini sessizce değiştirme.
 7. Determinism, save/load/resume parity, migration, invariant ve balance guard'larını koru.
 8. CI timeout `7 dk` sabittir. Yavaş testleri gizlemek için timeout artırma; test runner'ı optimize et.
@@ -334,16 +344,6 @@ Zorunlu çalışma biçimi:
 13. Yeni milestone'a başlamadan önce ürün kapsamını ve mevcut runtime/save mimarisini bozacak gereksiz refactor yapma.
 14. Kodda değişiklik yaparken minimum, hedefli ve test edilebilir değişiklik tercih et.
 
-### 1 aylık geçici devir notu
+### Geçici devir tamamlandı
 
-Bu proje yaklaşık **1 aylığına başka bir ChatGPT hesabı/oturumu tarafından devralınacaktır**. Devir alan model, bu dosyayı tek başına okuyup projeyi sürdürebilecek seviyede hareket etmelidir. Öncelik hız değil **doğruluk + canlı CI kanıtı + mevcut davranışın korunmasıdır**.
-
-Özellikle:
-- M37'nin merge edilmiş olması, post-merge main CI yeşil olmadan milestone'un kapandığı anlamına gelmez.
-- M37'den sonra yeni milestone'u sırf "sıradaki mantıklı fikir" diye otomatik başlatma; önce M37 kapanışını doğrula ve kullanıcı talimatını bekle.
-- Kullanıcı onayını gerektiren merge/release gibi işlemleri kendi başına yapma.
-- Kod değişikliklerini GitHub üzerinde gerçekleştir; kullanıcının düşük disk alanını gereksiz yere tüketme.
-- Bir hata görürsen gerçek log → kök neden → minimal düzeltme → test → PR akışını izle.
-- "Yeşil gibi görünüyor", "muhtemelen düzeldi" veya eski sohbet notuna dayanarak PASS deme.
-
-Bu devir dosyası kalıcı proje dokümantasyonu değildir; geçici çalışma talimatı olarak kullanılacaktır.
+`DEVRALMA_1_AYLIK_GPT.md` tamamen okundu ve kalıcı kuralları bu özette korunmaktadır. M37 post-merge `main` CI canlı olarak doğrulandı; M37 kapanış dokümanı oluşturuldu. Geçici devir dosyası bu kapanış işlemiyle repo'dan kaldırılmıştır.
