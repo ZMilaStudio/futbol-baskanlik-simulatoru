@@ -41,23 +41,30 @@ Dünya ölçeği:
 
 Son kapalı milestone: **M37 — President Facility Decision Loop / Turnover Replanning I**.
 
-### Aktif bakım çalışması — M34 analyzer import temizliği
+### Bakım kapanışı — M34 analyzer import temizliği
 - canlı `main` başlangıç SHA: `08d99227c5a0dd96c91c61a046472bdbf9625ebd`
 - branch: `chore/cleanup-m34-analyzer-imports`
-- PR `#39` — OPEN, merge için kullanıcı açık onayı beklenir
-- code-bearing PR HEAD: `c58d2fd2df2453540427becc9ca6527e27a8703a`
+- PR `#39` — **MERGED**
+- final PR HEAD: `c907cb9ca2c73047d7a82428dd52a5b51f648e77`
 - amaç: M34 test/tool dosyalarında analyzer tarafından raporlanan 10 adet `unnecessary_import` info bildirimini davranış değiştirmeden kaldırmak
 - etkilenen dosyalar: `test/m34_facility_persistence_finance_test.dart`, `test/m34_facility_save_migration_test.dart`, `tool/run_m34_facility_persistence_finance.dart`
-- değişiklik yalnız redundant `src/...` importlarının kaldırılmasıdır; kullanılan semboller zaten public `package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart` export'u üzerinden sağlanmaktadır
-- PR CI run `34611993323`, job `103304508862` — **SUCCESS**
-- `dart analyze`: **No issues found!**
-- `dart test --exclude-tags canonical-feedback`: **147 tests passed**
-- M0–M37 runner zinciri: **PASS**
+- değişiklik yalnız redundant `src/...` importlarının kaldırılmasıdır; kullanılan semboller public `package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart` export'u üzerinden sağlanmaya devam eder
+- final PR CI run `34612787096`, job `103307174934` — **SUCCESS**
+- PR CI `dart analyze`: **No issues found!**
+- PR CI `dart test --exclude-tags canonical-feedback`: **147 tests passed**
+- PR CI M0–M37 runner zinciri: **PASS**
+- PR CI artifacts: **0**
+- final PR CI job süresi yaklaşık `4m54s`; sabit `7 dk` timeout sınırının altındadır
+- squash merge SHA: `4d49b67973b96424c2c73b9f25e3a1b2d636c829`
+- merge sonrası `main` CI run `34613733464`, job `103310367702` — **SUCCESS**
+- `main` CI `dart analyze`: **No issues found!**
+- `main` CI `dart test --exclude-tags canonical-feedback`: **147 tests passed**
+- `main` CI M0–M37 runner zinciri: **PASS**
 - M34 finance-funded facility persistence: **PASS**
 - M37 split decisions / youth history / final checkpoint parity: **true / true / true**
-- PR CI artifacts: **0**
-- PR CI job log zamanı yaklaşık `5m36s`; sabit `7 dk` timeout sınırının altındadır
-- bakım değişikliği CI ile doğrulanmıştır ancak `main` üzerinde teknik borç ancak kullanıcı onaylı merge ve post-merge main CI sonrasında kapalı sayılacaktır
+- `main` CI artifacts: **0**
+- `main` CI job süresi yaklaşık `5m34s`; sabit `7 dk` timeout sınırının altındadır
+- M34 analyzer import teknik borcu kapanmıştır; simülasyon davranışında değişiklik yapılmamıştır
 
 ### M37 kapanış
 - PR `#38` — MERGED
@@ -75,7 +82,7 @@ Son kapalı milestone: **M37 — President Facility Decision Loop / Turnover Rep
 - main CI artifact: **0**
 - main CI M37 deterministic continuation: split decisions / youth history / final checkpoint parity = **true / true / true**
 - main CI job süresi yaklaşık `4m49s`; 7 dk timeout sınırının altındadır
-- `dart analyze` adımı SUCCESS; logda failure olmayan 10 adet `unnecessary_import` info bildirimi vardır
+- `dart analyze` adımı SUCCESS; bu tarihsel M37 kapanış logunda failure olmayan 10 adet `unnecessary_import` info bildirimi vardı; bunlar daha sonra PR `#39` ile temizlenmiştir
 - devir kapanış commit'i: `ce155658128b4b6b9a7ba6377d61730f97c6bf5e`
 - devir kapanış commit'i CI: run `34609665300`, job `103296681707` — **SUCCESS**
 - kapanış commit'i CI: **147 tests passed**, M0–M37 runner zinciri PASS, artifact `0`
@@ -342,7 +349,8 @@ Açık konular:
 - seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
 - long-career player/economy/manager denge metrikleri 30+ sezonda ayrıca ürün-balance milestone'u olarak sertleştirilebilir
 - academy/facility karar döngüsünün daha geniş facility türlerine yayılması sonraki ürün kararıdır
-- M34 test/tool importlarındaki 10 adet `unnecessary_import` info bildirimi PR `#39` üzerinde temizlenmiş ve PR CI run `34611993323` / job `103304508862` ile `No issues found!`, 147 test, M0–M37 PASS ve artifact 0 olarak doğrulanmıştır; kullanıcı onaylı merge ve post-merge main CI tamamlanana kadar `main` üzerinde teknik borç açık kabul edilir
+
+Kapatılan bakım: M34 test/tool importlarındaki 10 adet `unnecessary_import` bildirimi PR `#39` ile temizlendi. Squash merge `4d49b67973b96424c2c73b9f25e3a1b2d636c829`; post-merge `main` CI run `34613733464` / job `103310367702` SUCCESS; analyzer `No issues found!`; 147 test; M0–M37 PASS; artifact 0.
 
 Yeni milestone otomatik varsayılmamalıdır. Sonraki ürün kapsamı kullanıcı yönlendirmesiyle seçilmelidir.
 
