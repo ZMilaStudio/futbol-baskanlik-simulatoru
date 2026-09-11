@@ -75,6 +75,8 @@ class FacilityInvestmentOrchestrator {
       checkpoint: FacilityRuntimeCheckpoint(
         world: updatedWorld,
         academyFacilities: updatedFacilities,
+        stadiumFacilities: checkpoint.stadiumFacilities,
+        trainingGroundFacilities: checkpoint.trainingGroundFacilities,
         totalInvestmentSpent: checkpoint.totalInvestmentSpent + decision.cost,
       ),
       decision: decision,
