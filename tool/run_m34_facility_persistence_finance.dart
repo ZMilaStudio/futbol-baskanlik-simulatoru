@@ -1,10 +1,6 @@
 import 'dart:convert';
 
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
-import 'package:futbol_baskanlik_m0/src/facility/facility_investment_orchestrator.dart';
-import 'package:futbol_baskanlik_m0/src/save/facility_runtime_career_engine.dart';
-import 'package:futbol_baskanlik_m0/src/save/facility_runtime_checkpoint.dart';
-import 'package:futbol_baskanlik_m0/src/save/facility_runtime_save_codec.dart';
 
 void main(List<String> args) {
   final seed = args.isEmpty ? 20260903 : int.parse(args.first);
