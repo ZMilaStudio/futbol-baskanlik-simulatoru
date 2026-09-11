@@ -2,6 +2,7 @@ import '../core/money.dart';
 import '../facility/academy_facility.dart';
 import '../facility/stadium_facility.dart';
 import '../facility/training_ground_facility.dart';
+import '../fan/fan_state.dart';
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
@@ -31,15 +32,18 @@ class FacilityRuntimeCareerEngine {
   FacilityRuntimeCheckpoint resume({
     required FacilityRuntimeCheckpoint checkpoint,
     required int seasonCount,
+    Map<String, FanState> fanStatesByClub = const <String, FanState>{},
   }) =>
       resumeWithReport(
         checkpoint: checkpoint,
         seasonCount: seasonCount,
+        fanStatesByClub: fanStatesByClub,
       ).checkpoint;
 
   FacilityRuntimeCareerSimulationResult resumeWithReport({
     required FacilityRuntimeCheckpoint checkpoint,
     required int seasonCount,
+    Map<String, FanState> fanStatesByClub = const <String, FanState>{},
   }) {
     checkpoint.validate();
     final academiesByClub = Map<String, AcademyFacilityState>.unmodifiable({
@@ -67,6 +71,7 @@ class FacilityRuntimeCareerEngine {
       economyEngine: _FacilityAwareEconomyEngine(
         delegate: worldEngine.economyEngine,
         stadiumFacilities: stadiumsByClub,
+        fanStatesByClub: Map<String, FanState>.unmodifiable(fanStatesByClub),
       ),
       transferMarketEngine: worldEngine.transferMarketEngine,
     );
@@ -126,10 +131,12 @@ class _FacilityAwareEconomyEngine extends BasicEconomyEngine {
   _FacilityAwareEconomyEngine({
     required this.delegate,
     required this.stadiumFacilities,
+    required this.fanStatesByClub,
   });
 
   final BasicEconomyEngine delegate;
   final Map<String, StadiumFacilityState> stadiumFacilities;
+  final Map<String, FanState> fanStatesByClub;
   final StadiumInvestmentPolicy stadiumPolicy = const StadiumInvestmentPolicy();
 
   @override
@@ -150,6 +157,11 @@ class _FacilityAwareEconomyEngine extends BasicEconomyEngine {
         throw ArgumentError('Stadium facility key must match its clubId.');
       }
     }
+    for (final entry in fanStatesByClub.entries) {
+      if (entry.key != entry.value.clubId) {
+        throw ArgumentError('Fan state key must match its clubId.');
+      }
+    }
 
     final positionByClub = <String, int>{};
     for (var i = 0; i < seasonReport.table.length; i++) {
@@ -166,11 +178,14 @@ class _FacilityAwareEconomyEngine extends BasicEconomyEngine {
       if (leaguePosition == null) {
         throw StateError('Missing league position for ${club.id}.');
       }
+      final fanTrust = fanStatesByClub[club.id]?.overallTrust ??
+          StadiumInvestmentPolicy.neutralFanTrust;
       multipliers[club.id] = stadiumPolicy
           .attendanceProfile(
             level: stadium.level,
             clubStrength: club.strength,
             leaguePosition: leaguePosition,
+            fanTrust: fanTrust,
           )
           .revenueMultiplierBps;
     }

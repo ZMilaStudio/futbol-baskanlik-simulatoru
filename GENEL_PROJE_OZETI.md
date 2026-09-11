@@ -45,77 +45,85 @@ Dünya: 48 özgün kulüp, 3 lig × 16 kulüp, 720 lig maçı/sezon, 14.400 maç
 
 **M0–M40 PASS ve `main` üzerindedir.**
 
-Son kapalı ürün milestone'u:
-**M40 — Stadium Capacity & Attendance Core I**.
+Aktif ürün milestone'u:
+**M41 — Attendance Demand & Fan Trust Integration II**.
 
-Şu anda aktif yeni ürün milestone'u yoktur. **M41 kullanıcı yönü olmadan otomatik başlatılmaz.**
+Branch: `feat/m41-fan-trust-attendance-integration`
+PR: `#44` — **OPEN / NOT MERGED / MERGE-READY**
+
+Kullanıcı M41 yönünü açıkça onayladı. Code-bearing ve docs-inclusive HEAD canlı CI ile doğrulandı. PR mergeable durumdadır. Merge için kullanıcıdan ayrıca explicit onay gerekir.
+
+### M41 kapsamı
+
+- mevcut `FanState.overallTrust` stadium talebine bağlanır
+- neutral fan trust `60`; bu değer M40 davranışını birebir korur
+- fan trust demand multiplier: `7000 + fanTrust * 50 bps`
+- trust `0 → 7000 bps`, `60 → 10000 bps`, `100 → 12000 bps`
+- düşük trust aynı sportif bağlamda talebi bastırır; yüksek trust artırır
+- `FacilityRuntimeCareerEngine` opsiyonel typed `Map<String, FanState>` alır
+- fan state verilmezse neutral `60` kullanılır; legacy caller'lar değişmez
+- fan map key'i `FanState.clubId` ile eşleşmelidir
+- facility save formatı `v2` değişmez; fan state facility checkpoint'e kopyalanmaz
+- aynı fan state save/load sonrası tekrar verildiğinde continuation deterministiktir
+- 5 yeni normal test ve M41 canonical runner eklendi
+- workflow'a M40 sonrasında `Run M41 fan trust attendance integration` gate'i eklendi
+- `timeout-minutes: 7` ve artifact `0` kuralları korunur
+
+### M41 PR CI kanıtı
+
+Code-bearing HEAD: `215e5a0eed817037badfd5fc5086b8e4ff933756`
+Run `34654802377` — **SUCCESS**
+- test job `103444747764` — **SUCCESS**, ≈ `3m01s`
+- canonical job `103444747982` — **SUCCESS**, ≈ `4m29s`
+- analyzer: `No issues found!`
+- **167 normal/non-canonical test PASS**
+- **M0–M41 canonical PASS**
+- artifacts: **0**
+
+Docs-inclusive verified HEAD: `2a4bccdbde22f5f37a5893e20548ab6b022bf736`
+Run `34655222974` — **SUCCESS**
+- test job `103446093271` — **SUCCESS**
+- canonical job `103446093339` — **SUCCESS**
+- analyzer / normal tests SUCCESS
+- M0–M41 canonical adımlarının tamamı SUCCESS
+- artifacts: **0**
+- PR #44 mergeable: `true`
+- iki CI job'ı da sabit 7 dakika sınırının altında tamamlandı
+
+M41 canonical:
+- target club `t1_01`
+- demand low / neutral / high: `15360 / 19200 / 22080`
+- trust multipliers: `8000 / 10000 / 11500 bps`
+- neutral M40 parity `true`
+- trust demand ordered `true`
+- real matchday revenue low → high: `10.29M → 12.06M`
+- real fan revenue effect `true`
+- save/load continuation match `true`
+- result **PASS**
+
+Kalıcı M41 dokümanı: `M41_ATTENDANCE_DEMAND_FAN_TRUST_INTEGRATION_II.md`.
 
 ### M40 — CLOSED / MERGED / PASS
 
-Branch: `feat/m40-stadium-capacity-attendance`
-PR: `#43` — **CLOSED / MERGED**
+PR #43 squash merge: `8edcdb67ee77f16e64b40d5b44588deae562625f`
 
-Kullanıcı açıkça merge onayı verdi. PR #43 squash merge edildi.
+Post-merge `main` CI `34652843932` — **SUCCESS**:
+- analyzer clean
+- 162 normal/non-canonical test PASS
+- M0–M40 canonical PASS
+- artifacts 0
+- test ≈ `2m55s`, canonical ≈ `4m26s`
 
-Squash merge:
-- `8edcdb67ee77f16e64b40d5b44588deae562625f`
-
-Post-merge `main` CI:
-- run `34652843932` — **SUCCESS**
-- test job `103438699230` — **SUCCESS**
-- canonical job `103438698979` — **SUCCESS**
-- `dart analyze`: **No issues found!**
-- `dart test --exclude-tags canonical-feedback`: **162 tests passed**
-- **M0–M40 canonical runner zinciri: PASS**
-- M40 canonical adımı: **SUCCESS / PASS**
-- artifacts: **0**
-- test job ≈ `2m55s`
-- canonical job ≈ `4m26s`
-- iki job da sabit `timeout-minutes: 7` sınırının altında
-
-M40 davranışı:
-- stadium level `0..5` korunur
-- kapasite eğrisi `18.000 → 20.500 → 23.500 → 27.000 → 31.000 → 36.000`
-- taraftar talebi deterministic club strength + league position üzerinden türetilir
-- attendance = `min(capacity, demand)`
-- occupancy basis-points olarak türetilir
-- stadium level arttıkça ticket-yield katkısı artar
-- M38'deki `%7,5 × level` matchday revenue etkisi kaldırılmaz; yeni modelde **gelir tavanı** olarak korunur
-- düşük talepte boş koltuk yatırım getirisini bu tavanın altında bırakabilir
-- güçlü talepte mevcut gelir tavanı tamamen realize edilebilir
-- level `0` multiplier tam `10000 bps` ile legacy davranışı korur
-- attendance/capacity derived state save'e yazılmaz; facility save formatı `v2` değişmez
-- `FacilityRuntimeCareerEngine` attendance-aware multiplier kullanır
-- save/load/resume determinism korunur
-
-M40 canonical:
-- target club `t1_01`
-- capacities `18000, 20500, 23500, 27000, 31000, 36000`
-- capacity monotonic `true`
-- level zero legacy `true`
-- weak demand `11700/36000`, occupancy `3250 bps`, realized multiplier `10750 bps`, underused `true`
-- strong demand `20500/20500`, occupancy `10000 bps`, realized multiplier `10750 bps`, level-1 ceiling realized `true`
-- real matchday revenue `9.84M → 10.58M`
-- save/load continuation match `true`
-- canonical result **PASS**
-
-M38 regression notu: attendance-aware model sonrası M38 canonical hâlâ PASS; düşük-talep `t3_05` örneğinde matchday `3.49M → 3.54M`. M38 milestone zamanındaki flat-model çıktısı `3.49M → 3.75M` idi. M38 invariant'ı exact tutar değil, stadium upgrade'in real matchday revenue'yu artırmasıdır. Cash/debt/save/training/parity invariant'ları korunur.
+M40: stadium capacity curve `18k → 36k`; demand from club strength + league position; attendance bounded by capacity; occupancy/ticket-yield; M38 `+750 bps × level` effect retained as revenue ceiling; level 0 exact legacy; facility save v2 unchanged.
 
 Kalıcı M40 dokümanı: `M40_STADIUM_CAPACITY_ATTENDANCE_CORE_I.md`.
 
 ### M39 — CLOSED / MERGED / PASS
 
 PR #42 squash merge: `ea95f767eb95194455e012cb0b9ec5cc6e81667f`
+Post-merge `main` CI `34649669246` — SUCCESS; 157 tests; M0–M39 PASS; artifacts 0.
 
-Post-merge `main` CI `34649669246` — **SUCCESS**:
-- 157 normal/non-canonical test PASS
-- M0–M39 canonical PASS
-- artifacts 0
-- test ≈ `3m00s`, canonical ≈ `4m21s`
-
-M39: academy legacy first; president profile stadium/training targetları; `financialDiscipline` cash reserve; deterministic `training → stadium` round-robin; real cash/no hidden debt; turnover replanning; save/load parity.
-
-Kalıcı M39 dokümanı: `M39_PRESIDENT_FACILITY_PORTFOLIO_DECISION_LOOP_I.md`.
+M39: academy legacy first; president profile stadium/training targetları; `financialDiscipline` reserve; deterministic `training → stadium` round-robin; real cash/no hidden debt; turnover replanning; save/load parity.
 
 ## 4. Save/runtime/facility zinciri
 
@@ -134,23 +142,25 @@ Kalıcı M39 dokümanı: `M39_PRESIDENT_FACILITY_PORTFOLIO_DECISION_LOOP_I.md`.
 - **M37** President Facility Decision Loop
 - **M38** Facility Portfolio Core — academy + stadium + training; real effects; save v2
 - **M39** President Facility Portfolio Decision Loop — president-driven portfolio investment
-- **M40** Stadium Capacity & Attendance Core I — **CLOSED / PASS / main**
+- **M40** Stadium Capacity & Attendance Core I — CLOSED / PASS / main
+- **M41** Attendance Demand & Fan Trust Integration II — **PR #44 MERGE-READY / NOT MERGED**
 
-## 5. Başkan trait wiring
+## 5. Başkan / taraftar trait wiring
 
-| Trait | Gerçek etki | Milestone |
+| Trait / state | Gerçek etki | Milestone |
 |---|---|---|
 | `managerPatience` | manager dismissal threshold + training-ground priority | M18 + M39 |
 | `financialDiscipline` | transfer affordability/budget + academy/portfolio cash reserve | M20 + M36 + M39 |
 | `transferAmbition` | completed transfer slots + stadium priority | M21 + M39 |
 | `riskAppetite` | buyer max-bid ceiling + stadium priority | M23 + M39 |
 | `youthOrientation` | youth/potential transfer preference + academy target/investment + training-ground priority | M24 + M33 + M36 + M37 + M39 |
+| `FanState.overallTrust` | stadium demand → attendance → matchday revenue | M41 |
 
 ## 6. Milestone geçmişi
 
-**M0–M40 PASS / main.**
+**M0–M40 PASS / main. M41 PR #44 MERGE-READY / NOT MERGED.**
 
-M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer pazarı; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya hafızası; M11 başkan vaatleri; M12 vaat→taraftar; M13 vaat→medya; M14 başkanlık seçimi; M15 görev süresi/devir; M16 başkan devrinde itibar; M17 yönetim profili; M18 manager patience; M19 manager/world↔election fixed-point; M20 financial discipline; M21 transfer ambition; M22 profile feedback orchestration; M23 risk appetite; M24 youth orientation; M25 save/load; M26 world snapshot; M27 advanced runtime; M28 history compaction; M29 president runtime; M30 fan/media/promise memory; M31 president resume; M32 long-career stress; M33 academy core; M34 facility persistence/finance; M35 academy runtime youth; M36 president→academy investment; M37 seasonal academy facility decision loop; M38 facility portfolio core; M39 president facility portfolio decision loop; M40 stadium capacity/attendance.
+M0 deterministik sezon; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya; M11 vaatler; M12 vaat→taraftar; M13 vaat→medya; M14 seçim; M15 görev süresi/devir; M16 itibar handover; M17 yönetim profili; M18 manager patience; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility zinciri; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance (PR #44).
 
 ## 7. CI ve teknik borç durumu
 
@@ -159,20 +169,15 @@ M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3
 - Hiçbir canonical/test kontrolü kaldırılmaz.
 - Artifact hedefi `0`; `actions/upload-artifact` eklenmez.
 - CI kırmızıysa gerçek log okunmadan patch atılmaz.
-- M40 final PR HEAD run `34652334241` — SUCCESS.
-- M40 post-merge main run `34652843932` — analyzer temiz, 162 test PASS, M0–M40 PASS, artifact 0.
+- Son kapalı main doğrulaması: M40 docs-only run `34653341164` — test SUCCESS, canonical SUCCESS, M0–M40 SUCCESS, artifact 0.
+- M41 code-bearing PR run `34654802377` — analyzer clean, 167 test PASS, M0–M41 PASS, artifact 0.
+- M41 docs-inclusive PR run `34655222974` — test SUCCESS, canonical SUCCESS, M0–M41 PASS, artifact 0.
 
 ## 8. Sonraki ürün yönü
 
-M40 kapanmıştır. Şu anda aktif yeni milestone yoktur. **Yeni ürün milestone'u kullanıcı yönü olmadan otomatik seçilmez.**
+Aktif çalışma **M41**'dir. PR #44 kullanıcı açıkça merge onayı vermeden ve post-merge main CI yeşil olmadan M41 CLOSED/PASS yapılmaz ve M42 başlatılmaz.
 
-Olası yönler:
-- fan trust / demand bağlantısı ile attendance derinliği II
-- sponsor sistemi
-- crisis sistemi
-- Android save slots / autosave / backup
-- election-loss game-over / switch-club UX
-- 30+ sezon denge sertleştirme
+M41 sonrası yeni ürün milestone'u yine kullanıcı yönüyle seçilir.
 
 ## 9. Devir / çalışma talimatı
 

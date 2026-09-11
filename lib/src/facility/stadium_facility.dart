@@ -57,6 +57,7 @@ class StadiumInvestmentPolicy {
   const StadiumInvestmentPolicy();
 
   static const int maxLevel = 5;
+  static const int neutralFanTrust = 60;
   static const List<int> _capacityByLevel = <int>[
     18000,
     20500,
@@ -112,9 +113,20 @@ class StadiumInvestmentPolicy {
     return _ticketYieldBpsByLevel[level];
   }
 
+  int fanTrustDemandMultiplierBps(int fanTrust) {
+    if (fanTrust < 0 || fanTrust > 100) {
+      throw ArgumentError.value(fanTrust, 'fanTrust', 'Must be between 0 and 100.');
+    }
+    // Trust 60 is deliberately neutral so every M40 caller that omits fan
+    // state keeps the exact same demand semantics. The bounded slope keeps fan
+    // sentiment material without overpowering sporting strength and position.
+    return 7000 + fanTrust * 50;
+  }
+
   int demandSeats({
     required double clubStrength,
     required int leaguePosition,
+    int fanTrust = neutralFanTrust,
   }) {
     if (!clubStrength.isFinite || clubStrength <= 0) {
       throw ArgumentError.value(
@@ -134,7 +146,10 @@ class StadiumInvestmentPolicy {
     final strengthDemand =
         (math.max(0.0, clubStrength - 50.0) * 280).round();
     final positionDemand = (17 - leaguePosition) * 300;
-    return (10000 + strengthDemand + positionDemand)
+    final sportingDemand =
+        (10000 + strengthDemand + positionDemand).clamp(8000, 50000).toInt();
+    final trustMultiplierBps = fanTrustDemandMultiplierBps(fanTrust);
+    return ((sportingDemand * trustMultiplierBps) ~/ 10000)
         .clamp(8000, 50000)
         .toInt();
   }
@@ -143,12 +158,14 @@ class StadiumInvestmentPolicy {
     required int level,
     required double clubStrength,
     required int leaguePosition,
+    int fanTrust = neutralFanTrust,
   }) {
     _validateLevel(level);
     final capacity = capacityForLevel(level);
     final demand = demandSeats(
       clubStrength: clubStrength,
       leaguePosition: leaguePosition,
+      fanTrust: fanTrust,
     );
     final attendance = math.min(capacity, demand);
     final occupancyBps = (attendance * 10000) ~/ capacity;
