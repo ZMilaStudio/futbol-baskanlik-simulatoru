@@ -154,9 +154,13 @@ class SponsorRuntimeSaveCodec {
           'Sponsor contract fields are invalid.',
         );
       }
-      final target = SponsorBonusTarget.values
-          .where((value) => value.name == targetName)
-          .firstOrNull;
+      SponsorBonusTarget? target;
+      for (final candidate in SponsorBonusTarget.values) {
+        if (candidate.name == targetName) {
+          target = candidate;
+          break;
+        }
+      }
       if (target == null) {
         throw const SaveLoadException(
           SaveLoadFailure.invalidPayload,
