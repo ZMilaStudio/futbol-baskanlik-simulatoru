@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 6 Eylül 2026
+Son güncelleme: 11 Eylül 2026
 
 ## 1. Proje kimliği
 
@@ -37,59 +37,66 @@ Dünya ölçeği:
 
 ## 3. CANLI DURUM — yeni sohbet buradan devam etmeli
 
-**M0–M36 PASS ve `main` üzerindedir.**
+**M0–M37 PASS ve `main` üzerindedir.**
 
-Son kapalı milestone: **M36 — President Youth Orientation → Academy Investment Orchestration I**.
+Son kapalı milestone: **M37 — President Facility Decision Loop / Turnover Replanning I**.
 
-M36 kapanış:
+### M37 kapanış
+- PR `#38` — MERGED
+- final PR HEAD: `0030caef1c292d4f1d249f9a8ed5a2abcca041fb`
+- PR CI: run `34059375807`, job `101557067196` — SUCCESS
+- analyzer PASS
+- `147` normal/non-canonical test PASS
+- M0–M37 runner zinciri PASS
+- artifact `0`
+- ilk CI'da 7 dk workflow timeout nedeniyle overall cancelled olmuş ancak tüm test adımları SUCCESS; timeout yükseltilmemiştir
+- test runner optimize edilerek final PR CI `4m22s` içinde yeşil tamamlanmıştır
+- squash merge sonrası main SHA: `ff1745671ce57fdaa56b937bf36f026f86b34ca5`
+- merge sonrası main CI: run `34113979981` — **son doğrulama sırasında in_progress**
+
+M37 amacı:
+- academy yatırım kararını tek explicit checkpoint'ten çıkarıp sezonluk president facility decision loop'a bağlamak
+- her sezonda 48 kulübün mevcut başkan profiline göre academy hedefi, upgrade yoğunluğu ve cash reserve'ü yeniden hesaplamak
+- başkan değişiminde yeni profile göre bir sonraki yatırım penceresini otomatik yeniden planlamak
+- downgrade yapmamak
+- mevcut M34 gerçek-cash finance yolunu korumak; gizli borç yaratmamak
+- yatırım penceresini facility-aware offseason youth lifecycle'dan önce çalıştırmak
+- decision history'yi derived tutarak save büyümesini artırmamak
+- split save/load/resume ile decision sequence, youth history ve final facility/world checkpoint'ın kesintisiz continuation ile eşleştiğini kanıtlamak
+- orchestration explicit çağrılmadıkça eski/default simulation semantiğini değiştirmemek
+
+M37 canonical sonucu:
+- başlangıç season: `8`
+- kulüp: `t3_05`
+- başkan değişimi: season `9`
+- decision window: `2`
+- eski başkan profili: cautious
+- yeni başkan profili: youth-builder
+- academy hedefi: `0 → 5`
+- uygulanan upgrade: `0 → 2`
+- turnover replanning: `true`
+- decision sequence parity: `true`
+- youth history parity: `true`
+- final checkpoint parity: `true`
+
+### M36 kapanış
 - PR `#37` — MERGED
 - final PR HEAD: `67a1996202a4fca6c6b9fc3998c18f0ac5daa1ba`
-- PR CI: run `34057110415`, job `101550909615` — SUCCESS
-- squash merge commit: `545a0c10345cbf12826c2bf615c5a5a20d2e99db`
-- merge sonrası `main` CI: run `34057573190`, job `101552160184` — SUCCESS
-- analyzer PASS
-- normal/non-canonical tests: `144` PASS
+- PR CI `34057110415`, job `101550909615` — SUCCESS
+- squash merge `545a0c10345cbf12826c2bf615c5a5a20d2e99db`
+- merge sonrası main CI `34057573190`, job `101552160184` — SUCCESS
+- 144 normal/non-canonical test PASS
 - M0–M36 runner zinciri PASS
-- artifact `0`
-- CI timeout `7 dk`
+- artifact 0
 
-M36 canonical sonucu:
-- investment checkpoint season: `8`
-- investment club: `t3_05`
-- youth orientation: `90`
-- financial discipline: `60`
-- target academy level: `5`
-- window upgrade cap: `2`
-- cash reserve: `1500 bps` (`%15`)
-- applied upgrades: `2`
-- academy level: `0 → 2`
-- investment spend: `9,00M`
-- resume sonrası tamamlanan sezon: `20`
-- youth history match: `true`
-- final checkpoint match: `true`
-- president-driven academy investment: PASS
+M36 canonical: season8, `t3_05`, youthOrientation 90, financialDiscipline 60, target5, cap2, reserve1500bps, academy 0→2, spend9.00M, resume20, youth history/final checkpoint parity true.
 
-M36 kapsamı:
-- `PresidentManagementProfile.youthOrientation` gerçek academy yatırım kararına bağlandı
-- düşük youth orientation daha tutucu; yüksek değer daha agresif yatırım üretir
-- tek yatırım penceresindeki upgrade sayısı profile göre sınırlandırılır
-- `financialDiscipline` korunacak nakit rezervini yükseltir
-- harcama mevcut gerçek-cash `FacilityInvestmentOrchestrator` yolunu kullanır
-- yetersiz nakitte gizli borç yaratılmaz
-- M35 facility-driven youth etkileri korunur
-- save/load/resume direct continuation ile deterministic eşleşir
-- eski/default simulation semantiği orchestration açıkça çağrılmadıkça değişmez
-
-M36 ile kapanan açık:
-- `youthOrientation` artık yalnız transfer adayı tercihine ve soyut academy target policy'ye etki etmiyor; gerçek persistent academy yatırım kararını da sürüyor
-
-Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
+Canlı GitHub durumu her zaman eski sohbet notlarından üstündür. **Bir milestone'ı CLOSED/PASS saymadan önce canlı main CI kanıtını kontrol et.**
 
 ## 4. Save/runtime/facility zinciri
 
 ### M25 — Save/Load + Versioning I — PASS
-- temel checkpoint
-- canonical JSON / checksum / migration
+- temel checkpoint, canonical JSON/checksum/migration
 - `8 + 12 == 20`
 
 ### M26 — World Save Snapshot I — PASS
@@ -121,7 +128,7 @@ Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 - season-8 `802.906 bytes`
 
 ### M31 — President Domain Resume Orchestration I — PASS
-- M30 checkpoint’inden gerçek president-domain resume
+- M30 checkpoint'inden gerçek president-domain resume
 - saved tenure/fan/media/election cursor
 - saved current-term promise scores
 - bounded history continuation
@@ -131,7 +138,7 @@ Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 ### M32 — Long-Career Save Growth / Resume Stress I — PASS
 - 30 sezon president-domain stress
 - multi-checkpoint `6 + 7 + 9 + 8`
-- her checkpoint’te encode/decode
+- her checkpoint'te encode/decode
 - final state kesintisiz 30 sezonla birebir aynı
 - save boyutu `<1.300.000 bytes`
 - ilk → final büyüme `-31.517 bytes`
@@ -170,7 +177,16 @@ Canlı GitHub durumu her zaman eski sohbet notlarından üstündür.
 - canonical academy `0 → 2`, spend `9,00M`
 - save/load/resume youth history + final checkpoint eşleşir
 
-Ayrıntı:
+### M37 — President Facility Decision Loop / Turnover Replanning I — MERGED; main CI son kontrol bekliyor
+- sezonluk/periodik facility decision loop
+- her sezon başkan profiline göre target/upgrade intensity/reserve recompute
+- başkan değişiminde turnover replanning
+- downgrade yok
+- gerçek cash finance path korunur
+- decision history derived; save growth'a yeni persisted history eklenmez
+- split save/load/resume parity + multi-president turnover kanıtı
+
+Ayrıntı dosyaları:
 - `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
 - `M30_FAN_MEDIA_PROMISE_RUNTIME_MEMORY_SNAPSHOT_I.md`
 - `M31_PRESIDENT_DOMAIN_RESUME_ORCHESTRATION_I.md`
@@ -189,9 +205,11 @@ Beş trait gerçek davranışa bağlıdır:
 | `financialDiscipline` | transfer affordability/budget + academy cash reserve | M20 + M36 |
 | `transferAmbition` | completed transfer slots | M21 |
 | `riskAppetite` | buyer max-bid ceiling | M23 |
-| `youthOrientation` | youth/potential candidate preference + academy target + gerçek academy yatırım yoğunluğu | M24 + M33 + M36 |
+| `youthOrientation` | youth/potential candidate preference + academy target + gerçek academy yatırım yoğunluğu | M24 + M33 + M36 + M37 |
 
 ## 6. Milestone geçmişi — kısa
+
+M0–M36 PASS. M37 MERGED ve main CI doğrulaması sürüyor.
 
 - M0 Deterministik sezon çekirdeği — PASS
 - M1 20 sezon kariyer — PASS
@@ -230,6 +248,7 @@ Beş trait gerçek davranışa bağlıdır:
 - M34 Facility Persistence / Finance Orchestration I — PASS
 - M35 Academy Runtime Youth Integration I — PASS
 - M36 President Youth Orientation → Academy Investment Orchestration I — PASS
+- M37 President Facility Decision Loop / Turnover Replanning I — MERGED; post-merge CI pending at last verification
 
 ## 7. Kalıcı teknik kurallar
 
@@ -258,11 +277,11 @@ Beş trait gerçek davranışa bağlıdır:
 - PASS yalnız canlı CI kanıtıyla yazılır
 - artifact hedefi `0`
 - `actions/upload-artifact` kullanılmaz
-- CI timeout `7 dk`
+- CI timeout `7 dk`; performans sorununu gizlemek için artırılmaz
 
 ## 8. CI politikası
 
-Ana workflow:
+Ana workflow temel olarak:
 - `dart analyze`
 - `dart test --exclude-tags canonical-feedback`
 - M0–M18 runner zinciri
@@ -278,25 +297,53 @@ Ana workflow:
 - M33 facilities / academy investment core
 - M34 facility persistence / finance orchestration
 - M35 academy runtime youth integration
-- M36 president youth academy investment orchestration
+- M36 president youth investment orchestration
+- M37 president facility decision loop / turnover replanning
 
 ## 9. Açık teknik borç / sıradaki yön
 
-World + advanced runtime + president domain için 20 sezon split-career continuation ve 30 sezon multi-checkpoint stress kanıtı vardır. Save büyümesi bounded kalır. Academy facility artık gerçek persistent state'tir, gerçek kulüp kasasından finanse edilir, gerçek offseason youth intake kalitesini değiştirir ve başkanın `youthOrientation` + `financialDiscipline` profiline göre gerçek yatırım kararı üretebilir.
+M0–M36 için canlı PASS kanıtı vardır. M37 kodu merge edilmiştir; post-merge main CI tamamlanmadan M37 CLOSED/PASS etiketi kesinleştirilmemelidir.
 
 Açık konular:
 - Android file system / save-slot UI / autosave / backup / cloud save daha sonra
-- academy investment orchestration şu an explicit yatırım penceresinde çalışır; tam sezonluk/periodik president facility decision loop henüz yok
-- başkan değişiminde yeni profile göre academy yatırım yönünün otomatik yeniden planlanması henüz end-to-end kanıtlanmadı
 - stadium / training-ground facility türleri henüz yok
 - sponsor ve kriz sistemleri henüz çekirdek milestone olarak uygulanmadı
 - seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
-- long-career player/economy/manager denge metrikleri 30+ sezonda ayrıca ürün-balance milestone’u olarak sertleştirilebilir
+- long-career player/economy/manager denge metrikleri 30+ sezonda ayrıca ürün-balance milestone'u olarak sertleştirilebilir
+- academy/facility karar döngüsünün daha geniş facility türlerine yayılması sonraki ürün kararıdır
 
-Sıradaki mantıklı yön:
+Sıradaki yön, M37 main CI sonucu alındıktan sonra yeniden değerlendirilmelidir. Yeni milestone otomatik varsayılmamalıdır.
 
-> **M37 adayı — President Facility Decision Loop / Turnover Replanning I**
+## 10. DEVRALMA / ÇALIŞMA TALİMATI
 
-Hedef:
+Bu dosyayı okuyan başka bir ChatGPT/Codex oturumu projeyi **yarım bırakmadan** devralabilmelidir.
 
-> **Academy yatırım kararını tek explicit checkpoint'ten çıkarıp başkan görev süresi boyunca sezonluk/periodik facility decision loop'a bağlamak; başkan değişiminde yeni profile göre hedef ve yatırım yoğunluğunu yeniden planlamak; tüm bunların save/load/resume ve multi-president kariyerde deterministik olarak korunmasını kanıtlamak.**
+Zorunlu çalışma biçimi:
+1. Önce `GENEL_PROJE_OZETI.md` ve ilgili milestone dokümanlarını oku.
+2. Eski sohbet anlatımlarını canlı GitHub durumunun yerine koyma. `main`, PR, commit ve Actions sonuçlarını canlı kontrol et.
+3. M37 için özellikle main run `34113979981` durumunu kontrol et. Yeşil değilse M37'yi CLOSED/PASS yazma.
+4. CI başarısızsa gerçek failure logunu çıkar; varsayım yapma; kök nedeni düzelt; yeni branch/PR aç; test et; kullanıcı onayı olmadan merge etme.
+5. CI yeşilse artifact `0` olduğunu doğrula ve ancak bundan sonra M37 kapanış dokümanını oluştur/güncelle ve bu özeti canlı kanıtla güncelle.
+6. Her milestone'da M0–önceki milestone davranışını koru. Yeni özellik eklerken eski public simulation semantiğini sessizce değiştirme.
+7. Determinism, save/load/resume parity, migration, invariant ve balance guard'larını koru.
+8. CI timeout `7 dk` sabittir. Yavaş testleri gizlemek için timeout artırma; test runner'ı optimize et.
+9. `actions/upload-artifact` ekleme; artifact hedefi `0`.
+10. Kullanıcı açıkça onay vermeden PR merge etme.
+11. Kullanıcı `Devam et` dediğinde küçük durum raporları vermek yerine araçları kullanarak gerçek işi ilerlet. Yalnız hard blocker varsa dur.
+12. Her kapanan milestone için ilgili kapanış `.md` dosyasını ve bu özeti güncelle; kapanışı canlı CI kanıtına bağla.
+13. Yeni milestone'a başlamadan önce ürün kapsamını ve mevcut runtime/save mimarisini bozacak gereksiz refactor yapma.
+14. Kodda değişiklik yaparken minimum, hedefli ve test edilebilir değişiklik tercih et.
+
+### 1 aylık geçici devir notu
+
+Bu proje yaklaşık **1 aylığına başka bir ChatGPT hesabı/oturumu tarafından devralınacaktır**. Devir alan model, bu dosyayı tek başına okuyup projeyi sürdürebilecek seviyede hareket etmelidir. Öncelik hız değil **doğruluk + canlı CI kanıtı + mevcut davranışın korunmasıdır**.
+
+Özellikle:
+- M37'nin merge edilmiş olması, post-merge main CI yeşil olmadan milestone'un kapandığı anlamına gelmez.
+- M37'den sonra yeni milestone'u sırf "sıradaki mantıklı fikir" diye otomatik başlatma; önce M37 kapanışını doğrula ve kullanıcı talimatını bekle.
+- Kullanıcı onayını gerektiren merge/release gibi işlemleri kendi başına yapma.
+- Kod değişikliklerini GitHub üzerinde gerçekleştir; kullanıcının düşük disk alanını gereksiz yere tüketme.
+- Bir hata görürsen gerçek log → kök neden → minimal düzeltme → test → PR akışını izle.
+- "Yeşil gibi görünüyor", "muhtemelen düzeldi" veya eski sohbet notuna dayanarak PASS deme.
+
+Bu devir dosyası kalıcı proje dokümantasyonu değildir; geçici çalışma talimatı olarak kullanılacaktır.
