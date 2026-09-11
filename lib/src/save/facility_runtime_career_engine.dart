@@ -145,14 +145,36 @@ class _FacilityAwareEconomyEngine extends BasicEconomyEngine {
     Map<String, Money>? transferInstallmentExpenseByClub,
     Map<String, int> matchdayRevenueMultiplierBpsByClub = const {},
   }) {
-    final multipliers = <String, int>{};
     for (final entry in stadiumFacilities.entries) {
       if (entry.key != entry.value.clubId) {
         throw ArgumentError('Stadium facility key must match its clubId.');
       }
-      multipliers[entry.key] =
-          stadiumPolicy.matchdayRevenueMultiplierBps(entry.value.level);
     }
+
+    final positionByClub = <String, int>{};
+    for (var i = 0; i < seasonReport.table.length; i++) {
+      positionByClub[seasonReport.table[i].clubId] = i + 1;
+    }
+
+    final multipliers = <String, int>{};
+    for (final club in clubs) {
+      final stadium = stadiumFacilities[club.id];
+      if (stadium == null) {
+        throw StateError('Missing stadium facility state for ${club.id}.');
+      }
+      final leaguePosition = positionByClub[club.id];
+      if (leaguePosition == null) {
+        throw StateError('Missing league position for ${club.id}.');
+      }
+      multipliers[club.id] = stadiumPolicy
+          .attendanceProfile(
+            level: stadium.level,
+            clubStrength: club.strength,
+            leaguePosition: leaguePosition,
+          )
+          .revenueMultiplierBps;
+    }
+
     return delegate.simulateSeason(
       clubs: clubs,
       players: players,
