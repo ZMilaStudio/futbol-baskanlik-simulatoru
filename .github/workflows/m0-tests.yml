@@ -35,6 +35,21 @@ jobs:
       - name: Run tests
         run: dart test --exclude-tags canonical-feedback
 
+  canonical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
       - name: Run M0 100-season batch
         run: dart run tool/run_m0_batch.dart 100
 
