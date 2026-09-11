@@ -134,7 +134,9 @@ class StadiumInvestmentPolicy {
     final strengthDemand =
         (math.max(0.0, clubStrength - 50.0) * 280).round();
     final positionDemand = (17 - leaguePosition) * 300;
-    return (10000 + strengthDemand + positionDemand).clamp(8000, 50000);
+    return (10000 + strengthDemand + positionDemand)
+        .clamp(8000, 50000)
+        .toInt();
   }
 
   StadiumAttendanceProfile attendanceProfile({
@@ -168,8 +170,9 @@ class StadiumInvestmentPolicy {
     final rawMultiplierBps =
         (attendance * ticketYieldBps) ~/ math.max(1, baselineAttendance);
     final ceilingBps = matchdayRevenueMultiplierBps(level);
-    final revenueMultiplierBps =
-        rawMultiplierBps.clamp(10000, ceilingBps);
+    final revenueMultiplierBps = rawMultiplierBps
+        .clamp(10000, ceilingBps)
+        .toInt();
 
     return StadiumAttendanceProfile(
       level: level,
