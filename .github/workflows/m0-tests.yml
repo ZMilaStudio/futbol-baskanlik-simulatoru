@@ -154,3 +154,6 @@ jobs:
 
       - name: Run M39 president facility portfolio decision loop
         run: dart run tool/run_m39_president_facility_portfolio_decision_loop.dart 20260903
+
+      - name: Run M40 stadium capacity attendance core
+        run: dart run tool/run_m40_stadium_capacity_attendance.dart 20260903
