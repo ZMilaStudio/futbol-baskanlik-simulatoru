@@ -45,102 +45,83 @@ Dünya: 48 özgün kulüp, 3 lig × 16 kulüp, 720 lig maçı/sezon, 14.400 maç
 
 **M0–M39 PASS ve `main` üzerindedir.**
 
-Son kapalı ürün milestone'u:
-**M39 — President Facility Portfolio Decision Loop I**.
+Aktif ürün milestone'u:
+**M40 — Stadium Capacity & Attendance Core I**.
 
-Yeni M40 kapsamı henüz seçilmemiştir. Yeni ürün milestone'u kullanıcı yönü olmadan otomatik başlatılmaz.
+Branch: `feat/m40-stadium-capacity-attendance`
 
-### PR #42 — M39 President Facility Portfolio Decision Loop I — CLOSED / MERGED
+M40 şu anda **ACTIVE / NOT YET CI-VERIFIED / NOT MERGED** durumundadır.
 
-Branch: `feat/m39-president-facility-portfolio-loop`
+### M40 hedefi ve mevcut branch kapsamı
 
-Final PR doğrulaması:
-- final PR HEAD: `ea4f1481b563cdd5d8386eb253c476cfb980194c`
-- final PR CI run `34648104716` — **SUCCESS**
-- test job `103423632663` — **SUCCESS**
-- canonical job `103423632885` — **SUCCESS**
-- analyzer: `No issues found!`
-- **157 normal/non-canonical test PASS**
-- **M0–M39 canonical PASS**
-- M39 canonical step — **SUCCESS**
-- artifacts `0`
-- iki job da sabit `timeout-minutes: 7` sınırının altında
+- mevcut stadium level `0..5` korunur
+- kapasite eğrisi: `18.000 → 20.500 → 23.500 → 27.000 → 31.000 → 36.000`
+- taraftar talebi deterministic olarak club strength + league position üzerinden türetilir
+- attendance her zaman `min(capacity, demand)` ile kapasiteye bounded kalır
+- occupancy basis-points olarak türetilir
+- stadium level arttıkça ticket-yield katkısı artar
+- M38'deki `%7,5 × level` matchday revenue etkisi kaldırılmaz; yeni modelde **gelir tavanı** olarak korunur
+- düşük talepte boş koltuk nedeniyle yatırım getirisi bu tavanın altında kalabilir
+- güçlü talepte mevcut M38 gelir tavanı tamamen realize edilebilir
+- level `0` matchday multiplier tam `10000 bps` kalarak legacy davranışı korur
+- yeni attendance/capacity state save'e yazılmaz; stadium level + sezon bağlamından türetildiği için facility save formatı `v2` değişmez
+- gerçek `FacilityRuntimeCareerEngine` ekonomisi attendance-aware multiplier kullanır
+- save/load/resume determinism korunacak
+- M40 için 5 yeni normal test ve yeni canonical runner branch'e eklendi
+- workflow'a M39 sonrasında `Run M40 stadium capacity attendance core` adımı eklendi
+- `timeout-minutes: 7` ve artifact `0` kuralları değişmedi
 
-Kullanıcı açıkça merge onayı verdi. PR #42 squash merge edildi.
+M40 için henüz PASS yazılmaz. PR açılıp gerçek GitHub Actions analyzer/test/canonical/log/artifact kanıtı alınacaktır.
 
-Squash merge:
+### M39 — President Facility Portfolio Decision Loop I — CLOSED / MERGED / PASS
+
+PR #42 squash merge:
 - `ea95f767eb95194455e012cb0b9ec5cc6e81667f`
 
 Post-merge `main` CI:
 - run `34649669246` — **SUCCESS**
 - test job `103428619127` — **SUCCESS**
 - canonical job `103428619421` — **SUCCESS**
-- `dart analyze`: **No issues found!**
-- `dart test --exclude-tags canonical-feedback`: **157 tests passed**
-- M0–M39 canonical runner zinciri: **PASS**
-- M39 canonical adımı: **SUCCESS**
-- artifacts: **0**
+- analyzer: `No issues found!`
+- **157 normal/non-canonical test PASS**
+- **M0–M39 canonical PASS**
+- artifacts `0`
 - test job ≈ `3m00s`
 - canonical job ≈ `4m21s`
 - iki job da sabit `timeout-minutes: 7` sınırının altında
 
-M39 artık **CLOSED / PASS / main** durumundadır.
-
-### M39 davranışı
-
-- M37 academy kararı aynı orchestrator ile önce uygulanır; legacy academy target/before/after/upgrades/reserve semantiği korunur.
+M39 davranışı:
+- M37 academy kararı aynı orchestrator ile önce uygulanır
 - stadium priority: `(transferAmbition * 2 + riskAppetite) ~/ 3`
 - training-ground priority: `(youthOrientation * 2 + managerPatience) ~/ 3`
-- `financialDiscipline` gerçek cash reserve politikasına girer.
-- stadium/training target level `0..5` bounded'dır.
-- portfolio upgrade denemeleri deterministic round-robin `training → stadium` sırasındadır.
-- cash reserve meşru biçimde sonraki yatırımı engelleyebilir; reserve/debt invariant gevşetilmez.
-- gerçek cash kullanılır; gizli debt yaratılmaz.
-- downgrade yoktur.
-- president turnover sonrasında iki portfolio target'ı bir sonraki season window'da yeniden hesaplanır.
-- direct `2 season` ile `1 + save/load + 1` decision/youth/final checkpoint parity korunur.
+- `financialDiscipline` gerçek cash reserve politikasına girer
+- portfolio upgrade denemeleri deterministic round-robin `training → stadium`
+- gerçek cash kullanılır, gizli debt ve downgrade yoktur
+- president turnover stadium/training target'larını yeniden planlar
+- direct `2 season` ile `1 + save/load + 1` decision/youth/final checkpoint parity korunur
 
-M39 canonical:
-- seed `20260903`
-- start checkpoint season `8`
-- target club `t3_05`
-- turnover season `9`
-- presidents `m39-cautious-president → m39-portfolio-builder-president`
-- academy path `0→0, 0→2`
-- training targets `0, 5`
-- training path `0→0, 0→1`
-- stadium targets `0, 5`
-- stadium path `0→0, 0→0`
-- applied portfolio upgrades `0+0, 1+0`
-- spend `0.00M, 13.00M`
-- completed seasons `10`
-- turnover replanned `true`
-- split decisions match `true`
-- youth history match `true`
-- final checkpoint match `true`
-- canonical result `PASS`
-
-Not: builder window'da academy `9M` harcadıktan sonra reserve yalnız training upgrade'ine izin verir; stadium target `5` olarak yeniden planlanmış olsa da aynı pencerede uygulanmaz. Ayrı affordable M39 testi aynı portfolio policy altında hem stadium hem training yatırımının gerçekleşebildiğini doğrular.
+M39 canonical: target `t3_05`, academy `0→0, 0→2`, training target `0,5` / path `0→0,0→1`, stadium target `0,5` / path `0→0,0→0`, spend `0M,13M`, turnover replanned `true`, split decisions/youth/final checkpoint parity `true`.
 
 Kalıcı M39 dokümanı: `M39_PRESIDENT_FACILITY_PORTFOLIO_DECISION_LOOP_I.md`.
 
 ## 4. Save/runtime/facility zinciri
 
 - **M25** Save/Load + Versioning I — temel checkpoint/version/checksum/migration; `8+12=20`
-- **M26** World Save Snapshot I — 48 club/leagues/players/finance; canonical `187664 bytes`
-- **M27** Advanced Runtime Snapshot I — contracts/loans/installments/manager; season8 `1013092 bytes`
-- **M28** History Compaction — season8 `1013092 → 736274`, `%27.3`; season20 `915648`
-- **M29** President Runtime Snapshot — 48 president states; season8 `754721 bytes`
-- **M30** Fan/Media/Promise Runtime Memory — bounded memory; season8 `802906 bytes`
-- **M31** President Domain Resume — canonical `8+12=20`, mid-term `5+3`
-- **M32** 30-season stress — `6+7+9+8`, max save `<1.3M`, final parity
+- **M26** World Save Snapshot I — 48 club/leagues/players/finance
+- **M27** Advanced Runtime Snapshot I — contracts/loans/installments/manager
+- **M28** History Compaction — bounded history/save
+- **M29** President Runtime Snapshot — 48 president states
+- **M30** Fan/Media/Promise Runtime Memory — bounded memory
+- **M31** President Domain Resume — canonical `8+12=20`, mid-term resume
+- **M32** 30-season stress — multi-save chain + final parity
 - **M33** Academy Investment Core — academy `0..5`, level0 legacy
-- **M34** Facility Persistence/Finance — 48 academy states, real cash funding, no hidden debt
-- **M35** Academy Runtime Youth Integration — persistent academy affects real youth generation; level2 canonical ability `+1.20`, potential `+3.60`
-- **M36** President Youth → Academy Investment — youthOrientation + financialDiscipline drive real academy investment; canonical `0→2`, spend `9M`
+- **M34** Facility Persistence/Finance — real cash funding, no hidden debt
+- **M35** Academy Runtime Youth Integration — academy affects real youth generation
+- **M36** President Youth → Academy Investment — profile-driven real academy investment
 - **M37** President Facility Decision Loop — seasonal academy reevaluation + turnover replanning
 - **M38** Facility Portfolio Core — academy + stadium + training; real matchday/player-development effects; save v2; full parity
-- **M39** President Facility Portfolio Decision Loop — president-driven stadium/training targets, reserve-safe seasonal investment, turnover replanning, save/resume parity
+- **M39** President Facility Portfolio Decision Loop — president-driven stadium/training targets, reserve-safe investment, turnover replanning
+- **M40** Stadium Capacity & Attendance Core I — **ACTIVE / branch**; stadium gelir etkisini kapasite + talep + attendance ile derinleştiriyor
 
 ### M38 temel davranışı
 
@@ -149,12 +130,9 @@ Kalıcı M39 dokümanı: `M39_PRESIDENT_FACILITY_PORTFOLIO_DECISION_LOOP_I.md`.
 - facility upgrade maliyeti gerçek club cash'ten düşer; gizli debt yok
 - stadium gerçek `matchdayRevenue` hattını etkiler
 - training ground gerçek offseason player-development hattını etkiler
-- training yalnız pozitif gelişim delta'sını artırır
 - level `0` legacy davranışını korur
-- facility save formatı `v2`; `v0 → v1 → v2` ve `v1 → v2` neutral migration
+- facility save formatı `v2`; neutral migration korunur
 - full portfolio save/load/resume parity korunur
-
-M38 canonical: stadium `0→1`, training `0→1`, spend `9M`, debt unchanged, matchday `3.49M→3.75M`, player ability `57.4905→57.5290`, v1 migration neutral, direct/resume parity `true`.
 
 ## 5. Başkan trait wiring
 
@@ -168,25 +146,25 @@ M38 canonical: stadium `0→1`, training `0→1`, spend `9M`, debt unchanged, ma
 
 ## 6. Milestone geçmişi
 
-**M0–M39 PASS / main.**
+**M0–M39 PASS / main. M40 ACTIVE / branch / CI bekliyor.**
 
-M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer pazarı; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya hafızası; M11 başkan vaatleri; M12 vaat→taraftar; M13 vaat→medya; M14 başkanlık seçimi; M15 görev süresi/devir; M16 başkan devrinde itibar; M17 yönetim profili; M18 manager patience; M19 manager/world↔election fixed-point; M20 financial discipline; M21 transfer ambition; M22 profile feedback orchestration; M23 risk appetite; M24 youth orientation; M25 save/load; M26 world snapshot; M27 advanced runtime; M28 history compaction; M29 president runtime; M30 fan/media/promise memory; M31 president resume; M32 long-career stress; M33 academy core; M34 facility persistence/finance; M35 academy runtime youth; M36 president→academy investment; M37 seasonal academy facility decision loop; M38 facility portfolio core; M39 president facility portfolio decision loop.
+M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer pazarı; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya hafızası; M11 başkan vaatleri; M12 vaat→taraftar; M13 vaat→medya; M14 başkanlık seçimi; M15 görev süresi/devir; M16 başkan devrinde itibar; M17 yönetim profili; M18 manager patience; M19 manager/world↔election fixed-point; M20 financial discipline; M21 transfer ambition; M22 profile feedback orchestration; M23 risk appetite; M24 youth orientation; M25 save/load; M26 world snapshot; M27 advanced runtime; M28 history compaction; M29 president runtime; M30 fan/media/promise memory; M31 president resume; M32 long-career stress; M33 academy core; M34 facility persistence/finance; M35 academy runtime youth; M36 president→academy investment; M37 seasonal academy facility decision loop; M38 facility portfolio core; M39 president facility portfolio decision loop; M40 stadium capacity/attendance (active).
 
 ## 7. CI ve teknik borç durumu
 
-- PR #39: 10 redundant M34 import temizlendi; analyzer temiz.
-- PR #40: tek-job 7 dakika timeout riski giderildi; workflow `test` + `canonical` iki paralel job'a ayrıldı.
+- CI `test` + `canonical` iki paralel job'dur.
 - Her job `timeout-minutes: 7`; artırılmaz.
-- Hiçbir canonical/test kontrolü kaldırılmadı.
+- Hiçbir canonical/test kontrolü kaldırılmaz.
 - Artifact hedefi `0`; `actions/upload-artifact` eklenmez.
-- Son M39 post-merge main doğrulaması: run `34649669246` SUCCESS, 157 test PASS, M0–M39 PASS, artifact 0.
+- CI kırmızıysa gerçek log okunmadan patch atılmaz.
+- Son kapalı main doğrulaması: docs-only run `34650277198` — test SUCCESS, canonical SUCCESS, M0–M39 SUCCESS, artifact 0.
 
 ## 8. Sonraki ürün yönü
 
-M39 kapanmıştır. Yeni milestone **otomatik seçilmez**.
+Aktif çalışma **M40**'tır. M40 doğrulanıp explicit kullanıcı merge onayı alınmadan yeni M41 başlatılmaz.
 
-Olası yönler:
-- stadium capacity / attendance derinliği
+M40 sonrası olası yönler:
+- fan trust / demand bağlantısı ile attendance derinliği II
 - sponsor sistemi
 - crisis sistemi
 - Android save slots / autosave / backup
