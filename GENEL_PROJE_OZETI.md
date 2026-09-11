@@ -41,6 +41,24 @@ Dünya ölçeği:
 
 Son kapalı milestone: **M37 — President Facility Decision Loop / Turnover Replanning I**.
 
+### Aktif bakım çalışması — M34 analyzer import temizliği
+- canlı `main` başlangıç SHA: `08d99227c5a0dd96c91c61a046472bdbf9625ebd`
+- branch: `chore/cleanup-m34-analyzer-imports`
+- PR `#39` — OPEN, merge için kullanıcı açık onayı beklenir
+- code-bearing PR HEAD: `c58d2fd2df2453540427becc9ca6527e27a8703a`
+- amaç: M34 test/tool dosyalarında analyzer tarafından raporlanan 10 adet `unnecessary_import` info bildirimini davranış değiştirmeden kaldırmak
+- etkilenen dosyalar: `test/m34_facility_persistence_finance_test.dart`, `test/m34_facility_save_migration_test.dart`, `tool/run_m34_facility_persistence_finance.dart`
+- değişiklik yalnız redundant `src/...` importlarının kaldırılmasıdır; kullanılan semboller zaten public `package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart` export'u üzerinden sağlanmaktadır
+- PR CI run `34611993323`, job `103304508862` — **SUCCESS**
+- `dart analyze`: **No issues found!**
+- `dart test --exclude-tags canonical-feedback`: **147 tests passed**
+- M0–M37 runner zinciri: **PASS**
+- M34 finance-funded facility persistence: **PASS**
+- M37 split decisions / youth history / final checkpoint parity: **true / true / true**
+- PR CI artifacts: **0**
+- PR CI job log zamanı yaklaşık `5m36s`; sabit `7 dk` timeout sınırının altındadır
+- bakım değişikliği CI ile doğrulanmıştır ancak `main` üzerinde teknik borç ancak kullanıcı onaylı merge ve post-merge main CI sonrasında kapalı sayılacaktır
+
 ### M37 kapanış
 - PR `#38` — MERGED
 - final PR HEAD: `0030caef1c292d4f1d249f9a8ed5a2abcca041fb`
@@ -324,7 +342,7 @@ Açık konular:
 - seçim kaybında game-over / başka kulübe geçiş UX'i henüz yok
 - long-career player/economy/manager denge metrikleri 30+ sezonda ayrıca ürün-balance milestone'u olarak sertleştirilebilir
 - academy/facility karar döngüsünün daha geniş facility türlerine yayılması sonraki ürün kararıdır
-- analyzer şu anda SUCCESS olmakla birlikte M34 test/tool importlarında 10 adet `unnecessary_import` info bildirimi vardır; bu M37 kapanış blocker'ı değildir
+- M34 test/tool importlarındaki 10 adet `unnecessary_import` info bildirimi PR `#39` üzerinde temizlenmiş ve PR CI run `34611993323` / job `103304508862` ile `No issues found!`, 147 test, M0–M37 PASS ve artifact 0 olarak doğrulanmıştır; kullanıcı onaylı merge ve post-merge main CI tamamlanana kadar `main` üzerinde teknik borç açık kabul edilir
 
 Yeni milestone otomatik varsayılmamalıdır. Sonraki ürün kapsamı kullanıcı yönlendirmesiyle seçilmelidir.
 
