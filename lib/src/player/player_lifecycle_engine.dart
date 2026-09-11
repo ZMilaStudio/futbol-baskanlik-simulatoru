@@ -1,6 +1,7 @@
 import '../core/seeded_rng.dart';
 import '../core/stable_hash.dart';
 import '../facility/academy_facility.dart';
+import '../facility/training_ground_facility.dart';
 import '../league/club.dart';
 import 'player.dart';
 import 'player_position.dart';
@@ -22,9 +23,12 @@ class PlayerLifecycleResult {
 class PlayerLifecycleEngine {
   const PlayerLifecycleEngine({
     this.academyInvestmentPolicy = const AcademyInvestmentPolicy(),
+    this.trainingGroundInvestmentPolicy =
+        const TrainingGroundInvestmentPolicy(),
   });
 
   final AcademyInvestmentPolicy academyInvestmentPolicy;
+  final TrainingGroundInvestmentPolicy trainingGroundInvestmentPolicy;
 
   PlayerLifecycleResult advance({
     required List<Player> currentPlayers,
@@ -34,12 +38,20 @@ class PlayerLifecycleEngine {
     required int nextSeasonIndex,
     required int simulationVersion,
     Map<String, AcademyFacilityState> academyFacilities = const {},
+    Map<String, TrainingGroundFacilityState> trainingGroundFacilities =
+        const {},
   }) {
     final evolved = <Player>[];
     final retired = <Player>[];
 
     for (final player in currentPlayers) {
       final nextAge = player.age + 1;
+      final trainingGround = trainingGroundFacilities[player.clubId];
+      if (trainingGround != null && trainingGround.clubId != player.clubId) {
+        throw ArgumentError(
+          'Training ground facility key must match its clubId.',
+        );
+      }
       final rng = SeededRng(
         StableHash.combine32([
           careerSeed,
@@ -49,7 +61,12 @@ class PlayerLifecycleEngine {
           StableHash.string32('player-development'),
         ]),
       );
-      final nextAbility = _nextAbility(player, nextAge, rng);
+      final nextAbility = _nextAbility(
+        player,
+        nextAge,
+        rng,
+        trainingGround?.level ?? 0,
+      );
       final next = player.copyWith(age: nextAge, ability: nextAbility);
       if (nextAge >= player.retirementAge) {
         retired.add(next);
@@ -90,13 +107,18 @@ class PlayerLifecycleEngine {
     );
   }
 
-  double _nextAbility(Player player, int nextAge, SeededRng rng) {
+  double _nextAbility(
+    Player player,
+    int nextAge,
+    SeededRng rng,
+    int trainingGroundLevel,
+  ) {
     final gap =
         (player.potential - player.ability).clamp(0.0, 30.0).toDouble();
     final gapFactor = (gap / 12.0).clamp(0.0, 1.0).toDouble();
     final roll = rng.nextDouble();
 
-    final delta = switch (nextAge) {
+    final baseDelta = switch (nextAge) {
       <= 20 => (0.35 + roll * 1.85) * gapFactor,
       <= 23 => (0.15 + roll * 1.35) * gapFactor,
       <= 26 => (-0.15 + roll * 0.75) * gapFactor,
@@ -105,6 +127,10 @@ class PlayerLifecycleEngine {
       <= 33 => -0.75 + roll * 0.45,
       _ => -1.35 + roll * 0.55,
     };
+    final delta = trainingGroundInvestmentPolicy.applyDevelopmentMultiplier(
+      baseDelta,
+      trainingGroundLevel,
+    );
 
     return (player.ability + delta)
         .clamp(35.0, player.potential)
