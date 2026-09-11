@@ -66,6 +66,27 @@ Son kapalı milestone: **M37 — President Facility Decision Loop / Turnover Rep
 - `main` CI job süresi yaklaşık `5m34s`; sabit `7 dk` timeout sınırının altındadır
 - M34 analyzer import teknik borcu kapanmıştır; simülasyon davranışında değişiklik yapılmamıştır
 
+### Aktif CI timeout iyileştirmesi — PR #40
+- güncel canlı `main` SHA: `14c37e4c3834e11e94435f4d6114ec8f6e52f78c`
+- bu SHA için `main` CI run `34614508900`, job `103312956069` overall **CANCELLED**
+- job `15:10:12–15:17:15` aralığında yaklaşık `7m03s` sürdüğü için sabit `7 dk` timeout sınırını birkaç saniye aştı
+- bu run'da `Analyze`, `Run tests`, M0–M37 runner adımlarının tamamı, `Post Checkout` ve `Complete job` ayrı ayrı **SUCCESS** oldu; ancak overall job cancelled olduğu için güncel `main` HEAD yeşil kabul edilmez
+- kök neden: analyzer + 147 normal/non-canonical test + M0–M37 canonical zincirinin tek job içinde seri çalışması ve runner performans varyansı için yeterli süre marjı bırakmaması
+- timeout **artırılmadı**; `timeout-minutes: 7` korunuyor
+- branch: `ci/split-verification-jobs`
+- PR `#40` — **OPEN / MERGE EDİLMEDİ**
+- ilk PR HEAD: `7a5827fb0d603d46a055c65a9050390915f327f6`
+- workflow iki paralel 7 dakikalık job'a ayrıldı: `test` = analyze + 147 test; `canonical` = M0–M37 runner zinciri
+- hiçbir test veya canonical runner kaldırılmadı; simülasyon/save/runtime davranışında değişiklik yok
+- ilk PR CI run `34615466603`
+- `test` job `103316169383` — **SUCCESS**, yaklaşık `2m55s`; `dart analyze`: **No issues found!**; **147 tests passed**
+- `canonical` job `103316169041` — **SUCCESS**, yaklaşık `4m18s`; M0–M37 runner zinciri **PASS**
+- canonical log M34: finance-funded facility persistence **PASS**
+- canonical log M37: turnover replanned `true`; split decisions / youth history / final checkpoint parity = **true / true / true**
+- PR CI artifacts: **0**
+- paralel yapı ilk doğrulamada eski `~7m03s` kritik yolu `~4m18s` seviyesine indirip yaklaşık `2m42s` timeout marjı sağladı
+- PR #40 merge için kullanıcı açık onayı zorunludur; son PR HEAD CI yeniden yeşil doğrulanmadan merge edilmez
+
 ### M37 kapanış
 - PR `#38` — MERGED
 - final PR HEAD: `0030caef1c292d4f1d249f9a8ed5a2abcca041fb`
@@ -319,9 +340,18 @@ M0–M37 PASS.
 
 ## 8. CI politikası
 
-Ana workflow temel olarak:
-- `dart analyze`
-- `dart test --exclude-tags canonical-feedback`
+`main` üzerindeki mevcut workflow bu kayıt anında analyzer/test/canonical zincirini tek seri job'da çalıştırmaktadır; güncel `main` HEAD bu nedenle runner varyansında 7 dakika sınırını birkaç saniye aşarak cancelled olmuştur.
+
+PR `#40` ile önerilen ve PR CI'da doğrulanan yapı:
+- iki paralel job: `test` ve `canonical`
+- her iki job için `timeout-minutes: 7`
+- `test`: `dart analyze` + `dart test --exclude-tags canonical-feedback`
+- `canonical`: M0–M18 runner zinciri, combined M19–M24 canonical runner ve M25–M37 zinciri
+- hiçbir doğrulama kaldırılmaz
+- artifact üretimi eklenmez
+- ilk PR doğrulaması: test `~2m55s`, canonical `~4m18s`, ikisi de SUCCESS
+
+Canonical kapsam:
 - M0–M18 runner zinciri
 - combined M19–M24 canonical runner
 - M25 save/load
@@ -340,9 +370,11 @@ Ana workflow temel olarak:
 
 ## 9. Açık teknik borç / sıradaki yön
 
-M0–M37 için canlı PASS kanıtı vardır. M37 post-merge `main` CI run `34113979981`, job `101716393026` SUCCESS; `147` normal/non-canonical test PASS; M0–M37 runner zinciri PASS; artifact `0`; save/load/resume decision/youth/final checkpoint parity true.
+M0–M37 davranışları için canlı PASS kanıtı vardır. M37 post-merge `main` CI run `34113979981`, job `101716393026` SUCCESS; `147` normal/non-canonical test PASS; M0–M37 runner zinciri PASS; artifact `0`; save/load/resume decision/youth/final checkpoint parity true.
 
-Açık konular:
+**Güncel `main` HEAD `14c37e4c3834e11e94435f4d6114ec8f6e52f78c` için en son run `34614508900` / job `103312956069` overall CANCELLED'dır.** Bütün test/runner adımları SUCCESS olsa da sabit 7 dk sınırı yaklaşık 3 saniye aşılmıştır; bu nedenle güncel main CI yeşil sayılmaz. PR `#40` bu aktif teknik borcu timeout artırmadan iki paralel job'a bölerek düzeltmektedir ve ilk PR CI doğrulaması başarılıdır. Merge için kullanıcı onayı beklenir.
+
+Açık ürün konuları:
 - Android file system / save-slot UI / autosave / backup / cloud save daha sonra
 - stadium / training-ground facility türleri henüz yok
 - sponsor ve kriz sistemleri henüz çekirdek milestone olarak uygulanmadı
