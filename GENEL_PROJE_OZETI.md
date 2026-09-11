@@ -56,6 +56,18 @@ Temel ilkeler:
 Son kapalı ürün milestone'u:
 **M37 — President Facility Decision Loop / Turnover Replanning I**.
 
+### En son canlı `main` doğrulaması
+- HEAD: `c02df87578a3fccccce6571b6fcdab0bc717528c`
+- workflow run `34617969538` — **SUCCESS**
+- `test` job `103324528411` — **SUCCESS**, yaklaşık `2m56s`
+- `dart analyze`: **No issues found!**
+- `dart test --exclude-tags canonical-feedback`: **147 tests passed**
+- `canonical` job `103324528005` — **SUCCESS**, yaklaşık `4m25s`
+- M0–M37 canonical runner zinciri: **PASS**
+- artifacts: **0**
+- bu doğrulama PR #40 sonrası paralel CI yapısının son `main` HEAD üzerinde de güvenli çalıştığını doğrular
+- açık PR: **0**
+
 ### PR #40 — CI timeout remediation — CLOSED / MERGED
 
 Kök sorun:
@@ -378,15 +390,22 @@ PR #40 post-merge main kanıtı:
 
 Yeni milestone otomatik varsayılmamalıdır. Sonraki ürün kapsamı kullanıcı yönlendirmesiyle seçilmelidir.
 
+### 11 Eylül 2026 devam denetimi — ürün kapsamı henüz seçilmedi
+- canlı `main`: `c02df87578a3fccccce6571b6fcdab0bc717528c`; CI SUCCESS; açık PR yok
+- `lib/src/facility` bugün dört academy-odaklı parçadan oluşur: `academy_facility.dart`, `facility_investment_orchestrator.dart`, `president_academy_investment_orchestrator.dart`, `president_facility_decision_loop.dart`
+- `FacilityRuntimeCheckpoint` yalnız `academyFacilities` state'ini persist eder; generic stadium/training-ground state henüz yoktur
+- `finance` altyapısı mevcut ve M34 gerçek cash yatırım yoluyla facility harcamasını doğrulamıştır
+- ayrı bir sponsor veya kriz domain klasörü/modülü yoktur; bu yönler daha çapraz ve sıfırdan sistem işi gerektirir
+- teknik öneri: kullanıcı tesis genişlemesini seçerse **stadium + training-ground facility ailesi**, mevcut persistence/finance/decision-loop altyapısını en az riskle yeniden kullanabilecek doğal devam hattıdır
+- bu teknik öneri **yeni milestone seçimi değildir**; milestone numarası/başlığı kullanıcı ürün yönünü seçmeden oluşturulmaz
+
 Açık seçenekler:
-- Android file system / save-slot UI / autosave / backup / cloud save
-- stadium facility
-- training-ground facility
+- stadium + training-ground facility ailesi — teknik olarak en doğal devam önerisi
 - sponsor sistemi
 - kriz sistemi
+- Android file system / save-slot UI / autosave / backup / cloud save
 - seçim kaybında game-over / başka kulübe geçiş UX'i
 - 30+ sezon player/economy/manager balance sertleştirmesi
-- academy/facility karar döngüsünü daha geniş facility türlerine yayma
 
 Kapatılmış teknik borçlar:
 - M34 10 adet `unnecessary_import` — PR #39 ile kapandı
