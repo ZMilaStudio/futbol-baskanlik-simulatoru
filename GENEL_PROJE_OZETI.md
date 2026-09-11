@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 11 Eylül 2026
+Son güncelleme: 12 Eylül 2026
 
 ## 1. Proje kimliği
 
@@ -49,26 +49,28 @@ Kalıcı ilkeler:
 Aktif ürün milestone'u:
 **M39 — President Facility Portfolio Decision Loop I**.
 
-### PR #42 — M39 President Facility Portfolio Decision Loop I — OPEN / PR-VERIFIED
+### PR #42 — M39 President Facility Portfolio Decision Loop I — OPEN / MERGE-READY
 
 Branch: `feat/m39-president-facility-portfolio-loop`
 
 PR:
-- `#42` — **OPEN / NOT MERGED**
+- `#42` — **OPEN / NOT MERGED / MERGE-READY**
 - başlık: `M39: president facility portfolio decision loop`
 - code-bearing final HEAD: `712f8165ef66d11bc4f8f435820cfc3669073807`
-- final code CI run `34636235546` — **SUCCESS**
-- test job `103385080625` — **SUCCESS**
-- canonical job `103385080891` — **SUCCESS**
+- final docs-inclusive verified HEAD: `cfae0af3bb45fb90849c3ff58cb46a028f87d73d`
+- final PR CI run `34637005550` — **SUCCESS**
+- test job `103387495349` — **SUCCESS**
+- canonical job `103387494918` — **SUCCESS**
 - analyzer: `No issues found!`
 - **157 normal/non-canonical test PASS**
 - **M0–M39 canonical PASS**
+- M39 canonical step — **SUCCESS**
 - artifacts `0`
-- test job ≈ `2m56s`
-- canonical job ≈ `4m25s`
+- test job ≈ `2m57s`
+- canonical job ≈ `4m21s`
 - iki job da sabit `timeout-minutes: 7` sınırının altında
 
-M39 henüz `main` üzerinde değildir. Merge için kullanıcıdan explicit onay alınmalıdır; PR merge sonrası `main` CI canlı doğrulanmadan M39 CLOSED/PASS sayılmaz.
+PR #42 teknik olarak merge-ready durumdadır. Merge için kullanıcıdan explicit onay alınmalıdır; PR merge sonrası `main` CI canlı doğrulanmadan M39 CLOSED/PASS sayılmaz. Bu durum satırını güncelleyen docs-only commit kendi CI run numarasıyla tekrar dosyaya işlenmez; anti-loop kuralı korunur.
 
 ### M39 davranışı
 
@@ -221,7 +223,7 @@ Kalıcı M38 dokümanı: `M38_FACILITY_PORTFOLIO_CORE_I.md`.
 - **M36** President Youth → Academy Investment — youthOrientation + financialDiscipline drive real academy investment; canonical `0→2`, spend `9M`
 - **M37** President Facility Decision Loop — seasonal reevaluation + turnover replanning
 - **M38** Facility Portfolio Core — academy + stadium + training; real matchday/player-development effects; save v2; real cash; full parity
-- **M39** President Facility Portfolio Decision Loop — **PR-VERIFIED / NOT MERGED**; academy legacy korunarak stadium/training target + reserve-safe seasonal/turnover replanning
+- **M39** President Facility Portfolio Decision Loop — **MERGE-READY / NOT MERGED**; academy legacy korunarak stadium/training target + reserve-safe seasonal/turnover replanning
 
 ## 5. Başkan trait wiring
 
@@ -235,7 +237,7 @@ Kalıcı M38 dokümanı: `M38_FACILITY_PORTFOLIO_CORE_I.md`.
 
 ## 6. Milestone geçmişi
 
-**M0–M38 PASS / main. M39 PR-VERIFIED / merge bekliyor.**
+**M0–M38 PASS / main. M39 MERGE-READY / explicit kullanıcı onayı bekliyor.**
 
 M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3 ekonomi; M4 transfer pazarı; M5 48 kulüp/3 lig; M6 teknik direktör; M7 sözleşme/maaş; M8 kiralık/taksit; M9 taraftar; M10 medya hafızası; M11 başkan vaatleri; M12 vaat→taraftar; M13 vaat→medya; M14 başkanlık seçimi; M15 görev süresi/devir; M16 başkan devrinde itibar; M17 yönetim profili; M18 manager patience; M19 manager/world↔election fixed-point; M20 financial discipline; M21 transfer ambition; M22 profile feedback orchestration; M23 risk appetite; M24 youth orientation; M25 save/load; M26 world snapshot; M27 advanced runtime; M28 history compaction; M29 president runtime; M30 fan/media/promise memory; M31 president resume; M32 long-career stress; M33 academy core; M34 facility persistence/finance; M35 academy runtime youth; M36 president→academy investment; M37 seasonal facility decision loop; M38 facility portfolio core; M39 president facility portfolio decision loop (PR #42, not merged).
 
@@ -260,7 +262,7 @@ M0 Deterministik sezon çekirdeği; M1 20 sezon kariyer; M2 oyuncu lifecycle; M3
 
 ## 8. Sonraki ürün yönü
 
-Aktif çalışma **M39**'dur. PR #42 final docs HEAD CI doğrulanıp explicit kullanıcı merge onayı alınmadan yeni M40 kapsamı başlatılmaz.
+Aktif çalışma **M39**'dur. PR #42 merge-ready durumdadır; explicit kullanıcı merge onayı alınmadan merge edilmez ve yeni M40 kapsamı başlatılmaz.
 
 M39 merge sonrası olası yönler:
 - stadium capacity / attendance derinliği
