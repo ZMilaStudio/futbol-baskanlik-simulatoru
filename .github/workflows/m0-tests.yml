@@ -157,3 +157,6 @@ jobs:
 
       - name: Run M40 stadium capacity attendance core
         run: dart run tool/run_m40_stadium_capacity_attendance.dart 20260903
+
+      - name: Run M41 fan trust attendance integration
+        run: dart run tool/run_m41_fan_trust_attendance.dart 20260903
