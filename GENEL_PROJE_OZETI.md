@@ -51,205 +51,235 @@ Temel ilkeler:
 
 ## 3. CANLI DURUM — yeni sohbet buradan devam etmeli
 
+### `main`
+
 **M0–M37 PASS ve `main` üzerindedir.**
 
 Son kapalı ürün milestone'u:
 **M37 — President Facility Decision Loop / Turnover Replanning I**.
 
-### En son canlı `main` doğrulaması
-- HEAD: `c02df87578a3fccccce6571b6fcdab0bc717528c`
-- workflow run `34617969538` — **SUCCESS**
-- `test` job `103324528411` — **SUCCESS**, yaklaşık `2m56s`
+En son M38 öncesi canlı `main` HEAD:
+- `db1ad3d688b903f6fd295f74ed1f4c242b5d716d`
+- commit: `docs: record continuation audit and next-scope recommendation`
+- workflow run `34618873499` — **SUCCESS**
+- `test` job `103327537619` — **SUCCESS**
+- `canonical` job `103327537294` — **SUCCESS**
+- analyzer/test ve M0–M37 zinciri yeşil
+- artifacts hedefi `0`
+
+### M38 — Facility Portfolio Core I — ACTIVE / PR-VALIDATED
+
+Kullanıcı seçimiyle sonraki ürün yönü **stadium + training ground facility ailesi** olarak belirlendi.
+
+Branch:
+- `feat/m38-facility-portfolio-core`
+
+PR:
+- `#41` — **OPEN**
+- başlık: `M38: facility portfolio core with stadium and training ground`
+- kullanıcı açık merge onayı olmadan merge edilmeyecek
+
+Code-bearing HEAD:
+- `5bbcfa85b1abc9f56bdef7704577cc46e20636b8`
+
+İlk PR CI run `34620543693` analyzer'da yalnız iki gereksiz test importu nedeniyle kırmızı oldu. Gerçek logdan kök neden çıkarıldı; `stadium_facility.dart` ve `training_ground_facility.dart` test importları kaldırıldı. Simülasyon davranışı değiştirilmedi.
+
+Düzeltilmiş code-bearing PR CI:
+- run `34620636024` — **SUCCESS**
+- `test` job `103333639427` — **SUCCESS**, yaklaşık `2m54s`
 - `dart analyze`: **No issues found!**
-- `dart test --exclude-tags canonical-feedback`: **147 tests passed**
-- `canonical` job `103324528005` — **SUCCESS**, yaklaşık `4m25s`
-- M0–M37 canonical runner zinciri: **PASS**
+- normal/non-canonical test: **152 PASS**
+- `canonical` job `103333639253` — **SUCCESS**, yaklaşık `3m33s`
+- M0–M38 canonical runner zinciri: **PASS**
 - artifacts: **0**
-- bu doğrulama PR #40 sonrası paralel CI yapısının son `main` HEAD üzerinde de güvenli çalıştığını doğrular
-- açık PR: **0**
+- iki job da sabit `7 dk` timeout sınırının rahat altında
+
+M38 kapsamı:
+- 48 kulübün tamamında persistent `academy + stadium + training ground` state
+- stadium level `0..5`
+- training-ground level `0..5`
+- stadium/training upgrade maliyeti gerçek club cash'ten düşer
+- upgrade sırasında gizli debt yaratılmaz
+- yetersiz nakitte state değişmez
+- stadium gerçek `matchdayRevenue` hattına bağlanır
+- training ground gerçek offseason player-development hattına bağlanır
+- training yalnız pozitif gelişim delta'sını artırır; yaşa bağlı gerilemeyi tersine çevirmez
+- level `0` legacy davranışı korur
+- eski academy yatırım API'si korunur ve yeni facility state'lerini silmez
+- facility save formatı `v2`
+- `v0 → v1 → v2` ve `v1 → v2` migration
+- eski save'lerde stadium/training level `0` ile neutral açılır
+- full portfolio save/load/resume parity korunur
+- president-driven automatic stadium/training yatırım kararı M38 kapsamı dışındadır
+
+M38 canonical:
+- seed: `20260903`
+- investment checkpoint: season `8`
+- club: `t3_05`
+- stadium: `0 → 1`
+- training ground: `0 → 1`
+- total spend: `9.00M`
+- immediate cash delta: `9.00M`
+- debt unchanged: `true`
+- matchday revenue: `3.49M → 3.75M`
+- stadium revenue raised: `true`
+- training player: `y_t3_05_s4`
+- ability: `57.4905 → 57.5290`
+- training development raised: `true`
+- save version: `2`
+- save bytes: `217572`
+- v1 migration neutral: `true`
+- direct vs save-load resume: `true`
+- final canonical result: **PASS**
+
+Kalıcı M38 dokümanı:
+- `M38_FACILITY_PORTFOLIO_CORE_I.md`
+
+M38 henüz `main` üzerinde CLOSED/PASS değildir. Kapanış için PR #41 merge + post-merge `main` CI + artifact `0` doğrulaması gerekir.
 
 ### PR #40 — CI timeout remediation — CLOSED / MERGED
 
-Kök sorun:
-- `main` HEAD `14c37e4c3834e11e94435f4d6114ec8f6e52f78c`
-- run `34614508900`, job `103312956069`
-- `Analyze`, `Run tests`, M0–M37, `Post Checkout` ve `Complete job` adımlarının tamamı ayrı ayrı SUCCESS olmasına rağmen tek seri job yaklaşık `7m03s` sürdü ve sabit `7 dk` timeout nedeniyle overall `cancelled` oldu
-- bu nedenle o HEAD yeşil kabul edilmedi
-
-Düzeltme:
 - branch: `ci/split-verification-jobs`
-- PR `#40` — **MERGED**
+- PR `#40` — MERGED
 - final PR HEAD: `ae5ab884dfdd10cd00a3ac86da835b562a9ed683`
-- timeout **artırılmadı**; `timeout-minutes: 7` korundu
-- hiçbir test veya canonical runner kaldırılmadı
-- workflow iki paralel job'a ayrıldı:
-  - `test`: checkout/setup/pub get + `dart analyze` + `dart test --exclude-tags canonical-feedback`
-  - `canonical`: checkout/setup/pub get + M0–M37 runner zinciri
-- `actions/upload-artifact` eklenmedi; artifact hedefi `0`
-- simülasyon/save/runtime davranışında değişiklik yapılmadı
-
-Final PR CI:
-- run `34616348213` — **SUCCESS**
-- `canonical` job `103319137873` — **SUCCESS**, yaklaşık `2m29s`
-- `test` job `103319138074` — **SUCCESS**, yaklaşık `2m53s`
-- analyzer SUCCESS
-- 147 normal/non-canonical test PASS
-- M0–M37 canonical runner zinciri PASS
-- artifacts `0`
-
-Squash merge:
-- merge SHA: `cba4e28bef09d4109a10380b4808eb39b7c1ffb4`
-
-Post-merge `main` CI:
-- run `34617471052` — **SUCCESS**
-- `canonical` job `103322872761` — **SUCCESS**, yaklaşık `3m00s`
-- `test` job `103322873053` — **SUCCESS**, yaklaşık `2m53s`
-- analyzer SUCCESS
-- 147 normal/non-canonical test PASS
-- M0–M37 runner zinciri PASS
-- artifacts `0`
-- sabit 7 dk timeout artık iki paralel job üzerinde geniş güvenlik marjıyla korunuyor
+- squash merge: `cba4e28bef09d4109a10380b4808eb39b7c1ffb4`
+- timeout artırılmadı; her job `7 dk`
+- test/canonical kapsamı azaltılmadı
+- workflow `test` ve `canonical` olarak iki paralel job'a ayrıldı
+- `actions/upload-artifact` yok
+- post-merge main run `34617471052` SUCCESS
+- docs-close HEAD `c02df87578a3fccccce6571b6fcdab0bc717528c` run `34617969538` SUCCESS
+- analyzer temiz, 147 test, M0–M37 PASS, artifacts 0
 
 ### PR #39 — M34 analyzer import temizliği — CLOSED / MERGED
 
-- branch: `chore/cleanup-m34-analyzer-imports`
-- PR `#39` — **MERGED**
-- final PR HEAD: `c907cb9ca2c73047d7a82428dd52a5b51f648e77`
-- yalnız M34 test/tool dosyalarındaki 10 adet `unnecessary_import` info bildirimi kaldırıldı
-- final PR CI run `34612787096`, job `103307174934` — SUCCESS
-- analyzer: `No issues found!`
-- 147 test PASS
-- M0–M37 PASS
-- artifacts `0`
-- squash merge SHA: `4d49b67973b96424c2c73b9f25e3a1b2d636c829`
-- post-merge main CI run `34613733464`, job `103310367702` — SUCCESS
-- analyzer temizliği sonrası simülasyon davranışı değişmedi
+- PR `#39` — MERGED
+- final PR HEAD `c907cb9ca2c73047d7a82428dd52a5b51f648e77`
+- 10 redundant M34 import kaldırıldı
+- squash merge `4d49b67973b96424c2c73b9f25e3a1b2d636c829`
+- analyzer `No issues found!`
+- davranış değişmedi
 
 ### M37 kapanış — President Facility Decision Loop / Turnover Replanning I
 
 - PR `#38` — MERGED
-- final PR HEAD: `0030caef1c292d4f1d249f9a8ed5a2abcca041fb`
-- squash merge: `ff1745671ce57fdaa56b937bf36f026f86b34ca5`
-- final PR CI run `34059375807`, job `101557067196` — SUCCESS
-- post-merge main CI run `34113979981`, job `101716393026` — SUCCESS
+- final PR HEAD `0030caef1c292d4f1d249f9a8ed5a2abcca041fb`
+- squash merge `ff1745671ce57fdaa56b937bf36f026f86b34ca5`
+- final PR CI `34059375807` SUCCESS
+- post-merge main CI `34113979981` SUCCESS
 - 147 test PASS
 - M0–M37 PASS
-- artifacts `0`
+- artifacts 0
 
 M37 davranışı:
-- academy yatırım kararı tek explicit checkpoint yerine sezonluk president facility decision loop ile çalışır
-- her sezon mevcut başkan profiline göre academy target, upgrade intensity ve cash reserve yeniden hesaplanır
-- başkan değişiminde yeni profile göre yatırım planı yeniden yapılır
-- downgrade yoktur
-- gerçek M34 cash/affordability yolu korunur; gizli borç yaratılmaz
-- facility-aware offseason youth lifecycle mevcut lifecycle'ı delegate eder
-- decision history derived tutulur; save büyümesine yeni persisted history eklenmez
-- explicit orchestration çağrılmadıkça eski/default public simulation semantiği değişmez
+- sezonluk academy facility decision loop
+- başkan profiline göre target/intensity/reserve recompute
+- turnover anında replanning
+- downgrade yok
+- gerçek M34 cash path; gizli borç yok
+- derived decision history
+- save/load/resume parity
 
 M37 canonical:
-- start checkpoint: season `8`
-- club: `t3_05`
-- turnover season: `9`
-- decision windows: `2`
-- presidents: cautious → youth-builder
-- target levels: `0 → 5`
-- applied upgrades: `0 → 2`
-- academy path: `0→0`, `0→2`
-- turnover replanned: `true`
-- split decisions match: `true`
-- youth history match: `true`
-- final checkpoint match: `true`
+- start season `8`
+- club `t3_05`
+- turnover season `9`
+- decision windows `2`
+- target `0 → 5`
+- applied upgrades `0 → 2`
+- academy path `0→0`, `0→2`
+- turnover replanned `true`
+- split decisions match `true`
+- youth history match `true`
+- final checkpoint match `true`
 
 ## 4. Save/runtime/facility zinciri
 
 ### M25 — Save/Load + Versioning I — PASS
-- temel checkpoint, canonical JSON/checksum/migration
+- temel checkpoint/version/checksum/migration
 - `8 + 12 == 20`
 
 ### M26 — World Save Snapshot I — PASS
 - 48 club/leagues/players/finance
-- canonical save `187.664 bytes`
+- canonical `187664 bytes`
 - `8 + 12 == 20`
 
 ### M27 — Advanced World Runtime Snapshot I — PASS
 - contracts/loans/installments/manager runtime
-- season-8 `1.013.092 bytes`
+- season-8 `1013092 bytes`
 - `8 + 12 == 20`
 
 ### M28 — Save History Compaction I — PASS
-- son 2 sezon contract/loan detail + all-time summary
-- season-8 `1.013.092 → 736.274 bytes`
-- `%27,3` küçülme
-- season-20 compact save `915.648 bytes`
-- `8 + 12 == 20`
+- season-8 `1013092 → 736274 bytes`
+- reduction `%27.3`
+- season-20 `915648 bytes`
+- continuation parity korunur
 
 ### M29 — President Runtime Snapshot I — PASS
-- current president tenure/profile/fan/media/election cursor
-- 48 club state
-- season-8 `754.721 bytes`
+- 48 current president state + election cursor
+- season-8 `754721 bytes`
 
 ### M30 — Fan / Media / Promise Runtime Memory Snapshot I — PASS
-- son 2 sezon raw fan/media detail
-- all-time bounded summary
-- current-term promise memory
-- season-8 `802.906 bytes`
+- bounded raw/current-term memory
+- season-8 `802906 bytes`
 
 ### M31 — President Domain Resume Orchestration I — PASS
-- M30 checkpoint'ten gerçek president-domain resume
-- saved tenure/fan/media/election cursor
-- saved current-term promise scores
 - canonical `8 + 12 == 20`
 - mid-term `5 + 3` PASS
 
 ### M32 — Long-Career Save Growth / Resume Stress I — PASS
-- 30 sezon stress
-- multi-checkpoint `6 + 7 + 9 + 8`
-- her checkpoint encode/decode
-- final state uninterrupted 30 sezon ile birebir aynı
-- save `<1.300.000 bytes`
-- first→final growth `-31.517 bytes`
-- 20 sezon sonrası manager detail compaction
-- deterministic manager pool replenishment
+- 30 sezon
+- `6 + 7 + 9 + 8`
+- final uninterrupted 30 sezon ile birebir aynı
+- max save `<1.3M bytes`
+- first→final `-31517 bytes`
 
 ### M33 — Facilities / Academy Investment Core I — PASS
 - academy level `0..5`
-- youthOrientation → academy target policy
-- deterministic youth ability/potential bonus
-- level 0 legacy youth davranışını korur
-- level 5 ability/potential uplift canonical olarak kanıtlandı
+- level 0 legacy youth davranışı
+- academy youth ability/potential uplift
 
-### M34 — Facility Persistence / Finance Orchestration I — PASS
-- 48 academy facility state persistent
-- upgrade cost gerçek club cash'ten düşer
-- yetersiz nakitte state değişmez / gizli borç yok
-- versioned/checksummed facility save
-- v0→v1 migration
-- canonical save `214.737 bytes`
-- save/load/resume facility + finance continuity PASS
+### M34 — Facility Persistence / Finance Orchestration I — PASS on `main`
+- 48 academy state
+- gerçek cash-funded upgrade
+- yetersiz nakitte mutation yok / gizli borç yok
+- `main` baseline facility save v1: `214737 bytes`
+- save/load/resume parity
+
+M38 branch'te facility save portfolio v2'ye yükselmiştir:
+- v2 save: `217572 bytes`
+- academy M34 davranışı/parity aynı PR CI içinde tekrar PASS
 
 ### M35 — Academy Runtime Youth Integration I — PASS
-- persistent academy level gerçek offseason lifecycle'a enjekte edilir
-- level 0 legacy world resume ile birebir aynı
-- canonical level 2 delta: ability `+1,20`, potential `+3,60`
-- save/load/resume youth history direct continuation ile eşleşir
-- final facility/world checkpoint eşleşir
+- persistent academy gerçek offseason youth generation'a etki eder
+- level 0 legacy resume eşitliği
+- canonical level2: ability `+1.20`, potential `+3.60`
+- save/load/resume parity
 
 ### M36 — President Youth Orientation → Academy Investment Orchestration I — PASS
-- `youthOrientation` gerçek academy target + yatırım yoğunluğunu belirler
-- yüksek youth profile daha agresif upgrade yapar
-- `financialDiscipline` protected cash reserve üretir
-- gerçek cash/affordability path korunur
-- canonical academy `0 → 2`, spend `9,00M`
-- save/load/resume youth history + final checkpoint eşleşir
+- youthOrientation → academy target/intensity
+- financialDiscipline → protected cash reserve
+- canonical academy `0 → 2`, spend `9M`
+- parity korunur
 
 ### M37 — President Facility Decision Loop / Turnover Replanning I — PASS
-- sezonluk facility decision loop
-- başkan profiline göre target/intensity/reserve recompute
+- seasonal decision loop
 - turnover replanning
-- downgrade yok
-- gerçek cash finance path korunur
-- decision history derived
-- split save/load/resume parity + multi-president turnover kanıtlandı
+- no downgrade
+- real cash finance path
+- derived history
+- split parity
+
+### M38 — Facility Portfolio Core I — PR-VALIDATED
+- academy + stadium + training-ground portfolio
+- stadium gerçek matchday revenue etkisi
+- training ground gerçek positive player-development etkisi
+- level0 legacy semantics
+- real cash / no hidden debt
+- facility save v2 + v0/v1 migration
+- 152 test
+- M0–M38 canonical PASS on PR #41
+- `main` kapanışı bekleniyor
 
 Ayrıntı dosyaları:
 - `M29_PRESIDENT_RUNTIME_SNAPSHOT_I.md`
@@ -260,6 +290,7 @@ Ayrıntı dosyaları:
 - `M35_ACADEMY_RUNTIME_YOUTH_INTEGRATION_I.md`
 - `M36_PRESIDENT_YOUTH_ACADEMY_INVESTMENT_ORCHESTRATION_I.md`
 - `M37_PRESIDENT_FACILITY_DECISION_LOOP_TURNOVER_REPLANNING_I.md`
+- `M38_FACILITY_PORTFOLIO_CORE_I.md`
 
 ## 5. Başkan trait durumu
 
@@ -271,11 +302,15 @@ Beş trait gerçek davranışa bağlıdır:
 | `financialDiscipline` | transfer affordability/budget + academy cash reserve | M20 + M36 |
 | `transferAmbition` | completed transfer slots | M21 |
 | `riskAppetite` | buyer max-bid ceiling | M23 |
-| `youthOrientation` | youth/potential candidate preference + academy target + gerçek academy yatırım yoğunluğu | M24 + M33 + M36 + M37 |
+| `youthOrientation` | youth/potential candidate preference + academy target + academy investment intensity | M24 + M33 + M36 + M37 |
+
+M38 stadium/training yatırımları henüz president trait'lerine otomatik bağlanmamıştır; bu bilinçli scope sınırıdır.
 
 ## 6. Milestone geçmişi
 
-M0–M37 PASS.
+`main`: **M0–M37 PASS**.
+
+PR #41: **M38 PR-VALIDATED**, henüz main'de değil.
 
 - M0 Deterministik sezon çekirdeği
 - M1 20 sezon kariyer
@@ -315,6 +350,7 @@ M0–M37 PASS.
 - M35 Academy Runtime Youth Integration I
 - M36 President Youth Orientation → Academy Investment Orchestration I
 - M37 President Facility Decision Loop / Turnover Replanning I
+- M38 Facility Portfolio Core I — ACTIVE / PR #41
 
 ## 7. Kalıcı teknik kurallar
 
@@ -334,20 +370,24 @@ M0–M37 PASS.
 - history eklenmeden save growth ölçülür
 - ilk 20 sezon canonical manager davranışı korunur
 - 21+ sezon manager history compact olabilir ama all-time summary kaybolmaz
-- facility level 0 legacy youth generation davranışını korur
+- facility level 0 legacy davranışı korur
 - facility yatırımı gerçek cash ile finanse edilir; gizli borç yok
 - persistent academy gerçek offseason youth generation'a etki eder
-- facility-aware continuation mevcut lifecycle'ı delegate eder
+- stadium etkisi yalnız facility-aware runtime'da gerçek matchday revenue hattına bağlanır
+- training-ground etkisi yalnız facility-aware runtime'da pozitif player-development delta'sına bağlanır
+- training ground negatif gelişim/yaşa bağlı düşüşü tersine çevirmez
+- facility-aware continuation mevcut lifecycle/economy motorlarını delegate eder
 - president academy investment gerçek facility finance path'ini kullanır
 - `financialDiscipline` academy yatırımında protected cash reserve üretir
 - PASS yalnız canlı CI kanıtıyla yazılır
 - artifact hedefi `0`
 - `actions/upload-artifact` kullanılmaz
 - CI timeout her job için `7 dk`; yavaşlığı gizlemek için artırılmaz
+- kullanıcı açık onayı olmadan PR merge edilmez
 
 ## 8. CI politikası — güncel
 
-Ana workflow iki paralel job kullanır:
+Ana workflow iki paralel job kullanır.
 
 ### `test`
 - checkout
@@ -362,54 +402,45 @@ Ana workflow iki paralel job kullanır:
 - `dart pub get`
 - M0–M18 runner zinciri
 - combined M19–M24 canonical runner
-- M25 save/load
-- M26 world save
-- M27 advanced runtime save
-- M28 history compaction
-- M29 president runtime snapshot
-- M30 president domain memory snapshot
-- M31 president domain resume
-- M32 long-career save/resume stress
-- M33 facilities/academy investment core
-- M34 facility persistence/finance orchestration
-- M35 academy runtime youth integration
-- M36 president youth academy investment orchestration
-- M37 president facility decision loop/turnover replanning
+- M25–M32 save/runtime runner'ları
+- M33 academy facility core
+- M34 facility persistence/finance
+- M35 academy runtime youth
+- M36 president academy investment
+- M37 president facility decision loop
+- M38 facility portfolio core — PR #41 branch'te ekli
 
 Her job:
 - `timeout-minutes: 7`
-- artifact `0`
+- artifact hedefi `0`
 - `actions/upload-artifact` yok
 
-PR #40 post-merge main kanıtı:
-- run `34617471052`
-- `test` `103322873053` SUCCESS
-- `canonical` `103322872761` SUCCESS
+M38 code-bearing PR kanıtı:
+- run `34620636024`
+- `test` `103333639427` SUCCESS
+- `canonical` `103333639253` SUCCESS
+- analyzer `No issues found!`
+- 152 tests PASS
+- M0–M38 PASS
+- artifacts 0
 
 ## 9. Açık ürün yönleri
 
-Yeni milestone otomatik varsayılmamalıdır. Sonraki ürün kapsamı kullanıcı yönlendirmesiyle seçilmelidir.
+Aktif seçilmiş yön:
+- **M38 Facility Portfolio Core I — stadium + training ground** — PR #41 açık, merge bekliyor
 
-### 11 Eylül 2026 devam denetimi — ürün kapsamı henüz seçilmedi
-- canlı `main`: `c02df87578a3fccccce6571b6fcdab0bc717528c`; CI SUCCESS; açık PR yok
-- `lib/src/facility` bugün dört academy-odaklı parçadan oluşur: `academy_facility.dart`, `facility_investment_orchestrator.dart`, `president_academy_investment_orchestrator.dart`, `president_facility_decision_loop.dart`
-- `FacilityRuntimeCheckpoint` yalnız `academyFacilities` state'ini persist eder; generic stadium/training-ground state henüz yoktur
-- `finance` altyapısı mevcut ve M34 gerçek cash yatırım yoluyla facility harcamasını doğrulamıştır
-- ayrı bir sponsor veya kriz domain klasörü/modülü yoktur; bu yönler daha çapraz ve sıfırdan sistem işi gerektirir
-- teknik öneri: kullanıcı tesis genişlemesini seçerse **stadium + training-ground facility ailesi**, mevcut persistence/finance/decision-loop altyapısını en az riskle yeniden kullanabilecek doğal devam hattıdır
-- bu teknik öneri **yeni milestone seçimi değildir**; milestone numarası/başlığı kullanıcı ürün yönünü seçmeden oluşturulmaz
-
-Açık seçenekler:
-- stadium + training-ground facility ailesi — teknik olarak en doğal devam önerisi
+M38 sonrasında otomatik seçilmemesi gereken açık yönler:
+- president-driven stadium/training investment policy / facility decision loop extension
+- Android file system / save-slot UI / autosave / backup / cloud save
 - sponsor sistemi
 - kriz sistemi
-- Android file system / save-slot UI / autosave / backup / cloud save
 - seçim kaybında game-over / başka kulübe geçiş UX'i
 - 30+ sezon player/economy/manager balance sertleştirmesi
+- stadium capacity/attendance gibi daha ayrıntılı tesis ekonomisi
 
 Kapatılmış teknik borçlar:
-- M34 10 adet `unnecessary_import` — PR #39 ile kapandı
-- tek-job 7 dk CI kritik yolu — PR #40 ile iki paralel job'a ayrılarak kapandı
+- M34 10 adet `unnecessary_import` — PR #39
+- tek-job 7 dk CI kritik yolu — PR #40 ile iki paralel job
 
 ## 10. DEVRALMA / ÇALIŞMA TALİMATI
 
@@ -419,8 +450,8 @@ Zorunlu çalışma biçimi:
 1. Önce `GENEL_PROJE_OZETI.md` ve ilgili milestone dokümanlarını oku.
 2. Eski sohbet anlatımlarını canlı GitHub durumunun yerine koyma. `main`, PR, commit ve Actions sonuçlarını canlı kontrol et.
 3. Bir milestone'ı CLOSED/PASS saymadan önce ilgili `main` CI run/job sonucunu canlı doğrula.
-4. CI başarısızsa gerçek failure logunu çıkar; varsayım yapma; kök nedeni düzelt; yeni branch/PR aç; test et; kullanıcı onayı olmadan merge etme.
-5. CI yeşilse artifact `0` olduğunu doğrula; ilgili kapanış dokümanını ve bu özeti canlı kanıtla güncelle.
+4. CI başarısızsa gerçek failure logunu çıkar; varsayım yapma; kök nedeni düzelt; branch/PR üzerinde test et; kullanıcı onayı olmadan merge etme.
+5. CI yeşilse artifact `0` olduğunu doğrula; ilgili milestone dokümanını ve bu özeti canlı kanıtla güncelle.
 6. Her milestone'da M0–önceki milestone davranışını koru.
 7. Determinism, save/load/resume parity, migration, invariant ve balance guard'larını koru.
 8. CI timeout `7 dk` sabittir. Performans sorununu gizlemek için artırma; workflow/runner'ı optimize et.
