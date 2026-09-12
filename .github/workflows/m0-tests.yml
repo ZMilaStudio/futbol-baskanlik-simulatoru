@@ -175,3 +175,6 @@ jobs:
 
       - name: Run M46 sponsor crisis runtime composition
         run: dart run tool/run_m46_sponsor_crisis_runtime_composition.dart 20260903
+
+      - name: Run M47 facility sponsor crisis runtime composition
+        run: dart run tool/run_m47_facility_sponsor_crisis_runtime_composition.dart 20260903
