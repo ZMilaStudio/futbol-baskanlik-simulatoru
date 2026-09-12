@@ -36,6 +36,10 @@ class PresidentClubRuntimeState {
       'fan=${fanReputation.signature}|media=${mediaReputation.signature}';
 }
 
+// Internal compatibility alias used by the M49 player-control composition.
+// It does not add state or change checkpoint/save semantics.
+typedef PresidentRuntimeClubState = PresidentClubRuntimeState;
+
 class PresidentRuntimeCheckpoint {
   PresidentRuntimeCheckpoint({
     required this.runtime,
