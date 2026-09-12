@@ -31,9 +31,45 @@ Kalıcı kurallar:
 
 **M0–M49 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-Aktif PR / milestone yok.
+**M50 — Player President Sponsor Decision Override I aktif.**
 
-### Son kapanan milestone: M49 — Player President Facility Decision Override I
+Branch: `feat/m50-player-president-sponsor-control`
+PR: henüz açılmadı
+Durum: implementation candidate branch üzerinde; canlı PR CI henüz yok.
+
+### M50 seçiminin canlı kod gerekçesi
+
+M49 ile oyuncu ilk kez controlled club facility yatırım kararını doğrudan verebilir hale geldi. Canlı M42/M45 sponsor kodunda ise yeni sponsor gerektiğinde `SponsorOfferEngine` üç deterministic gerçek teklif üretmesine rağmen seçim hâlâ `PresidentSponsorDecisionPolicy` tarafından tamamen AI ile yapılıyordu. Bu, mevcut player-president yüzeyindeki en doğrudan yüksek değerli ürün boşluğuydu.
+
+M50 bu boşluğu kapatır:
+- yalnız `controlledClubId` yeni/yenilenen sponsor sözleşmesini player provider ile seçebilir
+- diğer 47 kulüp mevcut AI sponsor politikasını birebir sürdürür
+- aktif çok yıllı kontrat bozulmaz; kontrat bitmeden yeni seçim istenmez
+- oyuncu yalnız M42 tarafından üretilmiş gerçek tekliflerden birini seçebilir
+- context: current president + management profile + league position + fan trust + media credibility + teklifler + AI önerisi
+- seçilen teklif mevcut sponsor checkpoint/state zincirine girer ve gerçek economy `sponsorRevenue` satırını değiştirir
+- player provider serialize edilmez; `controlledClubId` ve aktif sponsor kontratı mevcut save state içinde persist eder
+- M49 facility player-control aynı engine içinde korunur
+- sponsor provider yokken M49 exact parity hedeflenir
+
+### M50 acceptance adayı
+
+1. sponsor provider yokken M49 exact checkpoint/boundary parity
+2. yalnız controlled club sponsor seçimi override; diğer 47 kulüp AI parity
+3. farklı gerçek sponsor teklifleri gerçek economy sponsorRevenue satırını değiştirir
+4. aktif çok yıllı player kontratı yeniden seçilmez ve save/load ile persist eder
+5. deterministic sponsor + facility provider ile `2+2 == uninterrupted 4` exact checkpoint/boundary/decision parity
+
+Yeni dosyalar:
+- `lib/src/sponsor/player_president_sponsor_control.dart`
+- `lib/player_president_sponsor_control.dart`
+- `test/m50_player_president_sponsor_control_test.dart`
+- `tool/run_m50_player_president_sponsor_control.dart`
+- `M50_PLAYER_PRESIDENT_SPONSOR_DECISION_OVERRIDE_I.md`
+
+CI workflow'a `Run M50 player president sponsor control` canonical adımı eklendi. PASS ancak canlı PR CI ile yazılacaktır.
+
+## 3. Son kapanan milestone: M49 — Player President Facility Decision Override I
 
 PR #52 kullanıcı tarafından açıkça onaylandı ve exact HEAD kilidiyle squash merge edildi.
 
@@ -83,7 +119,7 @@ M49 kapsamı:
 
 M49 **CLOSED / MERGED / PASS**.
 
-## 3. Yakın milestone geçmişi
+## 4. Yakın milestone geçmişi
 
 ### M48 — President Facility Investment Runtime Integration I — CLOSED / MERGED / PASS
 - M39 başkan facility yatırım politikası M47 birleşik facility+sponsor+crisis runtime'a bağlandı
@@ -120,9 +156,9 @@ PR #46 merge `27474a731aa73d291859828a1657d06579e69269`; post-merge CI `34680783
 ### M42 — Sponsor System I — CLOSED / MERGED / PASS
 PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280556`: 173 tests, M0–M42 PASS, artifact 0.
 
-## 4. Sistem zinciri
+## 5. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override (aktif branch).
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -141,27 +177,9 @@ Başkan/state gerçek etkileri:
 - M47: facility state ve etkileri M46 ile tek-season simulation yolunda compose edilir
 - M48: M39 current-president facility yatırım kararları M47 continuation boundary'sine bağlanır
 - M49: controlled club için player facility kararı M48 boundary'sini override eder; diğer kulüpler AI kalır
+- M50: controlled club için yeni sponsor seçimi player override alır; aktif kontratlar ve diğer kulüpler mevcut sponsor lifecycle/AI yolunu korur
 
-## 5. M49 kabul zinciri
-
-1. M48 source season yalnız bir kez tamamlanır.
-2. Gelecek sezon yoksa player/AI facility yatırımı uygulanmaz.
-3. Gelecek sezon varsa controlled club belirlenir.
-4. Provider yoksa tüm 48 kulüp exact M48/M39 AI yolunu kullanır.
-5. Provider varsa yalnız controlled club player choice kullanır; diğer 47 kulüp exact AI yolundadır.
-6. Player academy-first ve training→stadium round-robin yatırım sırası uygulanır.
-7. Her upgrade real cash + M39 reserve guard ile kontrol edilir; debt değişmez.
-8. Güncellenen facility state sonraki gerçek sponsor+crisis sezonunda lifecycle/matchday ekonomisini etkiler.
-9. `controlledClubId` save/checkpoint içinde deterministic olarak persist eder.
-10. Aynı deterministic provider ile save/load round-trip ve `2+2 == uninterrupted 4` exact parity verir.
-
-## 6. Sonraki milestone seçimi
-
-M50 henüz seçilmedi. Yeni milestone seçmeden önce canlı `main` tekrar doğrulanmalı ve repo içindeki gerçek ürün boşluğu okunmalıdır. Varsayımla kapsam açılmaz.
-
-Özellikle M49 ile ilk gerçek player-president facility karar girişi açıldığı için bir sonraki kapsam; mevcut player karar yüzeyinin eksik kalan en yüksek değerli ürün boşluğundan türetilmelidir. Sponsor, kriz, manager, transfer veya başka bir başkan kararına player override eklemek ancak canlı kod ve mevcut API yüzeyi incelendikten sonra seçilmelidir.
-
-## 7. Devir / çalışma talimatı
+## 6. Devir / çalışma talimatı
 
 1. Her işlemden önce canlı GitHub durumunu doğrula.
 2. `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır; silinmez.
