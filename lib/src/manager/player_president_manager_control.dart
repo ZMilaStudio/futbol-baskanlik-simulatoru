@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../core/seeded_rng.dart';
 import '../core/simulation_config.dart';
 import '../core/stable_hash.dart';
+import '../crisis/crisis_decision_core.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../crisis/player_president_crisis_control.dart';
 import '../crisis/player_president_facility_control.dart';
