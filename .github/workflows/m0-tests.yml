@@ -169,3 +169,6 @@ jobs:
 
       - name: Run M44 crisis runtime integration
         run: dart run tool/run_m44_crisis_runtime_integration.dart 20260903
+
+      - name: Run M45 sponsor runtime integration
+        run: dart run tool/run_m45_sponsor_runtime_integration.dart 20260903
