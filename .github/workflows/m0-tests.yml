@@ -163,3 +163,6 @@ jobs:
 
       - name: Run M42 sponsor system core
         run: dart run tool/run_m42_sponsor_system.dart 20260903
+
+      - name: Run M43 crisis decision core
+        run: dart run tool/run_m43_crisis_decision.dart 20260903
