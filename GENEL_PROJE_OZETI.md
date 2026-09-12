@@ -31,15 +31,19 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M54 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M55 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M55 — Player President Transfer Strategy Decision Override I.**
+**Aktif milestone yok. Aktif geliştirme PR'ı yok.**
+
+Son kapanan milestone: **M55 — Player President Transfer Strategy Decision Override I**.
 
 - Branch: `feat/m55-player-president-transfer-strategy-control`
-- PR #58 — **OPEN / NOT MERGED**
-- Base `main`: `51182060e462a3abf6aa252e3ace28d106b5d7f3`
-- Verified code-bearing HEAD: `d767506553a5f0f1dce71a320abdd2486a38d897`
+- PR #58 — **MERGED / CLOSED**
+- Final PR HEAD: `8f96cbfa5a482d378635822c3eca1fb51185c226`
 - Code-bearing PR CI `34724117874`: **SUCCESS**
+- Final exact-head PR CI `34724489311`: **SUCCESS**
+- Squash merge SHA / code-bearing `main`: `f4034bf35e11d52dc97d2d5a39abaed6672bbc7c`
+- Post-merge `main` CI `34724755590`: **SUCCESS**
 - analyzer: `No issues found!`
 - **238 normal/non-canonical test PASS**
 - beş M55 acceptance testinin tamamı PASS
@@ -47,15 +51,16 @@ Kalıcı kurallar:
 - `Run M55 player president transfer strategy control`: **SUCCESS**
 - canonical marker: `M55_PLAYER_TRANSFER_STRATEGY_CONTROL_PASS controlled=t1_01 aiParity=47 ai=ready_forward player=young_forward deterministic=true identityPreserved=true worldClubs=48`
 - artifacts: **0**
-- PR `mergeable=true`
 
-Bu özet refresh commit'i final PR HEAD'i değiştirecektir. Yeni exact HEAD üzerinde `test` + `canonical` CI, M55 marker ve artifact=0 yeniden doğrulanacaktır. Sonucu yalnız PR metadata'sına yazmak için ikinci bir docs commit atılmayacaktır.
+M55 **CLOSED / MERGED / PASS**.
 
-M55 henüz merge edilmedi. Final exact-head CI + artifact 0 + mergeable=true yeniden doğrulandıktan sonra kullanıcıdan **PR #58'e özel açık merge onayı** alınmalıdır.
+Bu kapanış özeti commit'inin docs-only CI'ı bir kez doğrulanacaktır; sırf son run ID'yi bu dosyaya yazmak için yeni docs commit atılmayacaktır.
+
+Sıradaki gerçek iş **M56'yı seçmektir**. Kapsam tahminle açılmayacak; canlı `main` kodu ve başkan karar yüzeyleri incelenip oyuncunun hâlâ veremediği en önemli gerçek kulüp başkanlığı kararı seçilecektir.
 
 ## 3. M55 kapsamı — Player President Transfer Strategy Decision Override I
 
-M53 başkanın transfer trait'lerini gerçek transfer-market politikalarına çevirdi; M54 bu stratejiyi gerçek `WorldCareerEngine` transfer penceresine opt-in pre-window bridge ile bağladı. M55 bu seam'i yalnız oyuncunun kontrol ettiği kulüp için gerçek başkan kararına açar.
+M53 başkanın transfer trait'lerini gerçek transfer-market politikalarına çevirdi; M54 bu stratejiyi gerçek `WorldCareerEngine` transfer penceresine opt-in pre-window bridge ile bağladı. M55 bu seam'i yalnız oyuncunun kontrol ettiği kulüp için gerçek başkan kararına açtı.
 
 Oyuncu tek tek taktik/kadro yönetmez. Başkan olarak transfer politikasının dört yönetim eksenini seçer:
 - `financialDiscipline`: transfer bütçesi ve mali disiplin yaklaşımı,
@@ -92,30 +97,32 @@ M55 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-## 4. Son kapanan milestone: M54 — Transfer Strategy World Runtime Bridge I
+M55 **CLOSED / MERGED / PASS**.
 
-- Branch: `feat/m54-transfer-strategy-world-runtime-bridge`
-- PR #57 — MERGED
-- Final PR HEAD: `45405585e2263a1377c2d62b14a2e1449bdd3962`
-- Merge SHA: `837198d3480be5571d4eeae1934c72454f47dec1`
-- Post-merge `main` CI `34723247609`: SUCCESS
-- closure docs commit: `51182060e462a3abf6aa252e3ace28d106b5d7f3`
-- docs-close CI `34723519127`: SUCCESS
-- analyzer clean; **233 tests PASS**; **M0–M54 canonical PASS**; artifacts **0**
-- canonical marker: `M54_TRANSFER_STRATEGY_WORLD_BRIDGE_PASS neutralParity=true low=ready_forward high=young_forward worldWired=true deterministic=true worldClubs=48`
+## 4. Son kapanan milestone: M55 — Player President Transfer Strategy Decision Override I
 
-M54, M53 stratejisini gerçek `WorldCareerEngine` transfer penceresine opt-in ve stateless pre-window market bridge ile bağladı. Neutral parity, explicit-policy bypass, 48-club world wiring ve determinism kanıtlandı.
+- Branch: `feat/m55-player-president-transfer-strategy-control`
+- PR #58 — MERGED
+- Final PR HEAD: `8f96cbfa5a482d378635822c3eca1fb51185c226`
+- Merge SHA: `f4034bf35e11d52dc97d2d5a39abaed6672bbc7c`
+- Code-bearing PR CI `34724117874`: SUCCESS
+- Final exact-head PR CI `34724489311`: SUCCESS
+- Post-merge `main` CI `34724755590`: SUCCESS
+- analyzer clean; **238 tests PASS**; **M0–M55 canonical PASS**; artifacts **0**
+- canonical marker: `M55_PLAYER_TRANSFER_STRATEGY_CONTROL_PASS controlled=t1_01 aiParity=47 ai=ready_forward player=young_forward deterministic=true identityPreserved=true worldClubs=48`
 
-M54 **CLOSED / MERGED / PASS**.
+M55, gerçek M54 transfer penceresinde yalnız controlled club için transfer stratejisinin dört başkanlık eksenini oyuncuya açar. Diğer 47 kulüp AI profile davranışını korur; başkan kimliği/archetype/manager patience değişmez; explicit policy bypass, determinism ve M54 parity korunur.
+
+M55 **CLOSED / MERGED / PASS**.
 
 ## 5. Yakın milestone geçmişi
 
+- M54 Transfer Strategy World Runtime Bridge I — PR #57 merge `837198d3480be5571d4eeae1934c72454f47dec1`; 233 tests; M0–M54 PASS; artifact 0.
 - M53 President Transfer Strategy Runtime Hook I — PR #56 merge `f83e159793f80d7f53c40a0845e795339e400d3c`; 228 tests; M0–M53 PASS; artifact 0.
 - M52 Player President Manager Decision Override I — PR #55 merge `bce9efe6c214526b0018110c5a10d2fa9e7ec5c8`; 223 tests; M0–M52 PASS; artifact 0.
 - M51 Player President Crisis Decision Override I — PR #54 merge `4b2832f3bfb091ae3adaeb504a7369b1190b2438`; 218 tests; M0–M51 PASS; artifact 0.
 - M50 Player President Sponsor Decision Override I — PR #53 merge `f8519d4f0be247f7029a2e29d4de10588d97736f`; 213 tests; M0–M50 PASS; artifact 0.
 - M49 Player President Facility Decision Override I — PR #52 merge `c0c40bada13e3dd83c06cded64ead38dc2f30d8`; 208 tests; M0–M49 PASS; artifact 0.
-- M48 President Facility Investment Runtime Integration I — PR #51 merge `63950ab4ad728fe6b6f4f0deb42323590ce5180a`; 203 tests; M0–M48 PASS; artifact 0.
 
 ## 6. Sistem zinciri
 
