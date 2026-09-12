@@ -27,54 +27,68 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M44 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M45 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
 Son merge edilmiş milestone:
-**M44 — Crisis Runtime Integration I**
+**M45 — Sponsor Runtime Integration I**
 
-PR #47 squash merge: `43149da199e74e41dabe47534e4e4e887d8862e7`
+PR #48 squash merge: `92f4f1b99fa841866587a8067dd529735400c035`
 
-Post-merge main CI `34683153804` — **SUCCESS**:
-- test job `103525370907` — SUCCESS
+Post-merge main CI `34684676105` — **SUCCESS**:
+- test job `103529485118` — SUCCESS
 - analyzer: `No issues found!`
-- **184 normal/non-canonical test PASS**
-- canonical job `103525370623` — SUCCESS
-- **M0–M44 canonical PASS**
+- **189 normal/non-canonical test PASS**
+- canonical job `103529485217` — SUCCESS
+- **M0–M45 canonical PASS**
 - artifacts: **0**
 - iki job da 7 dakika sınırının altında
 
-M44 canonical final:
+M45 canonical final:
 - seasons=4
-- crises=**17/192** (%8,9)
-- real president turnovers=42
-- policyChanges=35
-- legacyParity=true
+- contractsPerSeason=48
+- revenueBySeason=`291473844.75, 294374236.50, 295295994.50, 299016546.25`
+- cumulativeRevenue=`1180160622.00`
+- preservedAcrossTurnover=2
+- renewedByNewPresident=57
+- saveBytes=730919
+- financeReplacementMatch=true
 - finalCheckpointMatch=true
 - boundaryMatch=true
 
-Kalıcı doküman: `M44_CRISIS_RUNTIME_INTEGRATION_I.md`.
+Kalıcı doküman: `M45_SPONSOR_RUNTIME_INTEGRATION_I.md`.
 
-### Sıradaki seçilmiş milestone
+### Sıradaki milestone
 
-**M45 — Sponsor Runtime Integration I**
+**M46 henüz seçilmedi / başlatılmadı.**
 
-Canlı repoda açık bir M45 tanımı bulunmadı. README eski M25/M26 durumunda kaldığı için roadmap kaynağı olarak kullanılmadı. M45, mevcut canlı mimarideki en belirgin entegrasyon boşluğuna göre seçildi:
-- M42 sponsor çekirdeği gerçek teklif/kontrat/gelir üretir ve ayrı `SponsorRuntimeCheckpoint` taşır,
-- ancak sponsor kontrat yaşam döngüsü henüz tam PresidentDomain sezon runtime/checkpoint akışına bağlı değildir,
-- M44 kriz sistemi için bu “core → gerçek continuation runtime” boşluğunu kapattı; sponsor sistemi için aynı sınıf entegrasyon hâlâ eksiktir.
-
-M45 ilk hedefleri:
-- gerçek sezon akışında mevcut fan/media/current-president state'leriyle sponsor çözümlemek,
-- kabul edilen sponsor gelirini gerçek kulüp ekonomisine **double-counting olmadan** bağlamak,
-- çok yıllı sponsor kontratlarını gerçek başkan turnover'ları boyunca korumak,
-- kontrat bittiğinde yeni başkan profilinin yeni sponsor seçimini gerçekten etkileyebilmesini sağlamak,
-- sponsor runtime state'ini uzun kariyer continuation/save-resume akışında deterministik taşımak,
-- legacy sponsor/economy davranışını explicit opt-in veya ayrı wrapper ile korumak,
-- canonical gate + normal acceptance testleri eklemek.
-
-Kullanıcı bu oturumda yeşil milestone PR'larının ayrıca sorulmadan squash merge edilmesine ve kapanıştan sonra sonraki mantıklı milestone'a geçilmesine izin verdi. Exact-head CI, post-merge main CI, 7 dakika, determinism ve artifact=0 kuralları zorunludur.
+Bir sonraki milestone varsayımla adlandırılmamalıdır. Canlı `main` üstünde roadmap/TODO izleri ve mevcut runtime entegrasyon boşlukları okunup gerçek bir sonraki hedef seçilmelidir.
 
 ## 3. Son kapalı milestone'lar
+
+### M45 — Sponsor Runtime Integration I — CLOSED / MERGED / PASS
+PR #48 squash merge: `92f4f1b99fa841866587a8067dd529735400c035`
+Post-merge main CI `34684676105`: analyzer clean, **189 test PASS**, **M0–M45 PASS**, artifact **0**.
+
+Kapsam:
+- ayrı sponsor-aware full runtime entegrasyonu; legacy public PresidentDomain davranışı sessizce değiştirilmedi
+- `PresidentDomainCheckpoint + SponsorRuntimeCheckpoint` için explicit composite runtime checkpoint/save codec
+- üç lig boyunca tek sezon-scoped sponsor economy coordinator; aynı kulüp bir sezonda iki kez sponsor çözümünden geçemez
+- M42 sponsor geliri gerçek economy `sponsorRevenue` satırında legacy strength-only sponsor gelirinin **replacement** kaynağıdır; double-counting yok
+- yeni sponsor seçimleri gerçek current president + fan + media context'i kullanır
+- çok yıllı kontratlar gerçek president turnover boyunca korunur
+- kontrat expiry sonrası renewal mevcut başkan profiliyle yapılır
+- global 48-kulüp sponsor state'i sezon sonunda deterministik üretilir
+- 2+2 save/resume = uninterrupted 4 sezon
+- acceptance testleri + canonical M45 gate eklendi
+
+Canonical kanıt:
+- her sezonda 48 aktif sponsor kontratı
+- 4 sezonda cumulative sponsor revenue `1,180,160,622.00`
+- turnover boyunca korunan kontrat: 2
+- yeni başkan tarafından yenilenen kontrat: 57
+- `financeReplacementMatch=true`
+- `finalCheckpointMatch=true`
+- `boundaryMatch=true`
 
 ### M44 — Crisis Runtime Integration I — CLOSED / MERGED / PASS
 PR #47 squash merge: `43149da199e74e41dabe47534e4e4e887d8862e7`
@@ -91,11 +105,6 @@ Kapsam:
 - gerçek president turnover crisis policy'yi değiştirebilir
 - runtime threshold 55; M43 core defaultu değişmedi
 - kalıcı frequency guard kriz oranının %75'e ulaşmasını reddeder
-
-Failure/düzeltme geçmişi:
-- ilk PR analyzer failure: testte var olmayan `FictionalWorld`; gerçek tip `FictionalWorldSetup` ile düzeltildi
-- ilk teknik yeşil runtime 164/192 kriz üretti; ürün dengesi için M44 threshold 55 yapıldı
-- final 17/192 kriz ile tüm parity/legacy gate'leri PASS
 
 ### M43 — Crisis Decision Core I — CLOSED / MERGED / PASS
 PR #46 squash merge: `27474a731aa73d291859828a1657d06579e69269`
@@ -116,7 +125,7 @@ PR #42 squash merge: `ea95f767eb95194455e012cb0b9ec5cc6e81667f`; post-merge CI `
 
 ## 4. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -128,18 +137,16 @@ Başkan/state gerçek etkileri:
 - `MediaState.credibility`: sponsor offer quality + crisis pressure
 - finance cash/debt: crisis pressure + bounded cash effect
 - M44: crisis output gerçek next-season continuation state'ine taşınır
-- M42 sponsor core: `SponsorSystemEngine.resolveSeason(...)` gerçek kontrat ve `revenueByClub` üretir; `SponsorRuntimeCheckpoint` active contracts + cumulative paid revenue taşır; M45 bunu gerçek full runtime'a bağlayacaktır
+- M45: sponsor kontrat lifecycle + revenue gerçek PresidentDomain continuation/economy akışına bağlıdır
 
-## 5. M45 çalışma yönü
+## 5. M46 seçim yönü
 
-M45 implementasyondan önce canlı `main` üstünde şu yüzeyler birlikte okunmalıdır:
-1. `BasicEconomyEngine.simulateSeason` sponsor geliri override/parametre semantiği,
-2. facility/attendance economy wrapper'larının sponsor parametresini nasıl forward ettiği,
-3. `PresidentDomainCareerEngine` + resume/checkpoint sezon sınırı,
-4. gerçek season report içinden league position erişimi,
-5. M42 `SponsorRuntimeCheckpoint` ve sponsor save codec/testleri.
-
-Kritik kabul noktası: sponsor-aware runtime eski strength-only sponsor gelirini üstüne ekleyip geliri iki kez saymamalıdır. Sponsor kontrat geliri gerçek economy `sponsorRevenue` satırının tek kaynağı olmalı veya açıkça tanımlı replacement semantiği kullanmalıdır.
+M46 seçilmeden önce canlı `main` üzerinde:
+1. roadmap/TODO/README ve milestone dokümanlarında açık bir sonraki hedef aranmalı,
+2. M44 kriz runtime ile M45 sponsor runtime'ın birbirleriyle ve facility/economy katmanıyla birleşim noktaları gözden geçirilmeli,
+3. henüz observational/core olup gerçek continuation state'ine bağlanmamış başkanlık sistemleri aranmalı,
+4. save büyümesi ve 7 dakikalık CI bütçesi göz önünde tutulmalı,
+5. seçilen milestone gerçek ürün davranışına anlamlı yeni karar/sonuç etkisi katmalı; yalnız refactor veya metrik ekleme olmamalı.
 
 ## 6. Devir / çalışma talimatı
 
