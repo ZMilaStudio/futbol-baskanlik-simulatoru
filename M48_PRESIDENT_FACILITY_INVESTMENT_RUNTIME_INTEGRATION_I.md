@@ -1,6 +1,6 @@
 # M48 — President Facility Investment Runtime Integration I
 
-Status: **PR-VERIFIED / NOT MERGED**
+Status: **CLOSED / MERGED / PASS**
 
 PR: #51
 Branch: `feat/m48-president-facility-investment-runtime`
@@ -50,17 +50,25 @@ Normal test toplamı: **203 PASS**.
 ## CI / canonical kanıtı
 
 Code-bearing HEAD: `5a6bd0e695af214cf16530138ed3ba318effad46`
-Run: `34695693706`
+Code-bearing run: `34695693706`
 
+Final PR HEAD: `4de5350dc22fc44429b6c61548762c5e9f3f6033`
+Final PR CI: `34698168272` — **SUCCESS**
+
+Merge SHA: `63950ab4ad728fe6b6f4f0deb42323590ce5180a`
+Post-merge `main` CI: `34698950932` — **SUCCESS**
+
+Post-merge doğrulama:
 - analyzer: **No issues found**
-- test job: **SUCCESS**, yaklaşık 3:21
-- canonical job: **SUCCESS**, yaklaşık 5:04
 - **203 normal/non-canonical test PASS**
 - **M0–M48 canonical PASS**
+- M48 canonical PASS
 - artifacts: **0**
+- test job yaklaşık **3:13**
+- canonical job yaklaşık **5:01**
 - her iki job da `timeout-minutes: 7` altında
 
-İlk PR run `34695336114` analyzer'da test tarafında 1 gerçek hata + 3 unnecessary-import bilgisiyle kırmızıydı. Gerçek log incelendi: generated `PresidentProfile` üzerinde yanlış `.presidentId` erişimi `.id` olarak düzeltildi ve üç gereksiz import kaldırıldı. Sonraki analyzer/test run'ları yeşil oldu.
+İlk PR run `34695336114` analyzer'da test tarafında 1 gerçek hata + 3 unnecessary-import bilgisiyle kırmızıydı. Gerçek log incelendi: generated `PresidentProfile` üzerinde yanlış `.presidentId` erişimi `.id` olarak düzeltildi ve üç gereksiz import kaldırıldı. Sonraki analyzer/test/canonical run'ları yeşil oldu.
 
 ## M48 canonical sonucu
 
@@ -84,14 +92,8 @@ Run: `34695693706`
 - `boundaryMatch=true`
 - saveBytes=`922058`
 
-## Merge kapısı
+## Kapanış
 
-M48 henüz `main` üzerinde değildir.
+PR #51 açık kullanıcı onayı sonrası exact HEAD kilidiyle squash merge edildi.
 
-Code-bearing kapılar yeşildir. Merge öncesi kalan zorunlu adımlar:
-1. bu doküman + `GENEL_PROJE_OZETI.md` commitlerinden oluşan docs-inclusive exact PR HEAD CI'ını doğrula
-2. analyzer + 203 tests + M0–M48 + artifact 0 kanıtını exact HEAD için al
-3. PR head değişmediğini ve mergeable olduğunu doğrula
-4. kullanıcıdan PR #51 için açık merge onayı al
-5. yalnız onaydan sonra squash merge et
-6. post-merge `main` CI yeşil olmadan M48'i CLOSED sayma
+M48 artık `main` üzerindedir ve post-merge `main` CI yeşildir. Milestone **CLOSED / MERGED / PASS**.
