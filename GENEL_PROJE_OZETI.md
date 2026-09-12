@@ -29,27 +29,25 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M47 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M48 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M48 — President Facility Investment Runtime Integration I aktif; PR #51 MERGE READY / NOT MERGED.**
+Aktif PR / milestone yok.
 
-### M48 — President Facility Investment Runtime Integration I — MERGE READY / NOT MERGED
+### Son kapanan milestone: M48 — President Facility Investment Runtime Integration I
 
-Branch: `feat/m48-president-facility-investment-runtime`
-PR: #51
-Verified docs-inclusive PR HEAD: `0dc01cfe0da3afe9edc7bfdf1772acb15d1a73a6`
-Final verified PR CI run `34696028918` — **SUCCESS**:
+PR #51 explicit kullanıcı onayı sonrası exact HEAD kilidiyle squash merge edildi.
+
+- Final PR HEAD: `4de5350dc22fc44429b6c61548762c5e9f3f6033`
+- Final PR CI `34698168272`: **SUCCESS**
+- Merge SHA: `63950ab4ad728fe6b6f4f0deb42323590ce5180a`
+- Post-merge main CI `34698950932`: **SUCCESS**
 - analyzer: `No issues found!`
 - **203 normal/non-canonical test PASS**
 - **M0–M48 canonical PASS**
-- M48 canonical PASS
 - artifacts: **0**
-- PR mergeable: **true**
+- test job yaklaşık **3:13**
+- canonical job yaklaşık **5:01**
 - iki job da 7 dakika sınırının altında
-
-Code-bearing verified HEAD `5a6bd0e695af214cf16530138ed3ba318effad46`, CI `34695693706` da **SUCCESS** verdi; test job yaklaşık **3:21**, canonical job yaklaşık **5:04** sürdü ve artifact 0 kaldı.
-
-İlk PR run `34695336114` analyzer'da test tarafında 1 gerçek hata + 3 unnecessary-import bilgisiyle kırmızıydı. Gerçek failure logu incelendi; generated `PresidentProfile` üzerindeki yanlış `.presidentId` erişimi `.id` olarak düzeltildi ve üç gereksiz import kaldırıldı. Sonraki analyzer/test ve canonical run'ları yeşil oldu.
 
 M48 canonical final:
 - seasons=4
@@ -85,31 +83,14 @@ M48 kapsamı:
 - kalıcı canonical gate: `tool/run_m48_president_facility_investment_runtime.dart`
 - kalıcı doküman: `M48_PRESIDENT_FACILITY_INVESTMENT_RUNTIME_INTEGRATION_I.md`
 
-M48 henüz `main` üzerinde değildir. Teknik PR kapılarının tamamı doğrulanmıştır. Kalan zorunlu kapılar:
-1. PR #51 için açık kullanıcı merge onayı
-2. onay sonrası exact HEAD korunarak squash merge
-3. post-merge `main` CI yeşil doğrulaması
-4. ardından M48 CLOSED / MERGED / PASS
+M48 **CLOSED / MERGED / PASS**.
 
-Bu özet güncellemesi docs-only commit'tir. Bu commitin CI sonucu doğrulandıktan sonra yalnız run-ID yazmak için yeniden docs commit atılmaz; docs→CI→docs döngüsü oluşturulmaz.
+## 3. Yakın milestone geçmişi
 
-## 3. Son kapanan milestone: M47 — Facility + Sponsor + Crisis Runtime Composition I
-
-PR #50 explicit kullanıcı onayı sonrası squash merge edildi.
-
-- Final PR HEAD: `5fb0c8a0c6de9717d0ba3dd93f0629b8d81bf1de`
-- Final PR CI `34692763703`: **SUCCESS**
-- Merge SHA: `dc26c2782026c6823c91d05015f4f507a7bac2f6`
-- Post-merge main CI `34693305775`: **SUCCESS**
-- analyzer: `No issues found!`
-- **198 test PASS**
-- **M0–M47 canonical PASS**
-- artifacts: **0**
-- final docs-only CI `34693569906`: **SUCCESS**, artifact 0
-
-M47 **CLOSED / MERGED / PASS**.
-
-## 4. Yakın milestone geçmişi
+### M47 — Facility + Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
+- facility state ve etkileri sponsor+crisis PresidentDomain continuation runtime ile tek-season simulation yolunda compose edildi
+- PR #50 merge `dc26c2782026c6823c91d05015f4f507a7bac2f6`
+- post-merge CI `34693305775`: 198 tests, M0–M47 PASS, artifact 0
 
 ### M46 — Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
 - sponsor + crisis tek top-level continuation runtime'ında compose edildi
@@ -150,9 +131,9 @@ PR #43 merge `8edcdb67ee77f16e64b40d5b44588deae562625f`; post-merge CI `34652843
 ### M39 — President Facility Portfolio Decision Loop I — CLOSED / MERGED / PASS
 PR #42 merge `ea95f767eb95194455e012cb0b9ec5cc6e81667f`; post-merge CI `34649669246`: 157 tests, M0–M39 PASS, artifact 0.
 
-## 5. Sistem zinciri
+## 4. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime integration (PR #51, henüz merge edilmedi).
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime integration.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -171,7 +152,7 @@ Başkan/state gerçek etkileri:
 - M47: facility state ve etkileri M46 ile tek-season simulation yolunda compose edilir
 - M48: M39 current-president facility yatırım kararları M47 continuation boundary'sine bağlanır
 
-## 6. M48 kabul zinciri
+## 5. M48 kabul zinciri
 
 1. M47 sezonu yalnız bir kez tamamlanır.
 2. Crisis-adjusted post-season current president state okunur.
@@ -183,6 +164,10 @@ Başkan/state gerçek etkileri:
 8. Sonraki sezon yeni facility seviyeleri gerçek academy/training/stadium etkisine dönüşür.
 9. Final sezon sonrası yatırım uygulanmaz; tek-sezon M48 M47 ile parity verir.
 10. Existing M47 codec ile save/load round-trip ve 2+2 resume uninterrupted 4 sezonla aynıdır.
+
+## 6. Sonraki milestone seçimi
+
+M49 henüz seçilmedi. Yeni milestone seçmeden önce canlı `main` tekrar doğrulanmalı ve repo içindeki gerçek ürün boşluğu okunmalıdır. Varsayımla kapsam açılmaz.
 
 ## 7. Devir / çalışma talimatı
 
