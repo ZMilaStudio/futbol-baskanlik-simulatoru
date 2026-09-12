@@ -24,37 +24,28 @@ Kalıcı kurallar:
 - CI kırmızıysa gerçek failure logu okunmadan patch atılmaz
 - her anlamlı proje durumu/kararı sonrası bu özet güncel tutulur
 - docs→CI→docs sonsuz döngüsü üretilmez
+- her yeni PR için merge öncesi o PR'a özel açık kullanıcı onayı gerekir
+- merge sonrası `main` CI yeşil olmadan milestone CLOSED sayılmaz
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M46 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M47 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M47 — Facility + Sponsor + Crisis Runtime Composition I aktif; PR #50 MERGE-READY / NOT MERGED.**
+Aktif PR / milestone yok.
 
-### M47 — Facility + Sponsor + Crisis Runtime Composition I — MERGE-READY / NOT MERGED
+### Son kapanan milestone: M47 — Facility + Sponsor + Crisis Runtime Composition I
 
-Branch: `feat/m47-facility-sponsor-crisis-runtime-composition`
-PR: #50
-Code-bearing verified HEAD: `a23d623d7a89e1e9172e71f0aabd8c7b3a67ee40`
-Code-bearing CI run `34691699235` — **SUCCESS**:
-- analyzer: `No issues found!`
-- **198 normal/non-canonical test PASS**
-- **M0–M47 canonical PASS**
-- M47 canonical PASS
-- artifacts: **0**
-- test job yaklaşık **2:01**
-- canonical job yaklaşık **3:49**
-- iki job da 7 dakika sınırının altında
+PR #50 explicit kullanıcı onayı sonrası squash merge edildi.
 
-Docs-inclusive exact verified HEAD: `810654a3bafb063411221c3850a394ee78a5d9fc`
-Final exact-head CI run `34692008507` — **SUCCESS**:
+- Final PR HEAD: `5fb0c8a0c6de9717d0ba3dd93f0629b8d81bf1de`
+- Final PR CI `34692763703`: **SUCCESS**
+- Merge SHA: `dc26c2782026c6823c91d05015f4f507a7bac2f6`
+- Post-merge main CI `34693305775`: **SUCCESS**
 - analyzer: `No issues found!`
 - **198 normal/non-canonical test PASS**
 - **M0–M47 canonical PASS**
 - artifacts: **0**
-- PR `mergeable=true`
-
-İlk PR run `34691443880` analyzer'da 5 public-export hatasıyla kırmızıydı. Gerçek failure logu incelendi; `StadiumFacilityState` ve `TrainingGroundFacilityState` M47 public shim'den export edilerek kök neden düzeltildi. Sonraki analyzer/test ve canonical run'ları yeşil oldu.
+- test ve canonical job'ları 7 dakika sınırının altında
 
 M47 canonical final:
 - seasons=4
@@ -76,91 +67,66 @@ M47 canonical final:
 M47 kapsamı:
 - M38 academy/stadium/training facility etkileri M46 sponsor+crisis PresidentDomain continuation runtime'ına aynı sezon simülasyonu içinde bağlandı
 - her sezon yalnız bir kez world/PresidentDomain simülasyonu çalışır
-- academy + training real player lifecycle'a, stadium + current fan trust real matchday revenue'ya etki eder
+- academy + training gerçek player lifecycle'a etki eder
+- stadium + current fan trust gerçek matchday revenue'ya etki eder
 - sponsor geliri economy'de legacy sponsor gelirinin replacement kaynağıdır; double-counting yok
 - kriz facility+sponsor-aware economy sonrasında uygulanır
-- sponsor state krizden bağımsız korunur; debt preservation korunur
-- facility portfolio continuation-critical state olarak M46 runtime'ın yanında persist edilir; world state ikinci kez kopyalanmaz
+- sponsor state korunur; debt preservation korunur
+- facility portfolio continuation-critical state olarak persist edilir; world state ikinci kez kopyalanmaz
 - neutral facility level 0 yolu M46 ile birebir parity verir
 - non-zero academy/stadium/training state save/load ve 2+2 resume determinism verir
-- M39 otomatik president facility investment decision loop M47 kapsamına bilinçli olarak alınmadı; sonraki milestone adayıdır
-- 5 yeni acceptance testi; toplam 198 test
 - kalıcı canonical gate: `tool/run_m47_facility_sponsor_crisis_runtime_composition.dart`
 - kalıcı doküman: `M47_FACILITY_SPONSOR_CRISIS_RUNTIME_COMPOSITION_I.md`
 
-M47 henüz `main` üzerinde değildir. Teknik merge kapıları tamamlandı. Sıradaki tek zorunlu kapı:
-1. **PR #50 için açık kullanıcı merge onayı**
-2. yalnız onaydan sonra squash merge
-3. post-merge `main` CI yeşil doğrulaması
-4. ardından M47 CLOSED / MERGED / PASS olarak işaretlenir
+M47 **CLOSED / MERGED / PASS**.
 
-### Son merge edilmiş milestone: M46 — Sponsor + Crisis Runtime Composition I
-
-PR #49 squash merge: `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
-Post-merge main CI `34686218278` — **SUCCESS**:
-- analyzer: `No issues found!`
-- **193 normal/non-canonical test PASS**
-- **M0–M46 canonical PASS**
-- artifacts: **0**
-- test job yaklaşık **2:30**
-- canonical job yaklaşık **4:50**
-
-M46 **CLOSED / MERGED / PASS**.
-
-## 3. Son kapalı milestone'lar
+## 3. Yakın milestone geçmişi
 
 ### M46 — Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
 - M44 crisis runtime + M45 sponsor runtime tek top-level career continuation yolunda compose edildi
 - aynı PresidentDomain/world sezonu iki kez simüle edilmiyor
 - sponsor-aware finance sonrası kriz uygulanıyor
 - sponsor state korunuyor; kriz-adjusted finance/fan/media sonraki sponsor context'ine taşınıyor
-- neutral kriz yolu M45 parity veriyor
-- mevcut M45 composite save formatı yeterli; save version bump yok
 - 2+2 save/resume parity
 - PR #49 merge `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
 - post-merge CI `34686218278`: 193 tests, M0–M46 PASS, artifact 0
 
 ### M45 — Sponsor Runtime Integration I — CLOSED / MERGED / PASS
-- explicit `PresidentDomainMemoryCheckpoint + SponsorRuntimeCheckpoint` composite checkpoint/save codec
-- sponsor geliri gerçek economy `sponsorRevenue` alanında legacy gelirin replacement kaynağı; double-counting yok
-- current president + fan + media sponsor seçim context'i
-- multi-year kontrat president turnover boyunca korunur; expiry sonrası renewal current president ile yapılır
+- PresidentDomain + Sponsor composite checkpoint/save codec
+- sponsor revenue gerçek economy satırında replacement; double-counting yok
+- current president + fan + media sponsor context'i
+- multi-year kontrat turnover boyunca korunur; renewal current president ile yapılır
 - 2+2 save/resume parity
 - PR #48 merge `92f4f1b99fa841866587a8067dd529735400c035`
 - post-merge CI `34684676105`: 189 tests, M0–M45 PASS, artifact 0
 
 ### M44 — Crisis Runtime Integration I — CLOSED / MERGED / PASS
-- opt-in `CrisisRuntimeCareerEngine`
 - gerçek sezon sonu finance/fan/media/current-president context'i
-- cash/fan/media etkileri gerçek continuation state'ine
+- crisis etkileri continuation state'ine yazılır
 - debt değişmez; gizli borrowing yok
 - save-version bump yok
 - 2+2 save/resume parity
-- president turnover crisis policy'yi değiştirebilir
-- runtime threshold 55, frequency guard <%75
 - PR #47 merge `43149da199e74e41dabe47534e4e4e887d8862e7`
 - post-merge CI `34683153804`: 184 tests, M0–M44 PASS, artifact 0
 
 ### M43 — Crisis Decision Core I — CLOSED / MERGED / PASS
-PR #46 squash merge: `27474a731aa73d291859828a1657d06579e69269`
-Post-merge CI `34680783652`: 179 tests, M0–M43 PASS, artifact 0.
+PR #46 merge `27474a731aa73d291859828a1657d06579e69269`; post-merge CI `34680783652`: 179 tests, M0–M43 PASS, artifact 0.
 
 ### M42 — Sponsor System I — CLOSED / MERGED / PASS
-PR #45 squash merge: `2868d725c4ba68601a732d98b913195d3c58a4a3`
-Post-merge CI `34660280556`: 173 tests, M0–M42 PASS, artifact 0.
+PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280556`: 173 tests, M0–M42 PASS, artifact 0.
 
 ### M41 — Attendance Demand & Fan Trust Integration II — CLOSED / MERGED / PASS
-PR #44 squash merge: `8d1e901ceb4e13087b75f7df948a4cbe53c429ce`; post-merge CI `34656211019`: 167 tests, M0–M41 PASS, artifact 0.
+PR #44 merge `8d1e901ceb4e13087b75f7df948a4cbe53c429ce`; post-merge CI `34656211019`: 167 tests, M0–M41 PASS, artifact 0.
 
 ### M40 — Stadium Capacity & Attendance Core I — CLOSED / MERGED / PASS
-PR #43 squash merge: `8edcdb67ee77f16e64b40d5b44588deae562625f`; post-merge CI `34652843932`: 162 tests, M0–M40 PASS, artifact 0.
+PR #43 merge `8edcdb67ee77f16e64b40d5b44588deae562625f`; post-merge CI `34652843932`: 162 tests, M0–M40 PASS, artifact 0.
 
 ### M39 — President Facility Portfolio Decision Loop I — CLOSED / MERGED / PASS
-PR #42 squash merge: `ea95f767eb95194455e012cb0b9ec5cc6e81667f`; post-merge CI `34649669246`: 157 tests, M0–M39 PASS, artifact 0.
+PR #42 merge `ea95f767eb95194455e012cb0b9ec5cc6e81667f`; post-merge CI `34649669246`: 157 tests, M0–M39 PASS, artifact 0.
 
 ## 4. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis runtime composition; M47 facility+sponsor+crisis runtime composition (PR #50, merge-ready, henüz merge edilmedi).
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -174,24 +140,33 @@ Başkan/state gerçek etkileri:
 - facility academy/training: real lifecycle/youth-development etkisi
 - facility stadium + fan trust: real matchday revenue etkisi
 - M44: crisis output gerçek next-season continuation state'ine taşınır
-- M45: sponsor contract lifecycle + revenue gerçek PresidentDomain continuation/economy akışına bağlıdır
-- M46: M44 + M45 aynı season boundary/continuation runtime'ında compose edilir; kriz etkisi sonraki sponsor context'ine ulaşır
-- M47: M38 facility portfolio state ve etkileri M46 runtime ile aynı tek-season simulation yolunda compose edilir
+- M45: sponsor contract lifecycle + revenue gerçek continuation/economy akışına bağlıdır
+- M46: sponsor+crisis aynı season boundary'de compose edilir
+- M47: facility portfolio state ve etkileri M46 runtime ile aynı single-season simulation yolunda compose edilir
 
 ## 5. M47 kabul zinciri
 
 1. Full 48-club academy/stadium/training portfolio exact coverage ile açılır veya restore edilir.
-2. Academy + training facility map real `PlayerLifecycleEngine` call'ına uygulanır.
-3. Stadium + current fan trust real matchday revenue multiplier'ını üretir.
+2. Academy + training map gerçek `PlayerLifecycleEngine` call'ına uygulanır.
+3. Stadium + current fan trust gerçek matchday revenue multiplier'ını üretir.
 4. Sponsor coordinator 48 kulüp kontrat/gelirini gerçek economy çağrılarında çözer; sponsor geliri replacement olarak uygulanır.
 5. PresidentDomain sezonu yalnız bir kez tamamlanır.
-6. `CrisisRuntimeIntegrationEngine.apply(...)` tamamlanmış facility+sponsor-aware domain checkpoint'e uygulanır.
+6. Crisis tamamlanmış facility+sponsor-aware domain checkpoint'e uygulanır.
 7. Crisis-adjusted domain + sponsor checkpoint + facility portfolio composite continuation state olarak taşınır.
 8. Neutral facility portfolio M46 ile birebir parity verir.
 9. Non-zero facility portfolio save/load round-trip ve 2+2 resume uninterrupted 4 sezonla aynıdır.
 10. Debt, sponsor-state, finance-replacement ve boundary parity invariants korunur.
 
-## 6. Devir / çalışma talimatı
+## 6. Sonraki milestone için gerçek ürün boşluğu
+
+M47 facility seviyelerini birleşik runtime'da kullanır ve persist eder; ancak **M39 otomatik president facility investment decision loop henüz M47 birleşik runtime'a bağlanmamıştır**.
+
+Bu nedenle canlı kod doğrulaması da aynı sonucu verirse güçlü M48 adayı:
+**President Facility Investment Runtime Integration I** — M39 academy/stadium/training yatırım kararlarının M47 facility+sponsor+crisis continuation akışında gerçek sezon sınırında çalışması, real cash/reserve kullanması, turnover sonrası yeniden planlanması ve save/resume parity vermesi.
+
+M48 henüz başlatılmadı; yeni milestone seçmeden önce canlı `main` tekrar doğrulanmalıdır.
+
+## 7. Devir / çalışma talimatı
 
 1. Her işlemden önce canlı GitHub durumunu doğrula.
 2. `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır; silinmez.
