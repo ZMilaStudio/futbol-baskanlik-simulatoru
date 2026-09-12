@@ -181,3 +181,6 @@ jobs:
 
       - name: Run M48 president facility investment runtime
         run: dart run tool/run_m48_president_facility_investment_runtime.dart 20260903
+
+      - name: Run M49 player president facility control
+        run: dart run tool/run_m49_player_president_facility_control.dart 20260903
