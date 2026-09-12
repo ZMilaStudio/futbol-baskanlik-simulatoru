@@ -29,14 +29,14 @@ Kalıcı kurallar:
 
 **M0–M46 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M47 — Facility + Sponsor + Crisis Runtime Composition I aktif; PR #50 PR-VERIFIED / NOT MERGED.**
+**M47 — Facility + Sponsor + Crisis Runtime Composition I aktif; PR #50 MERGE-READY / NOT MERGED.**
 
-### M47 — Facility + Sponsor + Crisis Runtime Composition I — PR-VERIFIED / NOT MERGED
+### M47 — Facility + Sponsor + Crisis Runtime Composition I — MERGE-READY / NOT MERGED
 
 Branch: `feat/m47-facility-sponsor-crisis-runtime-composition`
 PR: #50
 Code-bearing verified HEAD: `a23d623d7a89e1e9172e71f0aabd8c7b3a67ee40`
-CI run `34691699235` — **SUCCESS**:
+Code-bearing CI run `34691699235` — **SUCCESS**:
 - analyzer: `No issues found!`
 - **198 normal/non-canonical test PASS**
 - **M0–M47 canonical PASS**
@@ -45,6 +45,14 @@ CI run `34691699235` — **SUCCESS**:
 - test job yaklaşık **2:01**
 - canonical job yaklaşık **3:49**
 - iki job da 7 dakika sınırının altında
+
+Docs-inclusive exact verified HEAD: `810654a3bafb063411221c3850a394ee78a5d9fc`
+Final exact-head CI run `34692008507` — **SUCCESS**:
+- analyzer: `No issues found!`
+- **198 normal/non-canonical test PASS**
+- **M0–M47 canonical PASS**
+- artifacts: **0**
+- PR `mergeable=true`
 
 İlk PR run `34691443880` analyzer'da 5 public-export hatasıyla kırmızıydı. Gerçek failure logu incelendi; `StadiumFacilityState` ve `TrainingGroundFacilityState` M47 public shim'den export edilerek kök neden düzeltildi. Sonraki analyzer/test ve canonical run'ları yeşil oldu.
 
@@ -80,12 +88,11 @@ M47 kapsamı:
 - kalıcı canonical gate: `tool/run_m47_facility_sponsor_crisis_runtime_composition.dart`
 - kalıcı doküman: `M47_FACILITY_SPONSOR_CRISIS_RUNTIME_COMPOSITION_I.md`
 
-M47 henüz `main` üzerinde değildir. Sıradaki zorunlu kapı:
-1. docs-inclusive exact PR HEAD CI
-2. analyzer + 198 test + M0–M47 + artifact 0
-3. head/mergeable doğrulaması
-4. **PR #50 için açık kullanıcı merge onayı**
-5. yalnız onaydan sonra squash merge + post-merge main CI
+M47 henüz `main` üzerinde değildir. Teknik merge kapıları tamamlandı. Sıradaki tek zorunlu kapı:
+1. **PR #50 için açık kullanıcı merge onayı**
+2. yalnız onaydan sonra squash merge
+3. post-merge `main` CI yeşil doğrulaması
+4. ardından M47 CLOSED / MERGED / PASS olarak işaretlenir
 
 ### Son merge edilmiş milestone: M46 — Sponsor + Crisis Runtime Composition I
 
@@ -153,7 +160,7 @@ PR #42 squash merge: `ea95f767eb95194455e012cb0b9ec5cc6e81667f`; post-merge CI `
 
 ## 4. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis runtime composition; M47 facility+sponsor+crisis runtime composition (PR #50, henüz merge edilmedi).
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis runtime composition; M47 facility+sponsor+crisis runtime composition (PR #50, merge-ready, henüz merge edilmedi).
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
