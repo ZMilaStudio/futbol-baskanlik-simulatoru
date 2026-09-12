@@ -29,38 +29,32 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M48 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M49 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M49 — Player President Facility Decision Override I aktif; PR #52 NOT MERGED.**
+Aktif PR / milestone yok.
 
-Branch: `feat/m49-player-president-facility-control`
-PR: #52
+### Son kapanan milestone: M49 — Player President Facility Decision Override I
 
-### M49 doğrulanmış teknik durum
+PR #52 kullanıcı tarafından açıkça onaylandı ve exact HEAD kilidiyle squash merge edildi.
 
-Code-bearing verified HEAD: `4290b428f09b5475bd3131f351075db0151b0ac9`
-Code-bearing CI `34701135589`: **SUCCESS**.
-
-İlk docs-inclusive candidate HEAD: `f6cc812016499af5acfb3779aa11aca53825c83c`
-Docs-inclusive CI `34701508278`: **SUCCESS**.
-
-Bu iki doğrulamada:
+- Final PR HEAD: `2dead082642228682bff6cded64ead38dc2f30d8`
+- Final PR CI `34702117074`: **SUCCESS**
+- Merge SHA: `c0c40bada13e3dd83c06cdba60093a7bb9b71304`
+- Post-merge main CI `34704054636`: **SUCCESS**
 - analyzer: `No issues found!`
 - **208 normal/non-canonical test PASS**
 - **M0–M49 canonical PASS**
+- `Run M49 player president facility control`: **SUCCESS**
 - artifacts: **0**
-- iki job da `timeout-minutes: 7` altında
+- `test` job yaklaşık **3:22**
+- `canonical` job yaklaşık **5:10**
+- iki job da 7 dakika sınırının altında
 
-Bu dosyanın mevcut refresh commit'i docs-only'dir. Bu commit yeni bir PR HEAD oluşturacağı için **merge öncesi current exact HEAD + current CI canlı GitHub'dan tekrar doğrulanmalıdır**. Sırf yeni run-ID'yi bu dosyaya yazmak için yeni docs commit atılmaz; docs→CI→docs döngüsü oluşturulmaz.
-
-İlk PR run `34700738952` analyzer'da iki gerçek compile hatasıyla kırmızıydı. Gerçek log okundu; `player_president_facility_control.dart` içindeki iki `PresidentRuntimeClubState` anotasyonunun canlı runtime sınıfı `PresidentClubRuntimeState` ile uyumsuz olduğu doğrulandı. Branch'te state/save davranışını değiştirmeyen internal compatibility typedef ile mevcut gerçek tipe bağlandı; sonraki analyzer temiz geçti.
-
-### M49 canonical final
-
+M49 canonical final:
 - controlledClub=`t1_02`
 - `aiParityCount=47`
 - `playerWindows=3`
-- controlled-player total facility spend=`12,000,000`
+- player facility spend=`12,000,000`
 - hold spend=`0`
 - stadium upgrades=`1`
 - matchday revenue=`10,168,800 -> 10,931,460`
@@ -72,8 +66,7 @@ Bu dosyanın mevcut refresh commit'i docs-only'dir. Bu commit yeni bir PR HEAD o
 - `boundaryMatch=true`
 - saveBytes=`1329011`
 
-### M49 kapsamı
-
+M49 kapsamı:
 - oyunun ilk explicit player-president decision override API'si eklendi
 - `controlledClubId` ile yalnız bir kulüp player-controlled facility kararına bağlanır
 - diğer 47 kulüp exact M48/M39 AI facility yatırım yolunu sürdürür
@@ -88,44 +81,14 @@ Bu dosyanın mevcut refresh commit'i docs-only'dir. Bu commit yeni bir PR HEAD o
 - kalıcı canonical gate: `tool/run_m49_player_president_facility_control.dart`
 - kalıcı doküman: `M49_PLAYER_PRESIDENT_FACILITY_DECISION_OVERRIDE_I.md`
 
-M49 henüz `main` üzerinde değildir. Merge için kalan zorunlu kapılar:
-1. current exact PR HEAD'i canlı doğrula
-2. current exact HEAD CI: analyzer + 208 tests + M0–M49 + artifact 0 doğrula
-3. PR #52 mergeable=true doğrula
-4. kullanıcıdan PR #52 için açık merge onayı al
-5. yalnız onaydan sonra exact HEAD kilidiyle squash merge et
-6. post-merge `main` CI yeşil doğrula
-7. ardından M49 CLOSED / MERGED / PASS
+M49 **CLOSED / MERGED / PASS**.
 
-## 3. Son kapanan milestone: M48 — President Facility Investment Runtime Integration I
+## 3. Yakın milestone geçmişi
 
-PR #51 explicit kullanıcı onayı sonrası squash merge edildi.
-
-- Final PR HEAD: `4de5350dc22fc44429b6c61548762c5e9f3f6033`
-- Final PR CI `34698168272`: **SUCCESS**
-- Merge SHA: `63950ab4ad728fe6b6f4f0deb42323590ce5180a`
-- Post-merge main CI `34698950932`: **SUCCESS**
-- analyzer: `No issues found!`
-- **203 test PASS**
-- **M0–M48 canonical PASS**
-- artifacts: **0**
-- final docs-only CI `34699313097`: **SUCCESS**, artifact 0
-
-M48 canonical final:
-- seasons=4
-- prepared investment boundaries=3
-- decisions=144
-- academy/training/stadium upgrades=`70/45/33`
-- spend=`634,000,000`
-- invested club windows=`73`
-- stadium target=`t1_02`
-- matchday revenue=`10,168,800 -> 10,922,000`
-- currentPresidentMatch/sponsorStatePreserved/debtPreserved/cashSpendMatches=true
-- finalSeasonM47Parity/saveResumeMatch/boundaryMatch=true
-
-M48 **CLOSED / MERGED / PASS**.
-
-## 4. Yakın milestone geçmişi
+### M48 — President Facility Investment Runtime Integration I — CLOSED / MERGED / PASS
+- M39 başkan facility yatırım politikası M47 birleşik facility+sponsor+crisis runtime'a bağlandı
+- PR #51 merge `63950ab4ad728fe6b6f4f0deb42323590ce5180a`
+- post-merge main CI `34698950932`: 203 tests, M0–M48 PASS, artifact 0
 
 ### M47 — Facility + Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
 - facility state ve etkileri sponsor+crisis PresidentDomain continuation runtime ile tek-season simulation yolunda compose edildi
@@ -157,9 +120,9 @@ PR #46 merge `27474a731aa73d291859828a1657d06579e69269`; post-merge CI `34680783
 ### M42 — Sponsor System I — CLOSED / MERGED / PASS
 PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280556`: 173 tests, M0–M42 PASS, artifact 0.
 
-## 5. Sistem zinciri
+## 4. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override (PR #52, henüz merge edilmedi).
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -179,7 +142,7 @@ Başkan/state gerçek etkileri:
 - M48: M39 current-president facility yatırım kararları M47 continuation boundary'sine bağlanır
 - M49: controlled club için player facility kararı M48 boundary'sini override eder; diğer kulüpler AI kalır
 
-## 6. M49 kabul zinciri
+## 5. M49 kabul zinciri
 
 1. M48 source season yalnız bir kez tamamlanır.
 2. Gelecek sezon yoksa player/AI facility yatırımı uygulanmaz.
@@ -191,6 +154,12 @@ Başkan/state gerçek etkileri:
 8. Güncellenen facility state sonraki gerçek sponsor+crisis sezonunda lifecycle/matchday ekonomisini etkiler.
 9. `controlledClubId` save/checkpoint içinde deterministic olarak persist eder.
 10. Aynı deterministic provider ile save/load round-trip ve `2+2 == uninterrupted 4` exact parity verir.
+
+## 6. Sonraki milestone seçimi
+
+M50 henüz seçilmedi. Yeni milestone seçmeden önce canlı `main` tekrar doğrulanmalı ve repo içindeki gerçek ürün boşluğu okunmalıdır. Varsayımla kapsam açılmaz.
+
+Özellikle M49 ile ilk gerçek player-president facility karar girişi açıldığı için bir sonraki kapsam; mevcut player karar yüzeyinin eksik kalan en yüksek değerli ürün boşluğundan türetilmelidir. Sponsor, kriz, manager, transfer veya başka bir başkan kararına player override eklemek ancak canlı kod ve mevcut API yüzeyi incelendikten sonra seçilmelidir.
 
 ## 7. Devir / çalışma talimatı
 
