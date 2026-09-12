@@ -196,3 +196,6 @@ jobs:
 
       - name: Run M53 president transfer strategy runtime hook
         run: dart run tool/run_m53_president_transfer_strategy_runtime_hook.dart
+
+      - name: Run M54 transfer strategy world runtime bridge
+        run: dart run tool/run_m54_transfer_strategy_world_runtime_bridge.dart
