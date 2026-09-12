@@ -57,11 +57,35 @@ M45 canonical final:
 
 Kalıcı doküman: `M45_SPONSOR_RUNTIME_INTEGRATION_I.md`.
 
-### Sıradaki milestone
+### Sıradaki seçilmiş milestone
 
-**M46 henüz seçilmedi / başlatılmadı.**
+**M46 — Sponsor + Crisis Runtime Composition I**
 
-Bir sonraki milestone varsayımla adlandırılmamalıdır. Canlı `main` üstünde roadmap/TODO izleri ve mevcut runtime entegrasyon boşlukları okunup gerçek bir sonraki hedef seçilmelidir.
+Canlı repo taraması sonucu açık bir M46 roadmap tanımı bulunmadı; README M26 seviyesinde kalmış durumda. M46 mevcut gerçek mimari boşluğa göre seçildi:
+- M44 `CrisisRuntimeCareerEngine` PresidentDomain sezonunu kendi top-level runtime'ında sürüyor,
+- M45 `SponsorRuntimeCareerEngine` sponsor-aware economy ile PresidentDomain sezonunu ayrı top-level runtime'ında sürüyor,
+- iki sistem bugün aynı kariyerde tek public continuation yolu içinde birlikte çalışmıyor,
+- bunları sırayla ayrı çalıştırmak aynı sezonun PresidentDomain/world hesaplarını tekrar simüle etme riski taşır.
+
+M46 hedefi tek sezon akışında:
+1. sponsor-aware gerçek ekonomi çözümü,
+2. tamamlanan sezonun PresidentDomain state'i,
+3. sezon sonu M44 crisis değerlendirmesi,
+4. crisis-adjusted finance/fan/media state'inin sonraki sezon sponsor context'ine taşınması,
+5. sponsor kontrat state'inin aynı composite checkpoint içinde korunması
+zincirini **tek dünya simülasyonu** ile kurmaktır.
+
+Kabul yönü:
+- M45 sponsor revenue replacement/double-counting koruması aynen kalmalı,
+- M44 crisis debt-preservation ve bounded effect kuralları aynen kalmalı,
+- crisis kapalı/etkisiz konfigürasyonda birleşik runtime M45 ile parity vermeli,
+- sponsor kontratları crisis nedeniyle sessizce bozulmamalı,
+- crisis fan/media etkisi sonraki sponsor renewal context'ine gerçekten ulaşmalı,
+- 2+2 save/resume = uninterrupted 4 sezon,
+- normal acceptance + canonical M46 gate,
+- artifact 0 ve her CI job <7 dakika.
+
+M46 henüz branch/PR açılmadan önce son M45 docs-only `main` CI kapısı doğrulanacaktır.
 
 ## 3. Son kapalı milestone'lar
 
@@ -71,8 +95,8 @@ Post-merge main CI `34684676105`: analyzer clean, **189 test PASS**, **M0–M45 
 
 Kapsam:
 - ayrı sponsor-aware full runtime entegrasyonu; legacy public PresidentDomain davranışı sessizce değiştirilmedi
-- `PresidentDomainCheckpoint + SponsorRuntimeCheckpoint` için explicit composite runtime checkpoint/save codec
-- üç lig boyunca tek sezon-scoped sponsor economy coordinator; aynı kulüp bir sezonda iki kez sponsor çözümünden geçemez
+- `PresidentDomainMemoryCheckpoint + SponsorRuntimeCheckpoint` için explicit composite runtime checkpoint/save codec
+- üç lig boyunca tek season-scoped sponsor economy coordinator; aynı kulüp bir sezonda iki kez sponsor çözümünden geçemez
 - M42 sponsor geliri gerçek economy `sponsorRevenue` satırında legacy strength-only sponsor gelirinin **replacement** kaynağıdır; double-counting yok
 - yeni sponsor seçimleri gerçek current president + fan + media context'i kullanır
 - çok yıllı kontratlar gerçek president turnover boyunca korunur
@@ -138,15 +162,18 @@ Başkan/state gerçek etkileri:
 - finance cash/debt: crisis pressure + bounded cash effect
 - M44: crisis output gerçek next-season continuation state'ine taşınır
 - M45: sponsor kontrat lifecycle + revenue gerçek PresidentDomain continuation/economy akışına bağlıdır
+- M46 hedefi: M44 + M45 etkilerini tek season boundary/continuation runtime'ında compose etmek
 
-## 5. M46 seçim yönü
+## 5. M46 çalışma yönü
 
-M46 seçilmeden önce canlı `main` üzerinde:
-1. roadmap/TODO/README ve milestone dokümanlarında açık bir sonraki hedef aranmalı,
-2. M44 kriz runtime ile M45 sponsor runtime'ın birbirleriyle ve facility/economy katmanıyla birleşim noktaları gözden geçirilmeli,
-3. henüz observational/core olup gerçek continuation state'ine bağlanmamış başkanlık sistemleri aranmalı,
-4. save büyümesi ve 7 dakikalık CI bütçesi göz önünde tutulmalı,
-5. seçilen milestone gerçek ürün davranışına anlamlı yeni karar/sonuç etkisi katmalı; yalnız refactor veya metrik ekleme olmamalı.
+Canlı koddan doğrulanan entegrasyon sırası:
+1. M45 sponsor coordinator gerçek economy çağrıları sırasında 48 kulüp sponsor kontrat/gelirini çözer.
+2. PresidentDomain sezonu tamamlanır ve next-season domain checkpoint oluşur.
+3. M44 `CrisisRuntimeIntegrationEngine.apply(...)` bu tamamlanmış domain checkpoint'e uygulanabilir; crisis engine stateless olduğundan ayrı crisis save state gerektirmez.
+4. Crisis-adjusted domain checkpoint, M45 sponsor checkpoint ile yeniden tek composite checkpoint olarak taşınır.
+5. Sonraki sponsor sezonu current president + crisis-adjusted fan/media state'ini okur.
+
+M46 için yeni save formatı gerekip gerekmediği implementasyon sırasında kanıtla belirlenecek; mevcut M45 `SponsorPresidentRuntimeCheckpoint` domain+sponsor state'i crisis etkilerini domain içinde zaten taşıyabildiği için **save-version bump varsayılmayacaktır**.
 
 ## 6. Devir / çalışma talimatı
 
