@@ -187,3 +187,6 @@ jobs:
 
       - name: Run M50 player president sponsor control
         run: dart run tool/run_m50_player_president_sponsor_control.dart 20260903
+
+      - name: Run M51 player president crisis control
+        run: dart run tool/run_m51_player_president_crisis_control.dart 20260903

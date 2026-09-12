@@ -149,6 +149,121 @@ class CrisisDecisionEngine {
     };
   }
 
+  /// Returns the exact canonical actions that can resolve [scenario].
+  ///
+  /// M51 exposes these existing M43 choices to a player-controlled president
+  /// without inventing new effects or changing the AI policy.
+  List<CrisisDecision> availableDecisions(CrisisScenario scenario) {
+    return switch (scenario.type) {
+      CrisisType.liquiditySqueeze => const [
+          CrisisDecision(
+            action: CrisisAction.austerityPlan,
+            effect: CrisisEffect(
+              cashDelta: Money.fromUnits(2000000),
+              fanTrustDelta: -2,
+              mediaCredibilityDelta: 2,
+            ),
+          ),
+          CrisisDecision(
+            action: CrisisAction.bridgeSpending,
+            effect: CrisisEffect(
+              cashDelta: Money.fromUnits(-3000000),
+              fanTrustDelta: 3,
+              mediaCredibilityDelta: -1,
+            ),
+          ),
+          CrisisDecision(
+            action: CrisisAction.balancedRecovery,
+            effect: CrisisEffect(
+              cashDelta: Money.fromUnits(500000),
+              fanTrustDelta: 0,
+              mediaCredibilityDelta: 1,
+            ),
+          ),
+        ],
+      CrisisType.supporterUnrest => const [
+          CrisisDecision(
+            action: CrisisAction.ambitionReset,
+            effect: CrisisEffect(
+              cashDelta: Money.fromUnits(-2000000),
+              fanTrustDelta: 5,
+              mediaCredibilityDelta: -1,
+            ),
+          ),
+          CrisisDecision(
+            action: CrisisAction.listeningTour,
+            effect: CrisisEffect(
+              cashDelta: Money.fromUnits(-500000),
+              fanTrustDelta: 4,
+              mediaCredibilityDelta: 2,
+            ),
+          ),
+          CrisisDecision(
+            action: CrisisAction.supporterReassurance,
+            effect: CrisisEffect(
+              cashDelta: Money.fromUnits(-1000000),
+              fanTrustDelta: 3,
+              mediaCredibilityDelta: 1,
+            ),
+          ),
+        ],
+      CrisisType.mediaBacklash => const [
+          CrisisDecision(
+            action: CrisisAction.transparentBriefing,
+            effect: CrisisEffect(
+              cashDelta: Money.fromUnits(-200000),
+              fanTrustDelta: 1,
+              mediaCredibilityDelta: 5,
+            ),
+          ),
+          CrisisDecision(
+            action: CrisisAction.confrontNarrative,
+            effect: CrisisEffect(
+              cashDelta: Money.zero,
+              fanTrustDelta: 1,
+              mediaCredibilityDelta: -3,
+            ),
+          ),
+          CrisisDecision(
+            action: CrisisAction.measuredMediaResponse,
+            effect: CrisisEffect(
+              cashDelta: Money.fromUnits(-100000),
+              fanTrustDelta: 0,
+              mediaCredibilityDelta: 3,
+            ),
+          ),
+        ],
+    };
+  }
+
+  /// Applies one of the canonical actions for [scenario] to [context].
+  ///
+  /// The action is validated against the scenario, and its effect always comes
+  /// from the M43 canonical table above. Callers cannot inject arbitrary cash,
+  /// fan, or media deltas.
+  CrisisResolution resolveAction({
+    required CrisisContext context,
+    required CrisisScenario scenario,
+    required CrisisAction action,
+  }) {
+    _validate(context);
+    final matches = availableDecisions(scenario)
+        .where((decision) => decision.action == action)
+        .toList(growable: false);
+    if (matches.length != 1) {
+      throw ArgumentError.value(
+        action,
+        'action',
+        'Action is not valid for ${scenario.type.name}.',
+      );
+    }
+    return _apply(
+      context: context,
+      scenario: scenario,
+      decision: matches.single,
+    );
+  }
+
   CrisisResolution? evaluate(CrisisContext context) {
     final scenario = detect(context);
     if (scenario == null) {
@@ -160,95 +275,109 @@ class CrisisDecisionEngine {
 
   CrisisDecision _liquidityDecision(PresidentManagementProfile president) {
     if (president.financialDiscipline >= 70) {
-      return const CrisisDecision(
-        action: CrisisAction.austerityPlan,
-        effect: CrisisEffect(
-          cashDelta: Money.fromUnits(2000000),
-          fanTrustDelta: -2,
-          mediaCredibilityDelta: 2,
-        ),
-      );
+      return _decisionForAction(CrisisAction.austerityPlan);
     }
     if (president.riskAppetite >= 70) {
-      return const CrisisDecision(
-        action: CrisisAction.bridgeSpending,
-        effect: CrisisEffect(
-          cashDelta: Money.fromUnits(-3000000),
-          fanTrustDelta: 3,
-          mediaCredibilityDelta: -1,
-        ),
-      );
+      return _decisionForAction(CrisisAction.bridgeSpending);
     }
-    return const CrisisDecision(
-      action: CrisisAction.balancedRecovery,
-      effect: CrisisEffect(
-        cashDelta: Money.fromUnits(500000),
-        fanTrustDelta: 0,
-        mediaCredibilityDelta: 1,
-      ),
-    );
+    return _decisionForAction(CrisisAction.balancedRecovery);
   }
 
   CrisisDecision _supporterDecision(PresidentManagementProfile president) {
     if (president.transferAmbition >= 70 && president.riskAppetite >= 60) {
-      return const CrisisDecision(
-        action: CrisisAction.ambitionReset,
-        effect: CrisisEffect(
-          cashDelta: Money.fromUnits(-2000000),
-          fanTrustDelta: 5,
-          mediaCredibilityDelta: -1,
-        ),
-      );
+      return _decisionForAction(CrisisAction.ambitionReset);
     }
     if (president.managerPatience >= 70) {
-      return const CrisisDecision(
-        action: CrisisAction.listeningTour,
-        effect: CrisisEffect(
-          cashDelta: Money.fromUnits(-500000),
-          fanTrustDelta: 4,
-          mediaCredibilityDelta: 2,
-        ),
-      );
+      return _decisionForAction(CrisisAction.listeningTour);
     }
-    return const CrisisDecision(
-      action: CrisisAction.supporterReassurance,
-      effect: CrisisEffect(
-        cashDelta: Money.fromUnits(-1000000),
-        fanTrustDelta: 3,
-        mediaCredibilityDelta: 1,
-      ),
-    );
+    return _decisionForAction(CrisisAction.supporterReassurance);
   }
 
   CrisisDecision _mediaDecision(PresidentManagementProfile president) {
     if (president.riskAppetite >= 70) {
-      return const CrisisDecision(
-        action: CrisisAction.confrontNarrative,
-        effect: CrisisEffect(
-          cashDelta: Money.zero,
-          fanTrustDelta: 1,
-          mediaCredibilityDelta: -3,
-        ),
-      );
+      return _decisionForAction(CrisisAction.confrontNarrative);
     }
     if (president.financialDiscipline >= 65 || president.managerPatience >= 65) {
-      return const CrisisDecision(
-        action: CrisisAction.transparentBriefing,
-        effect: CrisisEffect(
-          cashDelta: Money.fromUnits(-200000),
-          fanTrustDelta: 1,
-          mediaCredibilityDelta: 5,
-        ),
-      );
+      return _decisionForAction(CrisisAction.transparentBriefing);
     }
-    return const CrisisDecision(
-      action: CrisisAction.measuredMediaResponse,
-      effect: CrisisEffect(
-        cashDelta: Money.fromUnits(-100000),
-        fanTrustDelta: 0,
-        mediaCredibilityDelta: 3,
-      ),
-    );
+    return _decisionForAction(CrisisAction.measuredMediaResponse);
+  }
+
+  CrisisDecision _decisionForAction(CrisisAction action) {
+    return switch (action) {
+      CrisisAction.austerityPlan => const CrisisDecision(
+          action: CrisisAction.austerityPlan,
+          effect: CrisisEffect(
+            cashDelta: Money.fromUnits(2000000),
+            fanTrustDelta: -2,
+            mediaCredibilityDelta: 2,
+          ),
+        ),
+      CrisisAction.bridgeSpending => const CrisisDecision(
+          action: CrisisAction.bridgeSpending,
+          effect: CrisisEffect(
+            cashDelta: Money.fromUnits(-3000000),
+            fanTrustDelta: 3,
+            mediaCredibilityDelta: -1,
+          ),
+        ),
+      CrisisAction.balancedRecovery => const CrisisDecision(
+          action: CrisisAction.balancedRecovery,
+          effect: CrisisEffect(
+            cashDelta: Money.fromUnits(500000),
+            fanTrustDelta: 0,
+            mediaCredibilityDelta: 1,
+          ),
+        ),
+      CrisisAction.ambitionReset => const CrisisDecision(
+          action: CrisisAction.ambitionReset,
+          effect: CrisisEffect(
+            cashDelta: Money.fromUnits(-2000000),
+            fanTrustDelta: 5,
+            mediaCredibilityDelta: -1,
+          ),
+        ),
+      CrisisAction.listeningTour => const CrisisDecision(
+          action: CrisisAction.listeningTour,
+          effect: CrisisEffect(
+            cashDelta: Money.fromUnits(-500000),
+            fanTrustDelta: 4,
+            mediaCredibilityDelta: 2,
+          ),
+        ),
+      CrisisAction.supporterReassurance => const CrisisDecision(
+          action: CrisisAction.supporterReassurance,
+          effect: CrisisEffect(
+            cashDelta: Money.fromUnits(-1000000),
+            fanTrustDelta: 3,
+            mediaCredibilityDelta: 1,
+          ),
+        ),
+      CrisisAction.transparentBriefing => const CrisisDecision(
+          action: CrisisAction.transparentBriefing,
+          effect: CrisisEffect(
+            cashDelta: Money.fromUnits(-200000),
+            fanTrustDelta: 1,
+            mediaCredibilityDelta: 5,
+          ),
+        ),
+      CrisisAction.confrontNarrative => const CrisisDecision(
+          action: CrisisAction.confrontNarrative,
+          effect: CrisisEffect(
+            cashDelta: Money.zero,
+            fanTrustDelta: 1,
+            mediaCredibilityDelta: -3,
+          ),
+        ),
+      CrisisAction.measuredMediaResponse => const CrisisDecision(
+          action: CrisisAction.measuredMediaResponse,
+          effect: CrisisEffect(
+            cashDelta: Money.fromUnits(-100000),
+            fanTrustDelta: 0,
+            mediaCredibilityDelta: 3,
+          ),
+        ),
+    };
   }
 
   CrisisResolution _apply({
