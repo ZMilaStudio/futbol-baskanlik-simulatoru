@@ -31,7 +31,86 @@ Kalıcı kurallar:
 
 **M0–M50 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-Aktif milestone yok. **M51 henüz seçilmedi.** Yeni milestone seçmeden önce canlı `main` kodu incelenmeli ve kapsam gerçek ürün boşluğundan türetilmelidir; eski sohbetten veya tahminden milestone seçilmez.
+**M51 — Player President Crisis Decision Override I aktif; PR #54 OPEN / NOT MERGED.**
+
+Branch: `feat/m51-player-president-crisis-control`
+PR: #54
+
+### M51 doğrulanmış code-bearing durum
+
+- Verified code-bearing HEAD: `9b325f186e2317cec4c1cb6db13d72614c027c23`
+- Exact-head PR CI `34709153890`: **SUCCESS**
+- analyzer: `No issues found!`
+- **218 normal/non-canonical test PASS**
+- beş M51 acceptance testinin tamamı PASS
+- **M0–M51 canonical PASS**
+- `Run M51 player president crisis control`: **SUCCESS**
+- artifacts: **0**
+- PR mergeable: **true**
+- `test` job yaklaşık **2:50**
+- `canonical` job yaklaşık **5:29**
+- iki job da 7 dakika sınırının altında
+
+İlk M51 PR koşusu `34708813123` yalnız yeni M51 canonical gate'te kırmızıydı. Gerçek job logu okunmadan patch atılmadı. Kök neden runtime değil, gate'in parity karşılaştırmasında AI baseline'ın sponsor/facility provider olmadan, karşı tarafın ise sponsor/facility player provider ile çalıştırılmasıydı. Runner apples-to-apples parity ölçecek şekilde düzeltildi; production/runtime davranışına bu hata için ek patch gerekmedi. Aynı ilk koşuda analyzer + **218 test** ve **M0–M50 canonical** zaten PASS idi.
+
+Bu dosyanın mevcut refresh commit'i docs-only olacaktır. Bu nedenle merge öncesi bu commit sonrası oluşan **current exact PR HEAD + current CI** canlı GitHub'dan tekrar doğrulanmalıdır. Sırf yeni run-ID'yi bu dosyaya yazmak için yeni docs commit atılmaz; docs→CI→docs döngüsü oluşturulmaz.
+
+### M51 canonical final
+
+- controlledClub=`t1_02`
+- `aiParityCount=47`
+- `playerCrisisWindows=4`
+- `changedFromAiCount=4`
+- first scenario=`liquiditySqueeze:41`
+- first AI action=`balancedRecovery`
+- first player action=`austerityPlan`
+- `neutralM50Parity=true`
+- `crisisStateWired=true`
+- `debtPreserved=true`
+- `controlledClubPersisted=true`
+- `finalCheckpointMatch=true`
+- `boundaryMatch=true`
+- `decisionMatch=true`
+- `sponsorDecisionMatch=true`
+- saveBytes=`3705443`
+
+Canonical forced activation (`activationThreshold: 0`) yalnız test/gate konfigürasyonudur. Production/default M44 crisis threshold semantiği `55` olarak korunur.
+
+### M51 kapsamı
+
+- yalnız `controlledClubId` için gerçek kriz oluştuğunda player crisis provider çağrılır
+- kriz yoksa oyuncudan karar istenmez
+- diğer 47 kulüp mevcut `CrisisDecisionEngine` AI yolunu birebir sürdürür
+- oyuncu yalnız tespit edilen kriz tipine ait M43 kanonik üç aksiyondan birini seçebilir
+- keyfi cash/fan/media delta enjekte edilemez
+- seçilen aksiyon M44 continuation akışında gerçek finance/fan/media state'ine yazılır
+- debt değişmez; hidden borrowing yoktur
+- M50 sponsor + M49 facility player-control aynı runtime zincirinde korunur
+- crisis provider serialize edilmez
+- `controlledClubId` nested checkpoint/save zincirinde persist eder
+- crisis provider yokken M50 exact parity korunur
+- deterministic provider ile save/load/resume parity korunur
+
+M51 acceptance:
+1. crisis provider yokken M50 exact checkpoint/source parity — PASS
+2. yalnız controlled club crisis seçimi override; diğer 47 kulüp exact AI parity — PASS
+3. seçilen crisis action gerçek continuation finance/fan/media state'ine yazılır; debt korunur — PASS
+4. kriz yoksa provider çağrılmaz ve no-crisis M50 parity korunur — PASS
+5. sponsor + facility + crisis deterministic provider zincirinde save round-trip ve `2+2 == uninterrupted 4` checkpoint/boundary/decision parity — PASS
+
+M51 dosyaları/değişiklikleri:
+- `lib/src/crisis/crisis_decision_core.dart`
+- `lib/src/sponsor/player_president_sponsor_control.dart`
+- `lib/src/crisis/player_president_crisis_control.dart`
+- `lib/player_president_crisis_control.dart`
+- `test/m51_player_president_crisis_control_test.dart`
+- `tool/run_m51_player_president_crisis_control.dart`
+- `M51_PLAYER_PRESIDENT_CRISIS_DECISION_OVERRIDE_I.md`
+- `.github/workflows/m0-tests.yml`
+
+M51 şu an **MERGE READY / NOT MERGED**. Merge için PR #54'e özel açık kullanıcı onayı gerekir. Merge sonrası `main` CI yeşil doğrulanmadan M51 CLOSED sayılmaz.
+
+**M52 henüz seçilmedi.** M51 kapanmadan M52 açılmaz; M52 kapsamı daha sonra canlı `main` ürün boşluğundan türetilir.
 
 `DEVRALMA_1_AYLIK_GPT.md` 12 Eylül 2026 canlı `main` üzerinde bulunamadı ve repo aramasında da sonuç vermedi. Bu nedenle çalışma kuralları için bu dosyanın varlığı varsayılmaz; canlı GitHub + bu özet esas alınır.
 
@@ -150,7 +229,7 @@ PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280
 
 ## 6. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override; M51 player-president crisis decision override (PR #54, aktif).
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -170,6 +249,7 @@ Başkan/state gerçek etkileri:
 - M48: M39 current-president facility yatırım kararları M47 continuation boundary'sine bağlanır
 - M49: controlled club için player facility kararı M48 boundary'sini override eder; diğer kulüpler AI kalır
 - M50: controlled club için yeni sponsor seçimi player override alır; aktif kontratlar ve diğer kulüpler mevcut sponsor lifecycle/AI yolunu korur
+- M51: controlled club için kriz aksiyonu player override alır; diğer kulüpler exact AI kalır ve yalnız M43 kanonik aksiyonları seçilebilir
 
 ## 7. Devir / çalışma talimatı
 
@@ -181,4 +261,4 @@ Başkan/state gerçek etkileri:
 6. Eski public simülasyon semantiğini sessizce değiştirme.
 7. Yeni milestone seçmeden önce canlı `main` kodunu ve bu özeti incele; kapsamı gerçek ürün boşluğundan türet.
 8. Her yeni PR için merge öncesi o PR'a özel açık kullanıcı onayı al; merge sonrası `main` CI yeşil olmadan milestone'u CLOSED sayma.
-9. Docs-only kapanış commit'i CI tetikliyorsa bu CI bir kez doğrulanır; sırf run ID'yi özete yazmak için yeni docs commit atılmaz.
+9. Docs-only kapanış/refresh commit'i CI tetikliyorsa bu CI bir kez doğrulanır; sırf run ID'yi özete yazmak için yeni docs commit atılmaz.
