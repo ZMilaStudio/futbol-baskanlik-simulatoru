@@ -178,3 +178,6 @@ jobs:
 
       - name: Run M47 facility sponsor crisis runtime composition
         run: dart run tool/run_m47_facility_sponsor_crisis_runtime_composition.dart 20260903
+
+      - name: Run M48 president facility investment runtime
+        run: dart run tool/run_m48_president_facility_investment_runtime.dart 20260903
