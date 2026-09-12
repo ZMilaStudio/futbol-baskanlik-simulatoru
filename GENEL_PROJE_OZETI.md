@@ -36,10 +36,24 @@ Kalıcı kurallar:
 **Aktif milestone: M56 — Player President Promise Decision Override I.**
 
 - Branch: `feat/m56-player-president-promise-control`
+- PR #59 — **OPEN / NOT MERGED / MERGE READY**
 - Base `main`: `6f2386494d56ef2571d36695e6e7a3ab638c863b`
-- PR: henüz açılmadı
-- Durum: implementation + acceptance + canonical gate branch üzerinde hazırlandı; canlı PR CI henüz doğrulanmadı
-- PASS yazılmayacak; PR CI, exact HEAD, mergeability ve artifact=0 doğrulanmadan milestone merge-ready sayılmayacak
+- Verified code-bearing HEAD: `cbe161a1ff0ebd93089924591a171d923ed90120`
+- Code-bearing PR CI `34726344366`: **SUCCESS**
+- analyzer: `No issues found!`
+- **243 normal/non-canonical test PASS**
+- beş M56 acceptance testinin tamamı PASS
+- **M0–M56 canonical PASS**
+- `Run M56 player president promise control`: **SUCCESS**
+- canonical marker: `M56_PLAYER_PROMISE_CONTROL_PASS controlled=t1_01 aiParity=47 ai=challengeTitle player=finishTopHalf deterministic=true canonicalTargets=true invalidBlocked=true worldClubs=48`
+- artifacts: **0**
+- PR `mergeable=true`
+
+İlk M56 CI `34725931380` içinde yalnız save/resume acceptance testi kırmızıydı. Gerçek failure logu okundu; ürün/runtime hatası değil, 2+2 testinin ilk 2 sezonluk parçasının continuation olmasına rağmen `hasFutureSeasonAfterReport: true` verilmemesiydi. M31'in mevcut canonical split-continuation semantiğiyle aynı boundary ayarı uygulanarak yalnız test orkestrasyonu düzeltildi; M56 ürün kodu değiştirilmedi.
+
+Bu özet refresh commit'i final PR HEAD'i değiştirecektir. Yeni exact HEAD üzerinde `test` + `canonical` CI, M56 marker ve artifact=0 yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
+
+M56 henüz merge edilmedi. Final exact-head CI + artifact 0 + mergeable=true yeniden doğrulandıktan sonra kullanıcıdan **PR #59'a özel açık merge onayı** alınmalıdır.
 
 M55 kapanış kanıtı:
 - PR #58 — MERGED / CLOSED
@@ -70,12 +84,12 @@ M56 çözümü:
 - `PlayerPresidentPromiseDomainCareerEngine`, aynı player provider seam'ini initial president-domain ve resume yoluna opt-in bağlar.
 - Provider serialize edilmez; save alanı/migration eklenmez.
 
-M56 planlanan acceptance:
-1. provider yokken M11 exact promise generation parity
-2. yalnız controlled club değişir; diğer 47 AI promise exact parity
-3. canonical target korunur ve context-invalid vaat reddedilir
-4. seçilen vaat gerçek fan/media reputation zincirine akar
-5. runtime-only provider ile save/load/resume determinism korunur
+M56 acceptance:
+1. provider yokken M11 exact promise generation parity — PASS
+2. yalnız controlled club değişir; diğer 47 AI promise exact parity — PASS
+3. canonical target korunur ve context-invalid vaat reddedilir — PASS
+4. seçilen vaat gerçek fan/media reputation zincirine akar — PASS
+5. runtime-only provider ile save/load/resume determinism korunur — PASS
 
 M56 dosyaları:
 - `lib/src/promise/player_president_promise_control.dart`
