@@ -31,15 +31,22 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M52 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M53 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M53 — President Transfer Strategy Runtime Hook I.**
+Aktif milestone yok. **M54 henüz seçilmedi.** Yeni milestone seçmeden önce canlı `main` kodu incelenmeli; kapsam gerçek ürün boşluğundan türetilmelidir. Eski sohbet veya tahmin milestone kaynağı değildir.
+
+### Son kapanan milestone: M53 — President Transfer Strategy Runtime Hook I
+
+PR #56 kullanıcı tarafından açıkça onaylandı ve exact HEAD kilidiyle squash merge edildi.
 
 - Branch: `feat/m53-president-transfer-strategy-runtime-hook`
-- PR: #56 — **OPEN / NOT MERGED**
-- Base `main`: `48e7a8a687a06c427b7da22592e9249a515d7a9d`
+- PR: #56 — **MERGED**
 - Verified code-bearing HEAD: `dc163489c868b4b17bf66ad89837703a72e83f03`
-- Code-bearing PR CI: `34720756030` — **SUCCESS**
+- Code-bearing PR CI `34720756030`: **SUCCESS**
+- Final PR HEAD: `0f56d40195d149daafcd65abfdd77073d5c7eb0d`
+- Final docs-head PR CI `34721033834`: **SUCCESS**
+- Merge SHA: `f83e159793f80d7f53c40a0845e795339e400d3c`
+- Post-merge `main` CI `34721440607`: **SUCCESS**
 - analyzer: `No issues found!`
 - **228 normal/non-canonical test PASS**
 - beş M53 acceptance testinin tamamı PASS
@@ -47,35 +54,25 @@ Kalıcı kurallar:
 - `Run M53 president transfer strategy runtime hook`: **SUCCESS**
 - M53 canonical marker: `M53_PRESIDENT_TRANSFER_STRATEGY_RUNTIME_PASS neutralParity=true low=ready_forward high=young_forward deterministic=true policyCoverage=2`
 - artifacts: **0**
-- PR `mergeable=true`
-- bu özet refresh commit'i sonrası oluşan final PR HEAD için CI yeniden doğrulanacaktır; sonucu yazmak için ikinci docs commit atılmayacaktır
 
-M53 henüz merge edilmedi. Merge için final exact-head CI + artifact 0 doğrulamasından sonra kullanıcıdan **PR #56'ya özel açık merge onayı** alınmalıdır.
+Bu kapanış özeti docs-only bir `main` commit'idir. Tetiklediği CI bir kez doğrulanır; yalnız run ID'yi bu dosyaya yazmak için ikinci docs commit atılmaz.
 
-## 3. M53 kapsamı — President Transfer Strategy Runtime Hook I
-
-M53, M20–M24 arasında geliştirilen başkan yönetim profili transfer davranışlarını tek bir gerçek `TransferMarketEngine.simulateWindow` çağrısına bağlayan stateless adapter katmanıdır.
-
-Amaç M20–M24 transfer trait'lerini production transfer API'sinde kanıtlamak; **M0–M52 ana runtime zincirini bu milestone'da değiştirmemektir**. Player-president transfer override bir sonraki milestone'a bırakılır.
-
-M53 mapping:
+M53 kapsamı:
+- M20–M24 arasında geliştirilen başkan transfer trait'lerini tek gerçek `TransferMarketEngine.simulateWindow` adapterında birleştirir.
 - `financialDiscipline` → `TransferBudgetPolicy`
 - `transferAmbition` → `TransferActivityPolicy`
 - `riskAppetite` → `TransferNegotiationPolicy`
 - `youthOrientation` → `TransferYouthPreferencePolicy`
-
-Sözleşmeler:
-- Market içindeki her kulüp için exact president-profile coverage zorunludur; eksik/fazla profile map reddedilir.
-- Hook stateless'tir; yeni save version/migration yoktur.
-- Aynı input + seed + simulation version aynı sonucu üretir.
-- Nötr başkan profilleri eski neutral `TransferMarketEngine` ile exact market signature parity verir.
-- Mevcut M20–M24 policy formülleri yeniden yazılmaz; doğrudan reuse edilir.
-- M53 mevcut M0–M52 runtime composition'ına bağlanmaz; bu nedenle eski runtime sonuçları değişmez.
+- market içindeki her kulüp için exact president-profile coverage zorunludur.
+- hook stateless'tir; yeni save version/migration yoktur.
+- aynı input + seed + simulation version aynı sonucu üretir.
+- neutral başkan profilleri eski neutral transfer market ile exact signature parity verir.
+- M53 mevcut M0–M52 runtime composition'ına bağlanmaz; eski runtime sonuçları değişmez.
 
 M53 acceptance:
 1. dört başkan transfer trait'i mevcut policy formüllerine exact map — PASS
 2. exact club/profile coverage validation — PASS
-3. youth strategy yeni hook üzerinden gerçek transfer adayını `ready_forward` → `young_forward` değiştirir — PASS
+3. youth strategy gerçek transfer adayını `ready_forward` → `young_forward` değiştirir — PASS
 4. neutral profile map eski neutral market ile exact signature parity — PASS
 5. sabit inputlarda deterministic runtime signature — PASS
 
@@ -88,11 +85,13 @@ M53 dosyaları/değişiklikleri:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-İlk discovery sırasında vaat ve sözleşme kararları da incelendi. Promise seçimini ana player runtime'a temiz bağlamak M47→M52 dependency zincirinde gereksiz constructor yüzeyi yaratıyordu; sözleşme yenilemeyi sezon-sonu wrapper ile tersine çevirmek ise free-agent/transfer yan etkilerini bozma riski taşıyordu. Bu nedenle M53, transfer stratejisinin önce güvenli alt seviye runtime hook'u olarak seçildi.
+M53 discovery sırasında vaat ve sözleşme kararları da incelendi. Promise seçimini ana player runtime'a temiz bağlamak M47→M52 dependency zincirinde gereksiz constructor yüzeyi yaratıyordu; sözleşme yenilemeyi sezon-sonu wrapper ile tersine çevirmek ise free-agent/transfer yan etkilerini bozma riski taşıyordu. Bu nedenle önce transfer stratejisi için güvenli alt seviye runtime hook'u kuruldu.
 
-M53 sonrası doğal aday: doğrulanmış hook'u player-president/runtime transfer penceresine compose ederek kontrollü kulübün transfer stratejisini oyuncuya açmak.
+Doğal bir sonraki ürün adayı, doğrulanmış M53 hook'unu player-president/runtime transfer penceresine compose ederek kontrollü kulübün transfer stratejisini oyuncuya açmaktır; **bu yalnız adaydır, M54 seçilmiş değildir.**
 
-## 4. Son kapanan milestone: M52 — Player President Manager Decision Override I
+M53 **CLOSED / MERGED / PASS**.
+
+## 3. Önceki milestone: M52 — Player President Manager Decision Override I
 
 - Branch: `feat/m52-player-president-manager-control`
 - PR #55 — **MERGED**
@@ -130,7 +129,7 @@ M52 canonical final:
 
 M52 **CLOSED / MERGED / PASS**.
 
-## 5. Yakın milestone geçmişi
+## 4. Yakın milestone geçmişi
 
 ### M51 — Player President Crisis Decision Override I — CLOSED / MERGED / PASS
 - PR #54 merge `4b2832f3bfb091ae3adaeb504a7369b1190b2438`
@@ -174,7 +173,7 @@ PR #46 merge `27474a731aa73d291859828a1657d06579e69269`; post-merge CI `34680783
 ### M42 — Sponsor System I — CLOSED / MERGED / PASS
 PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280556`: 173 tests, M0–M42 PASS, artifact 0.
 
-## 6. Sistem zinciri
+## 5. Sistem zinciri
 
 M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override; M51 player-president crisis decision override; M52 player-president manager decision override; M53 president transfer strategy runtime hook.
 
@@ -200,7 +199,7 @@ Başkan/state gerçek etkileri:
 - M52: controlled club player manager override; gerçek next-season assignment'a bağlıdır
 - M53: M20–M24 transfer traits tek gerçek transfer-window adapterında birleşir; ana M52 runtime henüz değişmez
 
-## 7. Devir / çalışma talimatı
+## 6. Devir / çalışma talimatı
 
 1. Her işlemden önce canlı GitHub durumunu doğrula.
 2. `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır; silinmez.
