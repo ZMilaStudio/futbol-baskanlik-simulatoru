@@ -19,7 +19,7 @@ void main() {
     ),
   );
 
-  late FictionalWorld world;
+  late FictionalWorldSetup world;
   late PresidentDomainResumeResult oneSeason;
   late CrisisRuntimeBoundaryResult forcedBoundary;
   late CrisisRuntimeCareerResult defaultFour;
