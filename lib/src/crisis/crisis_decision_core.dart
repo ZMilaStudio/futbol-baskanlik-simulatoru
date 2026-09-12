@@ -113,9 +113,13 @@ class CrisisDecisionEngine {
     final cash = context.finance.cash.minorUnits;
     final debt = context.finance.debt.minorUnits;
     final total = cash + debt;
-    final liquidityPressure = total <= 0 ? 0 : ((debt * 100) ~/ total).clamp(0, 100);
-    final supporterPressure = (100 - context.fan.overallTrust).clamp(0, 100);
-    final mediaPressure = (100 - context.media.credibility).clamp(0, 100);
+    final liquidityPressure = total <= 0
+        ? 0
+        : ((debt * 100) ~/ total).clamp(0, 100).toInt();
+    final supporterPressure =
+        (100 - context.fan.overallTrust).clamp(0, 100).toInt();
+    final mediaPressure =
+        (100 - context.media.credibility).clamp(0, 100).toInt();
 
     var type = CrisisType.liquiditySqueeze;
     var severity = liquidityPressure;
@@ -290,7 +294,8 @@ class CrisisDecisionEngine {
     );
   }
 
-  int _score(int current, int delta) => (current + delta).clamp(0, 100).toInt();
+  int _score(int current, int delta) =>
+      (current + delta).clamp(0, 100).toInt();
 
   void _validate(CrisisContext context) {
     if (context.seasonIndex < 0) {
