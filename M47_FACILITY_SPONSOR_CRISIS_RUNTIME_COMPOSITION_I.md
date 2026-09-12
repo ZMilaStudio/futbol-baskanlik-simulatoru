@@ -1,9 +1,9 @@
 # M47 — Facility + Sponsor + Crisis Runtime Composition I
 
-Status: **PR-VERIFIED / NOT MERGED**
+Status: **CLOSED / MERGED / PASS**
 
 PR: #50
-Branch: `feat/m47-facility-sponsor-crisis-runtime-composition`
+Squash merge: `dc26c2782026c6823c91d05015f4f507a7bac2f6`
 Canonical seed: `20260903`
 
 ## Amaç
@@ -22,7 +22,7 @@ M39 otomatik president facility investment kararı M47 kapsamına alınmamışt�
 
 ## Kalıcı state
 
-Yeni `FacilitySponsorCrisisRuntimeCheckpoint`:
+`FacilitySponsorCrisisRuntimeCheckpoint`:
 - mevcut `SponsorPresidentRuntimeCheckpoint`
 - `FacilityPortfolioRuntimeState`
   - 48 academy state
@@ -32,7 +32,7 @@ Yeni `FacilitySponsorCrisisRuntimeCheckpoint`:
 
 World state ikinci kez kopyalanmaz.
 
-Yeni save codec:
+Save codec:
 - format: `zmila-fbs-facility-sponsor-crisis-runtime`
 - save version: 1
 - mevcut `SponsorPresidentRuntimeSaveCodec` nested string olarak yeniden kullanılır
@@ -49,20 +49,18 @@ Yeni save codec:
 
 Normal test toplamı: **198 PASS**.
 
-## CI / canonical kanıtı
+## PR ve exact-head CI kanıtı
 
-Code-bearing HEAD: `a23d623d7a89e1e9172e71f0aabd8c7b3a67ee40`
-Run: `34691699235`
+Final PR HEAD: `5fb0c8a0c6de9717d0ba3dd93f0629b8d81bf1de`
+Final PR run: `34692763703`
 
 - analyzer: **No issues found**
-- test job: **SUCCESS**, yaklaşık 2:01
-- canonical job: **SUCCESS**, yaklaşık 3:49
 - **198 normal test PASS**
 - **M0–M47 canonical PASS**
 - artifacts: **0**
-- her iki job da `timeout-minutes: 7` altında
+- PR mergeable=true
 
-İlk PR run `34691443880` analyzer'da 5 public-export hatasıyla kırmızıydı. Gerçek log incelendi; M47 public shim'e `StadiumFacilityState` ve `TrainingGroundFacilityState` exportları eklenerek kök neden düzeltildi. Sonraki analyzer/test run'ı yeşil oldu.
+İlk PR run `34691443880` analyzer'da 5 public-export hatasıyla kırmızıydı. Gerçek log incelendi; M47 public shim'e `StadiumFacilityState` ve `TrainingGroundFacilityState` exportları eklenerek kök neden düzeltildi. Sonraki analyzer/test/canonical run'ları yeşil oldu.
 
 ## M47 canonical sonucu
 
@@ -82,14 +80,17 @@ Run: `34691699235`
 - boundaryMatch=true
 - saveBytes=935220
 
-## Merge kapısı
+## Merge ve post-merge kanıtı
 
-M47 henüz `main` üzerinde değildir.
+PR #50 explicit kullanıcı onayı sonrası squash merge edildi.
 
-Merge öncesi kalan zorunlu adımlar:
-1. bu doküman + `GENEL_PROJE_OZETI.md` commitlerinden oluşan final PR HEAD CI'ını doğrula
-2. analyzer + normal tests + M0–M47 + artifact 0 kanıtını exact HEAD için al
-3. PR head değişmediğini ve mergeable olduğunu doğrula
-4. kullanıcıdan PR #50 için açık merge onayı al
-5. yalnız onaydan sonra squash merge et
-6. post-merge `main` CI yeşil olmadan M47'yi CLOSED sayma
+Merge SHA: `dc26c2782026c6823c91d05015f4f507a7bac2f6`
+Post-merge main CI: `34693305775` — **SUCCESS**
+
+- analyzer: `No issues found!`
+- **198 normal/non-canonical test PASS**
+- **M0–M47 canonical PASS**
+- artifacts: **0**
+- `main` HEAD merge anında merge SHA ile eşleşti
+
+M47 artık **CLOSED / MERGED / PASS** ve `main` üzerindedir.
