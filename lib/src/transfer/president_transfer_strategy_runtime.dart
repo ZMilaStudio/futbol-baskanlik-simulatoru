@@ -1,4 +1,3 @@
-import '../core/money.dart';
 import '../election/president_financial_discipline_transfer_policy.dart';
 import '../election/president_management_profile.dart';
 import '../election/president_risk_appetite_negotiation_policy.dart';
