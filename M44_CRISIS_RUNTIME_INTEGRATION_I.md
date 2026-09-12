@@ -1,9 +1,9 @@
 # M44 — Crisis Runtime Integration I
 
-Durum: **PR-VERIFIED / NOT MERGED**
+Durum: **CLOSED / MERGED / PASS**
 Tarih: 12 Eylül 2026
-Branch: `feat/m44-crisis-runtime-integration`
 PR: #47
+Squash merge: `43149da199e74e41dabe47534e4e4e887d8862e7`
 
 ## Amaç
 
@@ -79,7 +79,7 @@ Bu kadar yüksek oran sistemi 'kriz' olmaktan çıkarıp rutin olay haline getir
 Ayrıca canonical gate'e kalıcı sıklık koruması eklendi:
 - kriz sayısı kulüp-sezonlarının %75'ine ulaşırsa M44 canonical FAIL olur.
 
-Final code-bearing canonical sonuç:
+Final canonical sonuç:
 - kriz: **17 / 192** (%8,9)
 - türler: `liquiditySqueeze=17`
 - aksiyonlar: `bridgeSpending=4`, `balancedRecovery=10`, `austerityPlan=3`
@@ -106,18 +106,31 @@ Analyzer failure:
 
 İkinci code-bearing run `34682061772` tam yeşildi ancak canonical 164/192 kriz oranını ortaya çıkardı. Bu teknik failure değil ürün denge problemi olarak ele alındı; runtime threshold 55'e yükseltildi ve frequency guard eklendi.
 
-## Final code-bearing CI kanıtı
+## Final PR exact-head CI kanıtı
 
-HEAD: `295bbd4a7967e25c16bf8b72c4f67c0317159298`
-Run: `34682359483`
+HEAD: `14d125030b9db5302d5365facd0a6b20c00a5f09`
+Run: `34682664664`
 
-- test job `103523238562`: **SUCCESS**
+- test job `103524081379`: **SUCCESS**
 - analyzer: `No issues found!`
 - **184 normal/non-canonical test PASS**
-- canonical job `103523238501`: **SUCCESS**
+- canonical job `103524081445`: **SUCCESS**
 - **M0–M44 canonical PASS**
 - artifacts: **0**
-- canonical job süresi yaklaşık 4:37, 7 dakika sınırının altında
+- iki job da 7 dakika sınırının altında
+
+## Post-merge main CI kanıtı
+
+Squash merge SHA: `43149da199e74e41dabe47534e4e4e887d8862e7`
+Main run: `34683153804`
+
+- test job `103525370907`: **SUCCESS**
+- analyzer: `No issues found!`
+- **184 normal/non-canonical test PASS**
+- canonical job `103525370623`: **SUCCESS**
+- **M0–M44 canonical PASS**
+- artifacts: **0**
+- iki job da 7 dakika sınırının altında
 
 M44 canonical final:
 - seasons=4
@@ -129,6 +142,6 @@ M44 canonical final:
 - boundaryMatch=true
 - PASS
 
-## Merge öncesi kalan kapı
+## Sonuç
 
-Bu doküman ve `GENEL_PROJE_OZETI.md` güncellemesi branch HEAD'ini değiştireceği için docs-inclusive exact HEAD CI yeniden yeşil doğrulanmalıdır. Ardından PR #47 squash merge edilebilir.
+M44 **CLOSED / MERGED / PASS**. Kriz kararları artık opt-in runtime yolunda gerçek next-season finance/fan/media continuation state'ine deterministik biçimde taşınıyor; legacy akış, save/resume parity ve debt invariant korunuyor.
