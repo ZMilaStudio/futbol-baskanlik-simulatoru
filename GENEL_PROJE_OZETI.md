@@ -33,34 +33,44 @@ Aktif milestone:
 **M43 — Crisis Decision Core I**
 
 Branch: `feat/m43-crisis-decision-core`
-PR: henüz açılmadı
-Durum: **CODE COMPLETE / CI NOT YET VERIFIED**
+PR: **#46**
+Durum: **PR-VERIFIED / DOCS-INCLUSIVE HEAD CI PENDING**
 
 Kullanıcı bu oturumda yeşil milestone PR'larının ayrıca sorulmadan squash merge edilmesine ve kapanıştan sonra sonraki mantıklı milestone'a geçilmesine izin verdi. Exact-head CI, post-merge main CI, 7 dakika, determinism ve artifact=0 kuralları aynen zorunludur.
 
 ### M43 kapsamı
-- yeni ayrı `crisis` domain; legacy akışlara varsayılan entegrasyon yok
+- ayrı legacy-safe `crisis` domain; mevcut simülasyon akışları varsayılan olarak kriz motorunu çağırmaz
 - stateless deterministic `CrisisDecisionEngine`
-- finance cash/debt + `FanState.overallTrust` + `MediaState.credibility` + `PresidentManagementProfile` typed inputları
-- kriz türleri: liquidity squeeze / supporter unrest / media backlash
-- en yüksek pressure deterministic olarak kriz türünü seçer; threshold altı context kriz üretmez
-- başkan profili gerçek aksiyon farkı üretir (`financialDiscipline`, `riskAppetite`, `transferAmbition`, `managerPatience`)
-- karar etkileri bounded cash/fan/media delta üretir
-- negatif cash sıfırda clamp edilir; gizli debt yaratılmaz ve mevcut debt değiştirilmez
-- save formatı büyütülmez: sistem stateless olduğu için reconstructed continuation state aynı kriz sonucu/signature üretir
-- 6 normal acceptance testi
-- `tool/run_m43_crisis_decision.dart` canonical runner
-- workflow'a M42 sonrası `Run M43 crisis decision core` gate'i eklendi
+- finance cash/debt + fan trust + media credibility + president profile typed context
+- deterministic kriz türleri: liquidity squeeze / supporter unrest / media backlash
+- threshold altı context kriz üretmez
+- `financialDiscipline`, `riskAppetite`, `transferAmbition`, `managerPatience` gerçek karar farkı üretir
+- bounded cash/fan/media etkileri
+- cash sıfırın altına düşmez; debt değiştirilmez, gizli debt yok
+- save formatı değişmez; reconstructed continuation state aynı result signature üretir
+- 6 normal acceptance testi + M43 canonical runner
 
-Sıradaki adım: PR aç, exact-head analyzer + normal test + M0–M43 canonical + artifact=0 doğrula. Failure varsa gerçek logdan düzelt. Yeşil exact HEAD gece yetkisiyle squash merge edilebilir; ardından post-merge `main` CI doğrulanıp M43 CLOSED/PASS yapılır.
+### M43 code-bearing CI kanıtı
+PR #46 code-bearing HEAD: `e8d0d0384d970570a21e2382c1996dcb38be994f`
+Run `34680327227` — **SUCCESS**:
+- analyzer: `No issues found!`
+- **179 normal/non-canonical tests PASS**
+- **M0–M43 canonical PASS**
+- artifacts: **0**
+- test ≈ 1m57s; canonical ≈ 3m15s; ikisi de 7 dakikanın altında
+- canonical: prudent=`austerityPlan`, bold=`bridgeSpending`, supporter=`ambitionReset`, media=`transparentBriefing`
+- debtPreserved=`true`
+- saveResumeMatch=`true`
+
+Kalıcı doküman: `M43_CRISIS_DECISION_CORE_I.md`.
+
+Sıradaki adım: bu docs-inclusive exact PR HEAD'in test + canonical + artifact=0 sonucunu doğrula. Yeşilse oturum yetkisiyle squash merge et; post-merge `main` CI yeşilse M43 CLOSED/PASS yap ve canlı mimariye göre sonraki milestone'a devam et.
 
 ## 3. Son kapalı milestone'lar
 
 ### M42 — Sponsor System I — CLOSED / MERGED / PASS
 PR #45 squash merge: `2868d725c4ba68601a732d98b913195d3c58a4a3`
 Post-merge main CI `34660280556`: analyzer clean, **173 test PASS**, **M0–M42 PASS**, artifact **0**.
-M42: deterministic fictional sponsor offers; fan/media offer quality; president risk/finance preference; multi-year contracts; real economy sponsor revenue; save codec v1 + migration + deterministic resume.
-Kalıcı doküman: `M42_SPONSOR_SYSTEM_I.md`.
 Docs-close main commit `0839be62cd9221b19f0b7990681faac86a8d697c`; docs CI `34679910122` SUCCESS, artifact 0.
 
 ### M41 — Attendance Demand & Fan Trust Integration II — CLOSED / MERGED / PASS
