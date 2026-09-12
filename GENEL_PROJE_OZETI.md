@@ -31,15 +31,19 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M53 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M54 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M54 — Transfer Strategy World Runtime Bridge I.**
+**Aktif milestone yok. Aktif geliştirme PR'ı yok.**
+
+Son kapanan milestone: **M54 — Transfer Strategy World Runtime Bridge I**.
 
 - Branch: `feat/m54-transfer-strategy-world-runtime-bridge`
-- PR #57 — **OPEN / NOT MERGED**
-- Base `main`: `0697a2d127f5c5021be18f19a33b4eef503fa045`
-- Verified code-bearing HEAD: `4afb7db7d95f8446e1d39e912b0c9547206f0832`
+- PR #57 — **MERGED / CLOSED**
+- Final PR HEAD: `45405585e2263a1377c2d62b14a2e1449bdd3962`
+- Squash merge SHA / code-bearing `main`: `837198d3480be5571d4eeae1934c72454f47dec1`
 - Code-bearing PR CI `34722672195`: **SUCCESS**
+- Final exact-head PR CI `34722977310`: **SUCCESS**
+- Post-merge `main` CI `34723247609`: **SUCCESS**
 - analyzer: `No issues found!`
 - **233 normal/non-canonical test PASS**
 - beş M54 acceptance testinin tamamı PASS
@@ -47,10 +51,12 @@ Kalıcı kurallar:
 - `Run M54 transfer strategy world runtime bridge`: **SUCCESS**
 - canonical marker: `M54_TRANSFER_STRATEGY_WORLD_BRIDGE_PASS neutralParity=true low=ready_forward high=young_forward worldWired=true deterministic=true worldClubs=48`
 - artifacts: **0**
-- PR `mergeable=true`
-- bu özet refresh commit'i sonrası oluşan final PR HEAD için CI yeniden doğrulanacaktır; sonucu yazmak için ikinci docs commit atılmayacaktır
 
-M54 henüz merge edilmedi. Final exact-head CI + artifact 0 + mergeable=true yeniden doğrulandıktan sonra kullanıcıdan **PR #57'ye özel açık merge onayı** alınmalıdır.
+M54 **CLOSED / MERGED / PASS**.
+
+Bu kapanış özeti commit'inin docs-only CI'ı bir kez doğrulanacaktır; sırf son run ID'yi bu dosyaya yazmak için yeni docs commit atılmayacaktır.
+
+Sıradaki gerçek iş **M55'i seçmektir**. Kapsam tahminle açılmayacak; canlı `main` kodu ve player-president karar zinciri incelenip başkan olarak oyuncunun hâlâ veremediği en önemli gerçek karar seçilecektir. M54 bridge'inin controlled club için player-president transfer stratejisi override'ına açtığı seam güçlü doğal adaydır, ancak M55 adı/kapsamı canlı kod incelemesiyle kesinleştirilmelidir.
 
 ## 3. M54 kapsamı — Transfer Strategy World Runtime Bridge I
 
@@ -81,27 +87,29 @@ M54 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M54 production default path'i değiştirmez; köprü yalnız explicit injection ile çalışır. Bu sayede player-president transfer kararları için pre-window seam hazır olurken M0–M53 public/runtime semantiği korunur.
+M54 production default path'i değiştirmez; köprü yalnız explicit injection ile çalışır. Böylece player-president transfer kararları için pre-window seam hazır olurken M0–M53 public/runtime semantiği korunur.
 
-M54 sonrası doğal aday, bu bridge'in profile-provider yüzeyinde controlled club için player-president transfer stratejisi override'ını compose etmektir. Bu henüz ayrı bir milestone olarak seçilmemiştir.
+M54 **CLOSED / MERGED / PASS**.
 
-## 4. Son kapanan milestone: M53 — President Transfer Strategy Runtime Hook I
+## 4. Son kapanan milestone: M54 — Transfer Strategy World Runtime Bridge I
 
-- Branch: `feat/m53-president-transfer-strategy-runtime-hook`
-- PR #56 — MERGED
-- Final PR HEAD: `0f56d40195d149daafcd65abfdd77073d5c7eb0d`
-- Merge SHA: `f83e159793f80d7f53c40a0845e795339e400d3c`
-- Post-merge `main` CI `34721440607`: SUCCESS
-- docs-close commit: `0697a2d127f5c5021be18f19a33b4eef503fa045`
-- docs-close CI `34721780422`: SUCCESS
-- analyzer clean; **228 tests PASS**; **M0–M53 canonical PASS**; artifacts **0**
+- Branch: `feat/m54-transfer-strategy-world-runtime-bridge`
+- PR #57 — MERGED
+- Final PR HEAD: `45405585e2263a1377c2d62b14a2e1449bdd3962`
+- Merge SHA: `837198d3480be5571d4eeae1934c72454f47dec1`
+- Code-bearing PR CI `34722672195`: SUCCESS
+- Final exact-head PR CI `34722977310`: SUCCESS
+- Post-merge `main` CI `34723247609`: SUCCESS
+- analyzer clean; **233 tests PASS**; **M0–M54 canonical PASS**; artifacts **0**
+- canonical marker: `M54_TRANSFER_STRATEGY_WORLD_BRIDGE_PASS neutralParity=true low=ready_forward high=young_forward worldWired=true deterministic=true worldClubs=48`
 
-M53, M20–M24 başkan transfer trait'lerini tek gerçek transfer market adapterında birleştirir: financial discipline→budget, transfer ambition→activity, risk appetite→negotiation, youth orientation→youth preference. Exact profile coverage, neutral parity ve determinism kanıtlandı.
+M54, M53 başkan transfer stratejisini gerçek `WorldCareerEngine` transfer penceresine opt-in ve stateless bir pre-window market bridge ile bağlar. Neutral parity, explicit-policy bypass, 48-club world wiring ve determinism kanıtlandı; default production path değiştirilmedi.
 
-M53 **CLOSED / MERGED / PASS**.
+M54 **CLOSED / MERGED / PASS**.
 
 ## 5. Yakın milestone geçmişi
 
+- M53 President Transfer Strategy Runtime Hook I — PR #56 merge `f83e159793f80d7f53c40a0845e795339e400d3c`; 228 tests; M0–M53 PASS; artifact 0.
 - M52 Player President Manager Decision Override I — PR #55 merge `bce9efe6c214526b0018110c5a10d2fa9e7ec5c8`; 223 tests; M0–M52 PASS; artifact 0.
 - M51 Player President Crisis Decision Override I — PR #54 merge `4b2832f3bfb091ae3adaeb504a7369b1190b2438`; 218 tests; M0–M51 PASS; artifact 0.
 - M50 Player President Sponsor Decision Override I — PR #53 merge `f8519d4f0be247f7029a2e29d4de10588d97736f`; 213 tests; M0–M50 PASS; artifact 0.
