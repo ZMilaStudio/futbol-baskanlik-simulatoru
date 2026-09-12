@@ -24,6 +24,12 @@ void main(List<String> args) {
   if (direct.crisisCount <= 0) {
     throw StateError('M44 canonical runtime produced no crises.');
   }
+  final clubSeasons = world.clubs.length * direct.boundaries.length;
+  if (direct.crisisCount * 4 >= clubSeasons * 3) {
+    throw StateError(
+      'M44 runtime crises are too common: ${direct.crisisCount}/$clubSeasons.',
+    );
+  }
 
   final first = runtime.simulateWithCheckpoint(
     clubs: world.clubs,
@@ -113,7 +119,10 @@ void main(List<String> args) {
   }
 
   print('M44_CRISIS_RUNTIME seasons=${direct.boundaries.length}');
-  print('M44_CRISIS_RUNTIME crises=${direct.crisisCount} types=$crisisTypes');
+  print(
+    'M44_CRISIS_RUNTIME crises=${direct.crisisCount}/$clubSeasons '
+    'types=$crisisTypes',
+  );
   print('M44_CRISIS_RUNTIME actions=$actions');
   print('M44_CRISIS_RUNTIME turnovers=$turnovers policyChanges=$policyChanges');
   print('M44_CRISIS_RUNTIME legacyParity=$legacyParity');
