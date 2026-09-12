@@ -27,22 +27,19 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M45 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M46 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-### M46 — Sponsor + Crisis Runtime Composition I — MERGE-READY / NOT MERGED
+### Son merge edilmiş milestone: M46 — Sponsor + Crisis Runtime Composition I
 
-Branch: `feat/m46-sponsor-crisis-runtime-composition`
-PR: **#49**
-Kod + canonical gate HEAD: `afd0381139356eff59d399023a169e10bf60ffff`
-
-PR CI `34685617385` — **SUCCESS**:
+PR #49 squash merge: `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
+Post-merge main CI `34686218278` — **SUCCESS**:
 - analyzer: `No issues found!`
 - **193 normal/non-canonical test PASS**
-- canonical: **M0–M46 PASS**
+- **M0–M46 canonical PASS**
 - M46 canonical PASS
 - artifacts: **0**
-- test job yaklaşık 3:13
-- canonical job yaklaşık 4:51
+- test job yaklaşık **2:30**
+- canonical job yaklaşık **4:50**
 - iki job da 7 dakika sınırının altında
 
 M46 canonical final:
@@ -75,21 +72,25 @@ M46 kapsamı:
 - kalıcı canonical gate: `tool/run_m46_sponsor_crisis_runtime_composition.dart`
 - kalıcı doküman: `M46_SPONSOR_CRISIS_RUNTIME_COMPOSITION_I.md`
 
-M46 dokümanları eklendiği için **docs-inclusive exact HEAD CI yeniden doğrulanmadan merge yapılmayacaktır**. Kullanıcı PR #49 için merge onayı verdi.
+PR kanıtı:
+- code/canonical HEAD `afd0381139356eff59d399023a169e10bf60ffff`, run `34685617385` SUCCESS
+- docs-inclusive final HEAD `5dae71fb3118f4a9b1daf02810e3a01600e58c39`, run `34686001614` SUCCESS
+- 193 tests, M0–M46 PASS, artifact 0
 
-### Son merge edilmiş milestone: M45 — Sponsor Runtime Integration I
-
-PR #48 squash merge: `92f4f1b99fa841866587a8067dd529735400c035`
-Post-merge main CI `34684676105` — **SUCCESS**:
-- analyzer clean
-- **189 test PASS**
-- **M0–M45 canonical PASS**
-- artifact **0**
-- iki job da 7 dakika sınırının altında
-
-Kalıcı doküman: `M45_SPONSOR_RUNTIME_INTEGRATION_I.md`.
+M46 **CLOSED / MERGED / PASS**. Sonraki milestone henüz seçilmedi.
 
 ## 3. Son kapalı milestone'lar
+
+### M46 — Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
+- M44 crisis runtime + M45 sponsor runtime tek top-level career continuation yolunda compose edildi
+- aynı PresidentDomain/world sezonu iki kez simüle edilmiyor
+- sponsor-aware finance sonrası kriz uygulanıyor
+- sponsor state korunuyor; kriz-adjusted finance/fan/media sonraki sponsor context'ine taşınıyor
+- neutral kriz yolu M45 parity veriyor
+- mevcut M45 composite save formatı yeterli; save version bump yok
+- 2+2 save/resume parity
+- PR #49 merge `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
+- post-merge CI `34686218278`: 193 tests, M0–M46 PASS, artifact 0
 
 ### M45 — Sponsor Runtime Integration I — CLOSED / MERGED / PASS
 - explicit `PresidentDomainMemoryCheckpoint + SponsorRuntimeCheckpoint` composite checkpoint/save codec
@@ -164,4 +165,5 @@ Başkan/state gerçek etkileri:
 4. CI kırmızıysa gerçek logdan kök neden bul; tahminle patch atma.
 5. `timeout-minutes: 7`, artifacts `0`, determinism ve parity kurallarını koru.
 6. Eski public simülasyon semantiğini sessizce değiştirme.
-7. Kullanıcı PR #49 için merge onayı verdi; exact docs-inclusive HEAD yeşilse squash merge edilebilir. Merge sonrası `main` CI doğrulanmadan M46 CLOSED sayılmaz.
+7. Yeni milestone seçmeden önce canlı `main` kodunu ve bu özeti incele; kapsamı gerçek ürün boşluğundan türet.
+8. Her yeni PR için merge öncesi o PR'a özel açık kullanıcı onayı al; merge sonrası `main` CI yeşil olmadan milestone'u CLOSED sayma.
