@@ -36,32 +36,41 @@ Kalıcı kurallar:
 **Aktif milestone: M54 — Transfer Strategy World Runtime Bridge I.**
 
 - Branch: `feat/m54-transfer-strategy-world-runtime-bridge`
+- PR #57 — **OPEN / NOT MERGED**
 - Base `main`: `0697a2d127f5c5021be18f19a33b4eef503fa045`
-- PR: henüz açılmadı
-- CI: henüz doğrulanmadı
-- M54 production default path'i değiştirmez; bridge opt-in'dir.
-- Hedef: M53 başkan transfer stratejisini gerçek `WorldCareerEngine` transfer penceresine transfer seçilmeden önce güvenli biçimde bağlamak.
+- Verified code-bearing HEAD: `4afb7db7d95f8446e1d39e912b0c9547206f0832`
+- Code-bearing PR CI `34722672195`: **SUCCESS**
+- analyzer: `No issues found!`
+- **233 normal/non-canonical test PASS**
+- beş M54 acceptance testinin tamamı PASS
+- **M0–M54 canonical PASS**
+- `Run M54 transfer strategy world runtime bridge`: **SUCCESS**
+- canonical marker: `M54_TRANSFER_STRATEGY_WORLD_BRIDGE_PASS neutralParity=true low=ready_forward high=young_forward worldWired=true deterministic=true worldClubs=48`
+- artifacts: **0**
+- PR `mergeable=true`
+- bu özet refresh commit'i sonrası oluşan final PR HEAD için CI yeniden doğrulanacaktır; sonucu yazmak için ikinci docs commit atılmayacaktır
 
-M54 merge edilmedi. Kod/test/canonical tamamlandıktan sonra PR açılacak; final exact-head CI + artifact 0 + mergeable=true doğrulanmadan kullanıcıdan merge onayı istenmeyecek.
+M54 henüz merge edilmedi. Final exact-head CI + artifact 0 + mergeable=true yeniden doğrulandıktan sonra kullanıcıdan **PR #57'ye özel açık merge onayı** alınmalıdır.
 
 ## 3. M54 kapsamı — Transfer Strategy World Runtime Bridge I
 
-Canlı mimari incelemede `WorldCareerEngine` permanent transfer penceresini lifecycle sonrasında doğrudan `TransferMarketEngine.simulateWindow` ile açtığı görüldü. Mevcut `WorldTransferHooks` yalnız transferlerden sonra çalıştığı için M53 stratejisini sezon sonrasında uygulamak çift-transfer ve finance/contract yan etkisi riski taşır.
+`WorldCareerEngine` permanent transfer penceresini lifecycle sonrasında doğrudan `TransferMarketEngine.simulateWindow` ile açar. Mevcut `WorldTransferHooks` yalnız transferlerden sonra çalıştığı için M53 stratejisini sezon sonrasında uygulamak çift-transfer ve finance/contract yan etkisi riski taşır.
 
 M54 çözümü:
-- `PresidentTransferStrategyWorldMarketEngine`, `TransferMarketEngine` yerine açıkça enjekte edilebilen adapterdır.
-- Adapter gerçek market inputlarını alır ve M53 `PresidentTransferStrategyRuntimeEngine`i aynı transfer penceresinin içinde çağırır.
+- `PresidentTransferStrategyWorldMarketEngine`, standart `TransferMarketEngine` yerine açıkça enjekte edilebilen opt-in adapterdır.
+- Adapter gerçek market context'ini M53 `PresidentTransferStrategyRuntimeEngine`e aynı transfer penceresinin içinde verir.
 - `PresidentTransferStrategyWorldBridge`, mevcut `WorldCareerEngine` dependency'lerini koruyup yalnız transfer market engine'i değiştirir.
 - Default `WorldCareerEngine` ve M0–M53 production composition değiştirilmez.
 - Caller explicit transfer policy map verirse profile provider bypass edilir ve map'ler delegate market'e aynen aktarılır.
+- Contract years + installment flag korunur.
 - Bridge stateless'tir; save version/migration yoktur.
 
-M54 acceptance hedefleri:
-1. neutral bridge direct market exact signature parity
-2. M53 youth strategy bridge üzerinden `ready_forward` → `young_forward`
-3. explicit policy map provider bypass + delegate parity
-4. gerçek 48-kulüp `WorldCareerEngine` wiring + neutral report/checkpoint exact parity
-5. fixed input determinism
+M54 acceptance:
+1. neutral bridge direct market exact signature parity — PASS
+2. M53 youth strategy bridge üzerinden `ready_forward` → `young_forward` — PASS
+3. explicit policy map provider bypass + delegate parity — PASS
+4. gerçek 48-kulüp `WorldCareerEngine` wiring + neutral report/checkpoint save exact parity — PASS
+5. fixed input determinism — PASS
 
 M54 dosyaları:
 - `lib/src/transfer/president_transfer_strategy_world_bridge.dart`
@@ -72,7 +81,9 @@ M54 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M54 başarıyla kapanırsa doğal sonraki aday, bu pre-window bridge'in profile-provider yüzeyinde yalnız controlled club için player-president transfer stratejisi override'ı compose etmektir. Bu henüz ayrı bir milestone olarak seçilmemiştir.
+M54 production default path'i değiştirmez; köprü yalnız explicit injection ile çalışır. Bu sayede player-president transfer kararları için pre-window seam hazır olurken M0–M53 public/runtime semantiği korunur.
+
+M54 sonrası doğal aday, bu bridge'in profile-provider yüzeyinde controlled club için player-president transfer stratejisi override'ını compose etmektir. Bu henüz ayrı bir milestone olarak seçilmemiştir.
 
 ## 4. Son kapanan milestone: M53 — President Transfer Strategy Runtime Hook I
 
@@ -85,15 +96,7 @@ M54 başarıyla kapanırsa doğal sonraki aday, bu pre-window bridge'in profile-
 - docs-close CI `34721780422`: SUCCESS
 - analyzer clean; **228 tests PASS**; **M0–M53 canonical PASS**; artifacts **0**
 
-M53 sonucu:
-- `financialDiscipline` → transfer budget policy
-- `transferAmbition` → transfer activity policy
-- `riskAppetite` → negotiation policy
-- `youthOrientation` → youth preference policy
-- exact president-profile coverage zorunlu
-- neutral strategy exact market parity
-- deterministic gerçek transfer-window adapter
-- canonical marker: `neutralParity=true low=ready_forward high=young_forward deterministic=true policyCoverage=2`
+M53, M20–M24 başkan transfer trait'lerini tek gerçek transfer market adapterında birleştirir: financial discipline→budget, transfer ambition→activity, risk appetite→negotiation, youth orientation→youth preference. Exact profile coverage, neutral parity ve determinism kanıtlandı.
 
 M53 **CLOSED / MERGED / PASS**.
 
@@ -116,10 +119,9 @@ Başkan/state gerçek etkileri:
 - `transferAmbition`: transfer activity + stadium priority + supporter-crisis response
 - `riskAppetite`: bid ceiling + stadium priority + sponsor preference + crisis response
 - `youthOrientation`: youth transfer preference + academy/training priority
-- fan/media/finance/facility/sponsor/crisis state continuation-critical akışlarda kullanılır
 - M49–M52 controlled club oyuncu başkan kararlarıdır; diğer kulüpler AI kalır
 - M53 transfer trait'lerini gerçek transfer-market API'sinde birleştirir
-- M54 M53 stratejisini real world transfer window'a opt-in pre-window bridge ile taşır; default runtime henüz değişmez
+- M54 M53 stratejisini real world transfer window'a opt-in pre-window bridge ile taşır; default production runtime değişmez
 
 ## 7. Devir / çalışma talimatı
 
