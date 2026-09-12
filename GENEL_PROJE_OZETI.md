@@ -29,34 +29,35 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M50 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M51 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M51 — Player President Crisis Decision Override I aktif; PR #54 OPEN / NOT MERGED.**
+Aktif milestone yok. **M52 henüz seçilmedi.** Yeni milestone seçmeden önce canlı `main` kodu incelenmeli ve kapsam gerçek ürün boşluğundan türetilmelidir; eski sohbetten veya tahminden milestone seçilmez.
 
-Branch: `feat/m51-player-president-crisis-control`
-PR: #54
+`DEVRALMA_1_AYLIK_GPT.md` 12 Eylül 2026 canlı `main` üzerinde bulunamadı ve repo aramasında da sonuç vermedi. Bu nedenle çalışma kuralları için bu dosyanın varlığı varsayılmaz; canlı GitHub + bu özet esas alınır.
 
-### M51 doğrulanmış code-bearing durum
+## 3. Son kapanan milestone: M51 — Player President Crisis Decision Override I
 
-- Verified code-bearing HEAD: `9b325f186e2317cec4c1cb6db13d72614c027c23`
-- Exact-head PR CI `34709153890`: **SUCCESS**
+PR #54 kullanıcı tarafından açıkça onaylandı ve exact HEAD kilidiyle squash merge edildi.
+
+- Branch: `feat/m51-player-president-crisis-control`
+- PR: #54 — **MERGED**
+- Final PR HEAD: `3e78210c477de2b6f0a676349d7a7ff5bfe8fbe8`
+- Final PR CI `34709575823`: **SUCCESS**
+- Merge SHA: `4b2832f3bfb091ae3adaeb504a7369b1190b2438`
+- Post-merge `main` CI `34710810668`: **SUCCESS**
 - analyzer: `No issues found!`
 - **218 normal/non-canonical test PASS**
 - beş M51 acceptance testinin tamamı PASS
 - **M0–M51 canonical PASS**
 - `Run M51 player president crisis control`: **SUCCESS**
 - artifacts: **0**
-- PR mergeable: **true**
-- `test` job yaklaşık **2:50**
-- `canonical` job yaklaşık **5:29**
+- post-merge `test` job yaklaşık **3:28**
+- post-merge `canonical` job yaklaşık **5:21**
 - iki job da 7 dakika sınırının altında
 
-İlk M51 PR koşusu `34708813123` yalnız yeni M51 canonical gate'te kırmızıydı. Gerçek job logu okunmadan patch atılmadı. Kök neden runtime değil, gate'in parity karşılaştırmasında AI baseline'ın sponsor/facility provider olmadan, karşı tarafın ise sponsor/facility player provider ile çalıştırılmasıydı. Runner apples-to-apples parity ölçecek şekilde düzeltildi; production/runtime davranışına bu hata için ek patch gerekmedi. Aynı ilk koşuda analyzer + **218 test** ve **M0–M50 canonical** zaten PASS idi.
+İlk M51 PR koşusu `34708813123` yalnız yeni M51 canonical gate'te kırmızıydı. Gerçek job logu okunmadan patch atılmadı. Kök neden runtime değil, gate parity karşılaştırmasının iki tarafı farklı sponsor/facility provider konfigürasyonlarıyla çalıştırmasıydı. Runner apples-to-apples parity ölçecek şekilde düzeltildi; production/runtime davranışına bu hata için ek patch gerekmedi. Sonraki exact-head CI'lar tamamen yeşil geçti.
 
-Bu dosyanın mevcut refresh commit'i docs-only olacaktır. Bu nedenle merge öncesi bu commit sonrası oluşan **current exact PR HEAD + current CI** canlı GitHub'dan tekrar doğrulanmalıdır. Sırf yeni run-ID'yi bu dosyaya yazmak için yeni docs commit atılmaz; docs→CI→docs döngüsü oluşturulmaz.
-
-### M51 canonical final
-
+M51 canonical final:
 - controlledClub=`t1_02`
 - `aiParityCount=47`
 - `playerCrisisWindows=4`
@@ -76,8 +77,7 @@ Bu dosyanın mevcut refresh commit'i docs-only olacaktır. Bu nedenle merge önc
 
 Canonical forced activation (`activationThreshold: 0`) yalnız test/gate konfigürasyonudur. Production/default M44 crisis threshold semantiği `55` olarak korunur.
 
-### M51 kapsamı
-
+M51 kapsamı:
 - yalnız `controlledClubId` için gerçek kriz oluştuğunda player crisis provider çağrılır
 - kriz yoksa oyuncudan karar istenmez
 - diğer 47 kulüp mevcut `CrisisDecisionEngine` AI yolunu birebir sürdürür
@@ -98,7 +98,7 @@ M51 acceptance:
 4. kriz yoksa provider çağrılmaz ve no-crisis M50 parity korunur — PASS
 5. sponsor + facility + crisis deterministic provider zincirinde save round-trip ve `2+2 == uninterrupted 4` checkpoint/boundary/decision parity — PASS
 
-M51 dosyaları/değişiklikleri:
+Kalıcı M51 dosyaları/değişiklikleri:
 - `lib/src/crisis/crisis_decision_core.dart`
 - `lib/src/sponsor/player_president_sponsor_control.dart`
 - `lib/src/crisis/player_president_crisis_control.dart`
@@ -108,38 +108,29 @@ M51 dosyaları/değişiklikleri:
 - `M51_PLAYER_PRESIDENT_CRISIS_DECISION_OVERRIDE_I.md`
 - `.github/workflows/m0-tests.yml`
 
-M51 şu an **MERGE READY / NOT MERGED**. Merge için PR #54'e özel açık kullanıcı onayı gerekir. Merge sonrası `main` CI yeşil doğrulanmadan M51 CLOSED sayılmaz.
+M51 **CLOSED / MERGED / PASS**.
 
-**M52 henüz seçilmedi.** M51 kapanmadan M52 açılmaz; M52 kapsamı daha sonra canlı `main` ürün boşluğundan türetilir.
+## 4. Önceki milestone: M50 — Player President Sponsor Decision Override I
 
-`DEVRALMA_1_AYLIK_GPT.md` 12 Eylül 2026 canlı `main` üzerinde bulunamadı ve repo aramasında da sonuç vermedi. Bu nedenle çalışma kuralları için bu dosyanın varlığı varsayılmaz; canlı GitHub + bu özet esas alınır.
-
-## 3. Son kapanan milestone: M50 — Player President Sponsor Decision Override I
-
-PR #53 kullanıcı tarafından açıkça onaylandı ve exact HEAD kilidiyle squash merge edildi.
-
-- Branch: `feat/m50-player-president-sponsor-control`
-- PR: #53 — **MERGED**
+- PR #53 — **MERGED**
 - Final PR HEAD: `613f22409fd9f7270ebb552d1227ffebf8a5b3b7`
 - Final PR CI `34705919064`: **SUCCESS**
 - Merge SHA: `f8519d4f0be247f7029a2e29d4de10588d97736f`
 - Post-merge `main` CI `34706438383`: **SUCCESS**
-- analyzer: `No issues found!`
-- **213 normal/non-canonical test PASS**
-- **M0–M50 canonical PASS**
-- `Run M50 player president sponsor control`: **SUCCESS**
-- artifacts: **0**
-- post-merge `test` job yaklaşık **2:11**
-- post-merge `canonical` job yaklaşık **5:14**
-- iki job da 7 dakika sınırının altında
+- analyzer clean; **213 tests PASS**; **M0–M50 canonical PASS**; artifacts **0**
+- yalnız `controlledClubId` yeni/yenilenen sponsor kontratını player provider ile seçebilir
+- diğer 47 kulüp mevcut AI sponsor karar yolunu sürdürür
+- aktif çok yıllı kontratlar bozulmaz
+- seçilen teklif gerçek sponsor state ve economy `sponsorRevenue` akışına bağlanır
+- sponsor provider yokken M49 exact parity korunur
 
 M50 canonical final:
 - controlledClub=`t1_02`
 - `aiParityCount=47`
 - `playerSponsorWindows=4`
-- first canonical AI choice=`t1_02-s0-bold`
-- first canonical player choice=`t1_02-s0-bold`
-- controlled sponsor revenue=`13,766,445`
+- first AI choice=`t1_02-s0-bold`
+- first player choice=`t1_02-s0-bold`
+- sponsorRevenue=`1376644500`
 - `neutralM49Parity=true`
 - `sponsorRevenueWired=true`
 - `controlledContractPersisted=true`
@@ -149,70 +140,37 @@ M50 canonical final:
 - `decisionMatch=true`
 - saveBytes=`2122969`
 
-Not: canonical ilk pencerede AI ve player aynı `bold` teklifi seçmektedir. Gerçek override davranışı ayrı acceptance testinde AI seçiminden farklı gerçek teklif seçilerek doğrulanmıştır.
-
-M50 kapsamı:
-- M49 ile açılan player-president karar yüzeyi gerçek sponsor sözleşmesi seçimine genişletildi
-- yalnız `controlledClubId` yeni/yenilenen sponsor kontratını player provider ile seçebilir
-- diğer 47 kulüp mevcut `PresidentSponsorDecisionPolicy` AI yolunu aynen sürdürür
-- aktif çok yıllı kontratlar bozulmaz ve kontrat bitmeden yeniden seçim istenmez
-- oyuncu yalnız M42 `SponsorOfferEngine` tarafından üretilmiş deterministic gerçek tekliflerden birini seçebilir
-- karar context'i current president, management profile, lig pozisyonu, fan trust, media credibility, teklifler ve AI önerisini içerir
-- seçilen teklif gerçek sponsor checkpoint/state zincirine ve economy `sponsorRevenue` satırına bağlanır
-- player provider serialize edilmez; controlled club ve aktif sponsor kontratı save/load içinde persist eder
-- M49 facility player-control aynı engine içinde korunur
-- sponsor provider yokken M49 exact parity korunur
-
-M50 acceptance:
-1. sponsor provider yokken M49 exact parity — PASS
-2. yalnız controlled club sponsor seçimi override; diğer 47 kulüp AI parity — PASS
-3. seçilen gerçek sponsor terms gerçek economy sponsorRevenue satırını değiştirir — PASS
-4. aktif multi-year player kontratı yeniden seçilmez — PASS
-5. save round-trip + deterministic `2+2 == uninterrupted 4` checkpoint/boundary/decision parity — PASS
-
-Kalıcı M50 dosyaları:
-- `lib/src/sponsor/player_president_sponsor_control.dart`
-- `lib/player_president_sponsor_control.dart`
-- `test/m50_player_president_sponsor_control_test.dart`
-- `tool/run_m50_player_president_sponsor_control.dart`
-- `M50_PLAYER_PRESIDENT_SPONSOR_DECISION_OVERRIDE_I.md`
+Not: canonical ilk pencerede AI ve player aynı `bold` teklifini seçer. Gerçek override yolu ayrı acceptance testinde AI seçiminden farklı gerçek teklif seçilerek doğrulanmıştır.
 
 M50 **CLOSED / MERGED / PASS**.
 
-## 4. Önceki milestone: M49 — Player President Facility Decision Override I
-
-- PR #52 merge SHA: `c0c40bada13e3dd83c06cdba60093a7bb9b71304`
-- Final PR CI `34702117074`: **SUCCESS**
-- Post-merge main CI `34704054636`: **SUCCESS**
-- analyzer clean; **208 tests PASS**; **M0–M49 canonical PASS**; artifacts **0**
-- controlled club için player facility kararı M48 boundary'sini override eder; diğer 47 kulüp AI kalır
-- academy/training/stadium için pencere başına `0..2` upgrade talebi; reserve guard, debt koruması ve deterministic save/resume parity korunur
-
-M49 **CLOSED / MERGED / PASS**.
-
 ## 5. Yakın milestone geçmişi
+
+### M49 — Player President Facility Decision Override I — CLOSED / MERGED / PASS
+- PR #52 merge `c0c40bada13e3dd83c06cdba60093a7bb9b71304`
+- final PR CI `34702117074`: SUCCESS
+- post-merge `main` CI `34704054636`: SUCCESS
+- 208 tests, M0–M49 canonical, artifact 0
+- controlled club için player facility kararı M48 boundary'sini override eder; diğer 47 kulüp AI kalır
 
 ### M48 — President Facility Investment Runtime Integration I — CLOSED / MERGED / PASS
 - M39 başkan facility yatırım politikası M47 birleşik facility+sponsor+crisis runtime'a bağlandı
 - PR #51 merge `63950ab4ad728fe6b6f4f0deb42323590ce5180a`
-- post-merge main CI `34698950932`: 203 tests, M0–M48 PASS, artifact 0
+- post-merge `main` CI `34698950932`: 203 tests, M0–M48 PASS, artifact 0
 
 ### M47 — Facility + Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
-- facility state ve etkileri sponsor+crisis PresidentDomain continuation runtime ile tek-season simulation yolunda compose edildi
+- facility state ve etkileri sponsor+crisis PresidentDomain continuation runtime ile compose edildi
 - PR #50 merge `dc26c2782026c6823c91d05015f4f507a7bac2f6`
 - post-merge CI `34693305775`: 198 tests, M0–M47 PASS, artifact 0
 
 ### M46 — Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
 - sponsor + crisis tek top-level continuation runtime'ında compose edildi
 - sponsor-aware finance sonrası kriz uygulanır
-- sponsor state korunur; kriz-adjusted finance/fan/media sonraki sponsor context'ine ulaşır
 - PR #49 merge `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
 - post-merge CI `34686218278`: 193 tests, M0–M46 PASS, artifact 0
 
 ### M45 — Sponsor Runtime Integration I — CLOSED / MERGED / PASS
-- PresidentDomain + Sponsor composite checkpoint/save codec
-- sponsor revenue gerçek economy satırında replacement; double-counting yok
-- multi-year kontrat turnover boyunca korunur; renewal current president ile yapılır
+- sponsor contract lifecycle + revenue gerçek continuation/economy akışına bağlandı
 - PR #48 merge `92f4f1b99fa841866587a8067dd529735400c035`
 - post-merge CI `34684676105`: 189 tests, M0–M45 PASS, artifact 0
 
@@ -229,7 +187,7 @@ PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280
 
 ## 6. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override; M51 player-president crisis decision override (PR #54, aktif).
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override; M51 player-president crisis decision override.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -249,7 +207,7 @@ Başkan/state gerçek etkileri:
 - M48: M39 current-president facility yatırım kararları M47 continuation boundary'sine bağlanır
 - M49: controlled club için player facility kararı M48 boundary'sini override eder; diğer kulüpler AI kalır
 - M50: controlled club için yeni sponsor seçimi player override alır; aktif kontratlar ve diğer kulüpler mevcut sponsor lifecycle/AI yolunu korur
-- M51: controlled club için kriz aksiyonu player override alır; diğer kulüpler exact AI kalır ve yalnız M43 kanonik aksiyonları seçilebilir
+- M51: controlled club için gerçek kriz aksiyonu player override alır; diğer 47 kulüp exact AI kalır ve oyuncu yalnız mevcut M43 kanonik aksiyonlarından seçim yapabilir
 
 ## 7. Devir / çalışma talimatı
 
