@@ -1,9 +1,6 @@
-import 'package:futbol_baskanlik_m0/facility_sponsor_crisis_runtime_composition.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/president_facility_investment_runtime_integration.dart';
-import 'package:futbol_baskanlik_m0/src/facility/president_academy_investment_orchestrator.dart';
 import 'package:futbol_baskanlik_m0/src/facility/president_facility_portfolio_investment_orchestrator.dart';
-import 'package:futbol_baskanlik_m0/src/save/facility_runtime_checkpoint.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -125,7 +122,9 @@ void main() {
     expect(first.investment!.totalSpend, greaterThan(Money.zero));
     expect(first.checkpoint.facilities.stadiumFor(target).level, greaterThan(0));
     expect(
-      integrated.boundaries[1].source.checkpoint.facilities.stadiumFor(target).level,
+      integrated.boundaries[1].source.checkpoint.facilities
+          .stadiumFor(target)
+          .level,
       first.checkpoint.facilities.stadiumFor(target).level,
     );
     expect(
@@ -145,7 +144,8 @@ void main() {
     );
     final first = result.boundaries.first;
     final currentByClub = {
-      for (final state in first.source.checkpoint.runtime.domain.presidentRuntime.clubs)
+      for (final state
+          in first.source.checkpoint.runtime.domain.presidentRuntime.clubs)
         state.clubId: state.managementProfile.presidentId,
     };
     final generator = const PresidentProfileGenerator();
@@ -157,7 +157,7 @@ void main() {
               careerSeed: config.careerSeed,
               simulationVersion: config.simulationVersion,
             )
-            .presidentId,
+            .id,
     };
 
     for (final decision in first.decisions) {
@@ -201,6 +201,9 @@ void main() {
           .toList(),
       direct.boundaries.map((item) => item.signature).toList(),
     );
-    expect(second.checkpoint.facilities.totalInvestmentSpent, greaterThan(Money.zero));
+    expect(
+      second.checkpoint.facilities.totalInvestmentSpent,
+      greaterThan(Money.zero),
+    );
   });
 }
