@@ -184,3 +184,6 @@ jobs:
 
       - name: Run M49 player president facility control
         run: dart run tool/run_m49_player_president_facility_control.dart 20260903
+
+      - name: Run M50 player president sponsor control
+        run: dart run tool/run_m50_player_president_sponsor_control.dart 20260903
