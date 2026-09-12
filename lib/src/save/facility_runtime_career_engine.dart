@@ -151,6 +151,7 @@ class _FacilityAwareEconomyEngine extends BasicEconomyEngine {
     Map<String, Money>? transferInstallmentIncomeByClub,
     Map<String, Money>? transferInstallmentExpenseByClub,
     Map<String, int> matchdayRevenueMultiplierBpsByClub = const {},
+    Map<String, Money>? sponsorRevenueByClub,
   }) {
     for (final entry in stadiumFacilities.entries) {
       if (entry.key != entry.value.clubId) {
@@ -201,6 +202,7 @@ class _FacilityAwareEconomyEngine extends BasicEconomyEngine {
       transferInstallmentIncomeByClub: transferInstallmentIncomeByClub,
       transferInstallmentExpenseByClub: transferInstallmentExpenseByClub,
       matchdayRevenueMultiplierBpsByClub: multipliers,
+      sponsorRevenueByClub: sponsorRevenueByClub,
     );
   }
 }

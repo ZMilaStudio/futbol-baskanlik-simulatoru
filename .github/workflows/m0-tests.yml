@@ -160,3 +160,6 @@ jobs:
 
       - name: Run M41 fan trust attendance integration
         run: dart run tool/run_m41_fan_trust_attendance.dart 20260903
+
+      - name: Run M42 sponsor system core
+        run: dart run tool/run_m42_sponsor_system.dart 20260903
