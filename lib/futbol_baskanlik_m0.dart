@@ -15,6 +15,7 @@ export 'src/core/game_date.dart';
 export 'src/core/money.dart';
 export 'src/core/simulation_config.dart';
 export 'src/core/seeded_rng.dart';
+export 'src/crisis/crisis_decision_core.dart';
 export 'src/election/president_approval_state.dart';
 export 'src/election/president_election.dart';
 export 'src/election/president_election_career_engine.dart';
