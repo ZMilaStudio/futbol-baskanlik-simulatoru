@@ -31,11 +31,46 @@ Kalıcı kurallar:
 
 **M0–M49 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M50 — Player President Sponsor Decision Override I aktif.**
+**M50 — Player President Sponsor Decision Override I aktif; PR #53 OPEN / NOT MERGED.**
 
 Branch: `feat/m50-player-president-sponsor-control`
-PR: henüz açılmadı
-Durum: implementation candidate branch üzerinde; canlı PR CI henüz yok.
+PR: #53
+
+### M50 doğrulanmış teknik durum
+
+Code-bearing verified HEAD: `403cba68c9919d5c8285c2e4530255701ae18d8c`
+Code-bearing PR CI `34705596047`: **SUCCESS**.
+
+Bu doğrulamada:
+- analyzer: `No issues found!`
+- **213 normal/non-canonical test PASS**
+- beş M50 acceptance testinin tamamı PASS
+- **M0–M50 canonical PASS**
+- `Run M50 player president sponsor control`: **SUCCESS**
+- artifacts: **0**
+- PR mergeable: **true**
+- `test` ve `canonical` jobları 7 dakika sınırının altında
+
+Bu dosyanın mevcut refresh commit'i docs-only'dir. Bu commit yeni bir PR HEAD oluşturacağı için **merge öncesi current exact HEAD + current CI canlı GitHub'dan tekrar doğrulanmalıdır**. Sırf yeni run-ID'yi bu dosyaya yazmak için yeni docs commit atılmaz; docs→CI→docs döngüsü oluşturulmaz.
+
+### M50 canonical final adayı
+
+- controlledClub=`t1_02`
+- `aiParityCount=47`
+- `playerSponsorWindows=4`
+- first canonical AI choice=`t1_02-s0-bold`
+- first canonical player choice=`t1_02-s0-bold`
+- controlled sponsor revenue=`13,766,445`
+- `neutralM49Parity=true`
+- `sponsorRevenueWired=true`
+- `controlledContractPersisted=true`
+- `controlledClubPersisted=true`
+- `finalCheckpointMatch=true`
+- `boundaryMatch=true`
+- `decisionMatch=true`
+- saveBytes=`2122969`
+
+Not: canonical ilk pencerede AI ve player aynı `bold` teklifi seçmektedir; controlled-only gerçek override davranışı ayrı acceptance testinde AI seçiminden farklı teklif seçilerek doğrulanmıştır.
 
 ### M50 seçiminin canlı kod gerekçesi
 
@@ -50,15 +85,15 @@ M50 bu boşluğu kapatır:
 - seçilen teklif mevcut sponsor checkpoint/state zincirine girer ve gerçek economy `sponsorRevenue` satırını değiştirir
 - player provider serialize edilmez; `controlledClubId` ve aktif sponsor kontratı mevcut save state içinde persist eder
 - M49 facility player-control aynı engine içinde korunur
-- sponsor provider yokken M49 exact parity hedeflenir
+- sponsor provider yokken M49 exact parity verir
 
-### M50 acceptance adayı
+### M50 acceptance
 
-1. sponsor provider yokken M49 exact checkpoint/boundary parity
-2. yalnız controlled club sponsor seçimi override; diğer 47 kulüp AI parity
-3. farklı gerçek sponsor teklifleri gerçek economy sponsorRevenue satırını değiştirir
-4. aktif çok yıllı player kontratı yeniden seçilmez ve save/load ile persist eder
-5. deterministic sponsor + facility provider ile `2+2 == uninterrupted 4` exact checkpoint/boundary/decision parity
+1. sponsor provider yokken M49 exact checkpoint/source parity — PASS
+2. yalnız controlled club sponsor seçimi override; diğer 47 kulüp AI parity — PASS
+3. farklı gerçek sponsor teklifleri gerçek economy sponsorRevenue satırını değiştirir — PASS
+4. aktif çok yıllı player kontratı yeniden seçilmez ve save/load ile persist eder — PASS
+5. deterministic sponsor + facility provider ile `2+2 == uninterrupted 4` exact checkpoint/boundary/decision parity — PASS
 
 Yeni dosyalar:
 - `lib/src/sponsor/player_president_sponsor_control.dart`
@@ -67,7 +102,16 @@ Yeni dosyalar:
 - `tool/run_m50_player_president_sponsor_control.dart`
 - `M50_PLAYER_PRESIDENT_SPONSOR_DECISION_OVERRIDE_I.md`
 
-CI workflow'a `Run M50 player president sponsor control` canonical adımı eklendi. PASS ancak canlı PR CI ile yazılacaktır.
+CI workflow'a `Run M50 player president sponsor control` canonical adımı eklendi.
+
+M50 merge için kalan zorunlu kapılar:
+1. docs-only refresh sonrası current exact PR HEAD'i canlı doğrula
+2. current exact HEAD CI: analyzer + 213 tests + M0–M50 + artifact 0 doğrula
+3. PR #53 mergeable=true doğrula
+4. kullanıcıdan PR #53 için açık merge onayı al
+5. yalnız onaydan sonra exact HEAD kilidiyle squash merge et
+6. post-merge `main` CI yeşil doğrula
+7. ardından M50 CLOSED / MERGED / PASS
 
 ## 3. Son kapanan milestone: M49 — Player President Facility Decision Override I
 
@@ -158,7 +202,7 @@ PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280
 
 ## 5. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override (aktif branch).
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override (PR #53, aktif).
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
