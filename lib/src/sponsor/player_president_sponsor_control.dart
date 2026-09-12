@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../core/money.dart';
 import '../core/simulation_config.dart';
+import '../crisis/crisis_runtime_integration.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../crisis/player_president_facility_control.dart';
 import '../election/president_management_profile.dart';
@@ -227,12 +228,14 @@ class PlayerPresidentSponsorControlCareerEngine {
     this.facilityProvider,
     this.offerEngine = const SponsorOfferEngine(),
     this.aiSponsorPolicy = const PresidentSponsorDecisionPolicy(),
+    this.crisisIntegration = const CrisisRuntimeIntegrationEngine(),
   });
 
   final PlayerSponsorDecisionProvider? sponsorProvider;
   final PlayerFacilityInvestmentDecisionProvider? facilityProvider;
   final SponsorOfferEngine offerEngine;
   final PresidentSponsorDecisionPolicy aiSponsorPolicy;
+  final CrisisRuntimeIntegrationEngine crisisIntegration;
 
   PlayerPresidentSponsorControlCareerResult simulateWithCheckpoint({
     required List<Club> clubs,
@@ -313,6 +316,7 @@ class PlayerPresidentSponsorControlCareerEngine {
     return PlayerPresidentFacilityControlCareerEngine(
       runtime: FacilitySponsorCrisisRuntimeCareerEngine(
         sponsorSystem: sponsorSystem,
+        crisisIntegration: crisisIntegration,
       ),
       control: PlayerPresidentFacilityControlRuntimeEngine(
         provider: facilityProvider,
@@ -404,8 +408,9 @@ class _PlayerPresidentSponsorSystemEngine extends SponsorSystemEngine {
       aiChoice: aiChoice,
     );
     final choice = provider.choose(context)..validate();
-    final selectedMatches =
-        offers.where((offer) => offer.id == choice.offerId).toList(growable: false);
+    final selectedMatches = offers
+        .where((offer) => offer.id == choice.offerId)
+        .toList(growable: false);
     if (selectedMatches.length != 1) {
       throw ArgumentError.value(
         choice.offerId,
