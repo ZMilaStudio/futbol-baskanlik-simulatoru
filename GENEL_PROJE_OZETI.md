@@ -22,160 +22,96 @@ Kalıcı kurallar:
 - CI iki paralel job: `test` + `canonical`; her job `timeout-minutes: 7`.
 - Artifact hedefi `0`.
 - CI kırmızıysa gerçek failure logu okunmadan patch atılmaz.
-- Her anlamlı proje durumu/kararı sonrası bu özet güncel tutulur.
+- `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır ve güncel tutulur.
 - Docs→CI→docs sonsuz döngüsü üretilmez.
 - Her yeni PR için merge öncesi o PR'a özel açık kullanıcı onayı gerekir.
 - Merge sonrası `main` CI yeşil olmadan milestone CLOSED sayılmaz.
 
-`DEVRALMA_1_AYLIK_GPT.md` 12 Eylül 2026 canlı `main` üzerinde bulunamadı ve repo aramasında da sonuç vermedi. Çalışma kuralları için dosyanın varlığı varsayılmaz; canlı GitHub + bu özet esas alınır.
+`DEVRALMA_1_AYLIK_GPT.md` canlı `main` üzerinde bulunmamaktadır; çalışma kuralları için canlı GitHub + bu özet esas alınır.
 
 ## 2. CANLI DURUM — buradan devam et
 
 **M0–M53 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-Aktif milestone yok. **M54 henüz seçilmedi.** Yeni milestone seçmeden önce canlı `main` kodu incelenmeli; kapsam gerçek ürün boşluğundan türetilmelidir. Eski sohbet veya tahmin milestone kaynağı değildir.
+**Aktif milestone: M54 — Transfer Strategy World Runtime Bridge I.**
 
-### Son kapanan milestone: M53 — President Transfer Strategy Runtime Hook I
-
-PR #56 kullanıcı tarafından açıkça onaylandı ve exact HEAD kilidiyle squash merge edildi.
-
-- Branch: `feat/m53-president-transfer-strategy-runtime-hook`
-- PR: #56 — **MERGED**
-- Verified code-bearing HEAD: `dc163489c868b4b17bf66ad89837703a72e83f03`
-- Code-bearing PR CI `34720756030`: **SUCCESS**
-- Final PR HEAD: `0f56d40195d149daafcd65abfdd77073d5c7eb0d`
-- Final docs-head PR CI `34721033834`: **SUCCESS**
-- Merge SHA: `f83e159793f80d7f53c40a0845e795339e400d3c`
-- Post-merge `main` CI `34721440607`: **SUCCESS**
+- Branch: `feat/m54-transfer-strategy-world-runtime-bridge`
+- PR #57 — **OPEN / NOT MERGED**
+- Base `main`: `0697a2d127f5c5021be18f19a33b4eef503fa045`
+- Verified code-bearing HEAD: `4afb7db7d95f8446e1d39e912b0c9547206f0832`
+- Code-bearing PR CI `34722672195`: **SUCCESS**
 - analyzer: `No issues found!`
-- **228 normal/non-canonical test PASS**
-- beş M53 acceptance testinin tamamı PASS
-- **M0–M53 canonical PASS**
-- `Run M53 president transfer strategy runtime hook`: **SUCCESS**
-- M53 canonical marker: `M53_PRESIDENT_TRANSFER_STRATEGY_RUNTIME_PASS neutralParity=true low=ready_forward high=young_forward deterministic=true policyCoverage=2`
+- **233 normal/non-canonical test PASS**
+- beş M54 acceptance testinin tamamı PASS
+- **M0–M54 canonical PASS**
+- `Run M54 transfer strategy world runtime bridge`: **SUCCESS**
+- canonical marker: `M54_TRANSFER_STRATEGY_WORLD_BRIDGE_PASS neutralParity=true low=ready_forward high=young_forward worldWired=true deterministic=true worldClubs=48`
 - artifacts: **0**
+- PR `mergeable=true`
+- bu özet refresh commit'i sonrası oluşan final PR HEAD için CI yeniden doğrulanacaktır; sonucu yazmak için ikinci docs commit atılmayacaktır
 
-Bu kapanış özeti docs-only bir `main` commit'idir. Tetiklediği CI bir kez doğrulanır; yalnız run ID'yi bu dosyaya yazmak için ikinci docs commit atılmaz.
+M54 henüz merge edilmedi. Final exact-head CI + artifact 0 + mergeable=true yeniden doğrulandıktan sonra kullanıcıdan **PR #57'ye özel açık merge onayı** alınmalıdır.
 
-M53 kapsamı:
-- M20–M24 arasında geliştirilen başkan transfer trait'lerini tek gerçek `TransferMarketEngine.simulateWindow` adapterında birleştirir.
-- `financialDiscipline` → `TransferBudgetPolicy`
-- `transferAmbition` → `TransferActivityPolicy`
-- `riskAppetite` → `TransferNegotiationPolicy`
-- `youthOrientation` → `TransferYouthPreferencePolicy`
-- market içindeki her kulüp için exact president-profile coverage zorunludur.
-- hook stateless'tir; yeni save version/migration yoktur.
-- aynı input + seed + simulation version aynı sonucu üretir.
-- neutral başkan profilleri eski neutral transfer market ile exact signature parity verir.
-- M53 mevcut M0–M52 runtime composition'ına bağlanmaz; eski runtime sonuçları değişmez.
+## 3. M54 kapsamı — Transfer Strategy World Runtime Bridge I
 
-M53 acceptance:
-1. dört başkan transfer trait'i mevcut policy formüllerine exact map — PASS
-2. exact club/profile coverage validation — PASS
-3. youth strategy gerçek transfer adayını `ready_forward` → `young_forward` değiştirir — PASS
-4. neutral profile map eski neutral market ile exact signature parity — PASS
-5. sabit inputlarda deterministic runtime signature — PASS
+`WorldCareerEngine` permanent transfer penceresini lifecycle sonrasında doğrudan `TransferMarketEngine.simulateWindow` ile açar. Mevcut `WorldTransferHooks` yalnız transferlerden sonra çalıştığı için M53 stratejisini sezon sonrasında uygulamak çift-transfer ve finance/contract yan etkisi riski taşır.
 
-M53 dosyaları/değişiklikleri:
-- `lib/src/transfer/president_transfer_strategy_runtime.dart`
-- `lib/president_transfer_strategy_runtime.dart`
-- `test/m53_president_transfer_strategy_runtime_hook_test.dart`
-- `tool/run_m53_president_transfer_strategy_runtime_hook.dart`
-- `M53_PRESIDENT_TRANSFER_STRATEGY_RUNTIME_HOOK_I.md`
+M54 çözümü:
+- `PresidentTransferStrategyWorldMarketEngine`, standart `TransferMarketEngine` yerine açıkça enjekte edilebilen opt-in adapterdır.
+- Adapter gerçek market context'ini M53 `PresidentTransferStrategyRuntimeEngine`e aynı transfer penceresinin içinde verir.
+- `PresidentTransferStrategyWorldBridge`, mevcut `WorldCareerEngine` dependency'lerini koruyup yalnız transfer market engine'i değiştirir.
+- Default `WorldCareerEngine` ve M0–M53 production composition değiştirilmez.
+- Caller explicit transfer policy map verirse profile provider bypass edilir ve map'ler delegate market'e aynen aktarılır.
+- Contract years + installment flag korunur.
+- Bridge stateless'tir; save version/migration yoktur.
+
+M54 acceptance:
+1. neutral bridge direct market exact signature parity — PASS
+2. M53 youth strategy bridge üzerinden `ready_forward` → `young_forward` — PASS
+3. explicit policy map provider bypass + delegate parity — PASS
+4. gerçek 48-kulüp `WorldCareerEngine` wiring + neutral report/checkpoint save exact parity — PASS
+5. fixed input determinism — PASS
+
+M54 dosyaları:
+- `lib/src/transfer/president_transfer_strategy_world_bridge.dart`
+- `lib/president_transfer_strategy_world_bridge.dart`
+- `test/m54_transfer_strategy_world_runtime_bridge_test.dart`
+- `tool/run_m54_transfer_strategy_world_runtime_bridge.dart`
+- `M54_TRANSFER_STRATEGY_WORLD_RUNTIME_BRIDGE_I.md`
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M53 discovery sırasında vaat ve sözleşme kararları da incelendi. Promise seçimini ana player runtime'a temiz bağlamak M47→M52 dependency zincirinde gereksiz constructor yüzeyi yaratıyordu; sözleşme yenilemeyi sezon-sonu wrapper ile tersine çevirmek ise free-agent/transfer yan etkilerini bozma riski taşıyordu. Bu nedenle önce transfer stratejisi için güvenli alt seviye runtime hook'u kuruldu.
+M54 production default path'i değiştirmez; köprü yalnız explicit injection ile çalışır. Bu sayede player-president transfer kararları için pre-window seam hazır olurken M0–M53 public/runtime semantiği korunur.
 
-Doğal bir sonraki ürün adayı, doğrulanmış M53 hook'unu player-president/runtime transfer penceresine compose ederek kontrollü kulübün transfer stratejisini oyuncuya açmaktır; **bu yalnız adaydır, M54 seçilmiş değildir.**
+M54 sonrası doğal aday, bu bridge'in profile-provider yüzeyinde controlled club için player-president transfer stratejisi override'ını compose etmektir. Bu henüz ayrı bir milestone olarak seçilmemiştir.
+
+## 4. Son kapanan milestone: M53 — President Transfer Strategy Runtime Hook I
+
+- Branch: `feat/m53-president-transfer-strategy-runtime-hook`
+- PR #56 — MERGED
+- Final PR HEAD: `0f56d40195d149daafcd65abfdd77073d5c7eb0d`
+- Merge SHA: `f83e159793f80d7f53c40a0845e795339e400d3c`
+- Post-merge `main` CI `34721440607`: SUCCESS
+- docs-close commit: `0697a2d127f5c5021be18f19a33b4eef503fa045`
+- docs-close CI `34721780422`: SUCCESS
+- analyzer clean; **228 tests PASS**; **M0–M53 canonical PASS**; artifacts **0**
+
+M53, M20–M24 başkan transfer trait'lerini tek gerçek transfer market adapterında birleştirir: financial discipline→budget, transfer ambition→activity, risk appetite→negotiation, youth orientation→youth preference. Exact profile coverage, neutral parity ve determinism kanıtlandı.
 
 M53 **CLOSED / MERGED / PASS**.
 
-## 3. Önceki milestone: M52 — Player President Manager Decision Override I
+## 5. Yakın milestone geçmişi
 
-- Branch: `feat/m52-player-president-manager-control`
-- PR #55 — **MERGED**
-- Verified code-bearing HEAD: `e4383fffc371a53b1fd94a16e0add86b1f6636e1`
-- Final PR HEAD: `46e0baa63cca2f514d5061e7974991f5bfbc1c66`
-- Merge SHA: `bce9efe6c214526b0018110c5a10d2fa9e7ec5c8`
-- Post-merge `main` CI `34713457292`: **SUCCESS**
-- docs-close commit: `48e7a8a687a06c427b7da22592e9249a515d7a9d`
-- docs-close CI `34713802493`: **SUCCESS**
-- analyzer clean; **223 tests PASS**; **M0–M52 canonical PASS**; artifacts **0**
+- M52 Player President Manager Decision Override I — PR #55 merge `bce9efe6c214526b0018110c5a10d2fa9e7ec5c8`; 223 tests; M0–M52 PASS; artifact 0.
+- M51 Player President Crisis Decision Override I — PR #54 merge `4b2832f3bfb091ae3adaeb504a7369b1190b2438`; 218 tests; M0–M51 PASS; artifact 0.
+- M50 Player President Sponsor Decision Override I — PR #53 merge `f8519d4f0be247f7029a2e29d4de10588d97736f`; 213 tests; M0–M50 PASS; artifact 0.
+- M49 Player President Facility Decision Override I — PR #52 merge `c0c40bada13e3dd83c06cded64ead38dc2f30d8`; 208 tests; M0–M49 PASS; artifact 0.
+- M48 President Facility Investment Runtime Integration I — PR #51 merge `63950ab4ad728fe6b6f4f0deb42323590ce5180a`; 203 tests; M0–M48 PASS; artifact 0.
+- M47 Facility + Sponsor + Crisis Runtime Composition I — PR #50 merge `dc26c2782026c6823c91d05015f4f507a7bac2f6`; 198 tests; M0–M47 PASS; artifact 0.
 
-M52 sonucu:
-- controlled club için sezon-sonu manager `retain` / `replace` ve gerçek aday seçimi player override alır.
-- diğer 47 kulüp AI parity'sini korur.
-- retirement zorunlu ayrılıktır.
-- seçilen uygun manager gerçek assignment state'ine yazılır ve sonraki gerçek sezonda takımı çalıştırır.
-- player keyfi manager nesnesi/state enjekte edemez; deterministic gerçek manager pool adaylarıyla sınırlıdır.
-- facility + sponsor + crisis player-control zinciri ve save/resume parity korunur.
+## 6. Sistem zinciri
 
-M52 canonical final:
-- controlledClub=`t1_02`
-- `aiParityCount=47`
-- `managerDecisionWindows=4`
-- `changedFromAiCount=4`
-- first AI review=`retain`
-- first player review=`replace`
-- first AI manager=`manager_074`
-- first player manager=`manager_020`
-- `neutralM51Parity=true`
-- `nextSeasonWired=true`
-- `retainOverride=true`
-- `finalCheckpointMatch=true`
-- `boundaryMatch=true`
-- saveBytes=`6878904`
-
-M52 **CLOSED / MERGED / PASS**.
-
-## 4. Yakın milestone geçmişi
-
-### M51 — Player President Crisis Decision Override I — CLOSED / MERGED / PASS
-- PR #54 merge `4b2832f3bfb091ae3adaeb504a7369b1190b2438`
-- post-merge CI `34710810668`: 218 tests, M0–M51 PASS, artifact 0
-- controlled club gerçek kriz aksiyonunu seçer; diğer 47 kulüp AI kalır
-- yalnız M43 kanonik aksiyonları seçilebilir; debt korunur
-
-### M50 — Player President Sponsor Decision Override I — CLOSED / MERGED / PASS
-- PR #53 merge `f8519d4f0be247f7029a2e29d4de10588d97736f`
-- post-merge CI `34706438383`: 213 tests, M0–M50 PASS, artifact 0
-- controlled club yeni/yenilenen sponsor teklifini seçer; aktif çok yıllı kontratlar korunur
-
-### M49 — Player President Facility Decision Override I — CLOSED / MERGED / PASS
-- PR #52 merge `c0c40bada13e3dd83c06cdba60093a7bb9b71304`
-- post-merge CI `34704054636`: 208 tests, M0–M49 PASS, artifact 0
-- controlled club facility yatırımını seçer; diğer 47 kulüp AI kalır
-
-### M48 — President Facility Investment Runtime Integration I — CLOSED / MERGED / PASS
-- PR #51 merge `63950ab4ad728fe6b6f4f0deb42323590ce5180a`
-- post-merge CI `34698950932`: 203 tests, M0–M48 PASS, artifact 0
-
-### M47 — Facility + Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
-- PR #50 merge `dc26c2782026c6823c91d05015f4f507a7bac2f6`
-- post-merge CI `34693305775`: 198 tests, M0–M47 PASS, artifact 0
-
-### M46 — Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
-- PR #49 merge `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
-- post-merge CI `34686218278`: 193 tests, M0–M46 PASS, artifact 0
-
-### M45 — Sponsor Runtime Integration I — CLOSED / MERGED / PASS
-- PR #48 merge `92f4f1b99fa841866587a8067dd529735400c035`
-- post-merge CI `34684676105`: 189 tests, M0–M45 PASS, artifact 0
-
-### M44 — Crisis Runtime Integration I — CLOSED / MERGED / PASS
-- PR #47 merge `43149da199e74e41dabe47534e4e4e887d8862e7`
-- post-merge CI `34683153804`: 184 tests, M0–M44 PASS, artifact 0
-
-### M43 — Crisis Decision Core I — CLOSED / MERGED / PASS
-PR #46 merge `27474a731aa73d291859828a1657d06579e69269`; post-merge CI `34680783652`: 179 tests, M0–M43 PASS, artifact 0.
-
-### M42 — Sponsor System I — CLOSED / MERGED / PASS
-PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280556`: 173 tests, M0–M42 PASS, artifact 0.
-
-## 5. Sistem zinciri
-
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override; M51 player-president crisis decision override; M52 player-president manager decision override; M53 president transfer strategy runtime hook.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -183,23 +119,11 @@ Başkan/state gerçek etkileri:
 - `transferAmbition`: transfer activity + stadium priority + supporter-crisis response
 - `riskAppetite`: bid ceiling + stadium priority + sponsor preference + crisis response
 - `youthOrientation`: youth transfer preference + academy/training priority
-- `FanState.overallTrust`: attendance + sponsor offer quality + crisis pressure
-- `MediaState.credibility`: sponsor offer quality + crisis pressure
-- finance cash/debt: crisis pressure + facility affordability/reserve
-- academy/training: real lifecycle/youth-development etkisi
-- stadium + fan trust: real attendance/matchday revenue etkisi
-- M44: crisis output next-season continuation state'ine taşınır
-- M45: sponsor contract lifecycle + revenue gerçek continuation/economy akışına bağlıdır
-- M46: sponsor+crisis aynı season boundary'de compose edilir
-- M47: facility state ve etkileri M46 ile tek-season simulation yolunda compose edilir
-- M48: M39 current-president facility yatırım kararları M47 continuation boundary'sine bağlanır
-- M49: controlled club player facility override; diğer kulüpler AI
-- M50: controlled club player sponsor override; aktif kontratlar korunur
-- M51: controlled club player crisis override; diğer 47 kulüp exact AI
-- M52: controlled club player manager override; gerçek next-season assignment'a bağlıdır
-- M53: M20–M24 transfer traits tek gerçek transfer-window adapterında birleşir; ana M52 runtime henüz değişmez
+- M49–M52 controlled club oyuncu başkan kararlarıdır; diğer kulüpler AI kalır
+- M53 transfer trait'lerini gerçek transfer-market API'sinde birleştirir
+- M54 M53 stratejisini real world transfer window'a opt-in pre-window bridge ile taşır; default production runtime değişmez
 
-## 6. Devir / çalışma talimatı
+## 7. Devir / çalışma talimatı
 
 1. Her işlemden önce canlı GitHub durumunu doğrula.
 2. `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır; silinmez.
