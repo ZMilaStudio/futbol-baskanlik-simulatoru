@@ -29,36 +29,39 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M51 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M52 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M52 — Player President Manager Decision Override I aktif; PR #55 OPEN / NOT MERGED.**
+Aktif milestone yok. **M53 henüz seçilmedi.** Yeni milestone seçmeden önce canlı `main` kodu incelenmeli ve kapsam gerçek ürün boşluğundan türetilmelidir; eski sohbetten veya tahminden milestone seçilmez.
 
-Branch: `feat/m52-player-president-manager-control`
-PR: #55
+### Son kapanan milestone: M52 — Player President Manager Decision Override I
 
-### M52 doğrulanmış code-bearing durum
+PR #55 kullanıcı tarafından açıkça onaylandı ve exact HEAD kilidiyle squash merge edildi.
 
+- Branch: `feat/m52-player-president-manager-control`
+- PR: #55 — **MERGED**
 - Verified code-bearing HEAD: `e4383fffc371a53b1fd94a16e0add86b1f6636e1`
-- Exact-head PR CI `34712782535`: **SUCCESS**
+- Code-bearing PR CI `34712782535`: **SUCCESS**
+- Final PR HEAD: `46e0baa63cca2f514d5061e7974991f5bfbc1c66`
+- Final docs-head PR CI `34713143120`: **SUCCESS**
+- Merge SHA: `bce9efe6c214526b0018110c5a10d2fa9e7ec5c8`
+- Post-merge `main` CI `34713457292`: **SUCCESS**
 - analyzer: `No issues found!`
 - **223 normal/non-canonical test PASS**
 - beş M52 acceptance testinin tamamı PASS
 - **M0–M52 canonical PASS**
 - `Run M52 player president manager control`: **SUCCESS**
 - artifacts: **0**
-- PR mergeable: **true**
-- `test` job yaklaşık **3:32**
-- `canonical` job yaklaşık **5:18**
-- iki job da 7 dakika sınırının altında
+- final docs-head `test` job yaklaşık **2:54**
+- final docs-head `canonical` job yaklaşık **5:32**
+- post-merge `test` job yaklaşık **3:38**
+- post-merge `canonical` job yaklaşık **4:19**
+- tüm job'lar 7 dakika sınırının altında
 
 İlk M52 PR koşusu `34712529618` analyzer aşamasında iki compile hatasıyla kırmızıydı. Gerçek analyzer logu okundu; iki hata da `CrisisDecisionEngine` importunun eksik olmasından kaynaklanıyordu. Yalnız gerekli import eklendi.
 
 İkinci M52 PR koşusu `34712704483` yine analyzer aşamasında kırmızıydı. Gerçek log okundu; compile hatası kalmamıştı, yalnız iki unused-import uyarısı (`club_finance_state.dart` ve `player.dart`) analyzer exit 2 üretiyordu. Yalnız bu iki gereksiz import kaldırıldı. Runtime'a tahmin patch'i atılmadı.
 
-Bu dosyanın mevcut refresh commit'i docs-only olacaktır. Bu nedenle merge öncesi bu commit sonrası oluşan **current exact PR HEAD + current CI** canlı GitHub'dan bir kez daha doğrulanmalıdır. Sırf yeni run-ID'yi bu dosyaya yazmak için yeni docs commit atılmaz; docs→CI→docs döngüsü oluşturulmaz.
-
-### M52 canonical final
-
+M52 canonical final:
 - controlledClub=`t1_02`
 - `aiParityCount=47`
 - `managerDecisionWindows=4`
@@ -78,8 +81,7 @@ Bu dosyanın mevcut refresh commit'i docs-only olacaktır. Bu nedenle merge önc
 - `sponsorDecisionMatch=true`
 - saveBytes=`6878904`
 
-### M52 kapsamı
-
+M52 kapsamı:
 - M52, M51'in üstünde bir player-president manager-control katmanıdır; M0–M51 runtime semantiği doğrudan değiştirilmez
 - manager provider yokken M51 exact multi-season path delegate edilir
 - provider varken M51 birer sezon ilerletilir ve manager kararı tamamlanmış sezon ile sonraki sezon arasındaki boundary'de uygulanır
@@ -110,13 +112,11 @@ M52 dosyaları/değişiklikleri:
 - `M52_PLAYER_PRESIDENT_MANAGER_DECISION_OVERRIDE_I.md`
 - `.github/workflows/m0-tests.yml`
 
-M52 şu an **MERGE READY / NOT MERGED**. Merge için PR #55'e özel açık kullanıcı onayı gerekir. Merge sonrası `main` CI yeşil doğrulanmadan M52 CLOSED sayılmaz.
-
-**M53 henüz seçilmedi.** M52 kapanmadan M53 açılmaz; M53 kapsamı daha sonra canlı `main` ürün boşluğundan türetilir.
+M52 **CLOSED / MERGED / PASS**.
 
 `DEVRALMA_1_AYLIK_GPT.md` 12 Eylül 2026 canlı `main` üzerinde bulunamadı ve repo aramasında da sonuç vermedi. Bu nedenle çalışma kuralları için bu dosyanın varlığı varsayılmaz; canlı GitHub + bu özet esas alınır.
 
-## 3. Son kapanan milestone: M51 — Player President Crisis Decision Override I
+## 3. Önceki milestone: M51 — Player President Crisis Decision Override I
 
 PR #54 kullanıcı tarafından açıkça onaylandı ve exact HEAD kilidiyle squash merge edildi.
 
@@ -268,7 +268,7 @@ PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280
 
 ## 6. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override; M51 player-president crisis decision override; M52 player-president manager decision override (PR #55, aktif).
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override; M50 player-president sponsor decision override; M51 player-president crisis decision override; M52 player-president manager decision override.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -289,7 +289,7 @@ Başkan/state gerçek etkileri:
 - M49: controlled club için player facility kararı M48 boundary'sini override eder; diğer kulüpler AI kalır
 - M50: controlled club için yeni sponsor seçimi player override alır; aktif kontratlar ve diğer kulüpler mevcut sponsor lifecycle/AI yolunu korur
 - M51: controlled club için gerçek kriz aksiyonu player override alır; diğer 47 kulüp exact AI kalır ve oyuncu yalnız mevcut M43 kanonik aksiyonlarından seçim yapabilir
-- M52: controlled club için sezon-sonu manager retain/replace ve gerçek aday seçimi player override alır; seçilen manager sonraki gerçek sezona yazılır
+- M52: controlled club için sezon-sonu manager retain/replace ve gerçek aday seçimi player override alır; seçilen uygun manager sonraki gerçek sezonda takımı çalıştırır, diğer 47 kulüp AI parity'sini korur
 
 ## 7. Devir / çalışma talimatı
 
