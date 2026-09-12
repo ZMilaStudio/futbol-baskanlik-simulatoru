@@ -1,9 +1,9 @@
 # M45 — Sponsor Runtime Integration I
 
-Durum: **PR-VERIFIED / NOT MERGED**
+Durum: **CLOSED / MERGED / PASS**
 Tarih: 12 Eylül 2026
 PR: #48
-Branch: `feat/m45-sponsor-runtime-integration`
+Squash merge: `92f4f1b99fa841866587a8067dd529735400c035`
 
 ## Amaç
 
@@ -85,11 +85,7 @@ M45 M42 sponsor ödemesini bu parametre üzerinden geçirir. Böylece sponsor ge
 
 Ayrıca M45 economy wrapper başka bir `sponsorRevenueByClub` override ile birlikte çağrılırsa fail eder; iki sponsor kaynağının sessizce çakışmasına izin verilmez.
 
-Acceptance testi her 48 kulüp için:
-- runtime sponsor `revenueByClub[clubId]`
-- gerçek `ClubFinanceSeason.sponsorRevenue`
-
-alanlarının birebir aynı olduğunu doğrular.
+Acceptance testi her 48 kulüp için runtime sponsor `revenueByClub[clubId]` ile gerçek `ClubFinanceSeason.sponsorRevenue` alanlarının birebir aynı olduğunu doğrular.
 
 ## Başkan turnover ve kontrat yaşam döngüsü
 
@@ -132,9 +128,9 @@ Normal test toplamı: **189**.
 
 ## Canonical gate
 
-`tool/run_m45_sponsor_runtime_integration.dart` eklendi ve `.github/workflows/m0-tests.yml` zinciri M0–M45'e uzatıldı.
+`tool/run_m45_sponsor_runtime_integration.dart` ve `.github/workflows/m0-tests.yml` içindeki M45 step'i kalıcı kabul kapısıdır.
 
-Final code-bearing canonical çıktı:
+Final canonical çıktı:
 - seasons=4
 - contractsPerSeason=48
 - revenueBySeason=`291473844.75,294374236.50,295295994.50,299016546.25`
@@ -147,21 +143,27 @@ Final code-bearing canonical çıktı:
 - boundaryMatch=true
 - PASS
 
-## CI kanıtı
+## Merge ve CI kanıtı
 
-Code-bearing HEAD: `55433d670a5e875d2587751cbc66eaf5fe6d26c5`
-Run: `34684029096`
-
-- test job `103527769818`: **SUCCESS**
+Final docs-inclusive PR HEAD: `af2663f985a9dee86c7889e28b8ed72cb3f28bd8`
+PR CI `34684228003` — **SUCCESS**:
 - analyzer: `No issues found!`
-- **189 normal/non-canonical test PASS**
-- canonical job `103527769663`: **SUCCESS**
-- **M0–M45 canonical PASS**
+- 189 normal/non-canonical test PASS
+- M0–M45 canonical PASS
+- artifact 0
+- iki job da 7 dakika sınırının altında
+
+PR #48 squash merge: `92f4f1b99fa841866587a8067dd529735400c035`
+
+Post-merge `main` CI `34684676105` — **SUCCESS**:
+- test job `103529485118` — SUCCESS
+- analyzer: `No issues found!`
+- **189 tests PASS**
+- canonical job `103529485217` — SUCCESS
+- **M0–M45 PASS**
 - artifacts: **0**
 - iki job da 7 dakika sınırının altında
 
-Önceki acceptance-only run `34683829753` de analyzer clean + 189 test PASS + M0–M44 canonical PASS verdi.
-
 ## Sonuç
 
-M45 kod ve canonical kabul kriterleri açısından **PR-VERIFIED / NOT MERGED**. Sponsor sistemi artık opt-in runtime yolunda gerçek PresidentDomain sezon akışına, gerçek ekonomi sponsor satırına, başkan turnover/renewal yaşam döngüsüne ve composite save/resume continuation zincirine deterministik biçimde bağlıdır.
+M45 **CLOSED / MERGED / PASS**. Sponsor sistemi artık opt-in runtime yolunda gerçek PresidentDomain sezon akışına, gerçek ekonomi sponsor satırına, başkan turnover/renewal yaşam döngüsüne ve composite save/resume continuation zincirine deterministik biçimde bağlıdır.
