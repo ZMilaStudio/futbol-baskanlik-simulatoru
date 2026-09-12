@@ -29,6 +29,64 @@ Kalıcı kurallar:
 
 **M0–M46 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
+**M47 — Facility + Sponsor + Crisis Runtime Composition I aktif; PR #50 PR-VERIFIED / NOT MERGED.**
+
+### M47 — Facility + Sponsor + Crisis Runtime Composition I — PR-VERIFIED / NOT MERGED
+
+Branch: `feat/m47-facility-sponsor-crisis-runtime-composition`
+PR: #50
+Code-bearing verified HEAD: `a23d623d7a89e1e9172e71f0aabd8c7b3a67ee40`
+CI run `34691699235` — **SUCCESS**:
+- analyzer: `No issues found!`
+- **198 normal/non-canonical test PASS**
+- **M0–M47 canonical PASS**
+- M47 canonical PASS
+- artifacts: **0**
+- test job yaklaşık **2:01**
+- canonical job yaklaşık **3:49**
+- iki job da 7 dakika sınırının altında
+
+İlk PR run `34691443880` analyzer'da 5 public-export hatasıyla kırmızıydı. Gerçek failure logu incelendi; `StadiumFacilityState` ve `TrainingGroundFacilityState` M47 public shim'den export edilerek kök neden düzeltildi. Sonraki analyzer/test ve canonical run'ları yeşil oldu.
+
+M47 canonical final:
+- seasons=4
+- target=`t1_01`
+- facility levels=`2/2/2` (academy/stadium/training)
+- target matchday revenue=`9,911,400 -> 11,398,110`
+- crises=`40/192`
+- forcedWiring=true
+- debtPreserved=true
+- sponsorStatePreserved=true
+- financeReplacementMatch=true
+- facilitiesPreserved=true
+- stadiumEffect=true
+- neutralM46Parity=true
+- saveResumeMatch=true
+- boundaryMatch=true
+- saveBytes=935220
+
+M47 kapsamı:
+- M38 academy/stadium/training facility etkileri M46 sponsor+crisis PresidentDomain continuation runtime'ına aynı sezon simülasyonu içinde bağlandı
+- her sezon yalnız bir kez world/PresidentDomain simülasyonu çalışır
+- academy + training real player lifecycle'a, stadium + current fan trust real matchday revenue'ya etki eder
+- sponsor geliri economy'de legacy sponsor gelirinin replacement kaynağıdır; double-counting yok
+- kriz facility+sponsor-aware economy sonrasında uygulanır
+- sponsor state krizden bağımsız korunur; debt preservation korunur
+- facility portfolio continuation-critical state olarak M46 runtime'ın yanında persist edilir; world state ikinci kez kopyalanmaz
+- neutral facility level 0 yolu M46 ile birebir parity verir
+- non-zero academy/stadium/training state save/load ve 2+2 resume determinism verir
+- M39 otomatik president facility investment decision loop M47 kapsamına bilinçli olarak alınmadı; sonraki milestone adayıdır
+- 5 yeni acceptance testi; toplam 198 test
+- kalıcı canonical gate: `tool/run_m47_facility_sponsor_crisis_runtime_composition.dart`
+- kalıcı doküman: `M47_FACILITY_SPONSOR_CRISIS_RUNTIME_COMPOSITION_I.md`
+
+M47 henüz `main` üzerinde değildir. Sıradaki zorunlu kapı:
+1. docs-inclusive exact PR HEAD CI
+2. analyzer + 198 test + M0–M47 + artifact 0
+3. head/mergeable doğrulaması
+4. **PR #50 için açık kullanıcı merge onayı**
+5. yalnız onaydan sonra squash merge + post-merge main CI
+
 ### Son merge edilmiş milestone: M46 — Sponsor + Crisis Runtime Composition I
 
 PR #49 squash merge: `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
@@ -36,48 +94,11 @@ Post-merge main CI `34686218278` — **SUCCESS**:
 - analyzer: `No issues found!`
 - **193 normal/non-canonical test PASS**
 - **M0–M46 canonical PASS**
-- M46 canonical PASS
 - artifacts: **0**
 - test job yaklaşık **2:30**
 - canonical job yaklaşık **4:50**
-- iki job da 7 dakika sınırının altında
 
-M46 canonical final:
-- seasons=4
-- contractsPerSeason=48
-- sponsorRevenueBySeason=`291473844.75,294173445.25,295481959.00,299331748.00`
-- cumulativeSponsorRevenue=`1180460997.00`
-- crises=`46/192`
-- forcedWiring=true
-- debtPreserved=true
-- sponsorStatePreserved=true
-- financeReplacementMatch=true
-- neutralM45Parity=true
-- saveResumeMatch=true
-- boundaryMatch=true
-- saveBytes=731311
-
-M46 kapsamı:
-- M45 sponsor-aware ekonomi ve M44 kriz boundary'si aynı top-level runtime'da compose edildi
-- PresidentDomain/world sezonu yalnız bir kez simüle ediliyor
-- kriz sponsor-aware finance tamamlandıktan sonra uygulanıyor
-- sponsor contract state krizden bağımsız korunuyor
-- kriz-adjusted finance/fan/media gerçek continuation state'ine yazılıyor
-- sonraki sponsor sezonu kriz-adjusted fan/media + current president context'ini okuyor
-- M44 debt-preservation ve M45 sponsor replacement/double-counting korumaları korunuyor
-- kriz etkisiz konfigürasyonda M45 ile birebir parity var
-- mevcut `SponsorPresidentRuntimeCheckpoint` + `SponsorPresidentRuntimeSaveCodec` yeterli; save-version bump yok
-- 2+2 save/resume = uninterrupted 4 sezon
-- 4 yeni normal acceptance testi eklendi; toplam 193 test
-- kalıcı canonical gate: `tool/run_m46_sponsor_crisis_runtime_composition.dart`
-- kalıcı doküman: `M46_SPONSOR_CRISIS_RUNTIME_COMPOSITION_I.md`
-
-PR kanıtı:
-- code/canonical HEAD `afd0381139356eff59d399023a169e10bf60ffff`, run `34685617385` SUCCESS
-- docs-inclusive final HEAD `5dae71fb3118f4a9b1daf02810e3a01600e58c39`, run `34686001614` SUCCESS
-- 193 tests, M0–M46 PASS, artifact 0
-
-M46 **CLOSED / MERGED / PASS**. Sonraki milestone henüz seçilmedi.
+M46 **CLOSED / MERGED / PASS**.
 
 ## 3. Son kapalı milestone'lar
 
@@ -132,7 +153,7 @@ PR #42 squash merge: `ea95f767eb95194455e012cb0b9ec5cc6e81667f`; post-merge CI `
 
 ## 4. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis runtime composition.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis runtime composition; M47 facility+sponsor+crisis runtime composition (PR #50, henüz merge edilmedi).
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -143,19 +164,25 @@ Başkan/state gerçek etkileri:
 - `FanState.overallTrust`: attendance + sponsor offer quality + crisis pressure
 - `MediaState.credibility`: sponsor offer quality + crisis pressure
 - finance cash/debt: crisis pressure + bounded cash effect
+- facility academy/training: real lifecycle/youth-development etkisi
+- facility stadium + fan trust: real matchday revenue etkisi
 - M44: crisis output gerçek next-season continuation state'ine taşınır
 - M45: sponsor contract lifecycle + revenue gerçek PresidentDomain continuation/economy akışına bağlıdır
 - M46: M44 + M45 aynı season boundary/continuation runtime'ında compose edilir; kriz etkisi sonraki sponsor context'ine ulaşır
+- M47: M38 facility portfolio state ve etkileri M46 runtime ile aynı tek-season simulation yolunda compose edilir
 
-## 5. M46 kabul zinciri
+## 5. M47 kabul zinciri
 
-1. Sponsor-aware economy coordinator 48 kulüp kontrat/gelirini gerçek economy çağrılarında çözer.
-2. PresidentDomain sezonu bir kez tamamlanır.
-3. `CrisisRuntimeIntegrationEngine.apply(...)` tamamlanmış domain checkpoint'e uygulanır.
-4. Crisis-adjusted domain checkpoint mevcut sponsor checkpoint ile composite olarak taşınır.
-5. Sonraki sponsor sezonu kriz-adjusted fan/media + current president state'ini okur.
-6. Neutral kriz yolu M45 parity verir.
-7. 2+2 save/resume uninterrupted 4 sezonla aynıdır.
+1. Full 48-club academy/stadium/training portfolio exact coverage ile açılır veya restore edilir.
+2. Academy + training facility map real `PlayerLifecycleEngine` call'ına uygulanır.
+3. Stadium + current fan trust real matchday revenue multiplier'ını üretir.
+4. Sponsor coordinator 48 kulüp kontrat/gelirini gerçek economy çağrılarında çözer; sponsor geliri replacement olarak uygulanır.
+5. PresidentDomain sezonu yalnız bir kez tamamlanır.
+6. `CrisisRuntimeIntegrationEngine.apply(...)` tamamlanmış facility+sponsor-aware domain checkpoint'e uygulanır.
+7. Crisis-adjusted domain + sponsor checkpoint + facility portfolio composite continuation state olarak taşınır.
+8. Neutral facility portfolio M46 ile birebir parity verir.
+9. Non-zero facility portfolio save/load round-trip ve 2+2 resume uninterrupted 4 sezonla aynıdır.
+10. Debt, sponsor-state, finance-replacement ve boundary parity invariants korunur.
 
 ## 6. Devir / çalışma talimatı
 
