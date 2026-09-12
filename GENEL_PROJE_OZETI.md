@@ -27,51 +27,44 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M42 PASS ve `main` üzerindedir.**
+**M0–M43 PASS ve `main` üzerindedir.**
 
-Aktif milestone:
-**M43 — Crisis Decision Core I**
-
-Branch: `feat/m43-crisis-decision-core`
-PR: **#46**
-Durum: **PR-VERIFIED / DOCS-INCLUSIVE HEAD CI PENDING**
+Sıradaki seçilmiş milestone:
+**M44 — Crisis Runtime Integration I**
 
 Kullanıcı bu oturumda yeşil milestone PR'larının ayrıca sorulmadan squash merge edilmesine ve kapanıştan sonra sonraki mantıklı milestone'a geçilmesine izin verdi. Exact-head CI, post-merge main CI, 7 dakika, determinism ve artifact=0 kuralları aynen zorunludur.
 
-### M43 kapsamı
-- ayrı legacy-safe `crisis` domain; mevcut simülasyon akışları varsayılan olarak kriz motorunu çağırmaz
+## 3. Son kapalı milestone'lar
+
+### M43 — Crisis Decision Core I — CLOSED / MERGED / PASS
+PR #46 squash merge: `27474a731aa73d291859828a1657d06579e69269`
+
+Post-merge main CI `34680783652` — **SUCCESS**:
+- test job `103518919732` — SUCCESS
+- analyzer: `No issues found!`
+- **179 normal/non-canonical test PASS**
+- canonical job `103518919822` — SUCCESS
+- **M0–M43 canonical PASS**
+- artifacts: **0**
+- iki job da 7 dakika sınırının altında
+
+M43 kapsamı:
+- ayrı legacy-safe `crisis` domain
 - stateless deterministic `CrisisDecisionEngine`
 - finance cash/debt + fan trust + media credibility + president profile typed context
-- deterministic kriz türleri: liquidity squeeze / supporter unrest / media backlash
+- kriz türleri: liquidity squeeze / supporter unrest / media backlash
 - threshold altı context kriz üretmez
 - `financialDiscipline`, `riskAppetite`, `transferAmbition`, `managerPatience` gerçek karar farkı üretir
 - bounded cash/fan/media etkileri
 - cash sıfırın altına düşmez; debt değiştirilmez, gizli debt yok
 - save formatı değişmez; reconstructed continuation state aynı result signature üretir
-- 6 normal acceptance testi + M43 canonical runner
-
-### M43 code-bearing CI kanıtı
-PR #46 code-bearing HEAD: `e8d0d0384d970570a21e2382c1996dcb38be994f`
-Run `34680327227` — **SUCCESS**:
-- analyzer: `No issues found!`
-- **179 normal/non-canonical tests PASS**
-- **M0–M43 canonical PASS**
-- artifacts: **0**
-- test ≈ 1m57s; canonical ≈ 3m15s; ikisi de 7 dakikanın altında
-- canonical: prudent=`austerityPlan`, bold=`bridgeSpending`, supporter=`ambitionReset`, media=`transparentBriefing`
-- debtPreserved=`true`
-- saveResumeMatch=`true`
+- canonical: prudent=`austerityPlan`, bold=`bridgeSpending`, supporter=`ambitionReset`, media=`transparentBriefing`, debtPreserved=`true`, saveResumeMatch=`true`
 
 Kalıcı doküman: `M43_CRISIS_DECISION_CORE_I.md`.
-
-Sıradaki adım: bu docs-inclusive exact PR HEAD'in test + canonical + artifact=0 sonucunu doğrula. Yeşilse oturum yetkisiyle squash merge et; post-merge `main` CI yeşilse M43 CLOSED/PASS yap ve canlı mimariye göre sonraki milestone'a devam et.
-
-## 3. Son kapalı milestone'lar
 
 ### M42 — Sponsor System I — CLOSED / MERGED / PASS
 PR #45 squash merge: `2868d725c4ba68601a732d98b913195d3c58a4a3`
 Post-merge main CI `34660280556`: analyzer clean, **173 test PASS**, **M0–M42 PASS**, artifact **0**.
-Docs-close main commit `0839be62cd9221b19f0b7990681faac86a8d697c`; docs CI `34679910122` SUCCESS, artifact 0.
 
 ### M41 — Attendance Demand & Fan Trust Integration II — CLOSED / MERGED / PASS
 PR #44 squash merge: `8d1e901ceb4e13087b75f7df948a4cbe53c429ce`; post-merge CI `34656211019`: 167 test PASS, M0–M41 PASS, artifact 0.
@@ -84,7 +77,7 @@ PR #42 squash merge: `ea95f767eb95194455e012cb0b9ec5cc6e81667f`; post-merge CI `
 
 ## 4. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor system; M43 crisis decision core (aktif).
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor system; M43 crisis decision core.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + M43 supporter/media crisis response
@@ -96,7 +89,22 @@ Başkan/state gerçek etkileri:
 - `MediaState.credibility`: sponsor offer quality + M43 crisis pressure
 - finance cash/debt: M43 liquidity pressure and bounded cash effect
 
-## 5. Devir / çalışma talimatı
+## 5. Sıradaki yön — M44
+
+**M44 — Crisis Runtime Integration I** seçildi.
+
+Hedef: M43 kriz motorunu gerçek başkanlık runtime/sezon akışına dar ve opt-in bir entegrasyonla bağlamak.
+
+İlk tasarım ilkeleri:
+- legacy varsayılan akış değişmemeli; kriz entegrasyonu açıkça etkinleştirilmeli veya ayrı wrapper üzerinden çalışmalı
+- gerçek sezon sonunda mevcut finance/fan/media/president state kullanılarak kriz değerlendirilmeli
+- kriz sonucu gerçek continuation state'e uygulanmalı
+- karar/history typed ve deterministic olmalı
+- save/resume parity korunmalı; continuation-critical yeni state gerekirse explicit versioning yapılmalı, gerekmiyorsa mevcut state'ten türetilmeli
+- başkan turnover sonrasında yeni profil bir sonraki kriz kararını gerçekten değiştirebilmeli
+- canonical M44 gate + normal acceptance testleri eklenecek
+
+## 6. Devir / çalışma talimatı
 
 1. Her işlemden önce canlı GitHub durumunu doğrula.
 2. `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır; silinmez.
