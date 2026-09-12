@@ -43,6 +43,16 @@ void main(List<String> args) {
     controlledClubId: controlled,
     seasonCount: 1,
   );
+  final forcedPlayerParity = const PlayerPresidentCrisisControlCareerEngine(
+    crisisProvider: _NonAiCrisisProvider(),
+    aiCrisisEngine: forcedAi,
+  ).simulateWithCheckpoint(
+    clubs: world.clubs,
+    leagues: world.leagues,
+    config: config,
+    controlledClubId: controlled,
+    seasonCount: 1,
+  );
 
   const engine = PlayerPresidentCrisisControlCareerEngine(
     crisisProvider: _NonAiCrisisProvider(),
@@ -59,20 +69,25 @@ void main(List<String> args) {
     electionInterval: 2,
   );
 
-  final firstDecision = direct.crisisDecisions.first;
+  final parityDecision = forcedPlayerParity.crisisDecisions.single;
   final forcedBaselineByClub = {
     for (final item in forcedBaseline.boundaries.first.source.crisis.clubs)
       item.clubId: item.resolution!.signature,
   };
-  final playerByClub = {
-    for (final item in direct.boundaries.first.source.crisis.clubs)
+  final parityPlayerByClub = {
+    for (final item
+        in forcedPlayerParity.boundaries.first.source.crisis.clubs)
       item.clubId: item.resolution!.signature,
   };
   final aiParityCount = world.clubs
       .where((club) => club.id != controlled)
-      .where((club) => playerByClub[club.id] == forcedBaselineByClub[club.id])
+      .where(
+        (club) =>
+            parityPlayerByClub[club.id] == forcedBaselineByClub[club.id],
+      )
       .length;
 
+  final firstDecision = direct.crisisDecisions.first;
   final firstCrisis = direct.boundaries.first.source.crisis;
   final finance = firstCrisis.checkpoint.presidentRuntime.runtime.runtime.world
       .nextSeasonFinanceStates
@@ -131,7 +146,7 @@ void main(List<String> args) {
   if (!neutralM50Parity) {
     throw StateError('M51 no-provider path must preserve M50 exactly.');
   }
-  if (firstDecision.clubId != controlled || !firstDecision.changedFromAi) {
+  if (parityDecision.clubId != controlled || !parityDecision.changedFromAi) {
     throw StateError('M51 player must override only the controlled crisis.');
   }
   if (aiParityCount != world.clubs.length - 1) {
