@@ -31,22 +31,23 @@ Kalıcı kurallar:
 
 **M0–M47 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M48 — President Facility Investment Runtime Integration I aktif; PR #51 PR-VERIFIED / NOT MERGED.**
+**M48 — President Facility Investment Runtime Integration I aktif; PR #51 MERGE READY / NOT MERGED.**
 
-### M48 — President Facility Investment Runtime Integration I — PR-VERIFIED / NOT MERGED
+### M48 — President Facility Investment Runtime Integration I — MERGE READY / NOT MERGED
 
 Branch: `feat/m48-president-facility-investment-runtime`
 PR: #51
-Code-bearing verified HEAD: `5a6bd0e695af214cf16530138ed3ba318effad46`
-Code-bearing CI run `34695693706` — **SUCCESS**:
+Verified docs-inclusive PR HEAD: `0dc01cfe0da3afe9edc7bfdf1772acb15d1a73a6`
+Final verified PR CI run `34696028918` — **SUCCESS**:
 - analyzer: `No issues found!`
 - **203 normal/non-canonical test PASS**
 - **M0–M48 canonical PASS**
 - M48 canonical PASS
 - artifacts: **0**
-- test job yaklaşık **3:21**
-- canonical job yaklaşık **5:04**
+- PR mergeable: **true**
 - iki job da 7 dakika sınırının altında
+
+Code-bearing verified HEAD `5a6bd0e695af214cf16530138ed3ba318effad46`, CI `34695693706` da **SUCCESS** verdi; test job yaklaşık **3:21**, canonical job yaklaşık **5:04** sürdü ve artifact 0 kaldı.
 
 İlk PR run `34695336114` analyzer'da test tarafında 1 gerçek hata + 3 unnecessary-import bilgisiyle kırmızıydı. Gerçek failure logu incelendi; generated `PresidentProfile` üzerindeki yanlış `.presidentId` erişimi `.id` olarak düzeltildi ve üç gereksiz import kaldırıldı. Sonraki analyzer/test ve canonical run'ları yeşil oldu.
 
@@ -84,14 +85,13 @@ M48 kapsamı:
 - kalıcı canonical gate: `tool/run_m48_president_facility_investment_runtime.dart`
 - kalıcı doküman: `M48_PRESIDENT_FACILITY_INVESTMENT_RUNTIME_INTEGRATION_I.md`
 
-M48 henüz `main` üzerinde değildir. Code-bearing teknik kapılar tamamlandı. Kalan zorunlu kapılar:
-1. docs-inclusive exact PR HEAD CI doğrulaması
-2. exact HEAD analyzer + 203 tests + M0–M48 + artifact 0
-3. PR head/mergeability doğrulaması
-4. PR #51 için açık kullanıcı merge onayı
-5. onay sonrası squash merge
-6. post-merge `main` CI yeşil doğrulaması
-7. ardından M48 CLOSED / MERGED / PASS
+M48 henüz `main` üzerinde değildir. Teknik PR kapılarının tamamı doğrulanmıştır. Kalan zorunlu kapılar:
+1. PR #51 için açık kullanıcı merge onayı
+2. onay sonrası exact HEAD korunarak squash merge
+3. post-merge `main` CI yeşil doğrulaması
+4. ardından M48 CLOSED / MERGED / PASS
+
+Bu özet güncellemesi docs-only commit'tir. Bu commitin CI sonucu doğrulandıktan sonra yalnız run-ID yazmak için yeniden docs commit atılmaz; docs→CI→docs döngüsü oluşturulmaz.
 
 ## 3. Son kapanan milestone: M47 — Facility + Sponsor + Crisis Runtime Composition I
 
