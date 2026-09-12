@@ -199,3 +199,6 @@ jobs:
 
       - name: Run M54 transfer strategy world runtime bridge
         run: dart run tool/run_m54_transfer_strategy_world_runtime_bridge.dart
+
+      - name: Run M55 player president transfer strategy control
+        run: dart run tool/run_m55_player_president_transfer_strategy_control.dart
