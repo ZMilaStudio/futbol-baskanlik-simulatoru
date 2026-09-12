@@ -31,61 +31,96 @@ Kalıcı kurallar:
 
 **M0–M48 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-Aktif PR / milestone yok.
+**M49 — Player President Facility Decision Override I aktif; PR #52 PR-VERIFIED / NOT MERGED.**
 
-### Son kapanan milestone: M48 — President Facility Investment Runtime Integration I
+### M49 — Player President Facility Decision Override I — PR-VERIFIED / NOT MERGED
 
-PR #51 explicit kullanıcı onayı sonrası exact HEAD kilidiyle squash merge edildi.
+Branch: `feat/m49-player-president-facility-control`
+PR: #52
+Code-bearing verified HEAD: `4290b428f09b5475bd3131f351075db0151b0ac9`
+Code-bearing CI `34701135589` — **SUCCESS**:
+- analyzer: `No issues found!`
+- **208 normal/non-canonical test PASS**
+- **M0–M49 canonical PASS**
+- M49 canonical PASS
+- artifacts: **0**
+- test job yaklaşık **2:27**
+- canonical job yaklaşık **5:09**
+- iki job da 7 dakika sınırının altında
+
+İlk PR run `34700738952` analyzer'da iki gerçek compile hatasıyla kırmızıydı. Gerçek log okundu; `player_president_facility_control.dart` içindeki iki `PresidentRuntimeClubState` anotasyonunun canlı runtime sınıfı `PresidentClubRuntimeState` ile uyumsuz olduğu doğrulandı. Branch'te state/save davranışını değiştirmeyen internal compatibility typedef ile mevcut gerçek tipe bağlandı; sonraki analyzer temiz geçti.
+
+M49 canonical final:
+- controlledClub=`t1_02`
+- `aiParityCount=47`
+- `playerWindows=3`
+- controlled-player total facility spend=`12,000,000`
+- hold spend=`0`
+- stadium upgrades=`1`
+- matchday revenue=`10,168,800 -> 10,931,460`
+- neutralM48Parity=true
+- debtPreserved=true
+- cashSpendMatches=true
+- controlledClubPersisted=true
+- finalCheckpointMatch=true
+- boundaryMatch=true
+- saveBytes=`1329011`
+
+M49 kapsamı:
+- oyunun ilk explicit player-president decision override API'si eklendi
+- `controlledClubId` ile yalnız bir kulüp player-controlled facility kararına bağlanır
+- diğer 47 kulüp exact M48/M39 AI facility yatırım yolunu sürdürür
+- player academy/training/stadium için pencere başına 0..2 upgrade talep edebilir
+- academy-first ve training→stadium round-robin sırası korunur
+- M39 reserve bps guard'ları player kararında da geçerlidir; debt değişmez, hidden borrowing yoktur
+- deterministic karar context'i current president, cash/debt, facility levels, AI targets ve reserve değerlerini içerir
+- controlled club wrapper checkpoint/save içine persist edilir
+- player provider serialize edilmez; aynı deterministic provider ile `2+2 == uninterrupted 4` exact parity verir
+- provider yokken M49 runtime M48 ile birebir parity verir
+- 5 yeni acceptance testi; toplam **208 test**
+- kalıcı canonical gate: `tool/run_m49_player_president_facility_control.dart`
+- kalıcı doküman: `M49_PLAYER_PRESIDENT_FACILITY_DECISION_OVERRIDE_I.md`
+
+M49 henüz `main` üzerinde değildir. Code-bearing kapılar yeşildir. Kalan zorunlu kapılar:
+1. docs-inclusive exact PR HEAD CI
+2. exact HEAD analyzer + 208 tests + M0–M49 + artifact 0
+3. PR head/mergeable doğrulaması
+4. kullanıcıdan PR #52 için açık merge onayı
+5. onay sonrası squash merge
+6. post-merge `main` CI yeşil doğrulaması
+7. ardından M49 CLOSED / MERGED / PASS
+
+Bu özet güncellemesi docs-inclusive final adayının parçasıdır. Sırf yeni run-ID yazmak için yeniden docs commit atılmaz.
+
+## 3. Son kapanan milestone: M48 — President Facility Investment Runtime Integration I
+
+PR #51 explicit kullanıcı onayı sonrası squash merge edildi.
 
 - Final PR HEAD: `4de5350dc22fc44429b6c61548762c5e9f3f6033`
 - Final PR CI `34698168272`: **SUCCESS**
 - Merge SHA: `63950ab4ad728fe6b6f4f0deb42323590ce5180a`
 - Post-merge main CI `34698950932`: **SUCCESS**
 - analyzer: `No issues found!`
-- **203 normal/non-canonical test PASS**
+- **203 test PASS**
 - **M0–M48 canonical PASS**
 - artifacts: **0**
-- test job yaklaşık **3:13**
-- canonical job yaklaşık **5:01**
-- iki job da 7 dakika sınırının altında
+- final docs-only CI `34699313097`: **SUCCESS**, artifact 0
 
 M48 canonical final:
 - seasons=4
 - prepared investment boundaries=3
-- president facility decisions=144
+- decisions=144
 - academy/training/stadium upgrades=`70/45/33`
-- total facility investment spend=`634,000,000`
+- spend=`634,000,000`
 - invested club windows=`73`
 - stadium target=`t1_02`
 - matchday revenue=`10,168,800 -> 10,922,000`
-- currentPresidentMatch=true
-- sponsorStatePreserved=true
-- debtPreserved=true
-- cashSpendMatches=true
-- investmentActive=true
-- stadiumEffect=true
-- finalSeasonNoInvestment=true
-- finalSeasonM47Parity=true
-- saveResumeMatch=true
-- boundaryMatch=true
-- saveBytes=922058
-
-M48 kapsamı:
-- M39 başkan facility yatırım politikası M47 birleşik facility+sponsor+crisis runtime'a bağlandı
-- yatırım kararı tamamlanmış sezon + crisis boundary sonrasında ve yalnız gerçek bir sonraki sezon varsa çalışır
-- karar post-season/post-crisis **current president** profiliyle alınır; turnover otomatik replanning yaratır
-- M39 academy-first ve training→stadium round-robin sırası aynen yeniden kullanılır
-- gerçek next-season cash düşer; debt değişmez; reserve kuralları korunur
-- yeni facility state aynı M47 checkpoint'e yazılır ve sonraki sezon real lifecycle/matchday ekonomisini etkiler
-- final sezon sonrası yatırım yok; M47 final-season semantiği korunur
-- mevcut M47 save codec kullanılır; save-version bump yok
-- 5 yeni acceptance testi; toplam 203 test
-- kalıcı canonical gate: `tool/run_m48_president_facility_investment_runtime.dart`
-- kalıcı doküman: `M48_PRESIDENT_FACILITY_INVESTMENT_RUNTIME_INTEGRATION_I.md`
+- currentPresidentMatch/sponsorStatePreserved/debtPreserved/cashSpendMatches=true
+- finalSeasonM47Parity/saveResumeMatch/boundaryMatch=true
 
 M48 **CLOSED / MERGED / PASS**.
 
-## 3. Yakın milestone geçmişi
+## 4. Yakın milestone geçmişi
 
 ### M47 — Facility + Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
 - facility state ve etkileri sponsor+crisis PresidentDomain continuation runtime ile tek-season simulation yolunda compose edildi
@@ -94,7 +129,6 @@ M48 **CLOSED / MERGED / PASS**.
 
 ### M46 — Sponsor + Crisis Runtime Composition I — CLOSED / MERGED / PASS
 - sponsor + crisis tek top-level continuation runtime'ında compose edildi
-- aynı PresidentDomain/world sezonu iki kez simüle edilmez
 - sponsor-aware finance sonrası kriz uygulanır
 - sponsor state korunur; kriz-adjusted finance/fan/media sonraki sponsor context'ine ulaşır
 - PR #49 merge `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
@@ -103,16 +137,12 @@ M48 **CLOSED / MERGED / PASS**.
 ### M45 — Sponsor Runtime Integration I — CLOSED / MERGED / PASS
 - PresidentDomain + Sponsor composite checkpoint/save codec
 - sponsor revenue gerçek economy satırında replacement; double-counting yok
-- current president + fan + media sponsor context'i
 - multi-year kontrat turnover boyunca korunur; renewal current president ile yapılır
 - PR #48 merge `92f4f1b99fa841866587a8067dd529735400c035`
 - post-merge CI `34684676105`: 189 tests, M0–M45 PASS, artifact 0
 
 ### M44 — Crisis Runtime Integration I — CLOSED / MERGED / PASS
-- gerçek sezon sonu finance/fan/media/current-president context'i
-- crisis etkileri continuation state'ine yazılır
-- debt değişmez; gizli borrowing yok
-- save-version bump yok
+- crisis etkileri continuation state'ine yazılır; debt değişmez
 - PR #47 merge `43149da199e74e41dabe47534e4e4e887d8862e7`
 - post-merge CI `34683153804`: 184 tests, M0–M44 PASS, artifact 0
 
@@ -122,18 +152,9 @@ PR #46 merge `27474a731aa73d291859828a1657d06579e69269`; post-merge CI `34680783
 ### M42 — Sponsor System I — CLOSED / MERGED / PASS
 PR #45 merge `2868d725c4ba68601a732d98b913195d3c58a4a3`; post-merge CI `34660280556`: 173 tests, M0–M42 PASS, artifact 0.
 
-### M41 — Attendance Demand & Fan Trust Integration II — CLOSED / MERGED / PASS
-PR #44 merge `8d1e901ceb4e13087b75f7df948a4cbe53c429ce`; post-merge CI `34656211019`: 167 tests, M0–M41 PASS, artifact 0.
+## 5. Sistem zinciri
 
-### M40 — Stadium Capacity & Attendance Core I — CLOSED / MERGED / PASS
-PR #43 merge `8edcdb67ee77f16e64b40d5b44588deae562625f`; post-merge CI `34652843932`: 162 tests, M0–M40 PASS, artifact 0.
-
-### M39 — President Facility Portfolio Decision Loop I — CLOSED / MERGED / PASS
-PR #42 merge `ea95f767eb95194455e012cb0b9ec5cc6e81667f`; post-merge CI `34649669246`: 157 tests, M0–M39 PASS, artifact 0.
-
-## 4. Sistem zinciri
-
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime integration; M45 sponsor runtime integration; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime integration.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M37 academy facility; M38 facility portfolio; M39 president portfolio decision loop; M40 stadium capacity/attendance; M41 fan trust→attendance; M42 sponsor core; M43 crisis core; M44 crisis runtime; M45 sponsor runtime; M46 sponsor+crisis composition; M47 facility+sponsor+crisis composition; M48 president facility investment runtime; M49 player-president facility decision override (PR #52, henüz merge edilmedi).
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -151,23 +172,20 @@ Başkan/state gerçek etkileri:
 - M46: sponsor+crisis aynı season boundary'de compose edilir
 - M47: facility state ve etkileri M46 ile tek-season simulation yolunda compose edilir
 - M48: M39 current-president facility yatırım kararları M47 continuation boundary'sine bağlanır
+- M49: controlled club için player facility kararı M48 boundary'sini override eder; diğer kulüpler AI kalır
 
-## 5. M48 kabul zinciri
+## 6. M49 kabul zinciri
 
-1. M47 sezonu yalnız bir kez tamamlanır.
-2. Crisis-adjusted post-season current president state okunur.
-3. Gelecek sezon varsa academy kararı önce uygulanır.
-4. Aynı M39 portfolio orchestrator training→stadium round-robin kararını uygular.
-5. Cash gerçek next-season finance state'inden düşer; debt değişmez.
-6. Sponsor state ve PresidentDomain memory korunur.
-7. Güncellenen facility portfolio aynı M47 checkpoint'e yazılır.
-8. Sonraki sezon yeni facility seviyeleri gerçek academy/training/stadium etkisine dönüşür.
-9. Final sezon sonrası yatırım uygulanmaz; tek-sezon M48 M47 ile parity verir.
-10. Existing M47 codec ile save/load round-trip ve 2+2 resume uninterrupted 4 sezonla aynıdır.
-
-## 6. Sonraki milestone seçimi
-
-M49 henüz seçilmedi. Yeni milestone seçmeden önce canlı `main` tekrar doğrulanmalı ve repo içindeki gerçek ürün boşluğu okunmalıdır. Varsayımla kapsam açılmaz.
+1. M48 source season yalnız bir kez tamamlanır.
+2. Gelecek sezon yoksa player/AI facility yatırımı uygulanmaz.
+3. Gelecek sezon varsa controlled club belirlenir.
+4. Provider yoksa tüm 48 kulüp exact M48/M39 AI yolunu kullanır.
+5. Provider varsa yalnız controlled club player choice kullanır; diğer 47 kulüp exact AI yolundadır.
+6. Player academy-first ve training→stadium round-robin yatırım sırası uygulanır.
+7. Her upgrade real cash + M39 reserve guard ile kontrol edilir; debt değişmez.
+8. Güncellenen facility state sonraki gerçek sponsor+crisis sezonunda lifecycle/matchday ekonomisini etkiler.
+9. `controlledClubId` save/checkpoint içinde deterministic olarak persist eder.
+10. Aynı deterministic provider ile save/load round-trip ve `2+2 == uninterrupted 4` exact parity verir.
 
 ## 7. Devir / çalışma talimatı
 
