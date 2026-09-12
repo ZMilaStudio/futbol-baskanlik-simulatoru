@@ -31,26 +31,32 @@ Kalıcı kurallar:
 
 **M0–M48 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M49 — Player President Facility Decision Override I aktif; PR #52 PR-VERIFIED / NOT MERGED.**
-
-### M49 — Player President Facility Decision Override I — PR-VERIFIED / NOT MERGED
+**M49 — Player President Facility Decision Override I aktif; PR #52 NOT MERGED.**
 
 Branch: `feat/m49-player-president-facility-control`
 PR: #52
+
+### M49 doğrulanmış teknik durum
+
 Code-bearing verified HEAD: `4290b428f09b5475bd3131f351075db0151b0ac9`
-Code-bearing CI `34701135589` — **SUCCESS**:
+Code-bearing CI `34701135589`: **SUCCESS**.
+
+İlk docs-inclusive candidate HEAD: `f6cc812016499af5acfb3779aa11aca53825c83c`
+Docs-inclusive CI `34701508278`: **SUCCESS**.
+
+Bu iki doğrulamada:
 - analyzer: `No issues found!`
 - **208 normal/non-canonical test PASS**
 - **M0–M49 canonical PASS**
-- M49 canonical PASS
 - artifacts: **0**
-- test job yaklaşık **2:27**
-- canonical job yaklaşık **5:09**
-- iki job da 7 dakika sınırının altında
+- iki job da `timeout-minutes: 7` altında
+
+Bu dosyanın mevcut refresh commit'i docs-only'dir. Bu commit yeni bir PR HEAD oluşturacağı için **merge öncesi current exact HEAD + current CI canlı GitHub'dan tekrar doğrulanmalıdır**. Sırf yeni run-ID'yi bu dosyaya yazmak için yeni docs commit atılmaz; docs→CI→docs döngüsü oluşturulmaz.
 
 İlk PR run `34700738952` analyzer'da iki gerçek compile hatasıyla kırmızıydı. Gerçek log okundu; `player_president_facility_control.dart` içindeki iki `PresidentRuntimeClubState` anotasyonunun canlı runtime sınıfı `PresidentClubRuntimeState` ile uyumsuz olduğu doğrulandı. Branch'te state/save davranışını değiştirmeyen internal compatibility typedef ile mevcut gerçek tipe bağlandı; sonraki analyzer temiz geçti.
 
-M49 canonical final:
+### M49 canonical final
+
 - controlledClub=`t1_02`
 - `aiParityCount=47`
 - `playerWindows=3`
@@ -58,19 +64,20 @@ M49 canonical final:
 - hold spend=`0`
 - stadium upgrades=`1`
 - matchday revenue=`10,168,800 -> 10,931,460`
-- neutralM48Parity=true
-- debtPreserved=true
-- cashSpendMatches=true
-- controlledClubPersisted=true
-- finalCheckpointMatch=true
-- boundaryMatch=true
+- `neutralM48Parity=true`
+- `debtPreserved=true`
+- `cashSpendMatches=true`
+- `controlledClubPersisted=true`
+- `finalCheckpointMatch=true`
+- `boundaryMatch=true`
 - saveBytes=`1329011`
 
-M49 kapsamı:
+### M49 kapsamı
+
 - oyunun ilk explicit player-president decision override API'si eklendi
 - `controlledClubId` ile yalnız bir kulüp player-controlled facility kararına bağlanır
 - diğer 47 kulüp exact M48/M39 AI facility yatırım yolunu sürdürür
-- player academy/training/stadium için pencere başına 0..2 upgrade talep edebilir
+- player academy/training/stadium için pencere başına `0..2` upgrade talep edebilir
 - academy-first ve training→stadium round-robin sırası korunur
 - M39 reserve bps guard'ları player kararında da geçerlidir; debt değişmez, hidden borrowing yoktur
 - deterministic karar context'i current president, cash/debt, facility levels, AI targets ve reserve değerlerini içerir
@@ -81,16 +88,14 @@ M49 kapsamı:
 - kalıcı canonical gate: `tool/run_m49_player_president_facility_control.dart`
 - kalıcı doküman: `M49_PLAYER_PRESIDENT_FACILITY_DECISION_OVERRIDE_I.md`
 
-M49 henüz `main` üzerinde değildir. Code-bearing kapılar yeşildir. Kalan zorunlu kapılar:
-1. docs-inclusive exact PR HEAD CI
-2. exact HEAD analyzer + 208 tests + M0–M49 + artifact 0
-3. PR head/mergeable doğrulaması
-4. kullanıcıdan PR #52 için açık merge onayı
-5. onay sonrası squash merge
-6. post-merge `main` CI yeşil doğrulaması
+M49 henüz `main` üzerinde değildir. Merge için kalan zorunlu kapılar:
+1. current exact PR HEAD'i canlı doğrula
+2. current exact HEAD CI: analyzer + 208 tests + M0–M49 + artifact 0 doğrula
+3. PR #52 mergeable=true doğrula
+4. kullanıcıdan PR #52 için açık merge onayı al
+5. yalnız onaydan sonra exact HEAD kilidiyle squash merge et
+6. post-merge `main` CI yeşil doğrula
 7. ardından M49 CLOSED / MERGED / PASS
-
-Bu özet güncellemesi docs-inclusive final adayının parçasıdır. Sırf yeni run-ID yazmak için yeniden docs commit atılmaz.
 
 ## 3. Son kapanan milestone: M48 — President Facility Investment Runtime Integration I
 
