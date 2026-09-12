@@ -73,7 +73,7 @@ class CrisisRuntimeCareerResult {
 
 class CrisisRuntimeIntegrationEngine {
   const CrisisRuntimeIntegrationEngine({
-    this.decisionEngine = const CrisisDecisionEngine(),
+    this.decisionEngine = const CrisisDecisionEngine(activationThreshold: 55),
   });
 
   final CrisisDecisionEngine decisionEngine;
