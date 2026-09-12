@@ -1,8 +1,9 @@
 # M46 — Sponsor + Crisis Runtime Composition I
 
-Durum: **MERGE-READY / NOT MERGED**
+Durum: **CLOSED / MERGED / PASS**
 Tarih: 12 Eylül 2026
 PR: #49
+Squash merge: `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
 
 ## Amaç
 
@@ -30,7 +31,7 @@ Bu akış aynı sezonun world/PresidentDomain simülasyonunu iki kez çalıştı
 
 ## Legacy / neutral parity
 
-Kriz etkisiz konfigürasyonda birleşik runtime M45 ile birebir parity vermek zorundadır.
+Kriz etkisiz konfigürasyonda birleşik runtime M45 ile birebir parity verir.
 
 Acceptance testi:
 - composite checkpoint equality,
@@ -105,22 +106,41 @@ Final canonical seed `20260903` çıktısı:
 - saveBytes=`731311`
 - PASS
 
-## Final PR CI kanıtı
+## PR CI kanıtı
 
 Kod + canonical gate HEAD: `afd0381139356eff59d399023a169e10bf60ffff`
 PR CI `34685617385` — **SUCCESS**:
 - analyzer: `No issues found!`
 - **193 normal/non-canonical test PASS**
-- canonical job SUCCESS
 - **M0–M46 canonical PASS**
-- M46 canonical PASS
 - artifact **0**
-- test job yaklaşık 3:13
-- canonical job yaklaşık 4:51
+- test yaklaşık 3:13
+- canonical yaklaşık 4:51
+
+Docs-inclusive final PR HEAD: `5dae71fb3118f4a9b1daf02810e3a01600e58c39`
+Exact-head PR CI `34686001614` — **SUCCESS**:
+- analyzer clean
+- **193 test PASS**
+- **M0–M46 canonical PASS**
+- artifact **0**
 - iki job da 7 dakika sınırının altında
 
-Bu doküman ve genel özet eklendikten sonra docs-inclusive exact HEAD CI yeniden doğrulanacaktır.
+## Merge ve post-merge CI kanıtı
+
+PR #49 squash merge: `f0455db0fd5f33dd1d50bb89aeabcb14e3d5d694`
+
+Post-merge `main` CI `34686218278` — **SUCCESS**:
+- test job `103533544434` — SUCCESS
+- analyzer: `No issues found!`
+- **193 tests PASS**
+- canonical job `103533544278` — SUCCESS
+- **M0–M46 canonical PASS**
+- M46 canonical PASS
+- artifacts: **0**
+- test yaklaşık **2:30**
+- canonical yaklaşık **4:50**
+- iki job da 7 dakika sınırının altında
 
 ## Sonuç
 
-M46 kod ve davranış olarak merge-ready durumdadır. Sponsor ve kriz sistemleri artık aynı opt-in top-level runtime içinde tek sezon/world simülasyonu üzerinden compose edilir; kriz-adjusted continuation state gelecekteki sponsor context'ine taşınır ve mevcut M45 composite save formatı ile deterministik olarak resume edilebilir.
+M46 **CLOSED / MERGED / PASS**. Sponsor ve kriz sistemleri artık aynı opt-in top-level runtime içinde tek sezon/world simülasyonu üzerinden compose edilir; kriz-adjusted continuation state gelecekteki sponsor context'ine taşınır ve mevcut M45 composite save formatı ile deterministik olarak resume edilir.
