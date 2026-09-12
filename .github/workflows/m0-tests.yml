@@ -166,3 +166,6 @@ jobs:
 
       - name: Run M43 crisis decision core
         run: dart run tool/run_m43_crisis_decision.dart 20260903
+
+      - name: Run M44 crisis runtime integration
+        run: dart run tool/run_m44_crisis_runtime_integration.dart 20260903
