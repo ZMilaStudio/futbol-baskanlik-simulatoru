@@ -220,6 +220,7 @@ void main() {
       leagues: world.leagues,
       config: config,
       seasonCount: 2,
+      hasFutureSeasonAfterReport: true,
     );
     final restored = codec.decode(codec.encode(firstHalf.checkpoint));
     final resumed = PlayerPresidentPromiseDomainCareerEngine(
