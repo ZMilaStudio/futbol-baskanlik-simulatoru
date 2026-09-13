@@ -21,13 +21,24 @@ M67 sonrası M59 facility/sponsor/crisis/manager kontrol zinciri M65/M67 authori
 
 ## Acceptance
 
-1. Facility provider yokken exact M67 checkpoint + season-boundary parity.
-2. Aktif incumbent için aynı gerçek sezon akışında facility + promise + media + transfer + ticket provider delegation.
-3. Facility override yalnız controlled club yatırımını değiştirirken diğer 47 kulübün yatırım kararlarının exact AI parity'si.
-4. Persisted lost tenure ve incumbent identity mismatch facility provider'ını bloklar; mismatch sticky loss'a dönüşür.
-5. M65 codec ile 2+2 save/resume, uninterrupted 4-season run ile deterministic eşitlik.
-6. Mevcut M0–M67 canonical zinciri bozulmaz; M68 canonical marker eklenir.
-7. Artifact hedefi 0.
+1. Facility provider yokken exact M67 checkpoint + season-boundary parity — PASS.
+2. Aktif incumbent için aynı gerçek sezon akışında facility + promise + media + transfer + ticket provider delegation — PASS.
+3. Facility override yalnız controlled club yatırımını değiştirirken diğer 47 kulübün yatırım kararlarının exact AI parity'si — PASS.
+4. Persisted lost tenure ve incumbent identity mismatch facility provider'ını bloklar; mismatch sticky loss'a dönüşür — PASS.
+5. M65 codec ile 2+2 save/resume, uninterrupted 4-season run ile deterministic eşitlik — PASS.
+6. Mevcut M0–M67 canonical zinciri bozulmaz; M68 canonical marker eklenir — PASS.
+7. Artifact hedefi 0 — PASS.
+
+## İlk CI kanıtı
+
+- İlk code-bearing PR HEAD: `414db717ad4002a88b5754eddaa3e51f23e4a40e`
+- PR CI: `34784261233` — SUCCESS
+- Analyzer: `No issues found!`
+- Normal/non-canonical test: **303/303 PASS**
+- Beş M68 acceptance testi: PASS
+- Canonical: **M0–M68 PASS**
+- Marker: `M68_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=t1_01 m67ParityWithoutFacility=true fiveProviders=true facilityChanged=true aiParity=47 lostBlocksFacility=true singleCheckpoint=true saveResume=true worldClubs=48 seed=20260903`
+- Artifact: **0**
 
 ## Dosyalar
 
@@ -40,4 +51,4 @@ M67 sonrası M59 facility/sponsor/crisis/manager kontrol zinciri M65/M67 authori
 
 ## Durum
 
-IMPLEMENTATION IN PROGRESS / NOT MERGED.
+CODE + FIRST CI PASS / FINAL EXACT-HEAD CI BEKLENİYOR / NOT MERGED.
