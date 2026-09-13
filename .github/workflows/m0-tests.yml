@@ -226,3 +226,6 @@ jobs:
 
       - name: Run M63 player president tenure-gated promise media composition
         run: dart run tool/run_m63_player_president_tenure_gated_promise_media_composition.dart 20260903
+
+      - name: Run M64 player president tenure-gated ticket pricing control
+        run: dart run tool/run_m64_player_president_tenure_gated_ticket_pricing_control.dart 20260903
