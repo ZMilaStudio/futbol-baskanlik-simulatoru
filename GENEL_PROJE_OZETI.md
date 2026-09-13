@@ -31,31 +31,29 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M65 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M66 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M66 — Player President Tenure-Gated Transfer + Ticket Pricing Runtime Composition I.**
+**Aktif milestone: yok.**
 
-M66 canlı durum:
+M66 kapanış kanıtı:
+- PR #69 — **MERGED / CLOSED**
 - Branch: `feat/m66-transfer-ticket-pricing-runtime-composition`
-- PR #69 — **OPEN / NOT MERGED**
-- Base `main`: `9bd9553839cf9295e3049f120e41b5eb15387151`
-- İlk tam-yeşil branch HEAD: `cd49e779f1e67ae3cde2a5df00a6e1e5e2b2b1d6`
-- PR CI `34778364485`: **SUCCESS**
+- Final pre-merge PR HEAD: `0980fca22ffdbb7e0374d068f6ae21891c13134d`
+- Final exact-head PR CI `34778678637`: **SUCCESS**
+- Squash merge SHA: `7860ef0e03a4326a884595eeef37d0b088b6e14a`
+- Post-merge `main` CI `34779120175`: **SUCCESS**
 - analyzer: `No issues found!`
 - **293/293 normal/non-canonical test PASS**
 - beş M66 acceptance testinin tamamı PASS
 - **M0–M66 canonical PASS**
 - canonical marker: `M66_PLAYER_PRESIDENT_TENURE_GATED_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=t1_01 m65ParityWithoutTransfer=true bothProviders=true singleCheckpoint=true lostBlocksBoth=true saveResume=true worldClubs=48 seed=20260903`
 - artifacts: **0**
-- geçici `M66_IMPLEMENTATION_STATUS.md` dosyası merge öncesi kaldırıldı.
-
-Bu merge-ready özet commit'i final PR HEAD'ini değiştirecektir. Yeni exact HEAD üzerinde analyzer + 293 test + M0–M66 canonical + M66 marker + artifact=0 bir kez daha doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
 
 M66 seçim gerekçesi: M65 kapanışı sonrası canlı `main` taramasında M59, M63 ve M65'in ayrı checkpoint/save/tenure-state adaları taşıdığı; M60'ın ise checkpoint oluşturmadan `WorldCareerEngine.transferMarketEngine` seam'ine bağlanan bir bridge olduğu doğrulandı. Tüm player-president yüzeylerini tek milestone'da yeniden yazmak yerine M66, M60 transfer stratejisini M65'in authoritative gerçek ekonomi runtime'ına aynı sezon ve aynı persisted tenure state üzerinde compose eden düşük-riskli ilk üst-seviye birleşim adımıdır.
 
 M66 çözümü:
-- yeni checkpoint veya save codec oluşturulmaz;
-- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` authoritative kalır;
+- yeni checkpoint veya save codec oluşturulmadı;
+- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` authoritative kaldı;
 - M66 M65 runtime'ını birer sezonluk authoritative segmentler halinde ilerletir;
 - her sezon başında gerçek incumbent management profile map'i mevcut M65 checkpoint'inden alınır;
 - M60 `PlayerPresidentTenureGatedTransferStrategyWorldBridge`, M65 checkpoint'indeki aynı `PlayerPresidentTenureControlState` ile gerçek transfer-market seam'ine kurulur;
@@ -82,24 +80,23 @@ M66 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M66 **CODE + FIRST CI PASS / FINAL EXACT-HEAD CI BEKLENİYOR / NOT MERGED**.
+M66 **CLOSED / MERGED / PASS**.
 
-## 3. Son kapanan milestone: M65 — Player President Tenure-Gated Ticket Pricing Runtime Integration I
+## 3. Son kapanan milestone: M66 — Player President Tenure-Gated Transfer + Ticket Pricing Runtime Composition I
 
-M65, M64 ticket-pricing kararını gerçek M47/M48 season economy path'ine bağladı. Balanced politika exact M48 parity üretirken aktif oyuncu başkanın fiyat seçimi gerçek `ClubFinanceSeason.matchdayRevenue` ve kapanış nakdını etkiler; tenure ownership, 47 AI kulüp parity'si ve save/resume determinism korunur.
+M66, M60 tenure-gated transfer-strategy bridge'ini M65'in gerçek ticket-pricing/economy runtime'ına yeni bir checkpoint/save adası oluşturmadan bağladı. Transfer ve ticket kararları aynı authoritative M65 checkpoint, aynı persisted `PlayerPresidentTenureControlState` ve aynı gerçek sezon akışı üzerinde çalışır; kontrol kaybı veya incumbent mismatch iki provider'ı da aynı anda bloklar. No-transfer exact M65 parity ve save/resume determinism korunur.
 
 Kapanış kanıtı:
-- PR #68 — **MERGED / CLOSED**
-- Squash merge SHA: `9e4de0ea84446293155292af39d7e887f6cdab3b`
-- Post-merge `main` CI `34777266793`: **SUCCESS**
-- Docs close commit: `9bd9553839cf9295e3049f120e41b5eb15387151`
-- docs-only close CI `34777657555`: **SUCCESS**
-- analyzer clean; **288 tests PASS**; **M0–M65 canonical PASS**; artifacts 0.
+- PR #69 — **MERGED / CLOSED**
+- Squash merge SHA: `7860ef0e03a4326a884595eeef37d0b088b6e14a`
+- Post-merge `main` CI `34779120175`: **SUCCESS**
+- analyzer clean; **293 tests PASS**; **M0–M66 canonical PASS**; artifacts 0.
 
-M65 **CLOSED / MERGED / PASS**.
+M66 **CLOSED / MERGED / PASS**.
 
 ## 4. Yakın milestone geçmişi
 
+- M66 Player President Tenure-Gated Transfer + Ticket Pricing Runtime Composition I — PR #69 merge `7860ef0e03a4326a884595eeef37d0b088b6e14a`; 293 tests; M0–M66 PASS; artifact 0.
 - M65 Player President Tenure-Gated Ticket Pricing Runtime Integration I — PR #68 merge `9e4de0ea84446293155292af39d7e887f6cdab3b`; 288 tests; M0–M65 PASS; artifact 0.
 - M64 Player President Tenure-Gated Ticket Pricing Control I — PR #67 merge `4a76d1546fa02675e1c94cd57621a82d70e15a8c`; 283 tests; M0–M64 PASS; artifact 0.
 - M63 Player President Tenure-Gated Promise + Media Composition I — PR #66 merge `72f5387fe416746244eb41cbc6aaaaf179f9442f`; 278 tests; M0–M63 PASS; artifact 0.
