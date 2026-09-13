@@ -208,3 +208,6 @@ jobs:
 
       - name: Run M57 player president media statement control
         run: dart run tool/run_m57_player_president_media_statement_control.dart
+
+      - name: Run M58 player president tenure control gate
+        run: dart run tool/run_m58_player_president_tenure_control_gate.dart 20260903
