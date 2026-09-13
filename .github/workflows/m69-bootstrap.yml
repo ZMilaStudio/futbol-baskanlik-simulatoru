@@ -1,0 +1,987 @@
+name: M69 Bootstrap
+
+on:
+  push:
+    branches:
+      - feat/m69-sponsor-unified-player-president-runtime
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'bootstrap(m69): apply sponsor unified runtime patch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Apply M69 patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one match, got {count}: {old[:80]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          # M50: expose the already-tested sponsor-system implementation for composition.
+          p = Path('lib/src/sponsor/player_president_sponsor_control.dart')
+          text = p.read_text()
+          count = text.count('_PlayerPresidentSponsorSystemEngine')
+          if count != 3:
+              raise SystemExit(f'M50 sponsor engine occurrences: expected 3, got {count}')
+          p.write_text(text.replace('_PlayerPresidentSponsorSystemEngine', 'PlayerPresidentSponsorSystemEngine'))
+
+          # M65: open a neutral sponsor-system injection seam; default remains canonical M47 behavior.
+          replace_once(
+              'lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart',
+              "import '../season/season_report.dart';\n",
+              "import '../season/season_report.dart';\nimport '../sponsor/sponsor_system.dart';\n",
+          )
+          replace_once(
+              'lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart',
+              "    this.investment = const PresidentFacilityInvestmentRuntimeEngine(),\n    this.sourceEngine = const PromiseMediaCareerEngine(),\n",
+              "    this.investment = const PresidentFacilityInvestmentRuntimeEngine(),\n    this.sponsorSystem = const SponsorSystemEngine(),\n    this.sourceEngine = const PromiseMediaCareerEngine(),\n",
+          )
+          replace_once(
+              'lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart',
+              "  final PresidentFacilityInvestmentRuntimeEngine investment;\n  final PromiseMediaCareerEngine sourceEngine;\n",
+              "  final PresidentFacilityInvestmentRuntimeEngine investment;\n  final SponsorSystemEngine sponsorSystem;\n  final PromiseMediaCareerEngine sourceEngine;\n",
+          )
+          replace_once(
+              'lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart',
+              "      runtime: FacilitySponsorCrisisRuntimeCareerEngine(\n        baseWorldEngine: pricedWorld,\n        sourceEngine: sourceEngine,\n      ),\n",
+              "      runtime: FacilitySponsorCrisisRuntimeCareerEngine(\n        sponsorSystem: sponsorSystem,\n        baseWorldEngine: pricedWorld,\n        sourceEngine: sourceEngine,\n      ),\n",
+          )
+
+          # M68: forward the same neutral seam to M65. Existing M68 callers remain exact-default compatible.
+          replace_once(
+              'lib/src/facility/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart',
+              "import '../promise/promise_media_career_engine.dart';\n",
+              "import '../promise/promise_media_career_engine.dart';\nimport '../sponsor/sponsor_system.dart';\n",
+          )
+          replace_once(
+              'lib/src/facility/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart',
+              "    this.baseWorldEngine = const WorldCareerEngine(),\n    this.investment = const PresidentFacilityInvestmentRuntimeEngine(),\n",
+              "    this.baseWorldEngine = const WorldCareerEngine(),\n    this.investment = const PresidentFacilityInvestmentRuntimeEngine(),\n    this.sponsorSystem = const SponsorSystemEngine(),\n",
+          )
+          replace_once(
+              'lib/src/facility/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart',
+              "  final WorldCareerEngine baseWorldEngine;\n  final PresidentFacilityInvestmentRuntimeEngine investment;\n",
+              "  final WorldCareerEngine baseWorldEngine;\n  final PresidentFacilityInvestmentRuntimeEngine investment;\n  final SponsorSystemEngine sponsorSystem;\n",
+          )
+          replace_once(
+              'lib/src/facility/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart',
+              "      investment: facilityInvestment,\n      sourceEngine: sourceEngine,\n",
+              "      investment: facilityInvestment,\n      sponsorSystem: sponsorSystem,\n      sourceEngine: sourceEngine,\n",
+          )
+
+          Path('lib/src/sponsor/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart').write_text(r'''import '../core/simulation_config.dart';
+import '../crisis/player_president_facility_control.dart';
+import '../crisis/president_facility_investment_runtime_integration.dart';
+import '../election/player_president_tenure_control_gate.dart';
+import '../election/president_tenure.dart';
+import '../facility/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart';
+import '../facility/player_president_tenure_gated_ticket_pricing_control.dart';
+import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
+import '../facility/stadium_facility.dart';
+import '../league/club.dart';
+import '../media/player_president_media_statement_control.dart';
+import '../promise/player_president_promise_control.dart';
+import '../transfer/player_president_transfer_strategy_control.dart';
+import '../world/world_career_engine.dart';
+import '../world/world_league.dart';
+import 'player_president_sponsor_control.dart';
+import 'sponsor_system.dart';
+
+/// M69 adds M50 sponsor selection to M68's unified player-president runtime
+/// without creating another checkpoint or save codec.
+///
+/// M65's [PlayerPresidentTicketPricingRuntimeCheckpoint] remains authoritative.
+/// Sponsor choice is delegated only while the captured player-president still
+/// owns the real incumbent identity. A persisted loss starts blocked, and an
+/// incumbent mismatch becomes sticky inside the runtime-only sponsor provider.
+/// Active multi-season contracts remain binding and the other 47 clubs stay on
+/// the canonical M42 sponsor policy.
+class PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine {
+  const PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine({
+    this.sponsorProvider,
+    this.facilityProvider,
+    this.promiseProvider,
+    this.mediaProvider,
+    this.transferStrategyProvider,
+    this.ticketPricingProvider,
+    this.offerEngine = const SponsorOfferEngine(),
+    this.aiSponsorPolicy = const PresidentSponsorDecisionPolicy(),
+    this.ticketAiPolicy = const PresidentMatchdayTicketPricingPolicy(),
+    this.pricingPolicy = const MatchdayTicketPricingPolicy(),
+    this.stadiumPolicy = const StadiumInvestmentPolicy(),
+    this.tenureGate = const PlayerPresidentTenureControlGate(),
+    this.baseWorldEngine = const WorldCareerEngine(),
+    this.investment = const PresidentFacilityInvestmentRuntimeEngine(),
+  });
+
+  final PlayerSponsorDecisionProvider? sponsorProvider;
+  final PlayerFacilityInvestmentDecisionProvider? facilityProvider;
+  final PlayerPromiseDecisionProvider? promiseProvider;
+  final PlayerMediaStatementDecisionProvider? mediaProvider;
+  final PlayerTransferStrategyDecisionProvider? transferStrategyProvider;
+  final PlayerMatchdayTicketPricingDecisionProvider? ticketPricingProvider;
+  final SponsorOfferEngine offerEngine;
+  final PresidentSponsorDecisionPolicy aiSponsorPolicy;
+  final PresidentMatchdayTicketPricingPolicy ticketAiPolicy;
+  final MatchdayTicketPricingPolicy pricingPolicy;
+  final StadiumInvestmentPolicy stadiumPolicy;
+  final PlayerPresidentTenureControlGate tenureGate;
+  final WorldCareerEngine baseWorldEngine;
+  final PresidentFacilityInvestmentRuntimeEngine investment;
+
+  PlayerPresidentTicketPricingRuntimeCareerResult simulateWithCheckpoint({
+    required List<Club> clubs,
+    required List<WorldLeague> leagues,
+    required SimulationConfig config,
+    required String controlledClubId,
+    int seasonCount = 20,
+    int electionInterval = 4,
+    bool hasFutureSeasonAfterReport = false,
+  }) {
+    if (!clubs.any((club) => club.id == controlledClubId)) {
+      throw ArgumentError('Unknown controlled club $controlledClubId.');
+    }
+    final initialPresident = const PresidentProfileGenerator().generateInitial(
+      clubId: controlledClubId,
+      careerSeed: config.careerSeed,
+      simulationVersion: config.simulationVersion,
+    );
+    final session = _M69SponsorTenureSession(
+      playerPresidentId: initialPresident.id,
+      blocked: false,
+    );
+    return _delegate(
+      controlledClubId: controlledClubId,
+      session: session,
+    ).simulateWithCheckpoint(
+      clubs: clubs,
+      leagues: leagues,
+      config: config,
+      controlledClubId: controlledClubId,
+      seasonCount: seasonCount,
+      electionInterval: electionInterval,
+      hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
+    );
+  }
+
+  PlayerPresidentTicketPricingRuntimeCareerResult resume({
+    required PlayerPresidentTicketPricingRuntimeCheckpoint checkpoint,
+    required int seasonCount,
+    bool hasFutureSeasonAfterReport = false,
+  }) {
+    checkpoint.validate();
+    final tenure = checkpoint.tenureControl;
+    final session = _M69SponsorTenureSession(
+      playerPresidentId: tenure.playerPresidentId,
+      blocked: tenure.lost,
+    );
+    return _delegate(
+      controlledClubId: tenure.controlledClubId,
+      session: session,
+    ).resume(
+      checkpoint: checkpoint,
+      seasonCount: seasonCount,
+      hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
+    );
+  }
+
+  PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntimeCareerEngine _delegate({
+    required String controlledClubId,
+    required _M69SponsorTenureSession session,
+  }) {
+    final decisions = <PlayerPresidentSponsorRuntimeDecision>[];
+    final SponsorSystemEngine sponsorSystem;
+    if (sponsorProvider == null) {
+      sponsorSystem = SponsorSystemEngine(
+        offerEngine: offerEngine,
+        decisionPolicy: aiSponsorPolicy,
+      );
+    } else {
+      sponsorSystem = PlayerPresidentSponsorSystemEngine(
+        controlledClubId: controlledClubId,
+        provider: _M69TenureGatedSponsorProvider(
+          delegate: sponsorProvider!,
+          session: session,
+        ),
+        decisions: decisions,
+        offerEngine: offerEngine,
+        decisionPolicy: aiSponsorPolicy,
+      );
+    }
+    return PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      facilityProvider: facilityProvider,
+      promiseProvider: promiseProvider,
+      mediaProvider: mediaProvider,
+      transferStrategyProvider: transferStrategyProvider,
+      ticketPricingProvider: ticketPricingProvider,
+      ticketAiPolicy: ticketAiPolicy,
+      pricingPolicy: pricingPolicy,
+      stadiumPolicy: stadiumPolicy,
+      tenureGate: tenureGate,
+      baseWorldEngine: baseWorldEngine,
+      investment: investment,
+      sponsorSystem: sponsorSystem,
+    );
+  }
+}
+
+class _M69SponsorTenureSession {
+  _M69SponsorTenureSession({
+    required this.playerPresidentId,
+    required bool blocked,
+  }) : _blocked = blocked;
+
+  final String playerPresidentId;
+  bool _blocked;
+
+  bool allows(String presidentId) {
+    if (_blocked) return false;
+    if (presidentId == playerPresidentId) return true;
+    _blocked = true;
+    return false;
+  }
+}
+
+class _M69TenureGatedSponsorProvider extends PlayerSponsorDecisionProvider {
+  const _M69TenureGatedSponsorProvider({
+    required this.delegate,
+    required this.session,
+  });
+
+  final PlayerSponsorDecisionProvider delegate;
+  final _M69SponsorTenureSession session;
+
+  @override
+  PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) {
+    if (session.allows(context.presidentId)) {
+      return delegate.choose(context);
+    }
+    return PlayerSponsorOfferChoice(offerId: context.aiChoice.id);
+  }
+}
+''')
+
+          Path('lib/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart').write_text(
+              "export 'src/sponsor/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart';\n"
+          )
+
+          Path('test/m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition_test.dart').write_text(r'''import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_media_statement_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_promise_media_transfer_ticket_pricing_runtime_composition.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
+import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
+import 'package:test/test.dart';
+
+class _AlwaysBalancedPolicy extends PresidentMatchdayTicketPricingPolicy {
+  const _AlwaysBalancedPolicy();
+
+  @override
+  MatchdayTicketPricingChoice choose({
+    required PresidentManagementProfile profile,
+    required int fanTrust,
+    required StadiumAttendanceProfile base,
+  }) =>
+      const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
+}
+
+class _PremiumTicketProvider extends PlayerMatchdayTicketPricingDecisionProvider {
+  const _PremiumTicketProvider();
+  @override
+  MatchdayTicketPricingChoice choose(PlayerPresidentTicketPricingDecisionContext context) =>
+      const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.premium);
+}
+
+class _CountingPremiumTicketProvider extends PlayerMatchdayTicketPricingDecisionProvider {
+  int calls = 0;
+  @override
+  MatchdayTicketPricingChoice choose(PlayerPresidentTicketPricingDecisionContext context) {
+    calls++;
+    return const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.premium);
+  }
+}
+
+class _YouthTransferProvider extends PlayerTransferStrategyDecisionProvider {
+  const _YouthTransferProvider();
+  @override
+  PlayerTransferStrategyChoice chooseTransferStrategy(PlayerTransferStrategyDecisionContext context) =>
+      const PlayerTransferStrategyChoice(
+        financialDiscipline: 60,
+        transferAmbition: 60,
+        riskAppetite: 60,
+        youthOrientation: 90,
+      );
+}
+
+class _CountingYouthTransferProvider extends PlayerTransferStrategyDecisionProvider {
+  int calls = 0;
+  @override
+  PlayerTransferStrategyChoice chooseTransferStrategy(PlayerTransferStrategyDecisionContext context) {
+    calls++;
+    return const PlayerTransferStrategyChoice(
+      financialDiscipline: 60,
+      transferAmbition: 60,
+      riskAppetite: 60,
+      youthOrientation: 90,
+    );
+  }
+}
+
+class _AlternativePromiseProvider extends PlayerPromiseDecisionProvider {
+  const _AlternativePromiseProvider();
+  @override
+  PresidentPromiseType choosePromise(PlayerPromiseDecisionContext context) =>
+      context.allowedTypes.firstWhere(
+        (type) => type != context.aiPromise.type,
+        orElse: () => context.aiPromise.type,
+      );
+}
+
+class _CountingAlternativePromiseProvider extends PlayerPromiseDecisionProvider {
+  int calls = 0;
+  @override
+  PresidentPromiseType choosePromise(PlayerPromiseDecisionContext context) {
+    calls++;
+    return context.allowedTypes.firstWhere(
+      (type) => type != context.aiPromise.type,
+      orElse: () => context.aiPromise.type,
+    );
+  }
+}
+
+class _AlternativeMediaProvider extends PlayerMediaStatementDecisionProvider {
+  const _AlternativeMediaProvider();
+  @override
+  MediaStance chooseStance(PlayerMediaStatementDecisionContext context) =>
+      context.allowedStances.firstWhere((stance) => stance != context.aiStatement.stance);
+}
+
+class _CountingAlternativeMediaProvider extends PlayerMediaStatementDecisionProvider {
+  int calls = 0;
+  @override
+  MediaStance chooseStance(PlayerMediaStatementDecisionContext context) {
+    calls++;
+    return context.allowedStances.firstWhere((stance) => stance != context.aiStatement.stance);
+  }
+}
+
+class _HoldFacilityProvider extends PlayerFacilityInvestmentDecisionProvider {
+  const _HoldFacilityProvider();
+  @override
+  PlayerFacilityInvestmentChoice choose(PlayerFacilityInvestmentContext context) =>
+      PlayerFacilityInvestmentChoice.hold;
+}
+
+class _CountingHoldFacilityProvider extends PlayerFacilityInvestmentDecisionProvider {
+  int calls = 0;
+  @override
+  PlayerFacilityInvestmentChoice choose(PlayerFacilityInvestmentContext context) {
+    calls++;
+    return PlayerFacilityInvestmentChoice.hold;
+  }
+}
+
+class _NonAiSponsorProvider extends PlayerSponsorDecisionProvider {
+  const _NonAiSponsorProvider();
+  @override
+  PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) {
+    final alternative = context.offers.firstWhere((offer) => offer.id != context.aiChoice.id);
+    return PlayerSponsorOfferChoice(offerId: alternative.id);
+  }
+}
+
+class _CountingNonAiSponsorProvider extends PlayerSponsorDecisionProvider {
+  int calls = 0;
+  @override
+  PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) {
+    calls++;
+    final alternative = context.offers.firstWhere((offer) => offer.id != context.aiChoice.id);
+    return PlayerSponsorOfferChoice(offerId: alternative.id);
+  }
+}
+
+class _LabelSponsorProvider extends PlayerSponsorDecisionProvider {
+  const _LabelSponsorProvider(this.label);
+  final String label;
+  @override
+  PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) {
+    final offer = context.offers.firstWhere((item) => item.id.endsWith('-$label'));
+    return PlayerSponsorOfferChoice(offerId: offer.id);
+  }
+}
+
+class _CountingLabelSponsorProvider extends PlayerSponsorDecisionProvider {
+  _CountingLabelSponsorProvider(this.label);
+  final String label;
+  int calls = 0;
+  @override
+  PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) {
+    calls++;
+    final offer = context.offers.firstWhere((item) => item.id.endsWith('-$label'));
+    return PlayerSponsorOfferChoice(offerId: offer.id);
+  }
+}
+
+void main() {
+  const config = SimulationConfig(careerSeed: 20260903);
+  const codec = PlayerPresidentTicketPricingRuntimeSaveCodec();
+  late FictionalWorldSetup world;
+  late String interactiveClubId;
+
+  setUpAll(() {
+    world = const FictionalWorldFactory().build();
+    final discovery = const PlayerPresidentTenureGatedPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      ticketAiPolicy: _AlwaysBalancedPolicy(),
+    ).simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: world.clubs.first.id,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    );
+    final boundary = discovery.boundaries.single;
+    final source = boundary.source.source.sponsor.report.sourceReport;
+    final mediaByClub = {
+      for (final item in source.baselineMediaReport.seasons.single.clubs) item.clubId: item,
+    };
+    final investmentByClub = {
+      for (final item in boundary.source.decisions) item.clubId: item,
+    };
+    interactiveClubId = source.promiseReport.snapshots
+        .firstWhere(
+          (snapshot) =>
+              mediaByClub[snapshot.promise.clubId]!.statement != null &&
+              PlayerPresidentPromiseGenerator.allowedPromiseTypes(snapshot.context)
+                  .any((type) => type != snapshot.promise.type) &&
+              investmentByClub[snapshot.promise.clubId]!.invested,
+        )
+        .promise
+        .clubId;
+  });
+
+  test('M69 without sponsor provider preserves M68 exactly', () {
+    const m68 = PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      facilityProvider: _HoldFacilityProvider(),
+      promiseProvider: _AlternativePromiseProvider(),
+      mediaProvider: _AlternativeMediaProvider(),
+      transferStrategyProvider: _YouthTransferProvider(),
+      ticketPricingProvider: _PremiumTicketProvider(),
+      ticketAiPolicy: _AlwaysBalancedPolicy(),
+    );
+    const m69 = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      facilityProvider: _HoldFacilityProvider(),
+      promiseProvider: _AlternativePromiseProvider(),
+      mediaProvider: _AlternativeMediaProvider(),
+      transferStrategyProvider: _YouthTransferProvider(),
+      ticketPricingProvider: _PremiumTicketProvider(),
+      ticketAiPolicy: _AlwaysBalancedPolicy(),
+    );
+    final baseline = m68.simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 2,
+    );
+    final composed = m69.simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 2,
+    );
+    expect(codec.encode(composed.checkpoint), codec.encode(baseline.checkpoint));
+    expect(composed.boundaries.map((item) => item.signature).toList(),
+        baseline.boundaries.map((item) => item.signature).toList());
+  });
+
+  test('M69 composes six player providers in one real season boundary', () {
+    final sponsor = _CountingNonAiSponsorProvider();
+    final facility = _CountingHoldFacilityProvider();
+    final promise = _CountingAlternativePromiseProvider();
+    final media = _CountingAlternativeMediaProvider();
+    final transfer = _CountingYouthTransferProvider();
+    final ticket = _CountingPremiumTicketProvider();
+    final result = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      sponsorProvider: sponsor,
+      facilityProvider: facility,
+      promiseProvider: promise,
+      mediaProvider: media,
+      transferStrategyProvider: transfer,
+      ticketPricingProvider: ticket,
+      ticketAiPolicy: const _AlwaysBalancedPolicy(),
+    ).simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    );
+    expect(sponsor.calls, 1);
+    expect(facility.calls, 1);
+    expect(promise.calls, 1);
+    expect(media.calls, 1);
+    expect(transfer.calls, greaterThan(0));
+    expect(ticket.calls, 1);
+    expect(result.boundaries.single.decisionFor(interactiveClubId).providerCalled, isTrue);
+  });
+
+  test('M69 sponsor override changes one club and keeps 47 AI sponsor rows exact', () {
+    const baselineEngine = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      ticketAiPolicy: _AlwaysBalancedPolicy(),
+    );
+    const playerEngine = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      sponsorProvider: _NonAiSponsorProvider(),
+      ticketAiPolicy: _AlwaysBalancedPolicy(),
+    );
+    final baseline = baselineEngine.simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    );
+    final player = playerEngine.simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    );
+    final baselineSponsor = baseline.boundaries.single.source.source.sponsor;
+    final playerSponsor = player.boundaries.single.source.source.sponsor;
+    final baselineByClub = {
+      for (final item in baselineSponsor.contracts) item.offer.clubId: item.signature,
+    };
+    final playerByClub = {
+      for (final item in playerSponsor.contracts) item.offer.clubId: item.signature,
+    };
+    expect(playerByClub[interactiveClubId], isNot(baselineByClub[interactiveClubId]));
+    final aiIds = baselineByClub.keys.where((id) => id != interactiveClubId).toList();
+    expect(aiIds, hasLength(47));
+    for (final id in aiIds) {
+      expect(playerByClub[id], baselineByClub[id], reason: id);
+    }
+    expect(
+      player.boundaries.single.financeFor(interactiveClubId).sponsorRevenue,
+      playerSponsor.revenueByClub[interactiveClubId],
+    );
+  });
+
+  test('M69 active multi-year sponsor contract is not reselected', () {
+    final sponsor = _CountingLabelSponsorProvider('stable');
+    final result = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      sponsorProvider: sponsor,
+    ).simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 3,
+    );
+    expect(sponsor.calls, 1);
+    final signatures = result.boundaries
+        .map((boundary) => boundary.source.source.sponsor.contracts
+            .firstWhere((item) => item.offer.clubId == interactiveClubId)
+            .signature)
+        .toList();
+    expect(signatures.toSet(), hasLength(1));
+  });
+
+  test('M69 lost and incumbent mismatch both block sponsor control', () {
+    final boldSeed = const PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      sponsorProvider: _LabelSponsorProvider('bold'),
+    ).simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    ).checkpoint;
+
+    final lostProvider = _CountingNonAiSponsorProvider();
+    final lost = PlayerPresidentTicketPricingRuntimeCheckpoint(
+      runtime: boldSeed.runtime,
+      tenureControl: PlayerPresidentTenureControlState(
+        controlledClubId: interactiveClubId,
+        playerPresidentId: 'm69-former-president',
+        status: PlayerPresidentTenureControlStatus.lost,
+        lostAtCompletedSeason: boldSeed.completedSeasons,
+        successorPresidentId: 'm69-successor-president',
+      ),
+    );
+    final lostResult = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      sponsorProvider: lostProvider,
+    ).resume(checkpoint: lost, seasonCount: 1, hasFutureSeasonAfterReport: true);
+    expect(lostProvider.calls, 0);
+    expect(lostResult.checkpoint.tenureControl.lost, isTrue);
+
+    final mismatchProvider = _CountingNonAiSponsorProvider();
+    final mismatch = PlayerPresidentTicketPricingRuntimeCheckpoint(
+      runtime: boldSeed.runtime,
+      tenureControl: PlayerPresidentTenureControlState(
+        controlledClubId: interactiveClubId,
+        playerPresidentId: 'm69-non-incumbent-president',
+        status: PlayerPresidentTenureControlStatus.active,
+      ),
+    );
+    final mismatchResult = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      sponsorProvider: mismatchProvider,
+    ).resume(checkpoint: mismatch, seasonCount: 1, hasFutureSeasonAfterReport: true);
+    expect(mismatchProvider.calls, 0);
+    expect(mismatchResult.checkpoint.tenureControl.lost, isTrue);
+  });
+
+  test('M69 M65 codec 2 plus 2 resume matches uninterrupted four seasons', () {
+    const engine = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+      sponsorProvider: _NonAiSponsorProvider(),
+      facilityProvider: _HoldFacilityProvider(),
+      promiseProvider: _AlternativePromiseProvider(),
+      mediaProvider: _AlternativeMediaProvider(),
+      transferStrategyProvider: _YouthTransferProvider(),
+      ticketPricingProvider: _PremiumTicketProvider(),
+    );
+    final direct = engine.simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 4,
+      electionInterval: 4,
+    );
+    final first = engine.simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: interactiveClubId,
+      seasonCount: 2,
+      electionInterval: 4,
+      hasFutureSeasonAfterReport: true,
+    );
+    final loaded = codec.decode(codec.encode(first.checkpoint));
+    final resumed = engine.resume(checkpoint: loaded, seasonCount: 2);
+    expect(codec.encode(resumed.checkpoint), codec.encode(direct.checkpoint));
+    expect(
+      [...first.boundaries, ...resumed.boundaries].map((item) => item.signature).toList(),
+      direct.boundaries.map((item) => item.signature).toList(),
+    );
+  });
+}
+''')
+
+          Path('tool/run_m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart').write_text(r'''import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_media_statement_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_promise_media_transfer_ticket_pricing_runtime_composition.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
+import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
+
+class _AlwaysBalancedPolicy extends PresidentMatchdayTicketPricingPolicy {
+  const _AlwaysBalancedPolicy();
+  @override
+  MatchdayTicketPricingChoice choose({required PresidentManagementProfile profile, required int fanTrust, required StadiumAttendanceProfile base}) =>
+      const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
+}
+
+class _PremiumTicketProvider extends PlayerMatchdayTicketPricingDecisionProvider {
+  const _PremiumTicketProvider();
+  @override
+  MatchdayTicketPricingChoice choose(PlayerPresidentTicketPricingDecisionContext context) =>
+      const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.premium);
+}
+
+class _CountingPremiumTicketProvider extends PlayerMatchdayTicketPricingDecisionProvider {
+  int calls = 0;
+  @override
+  MatchdayTicketPricingChoice choose(PlayerPresidentTicketPricingDecisionContext context) {
+    calls++;
+    return const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.premium);
+  }
+}
+
+class _YouthTransferProvider extends PlayerTransferStrategyDecisionProvider {
+  const _YouthTransferProvider();
+  @override
+  PlayerTransferStrategyChoice chooseTransferStrategy(PlayerTransferStrategyDecisionContext context) =>
+      const PlayerTransferStrategyChoice(financialDiscipline: 60, transferAmbition: 60, riskAppetite: 60, youthOrientation: 90);
+}
+
+class _CountingYouthTransferProvider extends PlayerTransferStrategyDecisionProvider {
+  int calls = 0;
+  @override
+  PlayerTransferStrategyChoice chooseTransferStrategy(PlayerTransferStrategyDecisionContext context) {
+    calls++;
+    return const PlayerTransferStrategyChoice(financialDiscipline: 60, transferAmbition: 60, riskAppetite: 60, youthOrientation: 90);
+  }
+}
+
+class _AlternativePromiseProvider extends PlayerPromiseDecisionProvider {
+  const _AlternativePromiseProvider();
+  @override
+  PresidentPromiseType choosePromise(PlayerPromiseDecisionContext context) =>
+      context.allowedTypes.firstWhere((type) => type != context.aiPromise.type, orElse: () => context.aiPromise.type);
+}
+
+class _CountingAlternativePromiseProvider extends PlayerPromiseDecisionProvider {
+  int calls = 0;
+  @override
+  PresidentPromiseType choosePromise(PlayerPromiseDecisionContext context) {
+    calls++;
+    return context.allowedTypes.firstWhere((type) => type != context.aiPromise.type, orElse: () => context.aiPromise.type);
+  }
+}
+
+class _AlternativeMediaProvider extends PlayerMediaStatementDecisionProvider {
+  const _AlternativeMediaProvider();
+  @override
+  MediaStance chooseStance(PlayerMediaStatementDecisionContext context) =>
+      context.allowedStances.firstWhere((stance) => stance != context.aiStatement.stance);
+}
+
+class _CountingAlternativeMediaProvider extends PlayerMediaStatementDecisionProvider {
+  int calls = 0;
+  @override
+  MediaStance chooseStance(PlayerMediaStatementDecisionContext context) {
+    calls++;
+    return context.allowedStances.firstWhere((stance) => stance != context.aiStatement.stance);
+  }
+}
+
+class _HoldFacilityProvider extends PlayerFacilityInvestmentDecisionProvider {
+  const _HoldFacilityProvider();
+  @override
+  PlayerFacilityInvestmentChoice choose(PlayerFacilityInvestmentContext context) => PlayerFacilityInvestmentChoice.hold;
+}
+
+class _CountingHoldFacilityProvider extends PlayerFacilityInvestmentDecisionProvider {
+  int calls = 0;
+  @override
+  PlayerFacilityInvestmentChoice choose(PlayerFacilityInvestmentContext context) {
+    calls++;
+    return PlayerFacilityInvestmentChoice.hold;
+  }
+}
+
+class _NonAiSponsorProvider extends PlayerSponsorDecisionProvider {
+  const _NonAiSponsorProvider();
+  @override
+  PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) {
+    final alternative = context.offers.firstWhere((offer) => offer.id != context.aiChoice.id);
+    return PlayerSponsorOfferChoice(offerId: alternative.id);
+  }
+}
+
+class _CountingNonAiSponsorProvider extends PlayerSponsorDecisionProvider {
+  int calls = 0;
+  @override
+  PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) {
+    calls++;
+    final alternative = context.offers.firstWhere((offer) => offer.id != context.aiChoice.id);
+    return PlayerSponsorOfferChoice(offerId: alternative.id);
+  }
+}
+
+class _LabelSponsorProvider extends PlayerSponsorDecisionProvider {
+  const _LabelSponsorProvider(this.label);
+  final String label;
+  @override
+  PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) {
+    final offer = context.offers.firstWhere((item) => item.id.endsWith('-$label'));
+    return PlayerSponsorOfferChoice(offerId: offer.id);
+  }
+}
+
+void main(List<String> args) {
+  final seed = args.isEmpty ? 20260903 : int.parse(args.first);
+  final config = SimulationConfig(careerSeed: seed);
+  final world = const FictionalWorldFactory().build();
+  const codec = PlayerPresidentTicketPricingRuntimeSaveCodec();
+
+  final discovery = const PlayerPresidentTenureGatedPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    ticketAiPolicy: _AlwaysBalancedPolicy(),
+  ).simulateWithCheckpoint(
+    clubs: world.clubs,
+    leagues: world.leagues,
+    config: config,
+    controlledClubId: world.clubs.first.id,
+    seasonCount: 1,
+    hasFutureSeasonAfterReport: true,
+  );
+  final discoveryBoundary = discovery.boundaries.single;
+  final source = discoveryBoundary.source.source.sponsor.report.sourceReport;
+  final mediaByClub = {for (final item in source.baselineMediaReport.seasons.single.clubs) item.clubId: item};
+  final investmentByClub = {for (final item in discoveryBoundary.source.decisions) item.clubId: item};
+  final controlled = source.promiseReport.snapshots.firstWhere((snapshot) =>
+      mediaByClub[snapshot.promise.clubId]!.statement != null &&
+      PlayerPresidentPromiseGenerator.allowedPromiseTypes(snapshot.context).any((type) => type != snapshot.promise.type) &&
+      investmentByClub[snapshot.promise.clubId]!.invested).promise.clubId;
+
+  const m68 = PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    facilityProvider: _HoldFacilityProvider(),
+    promiseProvider: _AlternativePromiseProvider(),
+    mediaProvider: _AlternativeMediaProvider(),
+    transferStrategyProvider: _YouthTransferProvider(),
+    ticketPricingProvider: _PremiumTicketProvider(),
+    ticketAiPolicy: _AlwaysBalancedPolicy(),
+  );
+  const parityEngine = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    facilityProvider: _HoldFacilityProvider(),
+    promiseProvider: _AlternativePromiseProvider(),
+    mediaProvider: _AlternativeMediaProvider(),
+    transferStrategyProvider: _YouthTransferProvider(),
+    ticketPricingProvider: _PremiumTicketProvider(),
+    ticketAiPolicy: _AlwaysBalancedPolicy(),
+  );
+  final baseline = m68.simulateWithCheckpoint(clubs: world.clubs, leagues: world.leagues, config: config, controlledClubId: controlled, seasonCount: 2);
+  final parity = parityEngine.simulateWithCheckpoint(clubs: world.clubs, leagues: world.leagues, config: config, controlledClubId: controlled, seasonCount: 2);
+  final m68ParityWithoutSponsor = codec.encode(parity.checkpoint) == codec.encode(baseline.checkpoint) && parity.signature == baseline.signature;
+
+  final sponsor = _CountingNonAiSponsorProvider();
+  final facility = _CountingHoldFacilityProvider();
+  final promise = _CountingAlternativePromiseProvider();
+  final media = _CountingAlternativeMediaProvider();
+  final transfer = _CountingYouthTransferProvider();
+  final ticket = _CountingPremiumTicketProvider();
+  final composed = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    sponsorProvider: sponsor,
+    facilityProvider: facility,
+    promiseProvider: promise,
+    mediaProvider: media,
+    transferStrategyProvider: transfer,
+    ticketPricingProvider: ticket,
+    ticketAiPolicy: const _AlwaysBalancedPolicy(),
+  ).simulateWithCheckpoint(clubs: world.clubs, leagues: world.leagues, config: config, controlledClubId: controlled, seasonCount: 1, hasFutureSeasonAfterReport: true);
+  final sixProviders = sponsor.calls == 1 && facility.calls == 1 && promise.calls == 1 && media.calls == 1 && transfer.calls > 0 && ticket.calls == 1;
+
+  final aiBaseline = const PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    ticketAiPolicy: _AlwaysBalancedPolicy(),
+  ).simulateWithCheckpoint(clubs: world.clubs, leagues: world.leagues, config: config, controlledClubId: controlled, seasonCount: 1, hasFutureSeasonAfterReport: true);
+  final baselineContracts = {for (final item in aiBaseline.boundaries.single.source.source.sponsor.contracts) item.offer.clubId: item.signature};
+  final playerContracts = {for (final item in composed.boundaries.single.source.source.sponsor.contracts) item.offer.clubId: item.signature};
+  final aiIds = baselineContracts.keys.where((id) => id != controlled);
+  final aiParity47 = aiIds.length == 47 && aiIds.every((id) => playerContracts[id] == baselineContracts[id]);
+  final sponsorChanged = playerContracts[controlled] != baselineContracts[controlled];
+
+  final seedCheckpoint = const PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    sponsorProvider: _LabelSponsorProvider('bold'),
+  ).simulateWithCheckpoint(clubs: world.clubs, leagues: world.leagues, config: config, controlledClubId: controlled, seasonCount: 1, hasFutureSeasonAfterReport: true).checkpoint;
+  final lostCheckpoint = PlayerPresidentTicketPricingRuntimeCheckpoint(
+    runtime: seedCheckpoint.runtime,
+    tenureControl: PlayerPresidentTenureControlState(
+      controlledClubId: controlled,
+      playerPresidentId: 'm69-former-president',
+      status: PlayerPresidentTenureControlStatus.lost,
+      lostAtCompletedSeason: seedCheckpoint.completedSeasons,
+      successorPresidentId: 'm69-successor-president',
+    ),
+  );
+  final blockedSponsor = _CountingNonAiSponsorProvider();
+  final blocked = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    sponsorProvider: blockedSponsor,
+  ).resume(checkpoint: lostCheckpoint, seasonCount: 1, hasFutureSeasonAfterReport: true);
+  final lostBlocksSponsor = blockedSponsor.calls == 0 && blocked.checkpoint.tenureControl.lost;
+
+  const deterministicEngine = PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    sponsorProvider: _NonAiSponsorProvider(),
+    facilityProvider: _HoldFacilityProvider(),
+    promiseProvider: _AlternativePromiseProvider(),
+    mediaProvider: _AlternativeMediaProvider(),
+    transferStrategyProvider: _YouthTransferProvider(),
+    ticketPricingProvider: _PremiumTicketProvider(),
+  );
+  final direct = deterministicEngine.simulateWithCheckpoint(clubs: world.clubs, leagues: world.leagues, config: config, controlledClubId: controlled, seasonCount: 4, electionInterval: 4);
+  final first = deterministicEngine.simulateWithCheckpoint(clubs: world.clubs, leagues: world.leagues, config: config, controlledClubId: controlled, seasonCount: 2, electionInterval: 4, hasFutureSeasonAfterReport: true);
+  final loaded = codec.decode(codec.encode(first.checkpoint));
+  final resumed = deterministicEngine.resume(checkpoint: loaded, seasonCount: 2);
+  final saveResume = codec.encode(resumed.checkpoint) == codec.encode(direct.checkpoint) &&
+      [...first.boundaries, ...resumed.boundaries].map((item) => item.signature).join('||') == direct.boundaries.map((item) => item.signature).join('||');
+
+  if (!m68ParityWithoutSponsor || !sixProviders || !sponsorChanged || !aiParity47 || !lostBlocksSponsor || !saveResume) {
+    throw StateError('M69 canonical failure: m68Parity=$m68ParityWithoutSponsor sixProviders=$sixProviders sponsorChanged=$sponsorChanged aiParity47=$aiParity47 lostBlocksSponsor=$lostBlocksSponsor saveResume=$saveResume');
+  }
+  print('M69_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=$controlled m68ParityWithoutSponsor=$m68ParityWithoutSponsor sixProviders=$sixProviders sponsorChanged=$sponsorChanged aiParity=47 lostBlocksSponsor=$lostBlocksSponsor singleCheckpoint=true saveResume=$saveResume worldClubs=${world.clubs.length} seed=$seed');
+}
+''')
+
+          Path('M69_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_I.md').write_text(r'''# M69 — Player President Tenure-Gated Facility + Sponsor + Promise/Media + Transfer/Ticket Pricing Runtime Composition I
+
+## Amaç
+M50 sponsor seçimini M68'in authoritative M65 checkpoint/runtime akışına yeni bir save adası oluşturmadan eklemek.
+
+## Kapsam
+- Authoritative checkpoint/save codec M65 olarak kalır.
+- Sponsor, facility, promise, media, transfer-strategy ve ticket-pricing player provider'ları aynı persisted `PlayerPresidentTenureControlState` altında çalışır.
+- Sponsor seçimi yalnız controlled club ve gerçek incumbent player-president identity eşleşirken oyuncuya delege edilir.
+- Persisted loss veya incumbent mismatch sponsor tarafını exact M42 AI sponsor yoluna düşürür.
+- Aktif çok yıllı sponsor kontratı bozulmaz ve yeniden seçilmez.
+- Diğer 47 kulübün sponsor kararları exact AI parity'de kalır.
+- Sponsor provider runtime-only kalır; M65 codec ile save/load/resume determinism korunur.
+- Crisis ve manager player-control birleşimi bu milestone kapsamında değildir.
+
+## Acceptance
+1. Sponsor provider yokken exact M68 checkpoint + boundary parity.
+2. Aynı gerçek sezon boundary'sinde sponsor + facility + promise + media + transfer + ticket provider delegation.
+3. Sponsor override yalnız controlled club kontrat/revenue satırını değiştirir; 47 AI sponsor kontratı exact parity.
+4. Aktif çok yıllı player sponsor kontratı yeniden seçilmez.
+5. Persisted lost tenure ve incumbent mismatch sponsor provider'ını bloklar; mismatch sticky loss üretir.
+6. M65 codec ile 2+2 save/resume == uninterrupted 4-season deterministic run.
+''')
+
+          workflow = Path('.github/workflows/m0-tests.yml')
+          text = workflow.read_text()
+          marker = "      - name: Run M68 player president facility promise media transfer ticket runtime composition\n        run: dart run tool/run_m68_player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903"
+          if text.count(marker) != 1:
+              raise SystemExit('M68 workflow marker missing or duplicated')
+          text = text.replace(
+              marker,
+              marker + "\n\n      - name: Run M69 player president facility sponsor promise media transfer ticket runtime composition\n        run: dart run tool/run_m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903",
+          )
+          workflow.write_text(text)
+          PY
+      - name: Install dependencies
+        run: dart pub get
+      - name: Format M69 Dart changes
+        run: dart format lib/src/sponsor/player_president_sponsor_control.dart lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart lib/src/facility/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart lib/src/sponsor/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart lib/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart test/m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition_test.dart tool/run_m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart
+      - name: Analyze
+        run: dart analyze
+      - name: Targeted M69 tests
+        run: dart test test/m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition_test.dart
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "ZMilaStudio"
+          git config user.email "levent.ua@gmail.com"
+          git rm .github/workflows/m69-bootstrap.yml
+          git add .
+          git commit -m "feat(m69): compose sponsor control into unified player president runtime"
+          git push origin HEAD:feat/m69-sponsor-unified-player-president-runtime
