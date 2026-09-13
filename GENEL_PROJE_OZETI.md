@@ -31,42 +31,34 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M55 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M56 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M56 — Player President Promise Decision Override I.**
+Aktif PR yok. Aktif milestone yok. **M57 henüz seçilmedi.**
 
+M56 kapanış kanıtı:
+- Milestone: **M56 — Player President Promise Decision Override I**
 - Branch: `feat/m56-player-president-promise-control`
-- PR #59 — **OPEN / NOT MERGED / MERGE READY**
+- PR #59 — **MERGED / CLOSED**
 - Base `main`: `6f2386494d56ef2571d36695e6e7a3ab638c863b`
-- Verified code-bearing HEAD: `cbe161a1ff0ebd93089924591a171d923ed90120`
-- Code-bearing PR CI `34726344366`: **SUCCESS**
+- Final exact PR HEAD: `336d2c5c743d8169ab396199fa1d51c4dd2a4506`
+- Final exact-head PR CI `34726631760`: **SUCCESS**
 - analyzer: `No issues found!`
 - **243 normal/non-canonical test PASS**
 - beş M56 acceptance testinin tamamı PASS
 - **M0–M56 canonical PASS**
-- `Run M56 player president promise control`: **SUCCESS**
 - canonical marker: `M56_PLAYER_PROMISE_CONTROL_PASS controlled=t1_01 aiParity=47 ai=challengeTitle player=finishTopHalf deterministic=true canonicalTargets=true invalidBlocked=true worldClubs=48`
-- artifacts: **0**
-- PR `mergeable=true`
+- Final PR artifacts: **0**
+- Squash merge SHA: `c61ef1338cc0ab7cfb993827e46bec62524cf308`
+- Post-merge `main` CI `34727519839`: **SUCCESS**
+- Post-merge `main` artifacts: **0**
 
 İlk M56 CI `34725931380` içinde yalnız save/resume acceptance testi kırmızıydı. Gerçek failure logu okundu; ürün/runtime hatası değil, 2+2 testinin ilk 2 sezonluk parçasının continuation olmasına rağmen `hasFutureSeasonAfterReport: true` verilmemesiydi. M31'in mevcut canonical split-continuation semantiğiyle aynı boundary ayarı uygulanarak yalnız test orkestrasyonu düzeltildi; M56 ürün kodu değiştirilmedi.
 
-Bu özet refresh commit'i final PR HEAD'i değiştirecektir. Yeni exact HEAD üzerinde `test` + `canonical` CI, M56 marker ve artifact=0 yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
+Yeni milestone seçmeden önce canlı `main` kodu yeniden taranmalıdır. M57 için eski sohbet tahminleri değil, güncel ürün boşluğu esas alınacaktır.
 
-M56 henüz merge edilmedi. Final exact-head CI + artifact 0 + mergeable=true yeniden doğrulandıktan sonra kullanıcıdan **PR #59'a özel açık merge onayı** alınmalıdır.
+## 3. Son kapanan milestone: M56 — Player President Promise Decision Override I
 
-M55 kapanış kanıtı:
-- PR #58 — MERGED / CLOSED
-- Final PR HEAD: `8f96cbfa5a482d378635822c3eca1fb51185c226`
-- Squash merge SHA: `f4034bf35e11d52dc97d2d5a39abaed6672bbc7c`
-- Post-merge `main` CI `34724755590`: SUCCESS
-- closure docs commit: `6f2386494d56ef2571d36695e6e7a3ab638c863b`
-- closure docs-only CI `34725059438`: SUCCESS
-- analyzer clean; **238 tests PASS**; **M0–M55 canonical PASS**; artifacts **0**
-
-## 3. M56 kapsamı — Player President Promise Decision Override I
-
-M11 vaatleri ölçülebilir ve deterministik yaptı; M12-M16 vaat sonuçlarını taraftar güveni, medya itibarı ve seçim/reputation zincirine bağladı. M11 dokümanında oyuncunun UI üzerinden vaat seçmesi açıkça kapsam dışı bırakılmıştı. Canlı M55-closed kodunda controlled club dahil vaat tipi hâlâ `PromiseGenerator` tarafından otomatik seçiliyordu.
+M11 vaatleri ölçülebilir ve deterministik yaptı; M12–M16 vaat sonuçlarını taraftar güveni, medya itibarı ve seçim/reputation zincirine bağladı. M11 dokümanında oyuncunun UI üzerinden vaat seçmesi açıkça kapsam dışı bırakılmıştı. M55-closed kodunda controlled club dahil vaat tipi hâlâ `PromiseGenerator` tarafından otomatik seçiliyordu.
 
 M56 çözümü:
 - `PlayerPromiseDecisionProvider`, yalnız controlled club için sezon başı resmi vaat türünü seçer.
@@ -100,13 +92,13 @@ M56 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-## 4. Son kapanan milestone: M55 — Player President Transfer Strategy Decision Override I
+M56 **CLOSED / MERGED / PASS**.
 
-- Branch: `feat/m55-player-president-transfer-strategy-control`
-- PR #58 — MERGED
+## 4. Önceki milestone: M55 — Player President Transfer Strategy Decision Override I
+
+- PR #58 — MERGED / CLOSED
 - Final PR HEAD: `8f96cbfa5a482d378635822c3eca1fb51185c226`
 - Merge SHA: `f4034bf35e11d52dc97d2d5a39abaed6672bbc7c`
-- Code-bearing PR CI `34724117874`: SUCCESS
 - Final exact-head PR CI `34724489311`: SUCCESS
 - Post-merge `main` CI `34724755590`: SUCCESS
 - closure docs commit `6f2386494d56ef2571d36695e6e7a3ab638c863b`
@@ -115,8 +107,6 @@ M56 dosyaları:
 - canonical marker: `M55_PLAYER_TRANSFER_STRATEGY_CONTROL_PASS controlled=t1_01 aiParity=47 ai=ready_forward player=young_forward deterministic=true identityPreserved=true worldClubs=48`
 
 M55, gerçek M54 transfer penceresinde yalnız controlled club için transfer stratejisinin dört başkanlık eksenini oyuncuya açtı. Diğer 47 kulüp AI profile davranışını korur; başkan kimliği/archetype/manager patience değişmez; explicit policy bypass, determinism ve M54 parity korunur.
-
-M55 **CLOSED / MERGED / PASS**.
 
 ## 5. Yakın milestone geçmişi
 
@@ -137,11 +127,11 @@ Başkan/state gerçek etkileri:
 - `transferAmbition`: transfer activity + stadium priority + supporter-crisis response
 - `riskAppetite`: bid ceiling + stadium priority + sponsor preference + crisis response
 - `youthOrientation`: youth transfer preference + academy/training priority
-- M49–M52 controlled club oyuncu başkan facility/sponsor/crisis/manager kararlarıdır; diğer kulüpler AI kalır
-- M53 transfer trait'lerini gerçek transfer-market API'sinde birleştirir
-- M54 M53 stratejisini gerçek world transfer window'a opt-in pre-window bridge ile taşır
-- M55 aynı real transfer seam'inde yalnız controlled club için dört transfer stratejisi eksenini oyuncu başkana açar
-- M56 kontrollü kulübün resmi sezon vaadini M11'in geçerli kanonik seçenekleri arasından oyuncu başkana açar; sonuç mevcut fan/media/election zincirine akar
+- M49–M52 controlled club oyuncu başkan facility/sponsor/crisis/manager kararlarıdır; diğer kulüpler AI kalır.
+- M53 transfer trait'lerini gerçek transfer-market API'sinde birleştirir.
+- M54 M53 stratejisini gerçek world transfer window'a opt-in pre-window bridge ile taşır.
+- M55 aynı real transfer seam'inde yalnız controlled club için dört transfer stratejisi eksenini oyuncu başkana açar.
+- M56 kontrollü kulübün resmi sezon vaadini M11'in geçerli kanonik seçenekleri arasından oyuncu başkana açar; sonuç mevcut fan/media/election zincirine akar.
 
 ## 7. Devir / çalışma talimatı
 
