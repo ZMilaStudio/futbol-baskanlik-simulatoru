@@ -31,24 +31,25 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M59 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M60 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M60 — Player President Tenure-Gated Transfer Strategy Control I.**
+**Aktif milestone yok.** Yeni milestone, canlı `main` mimari taraması ve gerçek ürün boşluğu doğrulandıktan sonra seçilmelidir.
 
-M60 canlı durum:
+Son kapanan milestone M60 — Player President Tenure-Gated Transfer Strategy Control I:
 - Branch: `feat/m60-player-president-tenure-gated-transfer-strategy`
-- PR #63 — **OPEN / NOT MERGED**
-- Base `main`: `a4b4f6d986322ac05e34ca37157ceba1b3fd80c1`
-- Verified code-bearing HEAD: `3366195bc1f038c002b14c3c28642e0c2d7e6acc`
-- Code-bearing PR CI `34753538238`: **SUCCESS**
+- PR #63 — **MERGED / CLOSED**
+- Final exact PR HEAD: `6e40e5b46c3a452672148c13744a25f17a92f4d1`
+- Final exact-head PR CI `34753802695`: **SUCCESS**
+- Squash merge SHA: `b149e4f9c661ce5f2aa43f16ee4b5cbfc9b79b6d`
+- Post-merge `main` CI `34754220836`: **SUCCESS**
 - analyzer: `No issues found!`
 - **263/263 normal/non-canonical test PASS**
 - beş M60 acceptance testinin tamamı PASS
 - **M0–M60 canonical PASS**
 - canonical marker: `M60_PLAYER_PRESIDENT_TENURE_GATED_TRANSFER_STRATEGY_CONTROL_PASS controlled=t1_01 aiParity=47 activeDelegation=true turnoverStopsControl=true reelectionKeepsControl=true stickyLoss=true deterministic=true worldClubs=48`
-- artifacts: **0**
+- post-merge artifacts: **0**
 
-M60 seçim gerekçesi: M59, M58 gerçek incumbent-president ownership gate'ini M49–M52 facility/sponsor/crisis/manager player kararlarına bağladı; M55 transfer-strategy player override ise hâlâ yalnız controlled club kimliği üzerinden çalışıyordu. M55 karar context'i gerçek AI management profile ve `presidentId` taşıdığı için bu yüzey görev süresiyle güvenli ve küçük bir adaptör üzerinden yetkilendirilebilir.
+M60 seçim gerekçesi: M59, M58 gerçek incumbent-president ownership gate'ini M49–M52 facility/sponsor/crisis/manager player kararlarına bağladı; M55 transfer-strategy player override ise yalnız controlled club kimliği üzerinden çalışıyordu. M55 karar context'i gerçek AI management profile ve `presidentId` taşıdığı için bu yüzey görev süresiyle güvenli ve küçük bir adaptör üzerinden yetkilendirildi.
 
 M60 çözümü:
 - M55'in mevcut dört bounded transfer trait'i ve gerçek M54 transfer-window bridge'i aynen korunur;
@@ -59,7 +60,7 @@ M60 çözümü:
 - diğer 47 kulübün AI profile'ları aynen korunur;
 - M54 explicit caller policy precedence/bypass davranışı aynen korunur ve profile/provider katmanı hiç çalışmaz;
 - provider callback runtime-only kalır; yeni callback save'e yazılmaz;
-- M56 promise ve M57 media statement tenure gating M60 kapsamına zorla dahil edilmez.
+- M56 promise ve M57 media statement tenure gating M60 kapsamına zorla dahil edilmedi.
 
 Acceptance:
 1. active incumbent gerçek transfer window'da player strategy kararını uygular — PASS;
@@ -77,37 +78,35 @@ M60 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-Bu merge-ready docs refresh'i final PR HEAD'ini değiştirecektir. Bu commit'ten sonra branch'e yeni commit atılmayacak; yeni exact HEAD üzerinde test + canonical CI, 263 test, M60 marker, artifact=0 ve `mergeable=true` yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
+M60 **CLOSED / MERGED / PASS**.
 
-M60 **CODE-BEARING PASS / FINAL EXACT-HEAD CI BEKLENİYOR / NOT MERGED**.
+## 3. Son kapanan milestone: M60 — Player President Tenure-Gated Transfer Strategy Control I
 
-## 3. Son kapanan milestone: M59 — Player President Tenure-Gated Runtime Controls I
-
-M59, M58'de kurulan gerçek incumbent president ownership gate'ini M49–M52 facility/sponsor/crisis/manager player decision stack'ine bağladı.
+M60, M55 player-president transfer strategy override'ını M58'deki persisted incumbent-president ownership state'iyle yetkilendirdi.
 
 Kapanış kanıtı:
-- Branch: `feat/m59-player-president-tenure-gated-runtime-controls`
-- PR #62 — MERGED / CLOSED
-- Final exact PR HEAD: `e393439e96729f05102ed4c478476a01c62a0ab5`
-- Final exact-head PR CI `34752195656`: SUCCESS
-- Squash merge SHA: `d49424573d7db1c2f02554bffec2e3b13c40b6dd`
-- Post-merge `main` CI `34752676581`: SUCCESS
-- analyzer clean; **258 tests PASS**; **M0–M59 canonical PASS**; artifacts 0.
+- Branch: `feat/m60-player-president-tenure-gated-transfer-strategy`
+- PR #63 — MERGED / CLOSED
+- Final exact PR HEAD: `6e40e5b46c3a452672148c13744a25f17a92f4d1`
+- Final exact-head PR CI `34753802695`: SUCCESS
+- Squash merge SHA: `b149e4f9c661ce5f2aa43f16ee4b5cbfc9b79b6d`
+- Post-merge `main` CI `34754220836`: SUCCESS
+- analyzer clean; **263 tests PASS**; **M0–M60 canonical PASS**; artifacts 0.
 
 Davranış:
-- M52 nested control checkpoint'i ile M58 tenure state'i M59 checkpoint içinde birlikte persist edilir;
-- active state sırasında M49–M52 dış provider'ları ortak runtime tenure session üzerinden yalnız gerçek incumbent president identity geçerliyken çalışır;
-- gerçek election turnover boundary içinde successor id ilk görüldüğü anda player provider çağrıları kapanır;
-- bloke edilen facility/sponsor/crisis/manager kararları kendi kanonik AI kararına düşer;
-- reelection aynı incumbent kimliğini koruduğu için player control aktif kalır;
-- state `lost` olduktan sonraki sezonlar untouched no-provider M52 AI path'ine döner;
-- provider callback'leri runtime-only kalır ve save'e yazılmaz;
-- eski M49–M52 public engine/save formatları değiştirilmez.
+- active + exact incumbent `presidentId` durumunda controlled club player transfer-strategy provider'ına delege edilir;
+- gerçek successor identity görülür görülmez player provider çağrılmaz ve exact AI profile path korunur;
+- reelection player control'ü sürdürür;
+- persisted `lost` state sticky kalır ve eski başkan kimliği daha sonra yeniden görünse bile kontrol reaktive olmaz;
+- diğer 47 kulüp AI profile parity'sinde kalır;
+- explicit caller transfer policies M54 precedence/bypass davranışını korur;
+- provider callback runtime-only kalır ve save formatına yazılmaz.
 
-M59 **CLOSED / MERGED / PASS**.
+M60 **CLOSED / MERGED / PASS**.
 
 ## 4. Yakın milestone geçmişi
 
+- M60 Player President Tenure-Gated Transfer Strategy Control I — PR #63 merge `b149e4f9c661ce5f2aa43f16ee4b5cbfc9b79b6d`; 263 tests; M0–M60 PASS; artifact 0.
 - M59 Player President Tenure-Gated Runtime Controls I — PR #62 merge `d49424573d7db1c2f02554bffec2e3b13c40b6dd`; 258 tests; M0–M59 PASS; artifact 0.
 - M58 Player President Tenure Control Gate Core I — PR #61 merge `fe102d25ff53f598bf5d695f95131e580a7c4523`; 253 tests; M0–M58 PASS; artifact 0.
 - M57 Player President Media Statement Decision Override I — PR #60 merge `af5d7c12597ad4a68f2b75251a3c9e70fb09a590`; 248 tests; M0–M57 PASS; artifact 0.
