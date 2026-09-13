@@ -101,10 +101,10 @@ jobs:
       - name: Run M16 20-season president reputation career
         run: dart run tool/run_m16_president_reputation_career.dart 20260903
 
-      - name: Run M17 20-season president management profile career
+      - name: Run M17 president management profile career
         run: dart run tool/run_m17_president_management_career.dart 20260903
 
-      - name: Run M18 20-season president manager patience career
+      - name: Run M18 president manager patience career
         run: dart run tool/run_m18_president_manager_patience_career.dart 20260903
 
       - name: Run M19-M24 canonical profile feedback career
@@ -241,3 +241,6 @@ jobs:
 
       - name: Run M68 player president facility promise media transfer ticket runtime composition
         run: dart run tool/run_m68_player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
+
+      - name: Run M69 player president facility sponsor promise media transfer ticket runtime composition
+        run: dart run tool/run_m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
