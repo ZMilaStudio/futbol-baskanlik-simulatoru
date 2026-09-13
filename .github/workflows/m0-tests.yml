@@ -211,3 +211,6 @@ jobs:
 
       - name: Run M58 player president tenure control gate
         run: dart run tool/run_m58_player_president_tenure_control_gate.dart 20260903
+
+      - name: Run M59 player president tenure-gated runtime controls
+        run: dart run tool/run_m59_player_president_tenure_gated_runtime_controls.dart 20260903
