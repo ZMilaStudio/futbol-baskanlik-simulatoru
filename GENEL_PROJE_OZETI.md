@@ -31,25 +31,20 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M64 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M65 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M65 — Player President Tenure-Gated Ticket Pricing Runtime Integration I.**
+**Aktif milestone: yok.**
 
-M65 canlı durum:
-- Branch: `feat/m65-ticket-pricing-economy-runtime-integration`
-- PR #68 — **OPEN / NOT MERGED / MERGEABLE**
-- Base `main`: `b0f38ec4d0c02243991fc250aa235381f605d6e2`
-- Son non-summary branch HEAD: `1d74d504130d4fa6f82dce4cb0065448514cb3a3`
-- Verified pre-merge-ready summary HEAD: `60713b1f94ba93ceb99a9557bedc9a5eb98d5522`
-- PR CI `34770188103`: **SUCCESS**
+M65 kapanış kanıtı:
+- PR #68 — **MERGED / CLOSED**
+- Squash merge SHA: `9e4de0ea84446293155292af39d7e887f6cdab3b`
+- Post-merge `main` CI `34777266793`: **SUCCESS**
 - analyzer: `No issues found!`
 - **288/288 normal/non-canonical test PASS**
 - beş M65 acceptance testinin tamamı PASS
 - **M0–M65 canonical PASS**
 - canonical marker: `M65_PLAYER_PRESIDENT_TENURE_GATED_TICKET_PRICING_RUNTIME_INTEGRATION_PASS controlled=t1_01 aiParity=47 balancedM48Parity=true realEconomy=true activeDelegation=true bounded=true saveResume=true deterministic=true worldClubs=48 seed=20260903`
 - artifacts: **0**
-
-Bu merge-ready özet commit'i final PR HEAD'ini değiştirecektir. Yeni exact HEAD üzerinde analyzer + 288 test + M0–M65 canonical + M65 marker + artifact=0 bir kez daha doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
 
 M65 seçim gerekçesi: M64 kapanışı sonrası canlı `main` taramasında M64 pricing outcome'unun hesaplandığı ancak M47/M48 gerçek `ClubFinanceSeason.matchdayRevenue` satırına compose edilmediği doğrulandı. M47'nin authoritative stadium + fan-trust multiplier'ı `BasicEconomyEngine.matchdayRevenueMultiplierBpsByClub` seam'inden geçtiği için M65 bu mevcut seam'i kullandı; kapalı M47/M48 kaynak kodu değiştirilmedi.
 
@@ -82,24 +77,23 @@ M65 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M65 **CODE + CI PASS / FINAL EXACT-HEAD CI BEKLENİYOR / NOT MERGED**.
+M65 **CLOSED / MERGED / PASS**.
 
-## 3. Son kapanan milestone: M64 — Player President Tenure-Gated Ticket Pricing Control I
+## 3. Son kapanan milestone: M65 — Player President Tenure-Gated Ticket Pricing Runtime Integration I
 
-M64, M40/M41 stadyum + fan-trust attendance modelinin sabit ticket-yield davranışına, kulüp başkanı rolüne uygun tenure-gated maç günü bilet fiyatlandırma karar yüzeyi ekledi.
+M65, M64 ticket-pricing kararını gerçek M47/M48 season economy path'ine bağladı. Balanced politika exact M48 parity üretirken aktif oyuncu başkanın fiyat seçimi gerçek `ClubFinanceSeason.matchdayRevenue` ve kapanış nakdını etkiler; tenure ownership, 47 AI kulüp parity'si ve save/resume determinism korunur.
 
 Kapanış kanıtı:
-- PR #67 — **MERGED / CLOSED**
-- Squash merge SHA: `4a76d1546fa02675e1c94cd57621a82d70e15a8c`
-- Post-merge `main` CI `34768517130`: **SUCCESS**
-- Docs close commit: `b0f38ec4d0c02243991fc250aa235381f605d6e2`
-- docs-only close CI `34768940183`: **SUCCESS**
-- analyzer clean; **283 tests PASS**; **M0–M64 canonical PASS**; artifacts 0.
+- PR #68 — **MERGED / CLOSED**
+- Squash merge SHA: `9e4de0ea84446293155292af39d7e887f6cdab3b`
+- Post-merge `main` CI `34777266793`: **SUCCESS**
+- analyzer clean; **288 tests PASS**; **M0–M65 canonical PASS**; artifacts 0.
 
-M64 **CLOSED / MERGED / PASS**.
+M65 **CLOSED / MERGED / PASS**.
 
 ## 4. Yakın milestone geçmişi
 
+- M65 Player President Tenure-Gated Ticket Pricing Runtime Integration I — PR #68 merge `9e4de0ea84446293155292af39d7e887f6cdab3b`; 288 tests; M0–M65 PASS; artifact 0.
 - M64 Player President Tenure-Gated Ticket Pricing Control I — PR #67 merge `4a76d1546fa02675e1c94cd57621a82d70e15a8c`; 283 tests; M0–M64 PASS; artifact 0.
 - M63 Player President Tenure-Gated Promise + Media Composition I — PR #66 merge `72f5387fe416746244eb41cbc6aaaaf179f9442f`; 278 tests; M0–M63 PASS; artifact 0.
 - M62 Player President Tenure-Gated Media Statement Control I — PR #65 merge `64aab836ab707fe33c204465348f9bc0bc50a54f`; 273 tests; M0–M62 PASS; artifact 0.
