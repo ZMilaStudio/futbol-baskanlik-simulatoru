@@ -205,3 +205,6 @@ jobs:
 
       - name: Run M56 player president promise control
         run: dart run tool/run_m56_player_president_promise_control.dart
+
+      - name: Run M57 player president media statement control
+        run: dart run tool/run_m57_player_president_media_statement_control.dart
