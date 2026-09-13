@@ -31,31 +31,32 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M56 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M57 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M57 — Player President Media Statement Decision Override I.**
+Şu anda açık aktif milestone yoktur. Son kapanan milestone:
+
+**M57 — Player President Media Statement Decision Override I**
 
 - Branch: `feat/m57-player-president-media-statement-control`
-- PR #60 — **OPEN / NOT MERGED / MERGE READY**
-- Base `main`: `6f4d05a785ee6cab509e625f0bddb9c50143baf9`
-- Verified code-bearing HEAD: `af420fca5606bbc6dde3827ecc317ae851237256`
-- Code-bearing PR CI `34728351630`: **SUCCESS**
+- PR #60 — **MERGED / CLOSED**
+- Final exact PR HEAD: `db1bb76975135c29d6d009fcebe4dd2d58eece65`
+- Final exact-head PR CI `34728689253`: **SUCCESS**
 - analyzer: `No issues found!`
 - **248 normal/non-canonical test PASS**
 - beş M57 acceptance testinin tamamı PASS
 - **M0–M57 canonical PASS**
-- `Run M57 player president media statement control`: **SUCCESS**
 - canonical marker: `M57_PLAYER_MEDIA_STATEMENT_CONTROL_PASS controlled=t1_06 aiParity=47 ai=pressure player=strongSupport eventPreserved=true metadataPreserved=true realCredibility=true deterministic=true worldClubs=48`
-- artifacts: **0**
-- PR `mergeable=true`
+- PR exact-head artifacts: **0**
+- Squash merge SHA: `af5d7c12597ad4a68f2b75251a3c9e70fb09a590`
+- Post-merge `main` CI `34747248946`: **SUCCESS**
+- Post-merge analyzer clean; **248 tests PASS**; **M0–M57 canonical PASS**; artifacts **0**
+- Closure docs commit: bu kapanış güncellemesini oluşturan commit; docs-only CI bir kez doğrulanacaktır.
 
-Bu özet merge-ready commit'i final PR HEAD'ini değiştirecektir. Yeni exact HEAD üzerinde `test` + `canonical` CI, 248 test, M57 marker ve artifact=0 yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
+M57 **CLOSED / MERGED / PASS**.
 
-M57 henüz merge edilmedi. Final exact-head CI + artifact 0 + mergeable=true yeniden doğrulandıktan sonra kullanıcıdan **PR #60'a özel açık merge onayı** alınmalıdır.
+Bir sonraki milestone seçilirken önce canlı `main` kodu ve bu dosya yeniden okunmalı; kapsam gerçek ürün boşluğundan türetilmelidir.
 
-M57 seçim gerekçesi: M10 başkan açıklamalarını ve medya hafızasını gerçek state etkisine bağlamıştı; ancak controlled club dahil statement stance hâlâ `MediaStatementEngine` tarafından tamamen otomatik seçiliyordu. M10 dokümanı basın toplantısı/UI katmanını kapsam dışı bırakmıştı. Bu nedenle M57, mevcut gerçek M10 event'inde başkanın tavrını oyuncuya açan dar ürün boşluğunu kapatır.
-
-## 3. M57 kapsamı — Player President Media Statement Decision Override I
+## 3. M57 kapanış kapsamı — Player President Media Statement Decision Override I
 
 M57 çözümü:
 - `PlayerMediaStatementDecisionProvider` yalnız controlled club için çalışır.
@@ -85,9 +86,9 @@ M57 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M57 **MERGE READY / NOT MERGED**. Final docs-only exact-head CI doğrulanmadan merge onayı istenmez.
+M57 kapanış kanıtı canlı GitHub CI ile doğrulanmıştır. Bu docs-only kapanış commit'inden sonra yalnız onun CI'ı bir kez doğrulanır; sırf run ID yazmak için yeni docs commit üretilmez.
 
-## 4. Son kapanan milestone: M56 — Player President Promise Decision Override I
+## 4. Önceki milestone: M56 — Player President Promise Decision Override I
 
 - Branch: `feat/m56-player-president-promise-control`
 - PR #59 — MERGED / CLOSED
@@ -106,6 +107,8 @@ M56 **CLOSED / MERGED / PASS**.
 
 ## 5. Yakın milestone geçmişi
 
+- M57 Player President Media Statement Decision Override I — PR #60 merge `af5d7c12597ad4a68f2b75251a3c9e70fb09a590`; 248 tests; M0–M57 PASS; artifact 0.
+- M56 Player President Promise Decision Override I — PR #59 merge `c61ef1338cc0ab7cfb993827e46bec62524cf308`; 243 tests; M0–M56 PASS; artifact 0.
 - M55 Player President Transfer Strategy Decision Override I — PR #58 merge `f4034bf35e11d52dc97d2d5a39abaed6672bbc7c`; 238 tests; M0–M55 PASS; artifact 0.
 - M54 Transfer Strategy World Runtime Bridge I — PR #57 merge `837198d3480be5571d4eeae1934c72454f47dec1`; 233 tests; M0–M54 PASS; artifact 0.
 - M53 President Transfer Strategy Runtime Hook I — PR #56 merge `f83e159793f80d7f53c40a0845e795339e400d3c`; 228 tests; M0–M53 PASS; artifact 0.
