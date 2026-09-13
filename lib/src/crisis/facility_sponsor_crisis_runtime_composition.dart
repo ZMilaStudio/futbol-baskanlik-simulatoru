@@ -16,6 +16,7 @@ import '../league/club.dart';
 import '../media/media_state.dart';
 import '../player/player.dart';
 import '../player/player_lifecycle_engine.dart';
+import '../promise/promise_media_career_engine.dart';
 import '../save/advanced_runtime_career_engine.dart';
 import '../save/president_domain_career_engine.dart';
 import '../save/president_domain_resume_engine.dart';
@@ -389,6 +390,7 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
     this.presidentGenerator = const PresidentProfileGenerator(),
     this.managementProfileGenerator = const PresidentManagementProfileGenerator(),
     this.crisisIntegration = const CrisisRuntimeIntegrationEngine(),
+    this.sourceEngine = const PromiseMediaCareerEngine(),
   });
 
   final SponsorSystemEngine sponsorSystem;
@@ -396,6 +398,7 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
   final PresidentProfileGenerator presidentGenerator;
   final PresidentManagementProfileGenerator managementProfileGenerator;
   final CrisisRuntimeIntegrationEngine crisisIntegration;
+  final PromiseMediaCareerEngine sourceEngine;
 
   FacilitySponsorCrisisRuntimeCareerResult simulateWithCheckpoint({
     required List<Club> clubs,
@@ -659,7 +662,11 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
     final advanced = AdvancedRuntimeCareerEngine(worldEngine: world);
     return PresidentDomainCareerEngine(
       runtimeEngine: advanced,
-      resumeEngine: PresidentDomainResumeEngine(runtimeEngine: advanced),
+      sourceEngine: sourceEngine,
+      resumeEngine: PresidentDomainResumeEngine(
+        runtimeEngine: advanced,
+        sourceEngine: sourceEngine,
+      ),
     );
   }
 }
