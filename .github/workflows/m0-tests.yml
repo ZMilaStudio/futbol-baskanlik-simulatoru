@@ -232,3 +232,6 @@ jobs:
 
       - name: Run M65 player president tenure-gated ticket pricing runtime integration
         run: dart run tool/run_m65_player_president_tenure_gated_ticket_pricing_runtime_integration.dart 20260903
+
+      - name: Run M66 player president transfer ticket pricing runtime composition
+        run: dart run tool/run_m66_player_president_tenure_gated_transfer_ticket_pricing_runtime_composition.dart 20260903

@@ -33,51 +33,56 @@ Kalıcı kurallar:
 
 **M0–M65 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: yok.**
+**Aktif milestone: M66 — Player President Tenure-Gated Transfer + Ticket Pricing Runtime Composition I.**
 
-M65 kapanış kanıtı:
-- PR #68 — **MERGED / CLOSED**
-- Squash merge SHA: `9e4de0ea84446293155292af39d7e887f6cdab3b`
-- Post-merge `main` CI `34777266793`: **SUCCESS**
+M66 canlı durum:
+- Branch: `feat/m66-transfer-ticket-pricing-runtime-composition`
+- PR #69 — **OPEN / NOT MERGED**
+- Base `main`: `9bd9553839cf9295e3049f120e41b5eb15387151`
+- İlk tam-yeşil branch HEAD: `cd49e779f1e67ae3cde2a5df00a6e1e5e2b2b1d6`
+- PR CI `34778364485`: **SUCCESS**
 - analyzer: `No issues found!`
-- **288/288 normal/non-canonical test PASS**
-- beş M65 acceptance testinin tamamı PASS
-- **M0–M65 canonical PASS**
-- canonical marker: `M65_PLAYER_PRESIDENT_TENURE_GATED_TICKET_PRICING_RUNTIME_INTEGRATION_PASS controlled=t1_01 aiParity=47 balancedM48Parity=true realEconomy=true activeDelegation=true bounded=true saveResume=true deterministic=true worldClubs=48 seed=20260903`
+- **293/293 normal/non-canonical test PASS**
+- beş M66 acceptance testinin tamamı PASS
+- **M0–M66 canonical PASS**
+- canonical marker: `M66_PLAYER_PRESIDENT_TENURE_GATED_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=t1_01 m65ParityWithoutTransfer=true bothProviders=true singleCheckpoint=true lostBlocksBoth=true saveResume=true worldClubs=48 seed=20260903`
 - artifacts: **0**
+- geçici `M66_IMPLEMENTATION_STATUS.md` dosyası merge öncesi kaldırıldı.
 
-M65 seçim gerekçesi: M64 kapanışı sonrası canlı `main` taramasında M64 pricing outcome'unun hesaplandığı ancak M47/M48 gerçek `ClubFinanceSeason.matchdayRevenue` satırına compose edilmediği doğrulandı. M47'nin authoritative stadium + fan-trust multiplier'ı `BasicEconomyEngine.matchdayRevenueMultiplierBpsByClub` seam'inden geçtiği için M65 bu mevcut seam'i kullandı; kapalı M47/M48 kaynak kodu değiştirilmedi.
+Bu merge-ready özet commit'i final PR HEAD'ini değiştirecektir. Yeni exact HEAD üzerinde analyzer + 293 test + M0–M66 canonical + M66 marker + artifact=0 bir kez daha doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
 
-M65 çözümü:
-- M47/M48 runtime zincirine custom `baseWorldEngine.economyEngine` enjekte edilir;
-- M47'nin gönderdiği M40/M41 stadium+fan multiplier aynı authoritative attendance modeliyle doğrulanır;
-- yalnız matchday revenue multiplier M64 pricing outcome ile değiştirilir;
-- gerçek `ClubFinanceSeason.matchdayRevenue`, closing cash ve mevcut economy etkileri doğal olarak bu sonuçtan beslenir;
-- sponsor, crisis, facility investment, election, fan/media ve world akışları mevcut runtime zincirinde kalır;
-- M48 facility yatırımları sonraki sezon stadium level pricing context'ine doğal olarak girer;
-- M58 tenure ownership state M65 checkpoint'inde persist edilir ve her tamamlanan sezondan sonra gerçek incumbent identity ile refresh edilir;
-- player provider runtime-only kalır;
-- successor mismatch ve persisted `lost` state provider'ı bloklar;
-- diğer 47 kulüp exact AI ticket-pricing/finance path'inde kalır;
-- forced `balanced` policy exact M48 runtime parity üretir.
+M66 seçim gerekçesi: M65 kapanışı sonrası canlı `main` taramasında M59, M63 ve M65'in ayrı checkpoint/save/tenure-state adaları taşıdığı; M60'ın ise checkpoint oluşturmadan `WorldCareerEngine.transferMarketEngine` seam'ine bağlanan bir bridge olduğu doğrulandı. Tüm player-president yüzeylerini tek milestone'da yeniden yazmak yerine M66, M60 transfer stratejisini M65'in authoritative gerçek ekonomi runtime'ına aynı sezon ve aynı persisted tenure state üzerinde compose eden düşük-riskli ilk üst-seviye birleşim adımıdır.
 
-M65 acceptance:
-1. forced-balanced pricing exact M48 runtime parity — PASS;
-2. premium player pricing gerçek matchday finance row etkisi + bounded multiplier — PASS;
-3. active incumbent controlled club override + diğer 47 exact AI finance parity — PASS;
-4. successor mismatch + persisted lost tenure provider bloklama — PASS;
-5. save round-trip + 2+2 resume == uninterrupted 4-season deterministic run — PASS.
+M66 çözümü:
+- yeni checkpoint veya save codec oluşturulmaz;
+- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` authoritative kalır;
+- M66 M65 runtime'ını birer sezonluk authoritative segmentler halinde ilerletir;
+- her sezon başında gerçek incumbent management profile map'i mevcut M65 checkpoint'inden alınır;
+- M60 `PlayerPresidentTenureGatedTransferStrategyWorldBridge`, M65 checkpoint'indeki aynı `PlayerPresidentTenureControlState` ile gerçek transfer-market seam'ine kurulur;
+- ticket-pricing provider M65'in gerçek economy seam'inde çalışmaya devam eder;
+- transfer provider yoksa M66 exact M65 checkpoint + boundary parity üretir;
+- persisted `lost` tenure state veya incumbent identity mismatch hem transfer hem ticket provider'ını bloklar;
+- provider callback'leri runtime-only kalır;
+- M65 save codec ile save/load/resume determinism korunur.
 
-M65 dosyaları:
-- `lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart`
-- `lib/player_president_tenure_gated_ticket_pricing_runtime_integration.dart`
-- `test/m65_player_president_tenure_gated_ticket_pricing_runtime_integration_test.dart`
-- `tool/run_m65_player_president_tenure_gated_ticket_pricing_runtime_integration.dart`
-- `M65_PLAYER_PRESIDENT_TENURE_GATED_TICKET_PRICING_RUNTIME_INTEGRATION_I.md`
+M66 acceptance:
+1. transfer provider yokken exact M65 checkpoint + boundary parity — PASS;
+2. active incumbent aynı gerçek sezonda transfer + ticket provider delegation — PASS;
+3. ticket pricing gerçek `ClubFinanceSeason.matchdayRevenue` etkisini korur — PASS;
+4. tek persisted lost tenure state iki external provider'ı da bloklar — PASS;
+5. successor mismatch iki provider'ı bloklar ve sticky loss üretir — PASS;
+6. M65 codec ile 2+2 save/resume == uninterrupted 4-season deterministic run — PASS.
+
+M66 dosyaları:
+- `lib/src/facility/player_president_tenure_gated_transfer_ticket_pricing_runtime_composition.dart`
+- `lib/player_president_tenure_gated_transfer_ticket_pricing_runtime_composition.dart`
+- `test/m66_player_president_tenure_gated_transfer_ticket_pricing_runtime_composition_test.dart`
+- `tool/run_m66_player_president_tenure_gated_transfer_ticket_pricing_runtime_composition.dart`
+- `M66_PLAYER_PRESIDENT_TENURE_GATED_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_I.md`
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M65 **CLOSED / MERGED / PASS**.
+M66 **CODE + FIRST CI PASS / FINAL EXACT-HEAD CI BEKLENİYOR / NOT MERGED**.
 
 ## 3. Son kapanan milestone: M65 — Player President Tenure-Gated Ticket Pricing Runtime Integration I
 
@@ -87,6 +92,8 @@ Kapanış kanıtı:
 - PR #68 — **MERGED / CLOSED**
 - Squash merge SHA: `9e4de0ea84446293155292af39d7e887f6cdab3b`
 - Post-merge `main` CI `34777266793`: **SUCCESS**
+- Docs close commit: `9bd9553839cf9295e3049f120e41b5eb15387151`
+- docs-only close CI `34777657555`: **SUCCESS**
 - analyzer clean; **288 tests PASS**; **M0–M65 canonical PASS**; artifacts 0.
 
 M65 **CLOSED / MERGED / PASS**.
@@ -104,7 +111,7 @@ M65 **CLOSED / MERGED / PASS**.
 
 ## 5. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate core; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate; M63 M61+M62 single-domain promise/media composition; M64 tenure-gated matchday ticket pricing decision core; M65 M64 pricing → real M47/M48 matchday economy runtime integration.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate core; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate; M63 M61+M62 single-domain promise/media composition; M64 tenure-gated matchday ticket pricing decision core; M65 M64 pricing → real M47/M48 matchday economy runtime integration; M66 M60 transfer strategy + M65 ticket-pricing/economy aynı authoritative checkpoint/tenure state composition.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -120,7 +127,8 @@ Başkan/state gerçek etkileri:
 - M63 promise + media kararlarını aynı president-domain checkpoint/save akışında compose eder.
 - M64 tenure-gated ticket-pricing kararını üretir.
 - M65 bu kararı gerçek matchday revenue multiplier ve `ClubFinanceSeason.matchdayRevenue` akışına compose eder.
-- M59, M60, M63 ve M65 henüz tek üst-level player-president kariyer checkpoint altında birleşmemiştir.
+- M66 M60 transfer-strategy bridge'ini M65'in gerçek runtime/checkpoint/save akışına aynı tenure ownership state ile compose eder.
+- M59 nested facility/sponsor/crisis/manager control stack'i ve M63 promise/media composition hâlâ M66/M65 authoritative checkpoint altında birleşmemiştir; sıradaki üst-seviye entegrasyon boşluğu buradadır.
 
 ## 6. Devir / çalışma talimatı
 
