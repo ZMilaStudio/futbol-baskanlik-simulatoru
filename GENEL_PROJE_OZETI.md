@@ -33,57 +33,56 @@ Kalıcı kurallar:
 
 **M0–M61 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone yok.** Yeni milestone, canlı `main` mimari taraması ve gerçek ürün boşluğu doğrulandıktan sonra seçilmelidir.
+**Aktif milestone: M62 — Player President Tenure-Gated Media Statement Control I.**
 
-Son kapanan milestone M61 — Player President Tenure-Gated Promise Control I:
-- Branch: `feat/m61-player-president-tenure-gated-promise-control`
-- PR #64 — **MERGED / CLOSED**
-- Verified code-bearing HEAD: `744b9076b07485bd75a344635b61fe4c8f624eb5`
-- Code-bearing PR CI `34755475712`: **SUCCESS**
-- Final exact PR HEAD: `b58d8c2b73d4eb0787348eda567e2adda1862d2a`
-- Final exact-head PR CI `34755745646`: **SUCCESS**
-- Squash merge SHA: `0a00895a185e4dc2b8a97485767be888a8bfde85`
-- Post-merge `main` CI `34758193189`: **SUCCESS**
+M62 canlı durum:
+- Branch: `feat/m62-player-president-tenure-gated-media-statement-control`
+- PR #65 — **OPEN / NOT MERGED**
+- Base `main`: `ac5fb3a9e2407181a23645b4ee519f816726ea61`
+- Verified code-bearing HEAD: `be92d96a18bbc70a333e9f779506f479129e05b2`
+- Code-bearing PR CI `34759395413`: **SUCCESS**
 - analyzer: `No issues found!`
-- **268/268 normal/non-canonical test PASS**
-- beş M61 acceptance testinin tamamı PASS
-- **M0–M61 canonical PASS**
-- canonical marker: `M61_PLAYER_PRESIDENT_TENURE_GATED_PROMISE_CONTROL_PASS controlled=t1_01 aiParity=47 activeDelegation=true turnoverStopsControl=true reelectionKeepsControl=true stickyLoss=true deterministic=true worldClubs=48`
-- post-merge artifacts: **0**
+- **273/273 normal/non-canonical test PASS**
+- beş M62 acceptance testinin tamamı PASS
+- **M0–M62 canonical PASS**
+- canonical marker: `M62_PLAYER_PRESIDENT_TENURE_GATED_MEDIA_STATEMENT_CONTROL_PASS controlled=t1_01 aiParity=47 activeDelegation=true turnoverStopsControl=true reelectionKeepsControl=true stickyLoss=true deterministic=true worldClubs=48`
+- artifacts: **0**
 
-İlk code-bearing CI `34755418371` analyzer aşamasında kırıldı. Gerçek log kök nedeni yalnız M61 test dosyasında M56 public promise-control import'unun eksik olmasıydı (`PlayerPresidentPromiseGenerator`, `PlayerPromiseDecisionProvider`, `PlayerPromiseDecisionContext` çözülemiyordu). Üretim/runtime kodu değiştirilmedi; yalnız test import'u düzeltildi ve sonraki code-bearing CI tamamen yeşil geçti.
+M62 seçim gerekçesi: canlı M61 sonrası taramada M57 media statement override'ın yalnız `controlledClubId` + runtime provider varlığıyla yetkilendirildiği ve gerçek incumbent president identity/tenure durumunu bilmediği doğrulandı. M58 persisted player-president identity ve gerçek election turnover sonrası sticky `lost` state sağlıyor. Media statement olayları sezon içinde, election sezon sonunda işlendiği ve turnover sonraki sezon itibarıyla etkili olduğu için M57'yi sezon-sezon M58 gate'iyle bağlamak canonical event üretimini post-hoc değiştirmeden güvenli bir seam oluşturuyor.
 
-M61 seçim gerekçesi: canlı M60 sonrası taramada M56 promise override'ın yalnız `controlledClubId` ile yetkilendirildiği, gerçek incumbent president identity/tenure durumunu bilmediği doğrulandı. M58 ise persisted player-president identity ve gerçek election turnover sonrası sticky `lost` state sağlıyor. President-domain akışında promise olayları sezon içinde, election sezon sonunda işlendiği ve turnover `seasonIndex + 1` itibarıyla etkili olduğu için M56'yı sezon-sezon M58 gate'iyle bağlamak post-hoc mutasyon olmadan güvenli bir seam oluşturuyor.
-
-M61 çözümü:
-- M11/M56 canonical promise generation aynen korunur; player yalnız context-valid mevcut `PresidentPromiseType` seçeneklerinden seçim yapabilir ve hedefler M56'nın canonical kurallarından üretilir;
+M62 çözümü:
+- M10/M57 canonical media event generation aynen korunur; player yeni statement event yaratamaz;
+- player yalnız gerçek M10 event'inin mevcut `MediaStance` seçeneklerinden birini seçebilir;
+- statement existence, id, club, target manager, season ve topic canonical kalır;
+- seçilen stance mevcut M10 credibility resolution üzerinden normal biçimde işlenir;
 - president-domain runtime birer sezonluk segmentlerle ilerletilir;
-- active incumbent sırasında controlled club external promise provider'a delege edilir;
-- sezon sonu election sonrası M58 gate refresh edilir; gerçek turnover varsa successor'ın ilk preseason'ından itibaren provider çağrılmaz;
-- blocked/lost durumda aynı M56 engine provider=null ile exact AI path'e döner;
-- reelection aynı incumbent identity'yi koruduğu için player promise control devam eder;
+- active incumbent sırasında controlled club external media provider'a delege edilir;
+- sezon sonu election sonrası M58 gate refresh edilir; gerçek turnover varsa successor'ın ilk sezonundan itibaren provider çağrılmaz;
+- blocked/lost durumda aynı M57 engine provider=null ile exact AI media path'e döner;
+- reelection aynı incumbent identity'yi koruduğu için player media control devam eder;
 - persisted `lost` state sticky kalır ve save/load sonrası reaktive olmaz;
-- diğer 47 kulübün promise snapshot'ları exact AI parity'de kalır;
-- yeni save envelope yalnız president-domain checkpoint + M58 tenure-control state saklar; provider callback runtime-only kalır;
-- M57 media statement tenure gating M61 kapsamına dahil edilmez.
+- diğer 47 kulübün media snapshot'ları exact AI parity'de kalır;
+- yeni save envelope yalnız president-domain checkpoint + M58 tenure-control state saklar; provider callback runtime-only kalır.
 
 Acceptance:
-1. active incumbent player promise seçimini uygular, diğer 47 kulüp exact AI parity'de kalır — PASS;
-2. gerçek election turnover successor'ın ilk sezonunda provider'ı bloklar ve exact AI domain path'i korur — PASS;
-3. reelection player promise control'ü sonraki dönemde aktif tutar — PASS;
+1. active incumbent gerçek statement stance seçimini uygular, event metadata korunur ve diğer 47 kulüp exact AI parity'de kalır — PASS;
+2. gerçek election turnover successor'ın ilk sezonunda provider'ı bloklar ve exact AI president-domain path'ini korur — PASS;
+3. reelection player media control'ü sonraki dönemde aktif tutar — PASS;
 4. persisted lost tenure save/load sonrası provider'ı yeniden aktive etmez — PASS;
 5. runtime-only provider yeniden kurularak split save/resume direct run ile deterministik kalır — PASS.
 
-M61 dosyaları:
-- `lib/src/promise/player_president_tenure_gated_promise_control.dart`
-- `lib/player_president_tenure_gated_promise_control.dart`
-- `test/m61_player_president_tenure_gated_promise_control_test.dart`
-- `tool/run_m61_player_president_tenure_gated_promise_control.dart`
-- `M61_PLAYER_PRESIDENT_TENURE_GATED_PROMISE_CONTROL_I.md`
+M62 dosyaları:
+- `lib/src/media/player_president_tenure_gated_media_statement_control.dart`
+- `lib/player_president_tenure_gated_media_statement_control.dart`
+- `test/m62_player_president_tenure_gated_media_statement_control_test.dart`
+- `tool/run_m62_player_president_tenure_gated_media_statement_control.dart`
+- `M62_PLAYER_PRESIDENT_TENURE_GATED_MEDIA_STATEMENT_CONTROL_I.md`
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M61 **CLOSED / MERGED / PASS**.
+Bu merge-ready docs refresh'i final PR HEAD'ini değiştirecektir. Bu commit'ten sonra branch'e yeni commit atılmayacak; yeni exact HEAD üzerinde analyzer + 273 test + M0–M62 canonical + M62 marker + artifact=0 ve `mergeable=true` yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
+
+M62 **CODE-BEARING PASS / FINAL EXACT-HEAD CI BEKLENİYOR / NOT MERGED**.
 
 ## 3. Son kapanan milestone: M61 — Player President Tenure-Gated Promise Control I
 
@@ -96,6 +95,8 @@ Kapanış kanıtı:
 - Final exact-head PR CI `34755745646`: SUCCESS
 - Squash merge SHA: `0a00895a185e4dc2b8a97485767be888a8bfde85`
 - Post-merge `main` CI `34758193189`: SUCCESS
+- Docs close commit: `ac5fb3a9e2407181a23645b4ee519f816726ea61`
+- Docs CI `34758492972`: SUCCESS
 - analyzer clean; **268 tests PASS**; **M0–M61 canonical PASS**; artifacts 0.
 
 Davranış:
@@ -127,7 +128,7 @@ M61 **CLOSED / MERGED / PASS**.
 
 ## 5. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate core; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate core; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -140,7 +141,8 @@ Başkan/state gerçek etkileri:
 - M59 M49–M52 nested decision stack'ini gerçek incumbent ownership ile yetkilendirir; presidency loss sonrası bu yüzeyler exact AI path'e döner.
 - M60 M55 transfer-strategy kontrolünü gerçek incumbent ownership ile yetkilendirir ve explicit caller transfer policy precedence'ini korur.
 - M61 M56 promise kontrolünü gerçek incumbent ownership ile yetkilendirir; turnover sonrası successor preseason'ında exact AI path'e döner.
-- M57 media statement tenure gating henüz ayrı runtime yüzeyinde tamamlanmalıdır; sonraki milestone otomatik seçilmez, canlı `main` taraması gerekir.
+- M62 M57 media statement stance kontrolünü gerçek incumbent ownership ile yetkilendirir; canonical M10 event metadata'sını korur ve turnover sonrası successor sezonunda exact AI path'e döner.
+- M49–M57 player-president karar yüzeylerinin M58 tenure ownership entegrasyonu M59–M62 ile tamamlanmıştır; sonraki milestone otomatik seçilmez, canlı `main` taraması gerekir.
 
 ## 6. Devir / çalışma talimatı
 
