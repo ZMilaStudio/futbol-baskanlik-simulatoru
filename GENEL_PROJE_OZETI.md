@@ -31,43 +31,47 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M57 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M58 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M58 — Player President Tenure Control Gate Core I.**
+**Aktif milestone yok. M59 henüz seçilmedi.**
 
+M58 kapanış kanıtı:
+- Milestone: `M58 — Player President Tenure Control Gate Core I`
 - Branch: `feat/m58-player-president-tenure-control-gate`
-- PR #61 — **OPEN / NOT MERGED / MERGE READY**
-- Base `main`: `c09bdf37282a76237ec9b08c84b0efa0b3c0f4c2`
-- Verified code-bearing HEAD: `8f8c4bcf0f8f6fe26a4f1a78eb027897880bc7e9`
-- Code-bearing PR CI `34748455726`: **SUCCESS**
+- PR #61 — **MERGED / CLOSED**
+- Final exact PR HEAD: `9da7875970bdfa5ea48c20ac9ae2436c9df60abd`
+- Final exact-head PR CI `34749351474`: **SUCCESS**
+- Squash merge SHA: `fe102d25ff53f598bf5d695f95131e580a7c4523`
+- Post-merge `main` CI `34749911669`: **SUCCESS**
 - analyzer: `No issues found!`
 - **253/253 normal/non-canonical test PASS**
 - beş M58 acceptance testinin tamamı PASS
 - **M0–M58 canonical PASS**
-- `Run M58 player president tenure control gate`: **SUCCESS**
 - canonical marker: `M58_PLAYER_PRESIDENT_TENURE_CONTROL_GATE_PASS turnoverClub=t1_01 reelectedClub=t1_03 turnoverStopsControl=true reelectionKeepsControl=true stickyLoss=true deterministic=true worldClubs=48`
 - artifacts: **0**
-- PR `mergeable=true`
-- M58 yalnız core control identity/gate oluşturur; M49–M57 provider wiring bu milestone'da topluca değiştirilmez.
 
-Bu merge-ready özet commit'i final PR HEAD'ini değiştirecektir. Yeni exact HEAD üzerinde `test` + `canonical` CI, 253 test, M58 marker, artifact=0 ve `mergeable=true` yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
+Bu commit M58 kapanış özetidir. Tetiklediği docs-only CI bir kez doğrulanacaktır; sırf docs-close run ID'sini bu dosyaya yazmak için ikinci bir docs commit atılmayacaktır.
 
-M58 seçim gerekçesi: M49–M57 player-president karar yüzeyleri controlled club kimliğine göre açılıyor. Canlı M49/M52/M57 kaynaklarında current incumbent `presidentId` ile oyuncunun başkan kimliğini bağlayan bir ownership guard yoktur. Böylece gerçek election turnover sonrası yeni AI başkan göreve gelse bile kulüp-id tabanlı player provider'larının teorik olarak çalışmaya devam etmesi mümkündür. M14 bu kullanıcı election-loss/game-over davranışını bilinçli olarak sonraya bırakmıştı.
+Bir sonraki adım: canlı `main` kodunu ve bu özeti inceleyip M59 kapsamını gerçek ürün boşluğundan seçmek. M58 yalnız ortak persisted tenure-control gate core'u kurdu; M49–M57 provider wiring'inin bu gate ile yetkilendirilmesi sonraki milestone adaylarından biridir.
 
-M58 bu sistemik yaşam döngüsü açığı için ortak temel kurar:
+## 3. Son kapanan milestone: M58 — Player President Tenure Control Gate Core I
+
+M58, player-president kontrolünü yalnız controlled club kimliğine değil gerçek incumbent president identity'ye bağlayan ortak yaşam döngüsü temelini kurdu.
+
+Davranış:
 - controlled club'ın gerçek incumbent `presidentId` değeri player-president identity olarak capture edilir;
 - control `active` / `lost` olarak persist edilir;
-- gerçek incumbent değiştiğinde turnover sezonu + successor id ile control kalıcı kapanır;
-- reelection aynı kimliği koruduğu için control aktif kalır;
-- loss sticky'dir, eski kimlik daha sonra görülse bile yeniden açılmaz;
-- gate state deterministik save codec ile round-trip edilir;
-- election/reputation/provider davranışı bu core milestone'da değiştirilmez.
+- gerçek president turnover'ında control kalıcı kapanır;
+- reelection aynı incumbent kimliğini koruduğu için control açık kalır;
+- kayıp sticky'dir; eski kimlik daha sonra tekrar görünse bile control reaktive olmaz;
+- gate save/load round-trip ve president-domain resume deterministik kalır;
+- M58 election sonuçlarını veya M49–M57 provider davranışını topluca değiştirmez.
 
 Acceptance:
 1. gerçek incumbent identity active player control olarak capture edilir — PASS;
 2. gerçek 3→4 election turnover control'ü kapatır — PASS;
 3. gerçek reelection control'ü aktif tutar — PASS;
-4. loss sticky / no reactivation — PASS;
+4. lost state reaktive olmaz — PASS;
 5. gate save/load + president-domain save/resume deterministik parity — PASS.
 
 M58 dosyaları:
@@ -79,26 +83,11 @@ M58 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M58 **MERGE READY / NOT MERGED**. Final docs-only exact-head CI doğrulandıktan sonra PR #61 için kullanıcıdan açık merge onayı alınmalıdır.
-
-## 3. Son kapanan milestone: M57 — Player President Media Statement Decision Override I
-
-- Branch: `feat/m57-player-president-media-statement-control`
-- PR #60 — MERGED / CLOSED
-- Final exact PR HEAD: `db1bb76975135c29d6d009fcebe4dd2d58eece65`
-- Final exact-head PR CI `34728689253`: SUCCESS
-- analyzer clean; **248 tests PASS**; **M0–M57 canonical PASS**; artifacts **0**
-- Squash merge SHA: `af5d7c12597ad4a68f2b75251a3c9e70fb09a590`
-- Post-merge `main` CI `34747248946`: SUCCESS; 248 tests; M0–M57 PASS; artifacts 0
-- closure docs commit: `c09bdf37282a76237ec9b08c84b0efa0b3c0f4c2`
-- closure docs-only CI `34747541534`: SUCCESS; artifacts 0
-
-M57 yalnız gerçek M10 statement event'indeki controlled-club stance kararını oyuncu başkana açtı; event existence/metadata/credibility kanonik kaldı ve diğer 47 kulüp AI parity korudu.
-
-M57 **CLOSED / MERGED / PASS**.
+M58 **CLOSED / MERGED / PASS**.
 
 ## 4. Yakın milestone geçmişi
 
+- M57 Player President Media Statement Decision Override I — PR #60 merge `af5d7c12597ad4a68f2b75251a3c9e70fb09a590`; 248 tests; M0–M57 PASS; artifact 0.
 - M56 Player President Promise Decision Override I — PR #59 merge `c61ef1338cc0ab7cfb993827e46bec62524cf308`; 243 tests; M0–M56 PASS; artifact 0.
 - M55 Player President Transfer Strategy Decision Override I — PR #58 merge `f4034bf35e11d52dc97d2d5a39abaed6672bbc7c`; 238 tests; M0–M55 PASS; artifact 0.
 - M54 Transfer Strategy World Runtime Bridge I — PR #57 merge `837198d3480be5571d4eeae1934c72454f47dec1`; 233 tests; M0–M54 PASS; artifact 0.
@@ -119,7 +108,7 @@ Başkan/state gerçek etkileri:
 - `riskAppetite`: bid ceiling + stadium priority + sponsor preference + crisis response
 - `youthOrientation`: youth transfer preference + academy/training priority
 - M49–M57 player-president kararları controlled club üzerinde runtime-only provider'larla çalışır; diğer kulüpler AI kalır.
-- M58, bu kararların gelecekte gerçek incumbent identity'ye göre yetkilendirilebilmesi için persisted tenure control gate'i sağlar.
+- M58 bu kararların gerçek incumbent identity'ye göre yetkilendirilebilmesi için persisted tenure control gate'i sağlar; provider wiring'in gate ile compose edilmesi ayrı milestone olarak ele alınmalıdır.
 
 ## 6. Devir / çalışma talimatı
 
