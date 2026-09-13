@@ -238,3 +238,6 @@ jobs:
 
       - name: Run M67 player president promise media transfer ticket runtime composition
         run: dart run tool/run_m67_player_president_tenure_gated_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
+
+      - name: Run M68 player president facility promise media transfer ticket runtime composition
+        run: dart run tool/run_m68_player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
