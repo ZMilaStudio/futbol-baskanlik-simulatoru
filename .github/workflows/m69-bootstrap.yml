@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 7
     steps:
@@ -21,6 +22,8 @@ jobs:
           sdk: stable
       - name: Apply seam patch
         run: python3 .m69_bootstrap.py
+      - name: Keep workflow mutation out of bot push
+        run: git checkout -- .github/workflows/m0-tests.yml
       - name: Install dependencies
         run: dart pub get
       - name: Format changed Dart files
@@ -29,12 +32,18 @@ jobs:
         run: dart analyze
       - name: Targeted M69 tests
         run: dart test test/m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition_test.dart
-      - name: Commit verified patch
+      - name: Commit verified source patch
         shell: bash
         run: |
-          git config user.name "ZMilaStudio"
-          git config user.email "levent.ua@gmail.com"
-          git rm .github/workflows/m69-bootstrap.yml .m69_bootstrap.py
-          git add .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .m69_bootstrap.py
+          git add lib/src/sponsor/player_president_sponsor_control.dart
+          git add lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart
+          git add lib/src/facility/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart
+          git add lib/src/sponsor/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart
+          git add lib/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart
+          git add test/m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition_test.dart
+          git add tool/run_m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart
           git commit -m "feat(m69): compose sponsor control into unified player president runtime"
           git push origin HEAD:feat/m69-sponsor-unified-player-president-runtime
