@@ -31,22 +31,25 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M61 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M62 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M62 — Player President Tenure-Gated Media Statement Control I.**
+**Aktif milestone yok.** Yeni milestone, canlı `main` mimari taraması ve gerçek ürün boşluğu doğrulandıktan sonra seçilmelidir.
 
-M62 canlı durum:
+Son kapanan milestone M62 — Player President Tenure-Gated Media Statement Control I:
 - Branch: `feat/m62-player-president-tenure-gated-media-statement-control`
-- PR #65 — **OPEN / NOT MERGED**
-- Base `main`: `ac5fb3a9e2407181a23645b4ee519f816726ea61`
+- PR #65 — **MERGED / CLOSED**
 - Verified code-bearing HEAD: `be92d96a18bbc70a333e9f779506f479129e05b2`
 - Code-bearing PR CI `34759395413`: **SUCCESS**
+- Final exact PR HEAD: `8c3beb208eeb14271e0a7241286757b2c81b9bae`
+- Final exact-head PR CI `34759780148`: **SUCCESS**
+- Squash merge SHA: `64aab836ab707fe33c204465348f9bc0bc50a54f`
+- Post-merge `main` CI `34761602949`: **SUCCESS**
 - analyzer: `No issues found!`
 - **273/273 normal/non-canonical test PASS**
 - beş M62 acceptance testinin tamamı PASS
 - **M0–M62 canonical PASS**
 - canonical marker: `M62_PLAYER_PRESIDENT_TENURE_GATED_MEDIA_STATEMENT_CONTROL_PASS controlled=t1_01 aiParity=47 activeDelegation=true turnoverStopsControl=true reelectionKeepsControl=true stickyLoss=true deterministic=true worldClubs=48`
-- artifacts: **0**
+- post-merge artifacts: **0**
 
 M62 seçim gerekçesi: canlı M61 sonrası taramada M57 media statement override'ın yalnız `controlledClubId` + runtime provider varlığıyla yetkilendirildiği ve gerçek incumbent president identity/tenure durumunu bilmediği doğrulandı. M58 persisted player-president identity ve gerçek election turnover sonrası sticky `lost` state sağlıyor. Media statement olayları sezon içinde, election sezon sonunda işlendiği ve turnover sonraki sezon itibarıyla etkili olduğu için M57'yi sezon-sezon M58 gate'iyle bağlamak canonical event üretimini post-hoc değiştirmeden güvenli bir seam oluşturuyor.
 
@@ -80,38 +83,37 @@ M62 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-Bu merge-ready docs refresh'i final PR HEAD'ini değiştirecektir. Bu commit'ten sonra branch'e yeni commit atılmayacak; yeni exact HEAD üzerinde analyzer + 273 test + M0–M62 canonical + M62 marker + artifact=0 ve `mergeable=true` yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
+M62 **CLOSED / MERGED / PASS**.
 
-M62 **CODE-BEARING PASS / FINAL EXACT-HEAD CI BEKLENİYOR / NOT MERGED**.
+## 3. Son kapanan milestone: M62 — Player President Tenure-Gated Media Statement Control I
 
-## 3. Son kapanan milestone: M61 — Player President Tenure-Gated Promise Control I
-
-M61, M56 player-president promise override'ını M58 persisted incumbent-president ownership state'iyle yetkilendirdi.
+M62, M57 player-president media statement stance override'ını M58 persisted incumbent-president ownership state'iyle yetkilendirdi.
 
 Kapanış kanıtı:
-- Branch: `feat/m61-player-president-tenure-gated-promise-control`
-- PR #64 — MERGED / CLOSED
-- Final exact PR HEAD: `b58d8c2b73d4eb0787348eda567e2adda1862d2a`
-- Final exact-head PR CI `34755745646`: SUCCESS
-- Squash merge SHA: `0a00895a185e4dc2b8a97485767be888a8bfde85`
-- Post-merge `main` CI `34758193189`: SUCCESS
-- Docs close commit: `ac5fb3a9e2407181a23645b4ee519f816726ea61`
-- Docs CI `34758492972`: SUCCESS
-- analyzer clean; **268 tests PASS**; **M0–M61 canonical PASS**; artifacts 0.
+- Branch: `feat/m62-player-president-tenure-gated-media-statement-control`
+- PR #65 — MERGED / CLOSED
+- Code-bearing HEAD: `be92d96a18bbc70a333e9f779506f479129e05b2`
+- Code-bearing PR CI `34759395413`: SUCCESS
+- Final exact PR HEAD: `8c3beb208eeb14271e0a7241286757b2c81b9bae`
+- Final exact-head PR CI `34759780148`: SUCCESS
+- Squash merge SHA: `64aab836ab707fe33c204465348f9bc0bc50a54f`
+- Post-merge `main` CI `34761602949`: SUCCESS
+- analyzer clean; **273 tests PASS**; **M0–M62 canonical PASS**; artifacts 0.
 
 Davranış:
-- active incumbent sırasında controlled club player promise provider'ına delege edilir;
-- player yalnız mevcut canonical promise tiplerinden context-valid seçim yapar, target'lar canonical generation tarafından korunur;
-- gerçek successor identity sonrası player provider çağrılmaz ve exact AI promise path korunur;
+- active incumbent sırasında controlled club player media provider'ına delege edilir;
+- player yalnız gerçek canonical M10 statement event'inin stance'ını seçer, event metadata değişmez;
+- gerçek successor identity sonrası player provider çağrılmaz ve exact AI media path korunur;
 - reelection player control'ü sürdürür;
 - persisted `lost` state save/load sonrası sticky kalır ve reaktive olmaz;
 - diğer 47 kulüp exact AI parity'de kalır;
 - provider callback runtime-only kalır.
 
-M61 **CLOSED / MERGED / PASS**.
+M62 **CLOSED / MERGED / PASS**.
 
 ## 4. Yakın milestone geçmişi
 
+- M62 Player President Tenure-Gated Media Statement Control I — PR #65 merge `64aab836ab707fe33c204465348f9bc0bc50a54f`; 273 tests; M0–M62 PASS; artifact 0.
 - M61 Player President Tenure-Gated Promise Control I — PR #64 merge `0a00895a185e4dc2b8a97485767be888a8bfde85`; 268 tests; M0–M61 PASS; artifact 0.
 - M60 Player President Tenure-Gated Transfer Strategy Control I — PR #63 merge `b149e4f9c661ce5f2aa43f16ee4b5cbfc9b79b6d`; 263 tests; M0–M60 PASS; artifact 0.
 - M59 Player President Tenure-Gated Runtime Controls I — PR #62 merge `d49424573d7db1c2f02554bffec2e3b13c40b6dd`; 258 tests; M0–M59 PASS; artifact 0.
