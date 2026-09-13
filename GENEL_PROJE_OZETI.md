@@ -31,17 +31,26 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M63 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M64 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M64 — Player President Tenure-Gated Ticket Pricing Control I.**
+**Aktif milestone: yok.**
 
-M64 canlı durum:
+Bir sonraki milestone eski sohbetlerden veya bu dosyadaki potansiyel fikirlerden otomatik seçilmez. Önce canlı `main` mimarisi ve ürün boşlukları yeniden taranır; kapsam gerçek canlı durumdan türetilir.
+
+## 3. Son kapanan milestone: M64 — Player President Tenure-Gated Ticket Pricing Control I
+
+M64, M40/M41 stadyum + fan-trust attendance modelinin sabit ticket-yield davranışına, kulüp başkanı rolüne uygun tenure-gated maç günü bilet fiyatlandırma karar yüzeyi ekledi.
+
+Kapanış kanıtı:
 - Branch: `feat/m64-player-president-tenure-gated-ticket-pricing-control`
-- PR #67 — **OPEN / NOT MERGED**
+- PR #67 — **MERGED / CLOSED**
 - Base `main`: `e1c849eaeae02a988c7858ffbf3c64b751b4ffd0`
-- Verified code-bearing HEAD: `b9c2e366645d07eaedbd57d42c24213ae135224d`
-- Verified pre-merge-ready summary HEAD: `4b3c627213fb647523759145ea872296bdcc3daf`
-- PR CI `34767066298`: **SUCCESS**
+- Code-bearing HEAD: `b9c2e366645d07eaedbd57d42c24213ae135224d`
+- Code-bearing PR CI `34767066298`: **SUCCESS**
+- Final exact PR HEAD: `f3311f7a2b8fbfd72e2c0b04b343e2ddd8a68be7`
+- Final exact-head PR CI `34767467241`: **SUCCESS**
+- Squash merge SHA: `4a76d1546fa02675e1c94cd57621a82d70e15a8c`
+- Post-merge exact-merge-SHA `main` CI `34768517130`: **SUCCESS**
 - analyzer: `No issues found!`
 - **283/283 normal/non-canonical test PASS**
 - beş M64 acceptance testinin tamamı PASS
@@ -49,22 +58,18 @@ M64 canlı durum:
 - canonical marker: `M64_PLAYER_PRESIDENT_TENURE_GATED_TICKET_PRICING_CONTROL_PASS controlled=t1_01 aiParity=47 balancedParity=true elasticity=true activeDelegation=true successorBlocks=true stickyLoss=true deterministic=true worldClubs=48 seed=20260903`
 - artifacts: **0**
 
-Bu merge-ready özet commit'i final PR HEAD'ini değiştirecektir. Yeni exact HEAD üzerinde analyzer + 283 test + M0–M64 canonical + M64 marker + artifact=0 yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
-
-M64 seçim gerekçesi: M63 kapanışı sonrası canlı `main` taramasında M40/M41 stadyum + fan-trust attendance modelinin gerçek maç günü talep/gelir etkisi ürettiği, ancak `StadiumInvestmentPolicy.ticketYieldBpsForLevel` değerinin yalnız stadyum seviyesine sabit olduğu ve oyuncu-başkan için ticari bilet fiyatlandırma karar yüzeyi bulunmadığı doğrulandı. Bu doğrudan kulüp başkanı yetkisidir; teknik direktör/taktik alanına girmez.
-
-M64 çözümü:
-- üç canonical fiyat seviyesi: `supporterFriendly`, `balanced`, `premium`;
-- `balanced` seçimi mevcut M40/M41 demand + attendance + occupancy + ticket yield + revenue multiplier semantiğini birebir korur;
+Davranış:
+- üç canonical fiyat seviyesi vardır: `supporterFriendly`, `balanced`, `premium`;
+- `balanced`, mevcut M40/M41 demand + attendance + occupancy + ticket yield + revenue multiplier semantiğini birebir korur;
 - supporter-friendly daha düşük yield / daha yüksek talep, premium daha yüksek yield / daha düşük talep üretir;
 - etkiler bounded kalır;
-- AI fiyat politikası mevcut `PresidentManagementProfile.financialDiscipline`, fan trust ve baz doluluk bağlamını kullanır;
-- player provider yalnız controlled club + M58 tenure state aktif + gerçek president id captured player-president id ile eşleşiyorsa çalışır;
+- AI fiyat politikası `PresidentManagementProfile.financialDiscipline`, fan trust ve baz doluluk bağlamını deterministik kullanır;
+- player provider yalnız controlled club + aktif M58 tenure ownership + gerçek incumbent identity eşleşmesinde çalışır;
 - successor mismatch ve persisted `lost` state provider'ı bloklar;
 - diğer 47 kulüp exact AI pricing path'te kalır;
-- core katman world/finance/fan/stadium/president state mutate etmez; provider runtime-only kalır.
+- provider runtime-only'dir; M64 core world/finance/fan/stadium/president state mutate etmez.
 
-M64 acceptance:
+Acceptance:
 1. balanced pricing exact M40/M41 parity — PASS;
 2. supporter-friendly/premium bounded demand-yield elasticity — PASS;
 3. AI pricing fan trust + occupancy + financial discipline bağlamına deterministik tepki — PASS;
@@ -72,7 +77,7 @@ M64 acceptance:
 5. successor mismatch + persisted lost tenure provider bloklama ve determinism — PASS.
 
 Bilinçli kapsam dışı:
-- ticket pricing'in gerçek season economy row'una yazılması;
+- ticket pricing multiplier'ın gerçek season economy row'una yazılması;
 - maç/derbi/kupa bazlı dinamik fiyatlama;
 - M59 + M63 tek üst-level checkpoint composition;
 - M60 transfer-strategy composition.
@@ -86,38 +91,11 @@ M64 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M64 **CODE + CI PASS / FINAL EXACT-HEAD CI BEKLENİYOR / NOT MERGED**.
-
-## 3. Son kapanan milestone: M63 — Player President Tenure-Gated Promise + Media Composition I
-
-M63, M61 promise ve M62 media-statement player-president kontrollerini tek authoritative president-domain checkpoint/save akışında ve tek M58 tenure ownership state altında compose etti.
-
-Kapanış kanıtı:
-- PR #66 — MERGED / CLOSED
-- Code-bearing HEAD: `99006dfcb88f76701d8b25780db897dc57b9e9ac`
-- Code-bearing PR CI `34764229332`: SUCCESS
-- Final exact PR HEAD: `da685282ba96245c2939a9c09bf5c68d4cce6f9f`
-- Final exact-head PR CI `34764581816`: SUCCESS
-- Squash merge SHA: `72f5387fe416746244eb41cbc6aaaaf179f9442f`
-- Post-merge `main` CI `34765651874`: SUCCESS
-- Docs close commit: `e1c849eaeae02a988c7858ffbf3c64b751b4ffd0`
-- docs-only close CI `34765965394`: SUCCESS
-- analyzer clean; **278 tests PASS**; **M0–M63 canonical PASS**; artifacts 0.
-
-Davranış:
-- promise + media seçimleri aynı real president-domain sezon akışını paylaşır;
-- iki provider yalnız gerçek incumbent player-president aktifken çalışır;
-- turnover sonrası iki yüzey aynı anda exact AI path'e döner;
-- reelection iki kontrolü de sürdürür;
-- persisted loss sticky kalır;
-- promise target ve media statement event metadata canonical kalır;
-- diğer 47 kulüp exact AI parity'de kalır;
-- provider callback'ler runtime-only kalır ve save/resume determinism korunur.
-
-M63 **CLOSED / MERGED / PASS**.
+M64 **CLOSED / MERGED / PASS**.
 
 ## 4. Yakın milestone geçmişi
 
+- M64 Player President Tenure-Gated Ticket Pricing Control I — PR #67 merge `4a76d1546fa02675e1c94cd57621a82d70e15a8c`; 283 tests; M0–M64 PASS; artifact 0.
 - M63 Player President Tenure-Gated Promise + Media Composition I — PR #66 merge `72f5387fe416746244eb41cbc6aaaaf179f9442f`; 278 tests; M0–M63 PASS; artifact 0.
 - M62 Player President Tenure-Gated Media Statement Control I — PR #65 merge `64aab836ab707fe33c204465348f9bc0bc50a54f`; 273 tests; M0–M62 PASS; artifact 0.
 - M61 Player President Tenure-Gated Promise Control I — PR #64 merge `0a00895a185e4dc2b8a97485767be888a8bfde85`; 268 tests; M0–M61 PASS; artifact 0.
@@ -144,8 +122,9 @@ Başkan/state gerçek etkileri:
 - M61 M56 promise kontrolünü gerçek incumbent ownership ile yetkilendirir.
 - M62 M57 media statement stance kontrolünü gerçek incumbent ownership ile yetkilendirir.
 - M63 promise + media kararlarını aynı president-domain checkpoint/save akışında compose eder.
-- M64 M40/M41 attendance çıktısı üzerinde, tenure-gated ve state-mutating olmayan başkan bilet fiyatlandırma karar yüzeyi ekler.
-- M59 ve M63 ile tek üst-level player-president kariyer composition henüz tamamlanmamıştır; M60 da bu composition dışında kalır.
+- M64 M40/M41 attendance çıktısı üzerinde tenure-gated, stateless başkan bilet fiyatlandırma karar yüzeyi ekler.
+- M64 ticket pricing henüz gerçek season economy row'una compose edilmemiştir.
+- M59 ve M63 tek üst-level player-president kariyer composition altında birleşmemiştir; M60 da bu composition dışında kalır.
 
 ## 6. Devir / çalışma talimatı
 
