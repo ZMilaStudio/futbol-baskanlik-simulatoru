@@ -13,6 +13,7 @@ import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
 import '../league/club.dart';
 import '../player/player.dart';
+import '../promise/promise_media_career_engine.dart';
 import '../save/save_checksum.dart';
 import '../save/save_load_exception.dart';
 import '../season/season_report.dart';
@@ -228,6 +229,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     this.tenureGate = const PlayerPresidentTenureControlGate(),
     this.baseWorldEngine = const WorldCareerEngine(),
     this.investment = const PresidentFacilityInvestmentRuntimeEngine(),
+    this.sourceEngine = const PromiseMediaCareerEngine(),
   });
 
   final PlayerMatchdayTicketPricingDecisionProvider? playerProvider;
@@ -237,6 +239,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
   final PlayerPresidentTenureControlGate tenureGate;
   final WorldCareerEngine baseWorldEngine;
   final PresidentFacilityInvestmentRuntimeEngine investment;
+  final PromiseMediaCareerEngine sourceEngine;
 
   PlayerPresidentTicketPricingRuntimeCareerResult simulateWithCheckpoint({
     required List<Club> clubs,
@@ -464,6 +467,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     return PresidentFacilityInvestmentRuntimeCareerEngine(
       runtime: FacilitySponsorCrisisRuntimeCareerEngine(
         baseWorldEngine: pricedWorld,
+        sourceEngine: sourceEngine,
       ),
       investment: investment,
     );
