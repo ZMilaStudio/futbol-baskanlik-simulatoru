@@ -50,7 +50,7 @@ M59 kapanış kanıtı:
 - canonical marker: `M59_PLAYER_PRESIDENT_TENURE_GATED_RUNTIME_CONTROLS_PASS turnoverClub=t1_01 reelectedClub=t1_03 activeDelegation=true turnoverStopsControl=true reelectionKeepsControl=true exactAiAfterLoss=true deterministic=true worldClubs=48`
 - artifacts: **0**
 
-Bu commit M59 kapanış özetidir. Tetiklediği docs-only CI bir kez doğrulanacaktır; sırf docs-close run ID'sini bu dosyaya yazmak için ikinci bir docs commit atılmayacaktır.
+Bu dosya, post-merge `main` CI `34752676581` tamamen SUCCESS olduktan sonra M59 kapanış durumuna güncellenmiştir. Bu docs-only kapanış commit'inin CI'ı bir kez doğrulanacaktır; sırf docs-close run ID'sini bu dosyaya yazmak için ikinci bir docs commit atılmayacaktır.
 
 Bir sonraki adım: canlı `main` kodunu ve bu özeti inceleyip M60 kapsamını gerçek ürün boşluğundan seçmek. M55 transfer strategy, M56 promise ve M57 media statement player kararlarının M58 tenure gate ile yetkilendirilmesi güçlü adaydır; ancak kapsam canlı kod incelenmeden kesinleştirilmez.
 
