@@ -36,11 +36,22 @@ Kalıcı kurallar:
 **Aktif milestone: M57 — Player President Media Statement Decision Override I.**
 
 - Branch: `feat/m57-player-president-media-statement-control`
-- PR #60 — **OPEN / NOT MERGED / ACTIVE**
+- PR #60 — **OPEN / NOT MERGED / MERGE READY**
 - Base `main`: `6f4d05a785ee6cab509e625f0bddb9c50143baf9`
-- M57 code + 5 acceptance tests + canonical runner + CI step hazırlandı.
-- Canlı PR CI henüz doğrulanmadı; PASS yazılmayacaktır.
-- Merge için kullanıcıdan henüz onay istenmemelidir.
+- Verified code-bearing HEAD: `af420fca5606bbc6dde3827ecc317ae851237256`
+- Code-bearing PR CI `34728351630`: **SUCCESS**
+- analyzer: `No issues found!`
+- **248 normal/non-canonical test PASS**
+- beş M57 acceptance testinin tamamı PASS
+- **M0–M57 canonical PASS**
+- `Run M57 player president media statement control`: **SUCCESS**
+- canonical marker: `M57_PLAYER_MEDIA_STATEMENT_CONTROL_PASS controlled=t1_06 aiParity=47 ai=pressure player=strongSupport eventPreserved=true metadataPreserved=true realCredibility=true deterministic=true worldClubs=48`
+- artifacts: **0**
+- PR `mergeable=true`
+
+Bu özet merge-ready commit'i final PR HEAD'ini değiştirecektir. Yeni exact HEAD üzerinde `test` + `canonical` CI, 248 test, M57 marker ve artifact=0 yeniden doğrulanacaktır. Sonucu sırf özete yazmak için ikinci docs commit atılmayacaktır.
+
+M57 henüz merge edilmedi. Final exact-head CI + artifact 0 + mergeable=true yeniden doğrulandıktan sonra kullanıcıdan **PR #60'a özel açık merge onayı** alınmalıdır.
 
 M57 seçim gerekçesi: M10 başkan açıklamalarını ve medya hafızasını gerçek state etkisine bağlamıştı; ancak controlled club dahil statement stance hâlâ `MediaStatementEngine` tarafından tamamen otomatik seçiliyordu. M10 dokümanı basın toplantısı/UI katmanını kapsam dışı bırakmıştı. Bu nedenle M57, mevcut gerçek M10 event'inde başkanın tavrını oyuncuya açan dar ürün boşluğunu kapatır.
 
@@ -59,11 +70,11 @@ M57 çözümü:
 - Provider serialize edilmez; save alanı/migration eklenmez.
 
 M57 acceptance:
-1. provider yokken M10 media generation exact parity
-2. yalnız controlled club stance değişir; diğer 47 kulüp exact AI parity
-3. AI event yoksa provider çağrılmaz ve oyuncu event yaratamaz
-4. seçilen stance gerçek M10 credibility resolution'a akar; statement metadata korunur
-5. runtime-only provider ile save/load/resume determinism (`2+2 == 4`)
+1. provider yokken M10 media generation exact parity — PASS
+2. yalnız controlled club stance değişir; diğer 47 kulüp exact AI parity — PASS
+3. AI event yoksa provider çağrılmaz ve oyuncu event yaratamaz — PASS
+4. seçilen stance gerçek M10 credibility resolution'a akar; statement metadata korunur — PASS
+5. runtime-only provider ile save/load/resume determinism (`2+2 == 4`) — PASS
 
 M57 dosyaları:
 - `lib/src/media/player_president_media_statement_control.dart`
@@ -74,7 +85,7 @@ M57 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M57 **ACTIVE / NOT MERGED**. Canlı CI sonucu gelmeden merge-ready sayılmaz.
+M57 **MERGE READY / NOT MERGED**. Final docs-only exact-head CI doğrulanmadan merge onayı istenmez.
 
 ## 4. Son kapanan milestone: M56 — Player President Promise Decision Override I
 
