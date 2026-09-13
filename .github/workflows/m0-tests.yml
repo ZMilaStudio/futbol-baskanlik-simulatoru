@@ -223,3 +223,6 @@ jobs:
 
       - name: Run M62 player president tenure-gated media statement control
         run: dart run tool/run_m62_player_president_tenure_gated_media_statement_control.dart 20260903
+
+      - name: Run M63 player president tenure-gated promise media composition
+        run: dart run tool/run_m63_player_president_tenure_gated_promise_media_composition.dart 20260903
