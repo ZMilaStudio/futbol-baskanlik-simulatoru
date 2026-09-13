@@ -1,0 +1,1 @@
+export 'src/transfer/player_president_tenure_gated_transfer_strategy_control.dart';
