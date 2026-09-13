@@ -1,4 +1,5 @@
 import '../core/simulation_config.dart';
+import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../crisis/player_president_facility_control.dart';
 import '../crisis/president_facility_investment_runtime_integration.dart';
 import '../election/player_president_tenure_control_gate.dart';
