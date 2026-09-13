@@ -80,8 +80,7 @@ class PlayerPresidentSponsorRuntimeDecision {
   SponsorOffer get aiChoice => context.aiChoice;
   bool get changedFromAi => selectedOffer.id != aiChoice.id;
 
-  String get signature =>
-      '${context.signature}:choice=${choice.signature}:'
+  String get signature => '${context.signature}:choice=${choice.signature}:'
       'selected=${selectedOffer.signature}';
 }
 
@@ -161,7 +160,8 @@ class PlayerPresidentSponsorControlSaveCodec {
     final payload = envelope['payload'];
     final checksum = envelope['checksum'];
     if (checksum is! String ||
-        checksum != SaveChecksum.forPayload(saveVersion: version, payload: payload)) {
+        checksum !=
+            SaveChecksum.forPayload(saveVersion: version, payload: payload)) {
       throw const SaveLoadException(
         SaveLoadFailure.checksumMismatch,
         'Player-president sponsor save checksum mismatch.',
@@ -305,7 +305,7 @@ class PlayerPresidentSponsorControlCareerEngine {
         decisionPolicy: aiSponsorPolicy,
       );
     } else {
-      sponsorSystem = _PlayerPresidentSponsorSystemEngine(
+      sponsorSystem = PlayerPresidentSponsorSystemEngine(
         controlledClubId: controlledClubId,
         provider: sponsorProvider!,
         decisions: decisions,
@@ -325,8 +325,8 @@ class PlayerPresidentSponsorControlCareerEngine {
   }
 }
 
-class _PlayerPresidentSponsorSystemEngine extends SponsorSystemEngine {
-  _PlayerPresidentSponsorSystemEngine({
+class PlayerPresidentSponsorSystemEngine extends SponsorSystemEngine {
+  PlayerPresidentSponsorSystemEngine({
     required this.controlledClubId,
     required this.provider,
     required this.decisions,

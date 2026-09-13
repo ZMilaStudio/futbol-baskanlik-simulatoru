@@ -114,7 +114,8 @@ class PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricing
     );
   }
 
-  PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntimeCareerEngine _delegate({
+  PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntimeCareerEngine
+      _delegate({
     required String controlledClubId,
     required _M69SponsorTenureSession session,
   }) {

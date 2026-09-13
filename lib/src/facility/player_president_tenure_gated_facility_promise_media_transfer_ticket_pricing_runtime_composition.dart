@@ -11,6 +11,7 @@ import '../media/player_president_media_statement_control.dart';
 import '../promise/player_president_promise_control.dart';
 import '../promise/promise_career_engine.dart';
 import '../promise/promise_media_career_engine.dart';
+import '../sponsor/sponsor_system.dart';
 import '../transfer/player_president_tenure_gated_transfer_strategy_control.dart';
 import '../transfer/player_president_transfer_strategy_control.dart';
 import '../transfer/president_transfer_strategy_world_bridge.dart';
@@ -42,6 +43,7 @@ class PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntime
     this.tenureGate = const PlayerPresidentTenureControlGate(),
     this.baseWorldEngine = const WorldCareerEngine(),
     this.investment = const PresidentFacilityInvestmentRuntimeEngine(),
+    this.sponsorSystem = const SponsorSystemEngine(),
   });
 
   final PlayerFacilityInvestmentDecisionProvider? facilityProvider;
@@ -55,6 +57,7 @@ class PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntime
   final PlayerPresidentTenureControlGate tenureGate;
   final WorldCareerEngine baseWorldEngine;
   final PresidentFacilityInvestmentRuntimeEngine investment;
+  final SponsorSystemEngine sponsorSystem;
 
   PlayerPresidentTicketPricingRuntimeCareerResult simulateWithCheckpoint({
     required List<Club> clubs,
@@ -201,6 +204,7 @@ class PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntime
       tenureGate: tenureGate,
       baseWorldEngine: world,
       investment: facilityInvestment,
+      sponsorSystem: sponsorSystem,
       sourceEngine: sourceEngine,
     );
   }

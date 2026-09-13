@@ -18,16 +18,19 @@ class _AlwaysBalancedPolicy extends PresidentMatchdayTicketPricingPolicy {
     required PresidentManagementProfile profile,
     required int fanTrust,
     required StadiumAttendanceProfile base,
-  }) => const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
+  }) =>
+      const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
 }
 
-class _PremiumTicketProvider extends PlayerMatchdayTicketPricingDecisionProvider {
+class _PremiumTicketProvider
+    extends PlayerMatchdayTicketPricingDecisionProvider {
   const _PremiumTicketProvider();
 
   @override
   MatchdayTicketPricingChoice choose(
     PlayerPresidentTicketPricingDecisionContext context,
-  ) => const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.premium);
+  ) =>
+      const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.premium);
 }
 
 class _CountingPremiumTicketProvider
@@ -49,12 +52,13 @@ class _YouthTransferProvider extends PlayerTransferStrategyDecisionProvider {
   @override
   PlayerTransferStrategyChoice chooseTransferStrategy(
     PlayerTransferStrategyDecisionContext context,
-  ) => const PlayerTransferStrategyChoice(
-    financialDiscipline: 60,
-    transferAmbition: 60,
-    riskAppetite: 60,
-    youthOrientation: 90,
-  );
+  ) =>
+      const PlayerTransferStrategyChoice(
+        financialDiscipline: 60,
+        transferAmbition: 60,
+        riskAppetite: 60,
+        youthOrientation: 90,
+      );
 }
 
 class _CountingYouthTransferProvider
@@ -86,7 +90,8 @@ class _AlternativePromiseProvider extends PlayerPromiseDecisionProvider {
       );
 }
 
-class _CountingAlternativePromiseProvider extends PlayerPromiseDecisionProvider {
+class _CountingAlternativePromiseProvider
+    extends PlayerPromiseDecisionProvider {
   int calls = 0;
 
   @override
@@ -128,7 +133,8 @@ class _HoldFacilityProvider extends PlayerFacilityInvestmentDecisionProvider {
   @override
   PlayerFacilityInvestmentChoice choose(
     PlayerFacilityInvestmentContext context,
-  ) => PlayerFacilityInvestmentChoice.hold;
+  ) =>
+      PlayerFacilityInvestmentChoice.hold;
 }
 
 class _CountingHoldFacilityProvider
@@ -136,7 +142,8 @@ class _CountingHoldFacilityProvider
   int calls = 0;
 
   @override
-  PlayerFacilityInvestmentChoice choose(PlayerFacilityInvestmentContext context) {
+  PlayerFacilityInvestmentChoice choose(
+      PlayerFacilityInvestmentContext context) {
     calls++;
     return PlayerFacilityInvestmentChoice.hold;
   }
@@ -206,8 +213,8 @@ void main() {
 
   setUpAll(() {
     world = const FictionalWorldFactory().build();
-    final discovery = const
-        PlayerPresidentTenureGatedPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    final discovery =
+        const PlayerPresidentTenureGatedPromiseMediaTransferTicketPricingRuntimeCareerEngine(
       ticketAiPolicy: _AlwaysBalancedPolicy(),
     ).simulateWithCheckpoint(
       clubs: world.clubs,
@@ -274,7 +281,8 @@ void main() {
       seasonCount: 2,
     );
 
-    expect(codec.encode(composed.checkpoint), codec.encode(baseline.checkpoint));
+    expect(
+        codec.encode(composed.checkpoint), codec.encode(baseline.checkpoint));
     expect(
       composed.boundaries.map((item) => item.signature).toList(),
       baseline.boundaries.map((item) => item.signature).toList(),
@@ -318,7 +326,8 @@ void main() {
     );
   });
 
-  test('M69 sponsor override changes one club and keeps 47 AI sponsor rows exact',
+  test(
+      'M69 sponsor override changes one club and keeps 47 AI sponsor rows exact',
       () {
     const baselineEngine =
         PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
@@ -401,17 +410,19 @@ void main() {
   });
 
   test('M69 lost and incumbent mismatch both block sponsor control', () {
-    final boldSeed = const
-        PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
+    final boldSeed =
+        const PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
       sponsorProvider: _LabelSponsorProvider('bold'),
-    ).simulateWithCheckpoint(
-      clubs: world.clubs,
-      leagues: world.leagues,
-      config: config,
-      controlledClubId: interactiveClubId,
-      seasonCount: 1,
-      hasFutureSeasonAfterReport: true,
-    ).checkpoint;
+    )
+            .simulateWithCheckpoint(
+              clubs: world.clubs,
+              leagues: world.leagues,
+              config: config,
+              controlledClubId: interactiveClubId,
+              seasonCount: 1,
+              hasFutureSeasonAfterReport: true,
+            )
+            .checkpoint;
 
     final lostProvider = _CountingNonAiSponsorProvider();
     final lost = PlayerPresidentTicketPricingRuntimeCheckpoint(
