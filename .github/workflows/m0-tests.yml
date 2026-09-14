@@ -247,3 +247,6 @@ jobs:
 
       - name: Run M70 player president facility sponsor crisis promise media transfer ticket runtime composition
         run: dart run tool/run_m70_player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
+
+      - name: Run M71 player president facility sponsor crisis manager promise media transfer ticket runtime composition
+        run: dart run tool/run_m71_player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
