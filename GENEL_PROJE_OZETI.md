@@ -33,7 +33,9 @@ Kalıcı kurallar:
 
 **M0–M69 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: yok.**
+**Aktif milestone: M70 — Player President Tenure-Gated Facility + Sponsor + Crisis + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — IMPLEMENTATION / CI PENDING.**
+
+M70 canlı `main` taramasında M59'un M69/M65 authoritative checkpoint dışında kalan iki player-control parçasından crisis yolunun, manager yoluna göre daha dar ve mevcut M47 `CrisisRuntimeIntegrationEngine` seam'i üzerinden güvenli biçimde compose edilebilir olduğu doğrulanarak seçildi. M70 yeni checkpoint/save codec yaratmaz; M65 authoritative kalır. Crisis provider yalnız controlled club, gerçek crisis ve persisted incumbent ownership eşleşmesinde çalışır; diğer 47 kulüp canonical AI parity'de kalır. Manager player-control entegrasyonu kapsam dışıdır.
 
 M69 kapanış kanıtı:
 - PR #72 — **MERGED / CLOSED**

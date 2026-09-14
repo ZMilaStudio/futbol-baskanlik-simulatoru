@@ -18,7 +18,8 @@ class _AlwaysBalancedPolicy extends PresidentMatchdayTicketPricingPolicy {
     required PresidentManagementProfile profile,
     required int fanTrust,
     required StadiumAttendanceProfile base,
-  }) => const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
+  }) =>
+      const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
 }
 
 class _PremiumTicketProvider
@@ -28,7 +29,8 @@ class _PremiumTicketProvider
   @override
   MatchdayTicketPricingChoice choose(
     PlayerPresidentTicketPricingDecisionContext context,
-  ) => const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.premium);
+  ) =>
+      const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.premium);
 }
 
 class _CountingPremiumTicketProvider
@@ -50,12 +52,13 @@ class _YouthTransferProvider extends PlayerTransferStrategyDecisionProvider {
   @override
   PlayerTransferStrategyChoice chooseTransferStrategy(
     PlayerTransferStrategyDecisionContext context,
-  ) => const PlayerTransferStrategyChoice(
-    financialDiscipline: 60,
-    transferAmbition: 60,
-    riskAppetite: 60,
-    youthOrientation: 90,
-  );
+  ) =>
+      const PlayerTransferStrategyChoice(
+        financialDiscipline: 60,
+        transferAmbition: 60,
+        riskAppetite: 60,
+        youthOrientation: 90,
+      );
 }
 
 class _CountingYouthTransferProvider
@@ -130,7 +133,8 @@ class _HoldFacilityProvider extends PlayerFacilityInvestmentDecisionProvider {
   @override
   PlayerFacilityInvestmentChoice choose(
     PlayerFacilityInvestmentContext context,
-  ) => PlayerFacilityInvestmentChoice.hold;
+  ) =>
+      PlayerFacilityInvestmentChoice.hold;
 }
 
 class _CountingHoldFacilityProvider
@@ -201,8 +205,7 @@ class _RotatingCrisisProvider extends PlayerCrisisDecisionProvider {
 
   @override
   PlayerCrisisActionChoice choose(PlayerCrisisDecisionContext context) {
-    final index =
-        (context.seasonIndex + context.scenario.type.index) %
+    final index = (context.seasonIndex + context.scenario.type.index) %
         context.availableDecisions.length;
     return PlayerCrisisActionChoice(
       action: context.availableDecisions[index].action,
@@ -219,15 +222,15 @@ void main(List<String> args) {
 
   final discovery =
       const PlayerPresidentTenureGatedPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-        ticketAiPolicy: _AlwaysBalancedPolicy(),
-      ).simulateWithCheckpoint(
-        clubs: world.clubs,
-        leagues: world.leagues,
-        config: config,
-        controlledClubId: world.clubs.first.id,
-        seasonCount: 1,
-        hasFutureSeasonAfterReport: true,
-      );
+    ticketAiPolicy: _AlwaysBalancedPolicy(),
+  ).simulateWithCheckpoint(
+    clubs: world.clubs,
+    leagues: world.leagues,
+    config: config,
+    controlledClubId: world.clubs.first.id,
+    seasonCount: 1,
+    hasFutureSeasonAfterReport: true,
+  );
   final discoveryBoundary = discovery.boundaries.single;
   final source = discoveryBoundary.source.source.sponsor.report.sourceReport;
   final mediaByClub = {
@@ -251,24 +254,24 @@ void main(List<String> args) {
 
   const m69 =
       PlayerPresidentTenureGatedFacilitySponsorPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-        sponsorProvider: _NonAiSponsorProvider(),
-        facilityProvider: _HoldFacilityProvider(),
-        promiseProvider: _AlternativePromiseProvider(),
-        mediaProvider: _AlternativeMediaProvider(),
-        transferStrategyProvider: _YouthTransferProvider(),
-        ticketPricingProvider: _PremiumTicketProvider(),
-        ticketAiPolicy: _AlwaysBalancedPolicy(),
-      );
+    sponsorProvider: _NonAiSponsorProvider(),
+    facilityProvider: _HoldFacilityProvider(),
+    promiseProvider: _AlternativePromiseProvider(),
+    mediaProvider: _AlternativeMediaProvider(),
+    transferStrategyProvider: _YouthTransferProvider(),
+    ticketPricingProvider: _PremiumTicketProvider(),
+    ticketAiPolicy: _AlwaysBalancedPolicy(),
+  );
   const parityEngine =
       PlayerPresidentTenureGatedFacilitySponsorCrisisPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-        sponsorProvider: _NonAiSponsorProvider(),
-        facilityProvider: _HoldFacilityProvider(),
-        promiseProvider: _AlternativePromiseProvider(),
-        mediaProvider: _AlternativeMediaProvider(),
-        transferStrategyProvider: _YouthTransferProvider(),
-        ticketPricingProvider: _PremiumTicketProvider(),
-        ticketAiPolicy: _AlwaysBalancedPolicy(),
-      );
+    sponsorProvider: _NonAiSponsorProvider(),
+    facilityProvider: _HoldFacilityProvider(),
+    promiseProvider: _AlternativePromiseProvider(),
+    mediaProvider: _AlternativeMediaProvider(),
+    transferStrategyProvider: _YouthTransferProvider(),
+    ticketPricingProvider: _PremiumTicketProvider(),
+    ticketAiPolicy: _AlwaysBalancedPolicy(),
+  );
   final baseline = m69.simulateWithCheckpoint(
     clubs: world.clubs,
     leagues: world.leagues,
@@ -285,7 +288,7 @@ void main(List<String> args) {
   );
   final m69ParityWithoutCrisis =
       codec.encode(parity.checkpoint) == codec.encode(baseline.checkpoint) &&
-      parity.signature == baseline.signature;
+          parity.signature == baseline.signature;
 
   final crisis = _CountingNonAiCrisisProvider();
   final sponsor = _CountingNonAiSponsorProvider();
@@ -296,25 +299,24 @@ void main(List<String> args) {
   final ticket = _CountingPremiumTicketProvider();
   final composed =
       PlayerPresidentTenureGatedFacilitySponsorCrisisPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-        crisisProvider: crisis,
-        sponsorProvider: sponsor,
-        facilityProvider: facility,
-        promiseProvider: promise,
-        mediaProvider: media,
-        transferStrategyProvider: transfer,
-        ticketPricingProvider: ticket,
-        aiCrisisEngine: forcedAi,
-        ticketAiPolicy: const _AlwaysBalancedPolicy(),
-      ).simulateWithCheckpoint(
-        clubs: world.clubs,
-        leagues: world.leagues,
-        config: config,
-        controlledClubId: controlled,
-        seasonCount: 1,
-        hasFutureSeasonAfterReport: true,
-      );
-  final sevenProviders =
-      composed.boundaries.length == 1 &&
+    crisisProvider: crisis,
+    sponsorProvider: sponsor,
+    facilityProvider: facility,
+    promiseProvider: promise,
+    mediaProvider: media,
+    transferStrategyProvider: transfer,
+    ticketPricingProvider: ticket,
+    aiCrisisEngine: forcedAi,
+    ticketAiPolicy: const _AlwaysBalancedPolicy(),
+  ).simulateWithCheckpoint(
+    clubs: world.clubs,
+    leagues: world.leagues,
+    config: config,
+    controlledClubId: controlled,
+    seasonCount: 1,
+    hasFutureSeasonAfterReport: true,
+  );
+  final sevenProviders = composed.boundaries.length == 1 &&
       crisis.calls == 1 &&
       sponsor.calls == 1 &&
       facility.calls == 1 &&
@@ -325,25 +327,25 @@ void main(List<String> args) {
 
   final aiBaseline =
       const PlayerPresidentTenureGatedFacilitySponsorCrisisPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-        aiCrisisEngine: forcedAi,
-      ).simulateWithCheckpoint(
-        clubs: world.clubs,
-        leagues: world.leagues,
-        config: config,
-        controlledClubId: controlled,
-        seasonCount: 1,
-      );
+    aiCrisisEngine: forcedAi,
+  ).simulateWithCheckpoint(
+    clubs: world.clubs,
+    leagues: world.leagues,
+    config: config,
+    controlledClubId: controlled,
+    seasonCount: 1,
+  );
   final crisisOnly =
       const PlayerPresidentTenureGatedFacilitySponsorCrisisPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-        crisisProvider: _NonAiCrisisProvider(),
-        aiCrisisEngine: forcedAi,
-      ).simulateWithCheckpoint(
-        clubs: world.clubs,
-        leagues: world.leagues,
-        config: config,
-        controlledClubId: controlled,
-        seasonCount: 1,
-      );
+    crisisProvider: _NonAiCrisisProvider(),
+    aiCrisisEngine: forcedAi,
+  ).simulateWithCheckpoint(
+    clubs: world.clubs,
+    leagues: world.leagues,
+    config: config,
+    controlledClubId: controlled,
+    seasonCount: 1,
+  );
   final baselineCrisis = aiBaseline.boundaries.single.source.source.crisis;
   final playerCrisis = crisisOnly.boundaries.single.source.source.crisis;
   final baselineByClub = {
@@ -355,8 +357,7 @@ void main(List<String> args) {
       item.clubId: item.resolution!.signature,
   };
   final aiIds = baselineByClub.keys.where((id) => id != controlled);
-  final aiParity47 =
-      aiIds.length == 47 &&
+  final aiParity47 = aiIds.length == 47 &&
       aiIds.every((id) => playerByClub[id] == baselineByClub[id]);
   final crisisChanged = playerByClub[controlled] != baselineByClub[controlled];
   final snapshot = playerCrisis.clubs.firstWhere(
@@ -364,25 +365,19 @@ void main(List<String> args) {
   );
   final resolution = snapshot.resolution!;
   final finance = playerCrisis
-      .checkpoint
-      .presidentRuntime
-      .runtime
-      .runtime
-      .world
-      .nextSeasonFinanceStates
+      .checkpoint.presidentRuntime.runtime.runtime.world.nextSeasonFinanceStates
       .firstWhere((item) => item.clubId == controlled);
   final president = playerCrisis.checkpoint.presidentRuntime.clubs.firstWhere(
     (item) => item.clubId == controlled,
   );
-  final realCrisisState =
-      finance.signature == resolution.finance.signature &&
+  final realCrisisState = finance.signature == resolution.finance.signature &&
       president.fanReputation.signature == resolution.fan.signature &&
       president.mediaReputation.signature == resolution.media.signature;
 
   final seedCheckpoint =
       const PlayerPresidentTenureGatedFacilitySponsorCrisisPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-            aiCrisisEngine: forcedAi,
-          )
+    aiCrisisEngine: forcedAi,
+  )
           .simulateWithCheckpoint(
             clubs: world.clubs,
             leagues: world.leagues,
@@ -405,27 +400,27 @@ void main(List<String> args) {
   final blockedCrisis = _CountingNonAiCrisisProvider();
   final blocked =
       PlayerPresidentTenureGatedFacilitySponsorCrisisPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-        crisisProvider: blockedCrisis,
-        aiCrisisEngine: forcedAi,
-      ).resume(
-        checkpoint: lostCheckpoint,
-        seasonCount: 1,
-        hasFutureSeasonAfterReport: true,
-      );
+    crisisProvider: blockedCrisis,
+    aiCrisisEngine: forcedAi,
+  ).resume(
+    checkpoint: lostCheckpoint,
+    seasonCount: 1,
+    hasFutureSeasonAfterReport: true,
+  );
   final lostBlocksCrisis =
       blockedCrisis.calls == 0 && blocked.checkpoint.tenureControl.lost;
 
   const deterministicEngine =
       PlayerPresidentTenureGatedFacilitySponsorCrisisPromiseMediaTransferTicketPricingRuntimeCareerEngine(
-        crisisProvider: _RotatingCrisisProvider(),
-        sponsorProvider: _NonAiSponsorProvider(),
-        facilityProvider: _HoldFacilityProvider(),
-        promiseProvider: _AlternativePromiseProvider(),
-        mediaProvider: _AlternativeMediaProvider(),
-        transferStrategyProvider: _YouthTransferProvider(),
-        ticketPricingProvider: _PremiumTicketProvider(),
-        aiCrisisEngine: forcedAi,
-      );
+    crisisProvider: _RotatingCrisisProvider(),
+    sponsorProvider: _NonAiSponsorProvider(),
+    facilityProvider: _HoldFacilityProvider(),
+    promiseProvider: _AlternativePromiseProvider(),
+    mediaProvider: _AlternativeMediaProvider(),
+    transferStrategyProvider: _YouthTransferProvider(),
+    ticketPricingProvider: _PremiumTicketProvider(),
+    aiCrisisEngine: forcedAi,
+  );
   final direct = deterministicEngine.simulateWithCheckpoint(
     clubs: world.clubs,
     leagues: world.leagues,
@@ -450,11 +445,11 @@ void main(List<String> args) {
   );
   final saveResume =
       codec.encode(resumed.checkpoint) == codec.encode(direct.checkpoint) &&
-      [
-            ...first.boundaries,
-            ...resumed.boundaries,
-          ].map((item) => item.signature).join('||') ==
-          direct.boundaries.map((item) => item.signature).join('||');
+          [
+                ...first.boundaries,
+                ...resumed.boundaries,
+              ].map((item) => item.signature).join('||') ==
+              direct.boundaries.map((item) => item.signature).join('||');
 
   if (!m69ParityWithoutCrisis ||
       !sevenProviders ||

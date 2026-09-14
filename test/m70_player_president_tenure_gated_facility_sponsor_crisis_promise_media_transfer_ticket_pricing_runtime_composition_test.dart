@@ -207,9 +207,8 @@ class _RotatingCrisisProvider extends PlayerCrisisDecisionProvider {
 
   @override
   PlayerCrisisActionChoice choose(PlayerCrisisDecisionContext context) {
-    final index =
-        (context.seasonIndex + context.scenario.type.index) %
-            context.availableDecisions.length;
+    final index = (context.seasonIndex + context.scenario.type.index) %
+        context.availableDecisions.length;
     return PlayerCrisisActionChoice(
       action: context.availableDecisions[index].action,
     );
@@ -297,7 +296,8 @@ void main() {
       seasonCount: 2,
     );
 
-    expect(codec.encode(composed.checkpoint), codec.encode(baseline.checkpoint));
+    expect(
+        codec.encode(composed.checkpoint), codec.encode(baseline.checkpoint));
     expect(
       composed.boundaries.map((item) => item.signature).toList(),
       baseline.boundaries.map((item) => item.signature).toList(),
@@ -400,8 +400,8 @@ void main() {
     final snapshot = playerCrisis.clubs
         .firstWhere((item) => item.clubId == interactiveClubId);
     final resolution = snapshot.resolution!;
-    final finance = playerCrisis
-        .checkpoint.presidentRuntime.runtime.runtime.world.nextSeasonFinanceStates
+    final finance = playerCrisis.checkpoint.presidentRuntime.runtime.runtime
+        .world.nextSeasonFinanceStates
         .firstWhere((item) => item.clubId == interactiveClubId);
     final president = playerCrisis.checkpoint.presidentRuntime.clubs
         .firstWhere((item) => item.clubId == interactiveClubId);
@@ -503,8 +503,7 @@ void main() {
     expect(mismatchResult.checkpoint.tenureControl.lost, isTrue);
   });
 
-  test(
-      'M70 M65 codec keeps 2 plus 2 resume deterministic against four seasons',
+  test('M70 M65 codec keeps 2 plus 2 resume deterministic against four seasons',
       () {
     const engine =
         PlayerPresidentTenureGatedFacilitySponsorCrisisPromiseMediaTransferTicketPricingRuntimeCareerEngine(

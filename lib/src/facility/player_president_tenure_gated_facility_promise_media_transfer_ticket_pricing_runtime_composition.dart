@@ -1,4 +1,5 @@
 import '../core/simulation_config.dart';
+import '../crisis/crisis_runtime_integration.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../crisis/player_president_facility_control.dart';
 import '../crisis/president_facility_investment_runtime_integration.dart';
@@ -44,6 +45,7 @@ class PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntime
     this.baseWorldEngine = const WorldCareerEngine(),
     this.investment = const PresidentFacilityInvestmentRuntimeEngine(),
     this.sponsorSystem = const SponsorSystemEngine(),
+    this.crisisIntegration = const CrisisRuntimeIntegrationEngine(),
   });
 
   final PlayerFacilityInvestmentDecisionProvider? facilityProvider;
@@ -58,6 +60,7 @@ class PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntime
   final WorldCareerEngine baseWorldEngine;
   final PresidentFacilityInvestmentRuntimeEngine investment;
   final SponsorSystemEngine sponsorSystem;
+  final CrisisRuntimeIntegrationEngine crisisIntegration;
 
   PlayerPresidentTicketPricingRuntimeCareerResult simulateWithCheckpoint({
     required List<Club> clubs,
@@ -205,6 +208,7 @@ class PlayerPresidentTenureGatedFacilityPromiseMediaTransferTicketPricingRuntime
       baseWorldEngine: world,
       investment: facilityInvestment,
       sponsorSystem: sponsorSystem,
+      crisisIntegration: crisisIntegration,
       sourceEngine: sourceEngine,
     );
   }
