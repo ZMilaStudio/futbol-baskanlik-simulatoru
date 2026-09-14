@@ -34,33 +34,78 @@ Kalıcı kurallar:
 
 **M0–M73 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: yok.**
+**Aktif milestone: M74 — Player President Interactive Decision Transcript Snapshot I — MERGE-READY / FINAL EXACT-HEAD CI PENDING.**
 
-**Son kapanan milestone: M73 — Player President Interactive Decision Session I.**
+M73 sonrası canlı `main` gap scan sonucu:
+- M73 gerçek UI/application katmanının deterministic pause → pending request → response → continue akışını kurdu;
+- ancak M73 kabul edilmiş answer transcript'ini yalnız RAM'de tuttuğu için uygulama süreci kararlar arasında kapanırsa aynı sezon içinde daha önce verilmiş player-president cevapları kayboluyordu;
+- bu boşluğu doğrudan Flutter kabuğuna taşımak yerine, önce lifecycle-safe replay sidecar ile kapatmak en küçük gerçek ürün prerequisite'i olarak doğrulandı;
+- M74 ikinci bir game-state save üretmeden yalnız M73 replay metadata'sını persist eder.
 
-M73 squash merge sonrası doğrulanmış code SHA:
-`a82caf70f832c20e2da2929bcaddd26aad85b618`
+PR #77 açıktır.
+- Branch: `feat/m74-interactive-decision-transcript-snapshot`
+- Base `main`: `68b8a6437c6bc4a250ab7df8ab6597cdb5e3d42e`
+- Pre-doc code HEAD: `02a2ad68368bbf4a2ffeef9a8315689d3baa5c55`
 
-Post-merge gerçek `main` push CI:
-- run: `34872238972`
-- event: `push`
-- branch: `main`
-- exact head: `a82caf70f832c20e2da2929bcaddd26aad85b618`
-- workflow conclusion: **SUCCESS**
+M74 pre-doc CI kanıtı, run `34876337129`:
+- exact code HEAD: `02a2ad68368bbf4a2ffeef9a8315689d3baa5c55`
+- workflow final conclusion, canonical retry sonrası: **SUCCESS**
 - `test`: **SUCCESS**
 - analyzer: `No issues found!`
-- **329/329 normal/non-canonical test PASS**
-- M73'e ait 5 executable acceptance testinin tamamı PASS
-- `canonical`: **M0–M73 SUCCESS**
-- Post Checkout + Complete job: **SUCCESS**
+- **334/334 normal/non-canonical test PASS**
+- M74'e ait 5 acceptance testinin tamamı PASS
+- canonical attempt 1: M0–M69 adımları SUCCESS; M70 marker'ı da PASS yazıldı, ardından strict `timeout-minutes: 7` job envelope iptal edildi; M71–M74 bu nedenle skip edildi; gerçek assertion/runner failure yoktu
+- aynı exact code HEAD üzerinde yalnız canonical job bir kez retry edildi
+- canonical attempt 2: **M0–M74 SUCCESS**, exact M74 marker SUCCESS, Post Checkout + Complete job SUCCESS
 - artifacts: **0**
+- üçüncü retry açılmadı
 
-Exact M73 canonical marker:
-`M73_PLAYER_PRESIDENT_INTERACTIVE_DECISION_SESSION_PASS controlled=t1_01 decisions=9 uniqueKinds=9 pauseReplay=true parityM72=true singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
+Exact M74 marker:
+`M74_PLAYER_PRESIDENT_INTERACTIVE_DECISION_TRANSCRIPT_SNAPSHOT_PASS controlled=t1_01 savedDecisions=4 pendingRestore=true canonicalRoundTrip=true parityM73=true transcriptOnly=true singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
 
-Bu kapanıştan sonra M74 veya başka bir milestone otomatik seçilmez. Bir sonraki geliştirme ancak canlı `main` yeniden taranıp gerçek ürün/architecture boşluğu doğrulandıktan sonra seçilir.
+Bu merge-ready docs commit'i PR HEAD'ini değiştirdiği için merge öncesi yeni exact HEAD üzerinde final CI doğrulanmalıdır. Sırf final run ID'yi özete yazmak için ikinci docs commit oluşturulmaz.
 
-## 3. M73 — Player President Interactive Decision Session I — CLOSED / MERGED / PASS
+## 3. M74 — Player President Interactive Decision Transcript Snapshot I — MERGE-READY
+
+M74 amacı, M73'ün runtime-only accepted-answer transcript'ini application lifecycle boyunca geri yüklenebilir hale getirirken M65 oyun-state authority'sini tek kaynak olarak korumaktır.
+
+M74 çözümü:
+- `PlayerPresidentInteractiveDecisionTranscriptEntry` yalnız deterministic request key + decision kind + minimal typed choice payload taşır;
+- `PlayerPresidentInteractiveDecisionTranscriptSnapshot` yalnız kabul edilmiş cevap sırasını taşır; game state, pending context veya partial checkpoint taşımaz;
+- `PlayerPresidentInteractiveDecisionTranscriptSaveCodec` versioned/checksummed canonical JSON sidecar üretir;
+- `PlayerPresidentInteractiveDecisionTranscriptSession`, M73 session'ını sarar ve yalnız başarılı submit cevaplarını kaydeder;
+- restore sırasında uygulama aynı fresh-start input'larını veya authoritative M65 checkpoint'ini yeniden sağlar;
+- pending request/context save'den okunmaz; M73 tarafından deterministic yeniden türetilir;
+- her transcript entry restore sırasında yeniden türetilen request key + kind ile exact eşleşmek zorundadır;
+- checksum bozukluğu veya checksum-valid stale/divergent transcript fail-closed olur;
+- dokuz M73 karar türünün tamamı serialize edilir: facility, sponsor, crisis, manager review, manager replacement, promise, media, transfer strategy, ticket pricing;
+- Flutter/UI, Android file-system, save-slot veya cloud-save katmanı eklenmez.
+
+Persistence authority:
+- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` tek persisted **game-state** authority olmaya devam eder;
+- M74 sidecar game state değildir; yalnız M73 replay metadata'sıdır;
+- M74 sidecar tek başına session restore etmek için yeterli değildir; aynı immutable start inputs veya aynı M65 checkpoint ayrıca gereklidir.
+
+M74 acceptance:
+1. partial fresh-start transcript encode/decode canonical round-trip verir ve restore exact pending request key'ini yeniden üretir — PASS;
+2. restored fresh-start session tamamlandığında uninterrupted M73 ile exact M65 checkpoint + boundary parity verir — PASS;
+3. M65 checkpoint üstünde başlayan partial session restore aynı pending key'e döner ve uninterrupted M73 resume ile exact parity verir — PASS;
+4. checksum corruption replay başlamadan reddedilir — PASS;
+5. checksum-valid fakat stale/divergent request key restore sırasında fail-closed olur — PASS;
+6. transcript yalnız cevap metadata'sı taşır; M65 save authority/format değişmez — PASS.
+
+M74 dosyaları:
+- `lib/src/player_president/player_president_interactive_decision_transcript_snapshot.dart`
+- `lib/player_president_interactive_decision_transcript_snapshot.dart`
+- `test/m74_player_president_interactive_decision_transcript_snapshot_test.dart`
+- `tool/run_m74_player_president_interactive_decision_transcript_snapshot.dart`
+- `M74_PLAYER_PRESIDENT_INTERACTIVE_DECISION_TRANSCRIPT_SNAPSHOT_I.md`
+- `.github/workflows/m0-tests.yml`
+- `GENEL_PROJE_OZETI.md`
+
+M74 henüz **CLOSED değildir**. Final exact-head PR CI + açık kullanıcı merge onayı + exact-head squash merge + post-merge `main` doğrulaması gerekir.
+
+## 4. Son kapanan milestone: M73 — Player President Interactive Decision Session I — CLOSED / MERGED / PASS
 
 M72 sonrası canlı gap scan sonucu:
 - M72 sekiz player-president karar domain'ini tek senkron gateway altında toplamıştı;
@@ -109,7 +154,7 @@ M73 kapanış kanıtı:
 
 M73 **CLOSED / MERGED / PASS**.
 
-## 4. Önceki son milestone: M72 — Player President Unified Decision Gateway Runtime I
+## 5. Önceki son milestone: M72 — Player President Unified Decision Gateway Runtime I
 
 M72 sekiz ayrı player-president provider yüzeyini tek application-facing `PlayerPresidentDecisionGateway` altında birleştirdi.
 
@@ -132,7 +177,7 @@ M72 kapanış özeti:
 
 M72 **CLOSED / MERGED / PASS**.
 
-## 5. Yakın milestone geçmişi
+## 6. Yakın milestone geçmişi
 
 - M73 Player President Interactive Decision Session I — PR #76 merge `a82caf70f832c20e2da2929bcaddd26aad85b618`; 329 tests; M0–M73 PASS; artifacts 0.
 - M72 Player President Unified Decision Gateway Runtime I — PR #75 merge `44aa7f9c830551a4e980b9bd233153feb92d6d2c`; 324 tests; M0–M72 executable gates PASS; artifacts 0.
@@ -150,9 +195,9 @@ M72 **CLOSED / MERGED / PASS**.
 - M60 Player President Tenure-Gated Transfer Strategy Control I — PR #63 merge `b149e4f9c661ce5f2aa43f16ee4b5cbfc9b79b6d`; 263 tests; M0–M60 PASS; artifacts 0.
 - M59 Player President Tenure-Gated Runtime Controls I — PR #62 merge `d49424573d7db1c2f02554bffec2e3b13c40b6dd`; 258 tests; M0–M59 PASS; artifacts 0.
 
-## 6. Sistem zinciri ve authority sınırları
+## 7. Sistem zinciri ve authority sınırları
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate; M63 promise/media composition; M64 tenure-gated matchday ticket pricing decision core; M65 ticket pricing → gerçek matchday economy runtime/checkpoint/save authority; M66 transfer + ticket composition; M67 promise/media + transfer/ticket composition; M68 facility + M67; M69 sponsor + M68; M70 crisis + M69; M71 manager + M70; M72 sekiz player-president karar alanını tek gateway altında birleştirir; M73 bu gateway'i deterministic replay tabanlı pending-request/response/continue session sınırına taşır.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate; M63 promise/media composition; M64 tenure-gated matchday ticket pricing decision core; M65 ticket pricing → gerçek matchday economy runtime/checkpoint/save authority; M66 transfer + ticket composition; M67 promise/media + transfer/ticket composition; M68 facility + M67; M69 sponsor + M68; M70 crisis + M69; M71 manager + M70; M72 sekiz player-president karar alanını tek gateway altında birleştirir; M73 bu gateway'i deterministic replay tabanlı pending-request/response/continue session sınırına taşır; M74 M73 accepted-answer transcript'ini game state'ten ayrı versioned/checksummed replay sidecar olarak persist edip deterministic restore eder.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -164,12 +209,13 @@ Başkan/state gerçek etkileri:
 Authority zinciri:
 - M58 persisted player-president tenure ownership state'ini sağlar.
 - M59–M64 kontrollü başkan kararlarının tenure-gated domain authority'sini kurar.
-- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` tek persisted authority'dir.
+- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` tek persisted **game-state** authority'dir.
 - M66–M71 yeni persisted authority oluşturmaz; aynı M65 checkpoint/tenure state üzerinde domain'leri compose eder.
 - M72 yeni game-state/save formatı üretmez; application/UI için tek runtime decision gateway sağlar.
 - M73 yeni persisted state üretmez; pending request/answer transcript'i runtime-only tutar ve immutable başlangıçtan deterministic replay yapar.
+- M74 yalnız M73 accepted-answer replay metadata'sını sidecar olarak persist eder; pending request/context ve game state sidecar'a yazılmaz, M65 game-state authority değişmez.
 
-## 7. Devir / çalışma talimatı
+## 8. Devir / çalışma talimatı
 
 1. Her işlemden önce canlı GitHub durumunu doğrula.
 2. `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır; silinmez ve milestone kapanışlarında güncellenir.
@@ -180,4 +226,5 @@ Authority zinciri:
 7. Yeni milestone seçmeden önce canlı `main` kodunu ve bu özeti incele; kapsamı gerçek ürün/architecture boşluğundan türet.
 8. Her yeni PR için merge öncesi o PR'a özel açık kullanıcı onayı al; exact-head lock kullan; merge sonrası `main` executable gates doğrulanmadan milestone'u CLOSED sayma.
 9. Docs-only merge-ready/kapanış commit'i CI tetikliyorsa bu CI bir kez doğrulanır; sırf run ID'yi özete yazmak için yeni docs commit atılmaz.
-10. Şu anda aktif milestone yoktur. M74 otomatik başlatılmaz; sonraki `devam et` isteğinde önce canlı `main` gap scan yapılır.
+10. M74 merge-ready docs commit'inden sonra final exact-head PR CI'yi doğrula; yeşil executable kanıt olmadan merge onayı isteme.
+11. M74 merge edilip kapanmadan M75 otomatik açılmaz.

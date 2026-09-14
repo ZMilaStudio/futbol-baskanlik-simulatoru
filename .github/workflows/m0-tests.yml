@@ -256,3 +256,6 @@ jobs:
 
       - name: Run M73 player president interactive decision session
         run: dart run tool/run_m73_player_president_interactive_decision_session.dart 20260903
+
+      - name: Run M74 player president interactive decision transcript snapshot
+        run: dart run tool/run_m74_player_president_interactive_decision_transcript_snapshot.dart 20260903
