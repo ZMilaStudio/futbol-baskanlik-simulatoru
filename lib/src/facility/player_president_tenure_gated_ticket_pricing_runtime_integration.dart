@@ -17,6 +17,7 @@ import '../promise/promise_media_career_engine.dart';
 import '../save/save_checksum.dart';
 import '../save/save_load_exception.dart';
 import '../season/season_report.dart';
+import '../sponsor/sponsor_system.dart';
 import '../world/world_career_engine.dart';
 import '../world/world_league.dart';
 import 'player_president_tenure_gated_ticket_pricing_control.dart';
@@ -41,8 +42,8 @@ class PlayerPresidentTicketPricingRuntimeCheckpoint {
   void validate() {
     runtime.validate();
     tenureControl.validate();
-    final clubIds = runtime.runtime.domain.presidentRuntime.runtime.runtime.world
-        .baseClubs
+    final clubIds = runtime
+        .runtime.domain.presidentRuntime.runtime.runtime.world.baseClubs
         .map((club) => club.id)
         .toSet();
     if (!clubIds.contains(tenureControl.controlledClubId)) {
@@ -119,10 +120,11 @@ class PlayerPresidentTicketPricingRuntimeSaveCodec {
     final payloadObject = envelope['payload'];
     final checksum = envelope['checksum'];
     if (checksum is! String ||
-        checksum != SaveChecksum.forPayload(
-          saveVersion: version,
-          payload: payloadObject,
-        )) {
+        checksum !=
+            SaveChecksum.forPayload(
+              saveVersion: version,
+              payload: payloadObject,
+            )) {
       throw const SaveLoadException(
         SaveLoadFailure.checksumMismatch,
         'Ticket-pricing runtime save checksum mismatch.',
@@ -189,8 +191,7 @@ class PlayerPresidentTicketPricingRuntimeSeasonBoundary {
       .sourceReport.advancedTransferReport.worldReport.seasons.single.finances
       .firstWhere((item) => item.clubId == clubId);
 
-  String get signature =>
-      'season=$seasonIndex:pricing='
+  String get signature => 'season=$seasonIndex:pricing='
       '${pricingDecisions.map((item) => item.signature).join('|')}:'
       'source=${source.signature}:final=${checkpoint.signature}';
 }
@@ -229,6 +230,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     this.tenureGate = const PlayerPresidentTenureControlGate(),
     this.baseWorldEngine = const WorldCareerEngine(),
     this.investment = const PresidentFacilityInvestmentRuntimeEngine(),
+    this.sponsorSystem = const SponsorSystemEngine(),
     this.sourceEngine = const PromiseMediaCareerEngine(),
   });
 
@@ -239,6 +241,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
   final PlayerPresidentTenureControlGate tenureGate;
   final WorldCareerEngine baseWorldEngine;
   final PresidentFacilityInvestmentRuntimeEngine investment;
+  final SponsorSystemEngine sponsorSystem;
   final PromiseMediaCareerEngine sourceEngine;
 
   PlayerPresidentTicketPricingRuntimeCareerResult simulateWithCheckpoint({
@@ -466,6 +469,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     );
     return PresidentFacilityInvestmentRuntimeCareerEngine(
       runtime: FacilitySponsorCrisisRuntimeCareerEngine(
+        sponsorSystem: sponsorSystem,
         baseWorldEngine: pricedWorld,
         sourceEngine: sourceEngine,
       ),
@@ -552,7 +556,8 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
     final pricedMultipliers = <String, int>{};
     for (final club in clubs) {
       if (!expectedClubIds.contains(club.id)) {
-        throw StateError('Ticket-pricing economy received unknown club ${club.id}.');
+        throw StateError(
+            'Ticket-pricing economy received unknown club ${club.id}.');
       }
       if (_decisions.containsKey(club.id)) {
         throw StateError('Ticket-pricing economy processed ${club.id} twice.');
