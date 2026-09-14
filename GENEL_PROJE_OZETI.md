@@ -33,58 +33,51 @@ Kalıcı kurallar:
 
 **M0–M71 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: yok.**
+**Aktif milestone: M72 — Player President Unified Decision Gateway Runtime I — MERGE-READY / FINAL EXACT-HEAD CI PENDING.**
 
-M71 — Player President Tenure-Gated Facility + Sponsor + Crisis + Manager + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — tamamlandı. M52 manager review/replacement kontrolü M70'ın yedi player-president karar alanına aynı authoritative M65 checkpoint altında eklendi. Yeni checkpoint veya save codec oluşturulmadı.
+M71 sonrası canlı `main` taramasında repo'nun saf Dart deterministic simulation core olduğu, Flutter/UI katmanı içermediği ve M71'in sekiz ayrı player-president provider callback'ini gerçek runtime'da compose etmesine rağmen uygulama katmanının kullanabileceği tek bir player-president karar gateway'inin bulunmadığı doğrulandı. M72 bu architecture/application-boundary boşluğunu hedefler; yeni oyun kuralı veya UI eklemez.
 
-M71 kapanış kanıtı:
-- PR #74 — **MERGED / CLOSED**
-- Branch: `feat/m71-manager-unified-player-president-runtime`
-- Final pre-merge PR HEAD: `0a331542916a4dad07d933231d90dcfee5855193`
-- Final exact-head PR CI `34836808408`: **SUCCESS**
+M72 merge-ready kanıtı:
+- PR #75 — **OPEN**
+- Branch: `feat/m72-unified-player-president-decision-gateway`
+- Base `main`: `bbee62a1e56d50429c71a63b784f79a72ab27d18`
+- Pre-doc PR HEAD: `2fbd01d8ed9df9903fb9306c4086e02863db8cbf`
+- İlk full başarılı PR CI `34848064210`: **SUCCESS**
 - analyzer: `No issues found!`
-- **321/321 normal/non-canonical test PASS**
-- altı M71 acceptance testinin tamamı PASS
-- **M0–M71 canonical PASS**
-- canonical marker: `M71_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_CRISIS_MANAGER_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=t1_01 eightProviders=true singleCheckpoint=true managerDecisions=1 saveAuthority=M65 worldClubs=48 seed=20260903`
+- **324/324 normal/non-canonical test PASS**
+- üç M72 acceptance testinin tamamı PASS
+- **M0–M72 canonical PASS**
+- canonical marker: `M72_PLAYER_PRESIDENT_UNIFIED_DECISION_GATEWAY_RUNTIME_PASS controlled=t1_01 singleGateway=true managerCalls=1 gatewayCalls=7 singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
 - artifacts: **0**
-- Squash merge SHA: `fc373ee6dde881aa9bc730d0930924e7905725c9`
-- Post-merge `main` CI `34841502015`: **SUCCESS**, canonical retry / run attempt 2
-- İlk post-merge canonical attempt strict `timeout-minutes: 7` sınırında M70 PASS sonrasında iptal oldu; aynı merge SHA'da yalnız canonical job yeniden çalıştırıldı ve M0–M71 tamamen yeşil tamamlandı.
-- Post-merge analyzer clean; **321/321 tests PASS**; **M0–M71 canonical PASS**; M71 marker PASS; artifacts **0**.
+- Bu merge-ready docs commit'i yeni exact HEAD oluşturur; merge öncesi bu HEAD üzerinde `test + canonical` CI bir kez daha tamamen yeşil doğrulanmalıdır.
 
-M71 çözümü:
-- M70 runtime authoritative kaynak olarak korunur;
+M72 çözümü:
+- yeni `PlayerPresidentDecisionGateway`, facility, sponsor, crisis, manager review/replacement, promise, media, transfer strategy ve ticket pricing kararlarını tek application-facing interface altında toplar;
+- gateway adapter'ları mevcut M49–M64 provider contract'larını kullanır; domain validation ve canonical etkiler eski motorlarda kalır;
+- gateway yokken M72 exact M71 checkpoint + boundary parity verir;
+- gateway yalnız controlled club ve aktif persisted player-president tenure için çağrılır; successor, incumbent mismatch ve persisted-loss bloklama M58–M71 authority'sinde kalır;
+- diğer 47 kulüp canonical AI yolunda kalır;
+- gateway runtime-only'dir ve save içine yazılmaz;
 - M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` tek persisted authority olmaya devam eder;
-- manager provider yokken exact M70 checkpoint/boundary parity korunur;
-- manager review/replacement yalnız tamamlanmış sezon ile gerçek bir sonraki sezon arasındaki boundary'de çalışır;
-- controlled club için persisted player-president tenure aktif ve incumbent identity captured player-president identity ile eşleşiyorsa M52 manager seçimi oyuncuya delege edilir;
-- president turnover / persisted loss veya incumbent mismatch halinde manager player-control uygulanmaz ve M70 canonical AI manager sonucu korunur;
-- player manager override yalnız controlled club manager assignment'ını ve ilgili manager-season/change history kaydını değiştirir; diğer 47 kulüp exact AI manager parity'de kalır;
-- forced retirement retain edilemez; replacement gerçek manager pool içindeki deterministic adaylardan seçilir;
-- facility + sponsor + crisis + manager + promise + media + transfer strategy + ticket pricing sekiz player-president karar alanı aynı M65 checkpoint/tenure state üzerinde compose edilir;
-- bütün provider callback'leri runtime-only kalır.
+- Flutter/UI eklenmemiştir; M72 UI'nin daha sonra bağlanabileceği deterministic application boundary'yi hazırlar.
 
-M71 acceptance:
-1. manager provider yokken exact M70 checkpoint + source boundary parity — PASS;
-2. manager override yalnız controlled club'u değiştirir; diğer 47 AI manager assignment exact kalır — PASS;
-3. sekiz player provider aynı gerçek sezon boundary'sinde compose olur — PASS;
-4. future season yoksa manager provider çağrılmaz ve exact M70 checkpoint korunur — PASS;
-5. gerçek president turnover successor boundary'sinde manager player-control'u bloklar — PASS;
-6. M65 codec ile 2+2 save/resume == uninterrupted 4-season deterministic run — PASS.
+M72 acceptance:
+1. gateway yokken exact M71 checkpoint + boundary signature parity — PASS;
+2. tek gateway sekiz player-president karar domain'ini aynı gerçek sezon runtime'ında yönlendirir — PASS;
+3. gateway yalnız controlled club context'lerini alır; diğer 47 kulüp AI yolunda kalır — PASS;
+4. mevcut provider validation / tenure-loss / successor bloklama semantiği bypass edilmez — PASS;
+5. M65 codec ile 2+2 save/resume == uninterrupted 4-season deterministic run; gateway runtime-only kalır — PASS.
 
-M71 dosyaları:
-- `lib/src/manager/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart`
-- `lib/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart`
-- `test/m71_player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition_test.dart`
-- `tool/run_m71_player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart`
-- `M71_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_CRISIS_MANAGER_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_I.md`
+M72 dosyaları:
+- `lib/src/player_president/player_president_unified_decision_gateway_runtime.dart`
+- `lib/player_president_unified_decision_gateway_runtime.dart`
+- `test/m72_player_president_unified_decision_gateway_runtime_test.dart`
+- `tool/run_m72_player_president_unified_decision_gateway_runtime.dart`
+- `M72_PLAYER_PRESIDENT_UNIFIED_DECISION_GATEWAY_RUNTIME_I.md`
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M71 **CLOSED / MERGED / PASS**.
-
-Yeni milestone otomatik seçilmemelidir. Sonraki adım, canlı `main` üzerinden gerçek ürün/UI, simulation ve architecture boşluklarını yeniden taramaktır.
+M72 **MERGE-READY**; final exact-head CI ve kullanıcı merge onayı bekleniyor.
 
 ## 3. Son kapanan milestone: M71 — Player President Tenure-Gated Facility + Sponsor + Crisis + Manager + Promise/Media + Transfer/Ticket Pricing Runtime Composition I
 
@@ -120,7 +113,7 @@ M71 **CLOSED / MERGED / PASS**.
 
 ## 5. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate core; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate; M63 M61+M62 single-domain promise/media composition; M64 tenure-gated matchday ticket pricing decision core; M65 M64 pricing → real M47/M48 matchday economy runtime integration; M66 M60 transfer strategy + M65 ticket-pricing/economy aynı authoritative checkpoint/tenure state composition; M67 M63 promise/media + M66 transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M68 M49 facility control + M67 promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M69 M50 sponsor control + M68 facility/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M70 M51 crisis control + M69 facility/sponsor/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M71 M52 manager control + M70 facility/sponsor/crisis/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate core; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate; M63 M61+M62 single-domain promise/media composition; M64 tenure-gated matchday ticket pricing decision core; M65 M64 pricing → real M47/M48 matchday economy runtime integration; M66 M60 transfer strategy + M65 ticket-pricing/economy aynı authoritative checkpoint/tenure state composition; M67 M63 promise/media + M66 transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M68 M49 facility control + M67 promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M69 M50 sponsor control + M68 facility/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M70 M51 crisis control + M69 facility/sponsor/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M71 M52 manager control + M70 facility/sponsor/crisis/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M72 M71'in sekiz ayrı runtime provider yüzeyini tek application-facing `PlayerPresidentDecisionGateway` altında adapter ile birleştirir.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -142,7 +135,7 @@ Başkan/state gerçek etkileri:
 - M69 M50 sponsor player kararını M68'in authoritative M65 checkpoint akışına aynı persisted tenure state üzerinde compose eder.
 - M70 M51 crisis player kararını M69'un authoritative M65 checkpoint akışına aynı persisted tenure state üzerinde compose eder ve gerçek crisis continuation state'ine yazar.
 - M71 M52 manager player kararını M70'ın authoritative M65 checkpoint akışına ekler; böylece M49–M52 + M60–M64 player-president karar alanlarının bilinen runtime birleşimi tamamlanır.
-- M71 kapanışı sonrası yeni milestone varsayılmamalı; gerçek ürün/UI, simulation ve architecture boşlukları canlı `main` üzerinden yeniden taranmalıdır.
+- M72 bu sekiz domain için yeni game-state üretmez; application/UI entegrasyonu için tek runtime gateway sağlar ve M65 save authority'sini korur.
 
 ## 6. Devir / çalışma talimatı
 
