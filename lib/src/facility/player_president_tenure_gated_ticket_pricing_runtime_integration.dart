@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../core/money.dart';
 import '../core/simulation_config.dart';
+import '../crisis/crisis_runtime_integration.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../crisis/president_facility_investment_runtime_integration.dart';
 import '../election/player_president_tenure_control_gate.dart';
@@ -231,6 +232,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     this.baseWorldEngine = const WorldCareerEngine(),
     this.investment = const PresidentFacilityInvestmentRuntimeEngine(),
     this.sponsorSystem = const SponsorSystemEngine(),
+    this.crisisIntegration = const CrisisRuntimeIntegrationEngine(),
     this.sourceEngine = const PromiseMediaCareerEngine(),
   });
 
@@ -242,6 +244,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
   final WorldCareerEngine baseWorldEngine;
   final PresidentFacilityInvestmentRuntimeEngine investment;
   final SponsorSystemEngine sponsorSystem;
+  final CrisisRuntimeIntegrationEngine crisisIntegration;
   final PromiseMediaCareerEngine sourceEngine;
 
   PlayerPresidentTicketPricingRuntimeCareerResult simulateWithCheckpoint({
@@ -471,6 +474,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
       runtime: FacilitySponsorCrisisRuntimeCareerEngine(
         sponsorSystem: sponsorSystem,
         baseWorldEngine: pricedWorld,
+        crisisIntegration: crisisIntegration,
         sourceEngine: sourceEngine,
       ),
       investment: investment,

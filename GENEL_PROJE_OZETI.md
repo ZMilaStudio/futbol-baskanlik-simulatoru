@@ -33,56 +33,57 @@ Kalıcı kurallar:
 
 **M0–M69 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: yok.**
+**Aktif milestone: M70 — Player President Tenure-Gated Facility + Sponsor + Crisis + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — MERGE-READY / FINAL EXACT-HEAD CI PENDING.**
 
-M69 kapanış kanıtı:
-- PR #72 — **MERGED / CLOSED**
-- Branch: `feat/m69-sponsor-unified-player-president-runtime`
-- Base `main`: `642d08f4de4af2e48012d03a32c3977c2ca716be`
-- Final pre-merge PR HEAD: `8ee0228f4cf2d744442aab817178c8af7f1aaf2e`
-- Final exact-head PR CI `34811811914`: **SUCCESS**
-- Squash merge SHA: `bf94f3e411f30c0d4474067650ab18c491b4f997`
-- Post-merge `main` CI `34812592098`: **SUCCESS**
+M70 canlı `main` taramasında M59'un M69/M65 authoritative checkpoint dışında kalan iki player-control parçasından crisis yolunun, manager yoluna göre daha dar ve mevcut M47 `CrisisRuntimeIntegrationEngine` seam'i üzerinden güvenli biçimde compose edilebilir olduğu doğrulanarak seçildi. M70 yeni checkpoint/save codec yaratmaz; M65 authoritative kalır. Crisis provider yalnız controlled club, gerçek crisis ve persisted incumbent ownership eşleşmesinde çalışır; diğer 47 kulüp canonical AI parity'de kalır. Manager player-control entegrasyonu kapsam dışıdır.
+
+M70 merge-ready kanıtı:
+- PR #73 — **OPEN / MERGEABLE**
+- Branch: `feat/m70-crisis-unified-player-president-runtime`
+- Base `main`: `be4bcc151f691110a0aadc96e2444003ee8da368`
+- Pre-doc PR HEAD: `2f0704729381a6f4155846567aa75785f749dadb`
+- İlk full PR CI `34816060471`: **SUCCESS**
 - analyzer: `No issues found!`
-- **309/309 normal/non-canonical test PASS**
-- altı M69 acceptance testinin tamamı PASS
-- **M0–M69 canonical PASS**
-- canonical marker: `M69_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=t1_01 m68ParityWithoutSponsor=true sixProviders=true sponsorChanged=true aiParity=47 lostBlocksSponsor=true singleCheckpoint=true saveResume=true worldClubs=48 seed=20260903`
+- **315/315 normal/non-canonical test PASS**
+- altı M70 acceptance testinin tamamı PASS
+- **M0–M70 canonical PASS**
+- canonical marker: `M70_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_CRISIS_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=t1_01 m69ParityWithoutCrisis=true sevenProviders=true crisisChanged=true aiParity=47 realCrisisState=true lostBlocksCrisis=true singleCheckpoint=true saveResume=true worldClubs=48 seed=20260903`
 - artifacts: **0**
+- Bu merge-ready docs commit'i yeni exact HEAD oluşturur; merge öncesi bu HEAD üzerinde `test + canonical` CI bir kez daha tamamen yeşil doğrulanmalıdır.
 
-M69 seçim gerekçesi: M68 kapanışı sonrası canlı `main` taramasında M59'un sponsor/crisis/manager player-control parçalarının M68/M65 authoritative checkpoint altında hâlâ ayrı olduğu doğrulandı. Sponsor tarafında M47 zaten public `SponsorSystemEngine` injection seam'ine sahip olduğu ve M50 kontrollü kulüp sponsor semantiğini sağlam biçimde tanımladığı için, crisis/manager'a göre en düşük riskli sıradaki birleşim sponsor olarak seçildi.
-
-M69 çözümü:
-- yeni checkpoint veya save codec oluşturulmadı;
-- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` authoritative kaldı;
-- M50 sponsor player-control motoru reusable yapıldı; mevcut davranışı korundu;
-- M65/M68'e default-neutral `SponsorSystemEngine` injection seam'i eklendi;
-- sponsor + facility + promise + media + transfer strategy + ticket pricing aynı persisted tenure ownership state üzerinde compose edilir;
-- controlled club sponsor kararı yalnız persisted tenure aktifken ve gerçek incumbent profile ID captured player-president ID ile eşleşirken oyuncuya delege edilir;
-- persisted loss veya incumbent mismatch sponsor tarafını canonical AI sponsor yoluna düşürür;
-- aktif çok yıllı sponsor kontratı yeniden seçilmez / bozulmaz;
-- diğer 47 kulübün sponsor kararları exact canonical AI parity'de kalır;
+M70 çözümü:
+- yeni checkpoint veya save codec oluşturulmadı; M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` authoritative kaldı;
+- M65→M68→M69 zincirine default-neutral `CrisisRuntimeIntegrationEngine` seam'i geçirildi;
+- M51 player crisis control semantiği M69'un gerçek sezon runtime'ına bağlandı;
+- controlled club crisis kararı yalnız gerçek crisis mevcutken, persisted tenure aktifken ve incumbent identity captured player-president identity ile eşleşirken oyuncuya delege edilir;
+- persisted loss başlangıçtan bloklar; incumbent mismatch player crisis kontrolünü canonical AI fallback'e düşürür ve tenure loss semantiğini korur;
+- diğer 47 kulübün crisis kararları exact canonical AI parity'de kalır;
+- seçilen crisis action M44/M47 üzerinden gerçek finance/fan/media continuation state'ine yazılır;
+- facility + sponsor + crisis + promise + media + transfer strategy + ticket pricing aynı authoritative M65 checkpoint/tenure state üzerinde compose edilir;
 - bütün provider callback'leri runtime-only kalır;
-- crisis ve manager player-control birleşimi M69 kapsamı dışında tutuldu.
+- manager player-control entegrasyonu M70 kapsamı dışında tutuldu.
 
-M69 acceptance:
-1. sponsor provider yokken exact M68 checkpoint + boundary parity — PASS;
-2. altı provider aynı gerçek sezon boundary'sinde çalışır — PASS;
-3. sponsor override yalnız controlled club'u değiştirirken diğer 47 kulübün exact AI sponsor parity'si korunur — PASS;
-4. aktif multi-year sponsor kontratı yeniden seçilmez — PASS;
-5. persisted loss ve incumbent mismatch sponsor kontrolünü bloklar; mismatch sticky loss üretir — PASS;
+M70 acceptance:
+1. crisis provider yokken exact M69 checkpoint + boundary parity — PASS;
+2. yedi provider aynı gerçek sezon boundary'sinde çalışır — PASS;
+3. crisis override yalnız controlled club'u değiştirir; diğer 47 kulüp exact AI crisis parity'de kalır ve gerçek continuation state etkilenir — PASS;
+4. crisis yoksa player crisis provider çağrılmaz ve AI runtime parity korunur — PASS;
+5. persisted loss ve incumbent mismatch crisis player-control'u bloklar — PASS;
 6. M65 codec ile 2+2 save/resume == uninterrupted 4-season deterministic run — PASS.
 
-M69 dosyaları:
-- `lib/src/facility/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart`
-- `lib/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart`
-- `test/m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition_test.dart`
-- `tool/run_m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart`
-- `M69_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_I.md`
+M70 dosyaları:
+- `lib/src/crisis/player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart`
+- `lib/player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart`
+- `lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart`
+- `lib/src/facility/player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart`
+- `lib/src/sponsor/player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart`
+- `test/m70_player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition_test.dart`
+- `tool/run_m70_player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart`
+- `M70_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_CRISIS_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_I.md`
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M69 **CLOSED / MERGED / PASS**.
+M70 **MERGE-READY**; final exact-head CI ve kullanıcı merge onayı bekleniyor.
 
 ## 3. Son kapanan milestone: M69 — Player President Tenure-Gated Facility + Sponsor + Promise/Media + Transfer/Ticket Pricing Runtime Composition I
 
@@ -114,7 +115,7 @@ M69 **CLOSED / MERGED / PASS**.
 
 ## 5. Sistem zinciri
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate core; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate; M63 M61+M62 single-domain promise/media composition; M64 tenure-gated matchday ticket pricing decision core; M65 M64 pricing → real M47/M48 matchday economy runtime integration; M66 M60 transfer strategy + M65 ticket-pricing/economy aynı authoritative checkpoint/tenure state composition; M67 M63 promise/media + M66 transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M68 M49 facility control + M67 promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M69 M50 sponsor control + M68 facility/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition.
+M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 president transfer strategy runtime hook; M54 transfer strategy world runtime bridge; M55 player-president transfer strategy control; M56 player-president promise control; M57 player-president media statement control; M58 player-president tenure ownership/control gate core; M59 M49–M52 tenure-gated runtime controls; M60 M55 transfer strategy tenure gate; M61 M56 promise tenure gate; M62 M57 media statement tenure gate; M63 M61+M62 single-domain promise/media composition; M64 tenure-gated matchday ticket pricing decision core; M65 M64 pricing → real M47/M48 matchday economy runtime integration; M66 M60 transfer strategy + M65 ticket-pricing/economy aynı authoritative checkpoint/tenure state composition; M67 M63 promise/media + M66 transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M68 M49 facility control + M67 promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M69 M50 sponsor control + M68 facility/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition; M70 M51 crisis control + M69 facility/sponsor/promise/media/transfer/ticket aynı authoritative M65 checkpoint/tenure state/gerçek sezon composition.
 
 Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
@@ -134,7 +135,8 @@ Başkan/state gerçek etkileri:
 - M67 M63 promise/media player kararlarını M66 transfer/ticket gerçek runtime'ına aynı authoritative M65 checkpoint ve persisted tenure state üzerinde compose eder.
 - M68 M49 facility investment player kararını M67'nin authoritative M65 checkpoint akışına aynı persisted tenure state üzerinde compose eder.
 - M69 M50 sponsor player kararını M68'in authoritative M65 checkpoint akışına aynı persisted tenure state üzerinde compose eder.
-- M59'un crisis ve manager player-control parçaları M69/M65 authoritative checkpoint altında hâlâ birleşmemiş görünmektedir; sıradaki milestone seçilmeden önce bu ve diğer gerçek ürün/architecture boşlukları canlı `main` üzerinden yeniden taranmalıdır.
+- M70 M51 crisis player kararını M69'un authoritative M65 checkpoint akışına aynı persisted tenure state üzerinde compose eder ve gerçek crisis continuation state'ine yazar.
+- M59'un manager player-control parçası M70/M65 authoritative checkpoint altında hâlâ birleşmemiştir; M70 kapanışı sonrası sıradaki milestone seçilmeden önce bu ve diğer gerçek ürün/architecture boşlukları canlı `main` üzerinden yeniden taranmalıdır.
 
 ## 6. Devir / çalışma talimatı
 
