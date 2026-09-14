@@ -262,3 +262,6 @@ jobs:
 
       - name: Run M75 player president interactive decision persistence bundle
         run: dart run tool/run_m75_player_president_interactive_decision_persistence_bundle.dart 20260903
+
+      - name: Run M76 player president interactive decision application session
+        run: dart run tool/run_m76_player_president_interactive_decision_application_session.dart 20260903
