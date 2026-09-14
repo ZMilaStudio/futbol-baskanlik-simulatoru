@@ -1,4 +1,3 @@
-import 'package:futbol_baskanlik_m0/crisis_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
