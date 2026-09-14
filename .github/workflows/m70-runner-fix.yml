@@ -1,0 +1,52 @@
+name: M70 Runner Fix
+
+on:
+  push:
+    branches: [feat/m70-crisis-unified-player-president-runtime]
+    paths:
+      - '.github/workflows/m70-runner-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: feat/m70-crisis-unified-player-president-runtime
+
+      - name: Patch runner
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tool/run_m70_player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart')
+          text = path.read_text()
+          old = '  final sevenProviders = crisis.calls == 1 &&\n'
+          new = '  final sevenProviders = composed.boundaries.length == 1 &&\n      crisis.calls == 1 &&\n'
+          if text.count(old) != 1:
+              raise SystemExit('expected canonical sevenProviders anchor once')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Format runner
+        run: dart format tool/run_m70_player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart
+
+      - name: Commit runner fix
+        shell: bash
+        run: |
+          rm .github/workflows/m70-runner-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(m70): use canonical composed result"
+          git push origin HEAD:feat/m70-crisis-unified-player-president-runtime
