@@ -31,25 +31,27 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M70 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M71 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M71 — Player President Tenure-Gated Facility + Sponsor + Crisis + Manager + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — MERGE-READY / FINAL EXACT-HEAD CI PENDING.**
+**Aktif milestone: yok.**
 
-M71, M70 kapanışı sonrası canlı `main` kod taramasında kalan M59 player-control boşluğunu hedefler: M52 manager review/replacement kontrolü artık M70'ın yedi karar alanına aynı authoritative M65 checkpoint altında eklenmiştir. Yeni checkpoint veya save codec oluşturulmamıştır.
+M71 — Player President Tenure-Gated Facility + Sponsor + Crisis + Manager + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — tamamlandı. M52 manager review/replacement kontrolü M70'ın yedi player-president karar alanına aynı authoritative M65 checkpoint altında eklendi. Yeni checkpoint veya save codec oluşturulmadı.
 
-M71 merge-ready kanıtı:
-- PR #74 — **OPEN**
+M71 kapanış kanıtı:
+- PR #74 — **MERGED / CLOSED**
 - Branch: `feat/m71-manager-unified-player-president-runtime`
-- Base `main`: `14831c56e69bee1a0b8b9b476c8f574040cd2801`
-- Pre-doc PR HEAD: `c41bcf86a7d539da5f294ff34c4fcfa74ff60cbb`
-- İlk full PR CI `34836160897`: **SUCCESS**
+- Final pre-merge PR HEAD: `0a331542916a4dad07d933231d90dcfee5855193`
+- Final exact-head PR CI `34836808408`: **SUCCESS**
 - analyzer: `No issues found!`
 - **321/321 normal/non-canonical test PASS**
 - altı M71 acceptance testinin tamamı PASS
 - **M0–M71 canonical PASS**
 - canonical marker: `M71_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_CRISIS_MANAGER_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=t1_01 eightProviders=true singleCheckpoint=true managerDecisions=1 saveAuthority=M65 worldClubs=48 seed=20260903`
 - artifacts: **0**
-- Bu merge-ready docs commit'i yeni exact HEAD oluşturur; merge öncesi bu HEAD üzerinde `test + canonical` CI bir kez daha tamamen yeşil doğrulanmalıdır.
+- Squash merge SHA: `fc373ee6dde881aa9bc730d0930924e7905725c9`
+- Post-merge `main` CI `34841502015`: **SUCCESS**, canonical retry / run attempt 2
+- İlk post-merge canonical attempt strict `timeout-minutes: 7` sınırında M70 PASS sonrasında iptal oldu; aynı merge SHA'da yalnız canonical job yeniden çalıştırıldı ve M0–M71 tamamen yeşil tamamlandı.
+- Post-merge analyzer clean; **321/321 tests PASS**; **M0–M71 canonical PASS**; M71 marker PASS; artifacts **0**.
 
 M71 çözümü:
 - M70 runtime authoritative kaynak olarak korunur;
@@ -80,25 +82,29 @@ M71 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-M71 **MERGE-READY**; final exact-head CI ve kullanıcı merge onayı bekleniyor.
+M71 **CLOSED / MERGED / PASS**.
 
-## 3. Son kapanan milestone: M70 — Player President Tenure-Gated Facility + Sponsor + Crisis + Promise/Media + Transfer/Ticket Pricing Runtime Composition I
+Yeni milestone otomatik seçilmemelidir. Sonraki adım, canlı `main` üzerinden gerçek ürün/UI, simulation ve architecture boşluklarını yeniden taramaktır.
 
-M70, M51 player-president crisis kontrolünü M69'un facility/sponsor/promise/media/transfer/ticket gerçek sezon runtime'ına yeni checkpoint veya save adası oluşturmadan bağladı. Yedi player-president karar alanı aynı authoritative M65 checkpoint, aynı `PlayerPresidentTicketPricingRuntimeSaveCodec` ve aynı persisted `PlayerPresidentTenureControlState` üzerinde çalışır.
+## 3. Son kapanan milestone: M71 — Player President Tenure-Gated Facility + Sponsor + Crisis + Manager + Promise/Media + Transfer/Ticket Pricing Runtime Composition I
+
+M71, M52 player-president manager review/replacement kontrolünü M70'ın facility/sponsor/crisis/promise/media/transfer/ticket gerçek sezon runtime'ına yeni checkpoint veya save adası oluşturmadan bağladı. Sekiz player-president karar alanı aynı authoritative M65 checkpoint, aynı `PlayerPresidentTicketPricingRuntimeSaveCodec` ve aynı persisted `PlayerPresidentTenureControlState` üzerinde çalışır.
 
 Kapanış kanıtı:
-- PR #73 — **MERGED / CLOSED**
-- Final pre-merge PR HEAD: `10796fb94f6408c83db8105566dce49de1e3f90d`
-- Final exact-head PR CI `34831432760`: **SUCCESS**
-- Squash merge SHA: `b66512f08240f978286d1b6eaa128bd02ef2cfdb`
-- Post-merge `main` CI `34832397295`: **SUCCESS**, run attempt 2
-- İlk canonical attempt strict `timeout-minutes: 7` sınırında M69 sonrasında iptal oldu; aynı merge SHA'da yalnız canonical job yeniden çalıştırıldı ve attempt 2 tamamen yeşil tamamlandı.
-- analyzer clean; **315/315 tests PASS**; **M0–M70 canonical PASS**; artifacts 0.
+- PR #74 — **MERGED / CLOSED**
+- Final pre-merge PR HEAD: `0a331542916a4dad07d933231d90dcfee5855193`
+- Final exact-head PR CI `34836808408`: **SUCCESS**
+- Squash merge SHA: `fc373ee6dde881aa9bc730d0930924e7905725c9`
+- Post-merge `main` CI `34841502015`: **SUCCESS**, canonical retry / run attempt 2
+- İlk canonical attempt strict `timeout-minutes: 7` sınırında M70 PASS sonrasında iptal oldu; aynı merge SHA'da yalnız canonical job yeniden çalıştırıldı ve M71 dahil tamamen yeşil tamamlandı.
+- analyzer clean; **321/321 tests PASS**; **M0–M71 canonical PASS**; artifacts 0.
+- M71 marker: `M71_PLAYER_PRESIDENT_TENURE_GATED_FACILITY_SPONSOR_CRISIS_MANAGER_PROMISE_MEDIA_TRANSFER_TICKET_PRICING_RUNTIME_COMPOSITION_PASS controlled=t1_01 eightProviders=true singleCheckpoint=true managerDecisions=1 saveAuthority=M65 worldClubs=48 seed=20260903`
 
-M70 **CLOSED / MERGED / PASS**.
+M71 **CLOSED / MERGED / PASS**.
 
 ## 4. Yakın milestone geçmişi
 
+- M71 Player President Tenure-Gated Facility + Sponsor + Crisis + Manager + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — PR #74 merge `fc373ee6dde881aa9bc730d0930924e7905725c9`; 321 tests; M0–M71 PASS; artifact 0.
 - M70 Player President Tenure-Gated Facility + Sponsor + Crisis + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — PR #73 merge `b66512f08240f978286d1b6eaa128bd02ef2cfdb`; 315 tests; M0–M70 PASS; artifact 0.
 - M69 Player President Tenure-Gated Facility + Sponsor + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — PR #72 merge `bf94f3e411f30c0d4474067650ab18c491b4f997`; 309 tests; M0–M69 PASS; artifact 0.
 - M68 Player President Tenure-Gated Facility + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — PR #71 merge `779a0eb4d5c79b80d5afc743b9a53341bf56fcf2`; 303 tests; M0–M68 PASS; artifact 0.
