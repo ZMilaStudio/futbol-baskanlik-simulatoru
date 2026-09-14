@@ -31,17 +31,18 @@ Kalıcı kurallar:
 
 ## 2. CANLI DURUM — buradan devam et
 
-**M0–M68 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M69 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M69 — Player President Tenure-Gated Facility + Sponsor + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — MERGE READY / NOT MERGED.**
+**Aktif milestone: yok.**
 
-M69 canlı durum:
-- PR #72 — **OPEN / NOT MERGED / mergeable=true**
+M69 kapanış kanıtı:
+- PR #72 — **MERGED / CLOSED**
 - Branch: `feat/m69-sponsor-unified-player-president-runtime`
 - Base `main`: `642d08f4de4af2e48012d03a32c3977c2ca716be`
-- Doğrulanmış code-bearing commit: `c7bff604ad43affacef97b275e1e36ce80b530ab`
-- Merge-ready docs öncesi exact PR HEAD: `555085091fa1cb1e2db58373532555d7bbc28b22`
-- Exact-head PR CI `34787267876`: **SUCCESS**
+- Final pre-merge PR HEAD: `8ee0228f4cf2d744442aab817178c8af7f1aaf2e`
+- Final exact-head PR CI `34811811914`: **SUCCESS**
+- Squash merge SHA: `bf94f3e411f30c0d4474067650ab18c491b4f997`
+- Post-merge `main` CI `34812592098`: **SUCCESS**
 - analyzer: `No issues found!`
 - **309/309 normal/non-canonical test PASS**
 - altı M69 acceptance testinin tamamı PASS
@@ -54,7 +55,7 @@ M69 seçim gerekçesi: M68 kapanışı sonrası canlı `main` taramasında M59'u
 M69 çözümü:
 - yeni checkpoint veya save codec oluşturulmadı;
 - M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` authoritative kaldı;
-- M50 sponsor player-control motoru reusable yapıldı; mevcut davranışı korunur;
+- M50 sponsor player-control motoru reusable yapıldı; mevcut davranışı korundu;
 - M65/M68'e default-neutral `SponsorSystemEngine` injection seam'i eklendi;
 - sponsor + facility + promise + media + transfer strategy + ticket pricing aynı persisted tenure ownership state üzerinde compose edilir;
 - controlled club sponsor kararı yalnız persisted tenure aktifken ve gerçek incumbent profile ID captured player-president ID ile eşleşirken oyuncuya delege edilir;
@@ -62,7 +63,7 @@ M69 çözümü:
 - aktif çok yıllı sponsor kontratı yeniden seçilmez / bozulmaz;
 - diğer 47 kulübün sponsor kararları exact canonical AI parity'de kalır;
 - bütün provider callback'leri runtime-only kalır;
-- crisis ve manager player-control birleşimi M69 kapsamı dışındadır.
+- crisis ve manager player-control birleşimi M69 kapsamı dışında tutuldu.
 
 M69 acceptance:
 1. sponsor provider yokken exact M68 checkpoint + boundary parity — PASS;
@@ -81,24 +82,25 @@ M69 dosyaları:
 - `.github/workflows/m0-tests.yml`
 - `GENEL_PROJE_OZETI.md`
 
-**M69 henüz merge edilmemiştir.** Merge için PR #72'ye özel açık kullanıcı onayı gerekir. Merge sonrası `main` CI yeşil olmadan CLOSED yazılmaz.
+M69 **CLOSED / MERGED / PASS**.
 
-## 3. Son kapanan milestone: M68 — Player President Tenure-Gated Facility + Promise/Media + Transfer/Ticket Pricing Runtime Composition I
+## 3. Son kapanan milestone: M69 — Player President Tenure-Gated Facility + Sponsor + Promise/Media + Transfer/Ticket Pricing Runtime Composition I
 
-M68, M49 facility player-president yatırım kontrolünü M67'nin promise/media/transfer/ticket gerçek runtime'ına yeni checkpoint/save adası oluşturmadan bağladı. Facility, promise, media, transfer ve ticket kararları aynı authoritative M65 checkpoint ve aynı persisted `PlayerPresidentTenureControlState` üzerinde çalışır.
+M69, M50 sponsor player-president kontrolünü M68'in facility/promise/media/transfer/ticket gerçek runtime'ına yeni checkpoint veya save adası oluşturmadan bağladı. Altı player-president karar alanı aynı authoritative M65 checkpoint, aynı `PlayerPresidentTicketPricingRuntimeSaveCodec` ve aynı persisted `PlayerPresidentTenureControlState` üzerinde çalışır. Sponsor kontrolü yalnız aktif player-president tenure ve gerçek incumbent identity eşleşmesinde devredilir; kayıp veya mismatch halinde controlled club dahil sponsor seçimi canonical AI yoluna döner. Aktif multi-year sponsor kontratları korunur ve diğer 47 AI kulübünün sponsor parity'si değişmez.
 
 Kapanış kanıtı:
-- PR #71 — **MERGED / CLOSED**
-- Final pre-merge PR HEAD: `c46e33e628bf894b102a7a02fd13e8d4d0c87769`
-- Final exact-head PR CI `34784696380`: **SUCCESS**
-- Squash merge SHA: `779a0eb4d5c79b80d5afc743b9a53341bf56fcf2`
-- Post-merge `main` CI `34785306302`: **SUCCESS**
-- analyzer clean; **303 tests PASS**; **M0–M68 canonical PASS**; artifacts 0.
+- PR #72 — **MERGED / CLOSED**
+- Final pre-merge PR HEAD: `8ee0228f4cf2d744442aab817178c8af7f1aaf2e`
+- Final exact-head PR CI `34811811914`: **SUCCESS**
+- Squash merge SHA: `bf94f3e411f30c0d4474067650ab18c491b4f997`
+- Post-merge `main` CI `34812592098`: **SUCCESS**
+- analyzer clean; **309 tests PASS**; **M0–M69 canonical PASS**; artifacts 0.
 
-M68 **CLOSED / MERGED / PASS**.
+M69 **CLOSED / MERGED / PASS**.
 
 ## 4. Yakın milestone geçmişi
 
+- M69 Player President Tenure-Gated Facility + Sponsor + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — PR #72 merge `bf94f3e411f30c0d4474067650ab18c491b4f997`; 309 tests; M0–M69 PASS; artifact 0.
 - M68 Player President Tenure-Gated Facility + Promise/Media + Transfer/Ticket Pricing Runtime Composition I — PR #71 merge `779a0eb4d5c79b80d5afc743b9a53341bf56fcf2`; 303 tests; M0–M68 PASS; artifact 0.
 - M67 Player President Tenure-Gated Promise/Media + Transfer/Ticket Pricing Runtime Composition I — PR #70 merge `9f4f3a3f314de29e770b2031de29c288a7761684`; 298 tests; M0–M67 PASS; artifact 0.
 - M66 Player President Tenure-Gated Transfer + Ticket Pricing Runtime Composition I — PR #69 merge `7860ef0e03a4326a884595eeef37d0b088b6e14a`; 293 tests; M0–M66 PASS; artifact 0.
@@ -132,7 +134,7 @@ Başkan/state gerçek etkileri:
 - M67 M63 promise/media player kararlarını M66 transfer/ticket gerçek runtime'ına aynı authoritative M65 checkpoint ve persisted tenure state üzerinde compose eder.
 - M68 M49 facility investment player kararını M67'nin authoritative M65 checkpoint akışına aynı persisted tenure state üzerinde compose eder.
 - M69 M50 sponsor player kararını M68'in authoritative M65 checkpoint akışına aynı persisted tenure state üzerinde compose eder.
-- M59'un crisis ve manager player-control parçaları M69/M65 authoritative checkpoint altında hâlâ birleşmemiştir; sıradaki gerçek entegrasyon boşluğu canlı `main` üzerinden yeniden doğrulanmalıdır.
+- M59'un crisis ve manager player-control parçaları M69/M65 authoritative checkpoint altında hâlâ birleşmemiş görünmektedir; sıradaki milestone seçilmeden önce bu ve diğer gerçek ürün/architecture boşlukları canlı `main` üzerinden yeniden taranmalıdır.
 
 ## 6. Devir / çalışma talimatı
 
