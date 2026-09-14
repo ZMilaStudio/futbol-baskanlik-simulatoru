@@ -52,7 +52,7 @@ class PlayerPresidentInteractiveDecisionRequest {
         'Decision ${kind.name} does not contain context type $T.',
       );
     }
-    return value;
+    return value as T;
   }
 
   String get signature => key;
@@ -458,7 +458,7 @@ class _InteractiveReplayGateway extends PlayerPresidentDecisionGateway {
       );
     }
     _cursor++;
-    return choice;
+    return choice as T;
   }
 
   @override
