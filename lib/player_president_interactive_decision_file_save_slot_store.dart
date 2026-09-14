@@ -1,0 +1,1 @@
+export 'src/player_president/player_president_interactive_decision_file_save_slot_store.dart';

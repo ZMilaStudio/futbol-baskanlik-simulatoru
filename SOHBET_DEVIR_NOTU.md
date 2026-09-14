@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — SOHBET DEVİR NOTU
 
-Son güncelleme: 14 Eylül 2026
+Son güncelleme: 15 Eylül 2026
 
 Bu dosyanın amacı yeni bir ChatGPT sohbeti açıldığında **nerede kaldığımızı, hangi kanıtların doğrulandığını ve sıradaki adımın ne olduğunu** hızlıca devretmektir. Ayrıntılı proje tarihi ve milestone zinciri için `GENEL_PROJE_OZETI.md` okunmalıdır.
 
@@ -13,121 +13,108 @@ Yeni sohbet şu sırayla başlamalıdır:
 3. Bu `SOHBET_DEVIR_NOTU.md` dosyasını oku.
 4. Branch / PR / workflow / job / artifact durumunu canlı GitHub'dan yeniden doğrula.
 5. Canlı GitHub ile bu dosyalar çelişirse **canlı GitHub kazanır**.
-6. Yeni milestone kapsamını eski sohbetten otomatik devralma; önce canlı `main` üzerinde fresh gap scan yap.
+6. Aktif milestone/PR varsa yeni milestone seçmeden onu tamamla.
 
 ## 2. Devredilen canlı durum
 
-M76 executable kapanışı için doğrulanan merge SHA:
+M77 başlanmadan önce doğrulanan canlı `main` HEAD:
 
-`3fdc084a988050b179892ebdc5818c9d032720a0`
+`3e38c7eb918f11bb42eb473be66cc12376758d5a`
 
 Commit:
-`M76: interactive decision application session (#79)`
+`docs(m76): close interactive application session milestone`
 
 Durum:
 - **M0–M76 CLOSED / MERGED / PASS**
-- **Aktif milestone yok**
-- **M77 seçilmedi / başlatılmadı**
-- Açık bir milestone PR'ı devredilmiyor
+- **M77 ACTIVE / PRE-MERGE**
+- branch: `feat/m77-interactive-decision-file-save-slot-store`
+- PR: **#80 — OPEN / DRAFT**
+- M77 henüz `main` üzerinde değildir
 
-Bu closure docs commit'i merge SHA'dan sonra `main` HEAD'i ilerleteceği için yeni sohbet burada yazan SHA'yı güncel HEAD sanmamalı; canlı `main` mutlaka yeniden okunmalıdır.
+Bu dosya PR branch'i içinde güncellendiği için burada yazan branch HEAD'e körü körüne güvenme; PR #80 canlı head SHA'sını yeniden oku.
 
-## 3. Son kapanan milestone — M76
+## 3. Aktif milestone — M77
 
-**M76 — Player President Interactive Decision Application Session I**
+**M77 — Player President Interactive Decision File Save Slot Store I**
 
-Amaç:
-M75 persistence formatı üzerinde çalışan gerçek interactive application session için M65 checkpoint + M74 transcript + M75 bundle/config eşleşmesini tek lifecycle owner altında tutmak ve application-facing `advance / submit / save / restore` akışını sağlamak.
+Fresh live-main gap scan sonucu:
+M76 application session exact M75 persistence bundle'ını encoded `String` olarak save/restore edebiliyor; ancak pure Dart repoda concrete file-backed save-slot/storage owner bulunmuyordu. Repo taramasında mevcut `dart:io` save backend'i de bulunmadı.
 
-Ana tip:
-- `PlayerPresidentInteractiveDecisionApplicationSession`
+M77 çözümü:
+`PlayerPresidentInteractiveDecisionFileSaveSlotStore`
 
-Surface:
-- `resume(...)`
-- `restore(...)`
-- `restoreEncoded(...)`
-- `advance()`
-- `submit(...)`
-- `persistenceBundle`
-- `encodePersistenceBundle()`
-- `pendingDecision`
-- `answeredDecisionCount`
-- `completed`
+Application storage surface:
+- `save(slotId, session)`
+- `load(slotId)`
+- `contains(slotId)`
+- `delete(slotId)`
+- `listSlotIds()`
+
+Store davranışı:
+- slot ID yalnız `[A-Za-z0-9_-]`, uzunluk 1–64,
+- path traversal / slash / backslash / whitespace reddedilir,
+- exact M75 bundle bytes `<slot>.fbs.json` olarak yazılır,
+- overwrite temp + backup replacement ile yapılır,
+- interrupted replacement target yoksa backup'tan recovery edilir,
+- corrupt bundle M75 checksum/validation zinciri üzerinden fail-closed reddedilir,
+- slot listesi deterministic alfabetik sıradadır.
 
 Authority değişmedi:
 - M65 tek persisted **game-state authority**,
 - M74 accepted-answer deterministic replay metadata,
-- M75 atomik application persistence bundle,
-- M76 yalnız runtime/application lifecycle composition.
+- M75 atomik application persistence bundle/save format,
+- M76 interactive application-session lifecycle owner,
+- M77 yalnız local filesystem materialization/storage adapter.
 
-Filesystem, Flutter widget/state, Android save-slot backend, database veya cloud-save authority eklenmedi.
+Flutter state/provider, Android platform channel, database, cloud sync veya yeni game-state serialization authority eklenmedi.
 
-M76 ana dosyaları:
-- `lib/src/player_president/player_president_interactive_decision_application_session.dart`
-- `lib/player_president_interactive_decision_application_session.dart`
-- `test/m76_player_president_interactive_decision_application_session_test.dart`
-- `tool/run_m76_player_president_interactive_decision_application_session.dart`
-- `M76_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_SESSION_I.md`
+M77 ana dosyaları:
+- `lib/src/player_president/player_president_interactive_decision_file_save_slot_store.dart`
+- `lib/player_president_interactive_decision_file_save_slot_store.dart`
+- `test/m77_player_president_interactive_decision_file_save_slot_store_test.dart`
+- `tool/run_m77_player_president_interactive_decision_file_save_slot_store.dart`
+- `M77_PLAYER_PRESIDENT_INTERACTIVE_DECISION_FILE_SAVE_SLOT_STORE_I.md`
 - `.github/workflows/m0-tests.yml`
 
-## 4. M76 merge ve CI kanıtı
+## 4. Şu ana kadar doğrulanan M77 CI kanıtı
 
-PR:
-- **#79 — MERGED / CLOSED**
-- branch: `feat/m76-interactive-decision-application-session`
-- final exact pre-merge HEAD: `f84c50aac5deac7512ff7c7acd111cbc5d2fb8dd`
-- kullanıcı bu exact HEAD için açık merge onayı verdi
-- squash merge SHA: `3fdc084a988050b179892ebdc5818c9d032720a0`
+İlk exact code/workflow HEAD:
+`e217f7bcb937e8bd83bad3cda8d6c80c4460d4fb`
 
-Final exact-head PR CI:
-- run `34893560191`
-- analyzer `No issues found!`
-- **344/344 tests PASS**
-- 5 M76 acceptance testi PASS
-- canonical executable M0–M76 SUCCESS
-- exact M76 marker PASS
+Workflow run:
+`34898142811`
+
+`test` job `104157272601`:
+- **SUCCESS**
+- analyzer: `No issues found!`
+- **350/350 tests PASS**
+- M77'ye ait 6 acceptance testi PASS
 - Post Checkout + Complete job SUCCESS
-- artifacts 0
-- canonical dış etiketi strict 7 dakika envelope sonunda `cancelled`; tüm executable adımlar önceden SUCCESS
 
-Post-merge gerçek `main` CI:
-- run `34894535027`
-- run number `489`
-- merge SHA `3fdc084a988050b179892ebdc5818c9d032720a0`
-- event `push`
-
-Attempt 1:
-- test SUCCESS
-- analyzer `No issues found!`
-- **344/344 tests PASS**
-- M76'nın 5 acceptance testi PASS
-- canonical M0–M72 SUCCESS
-- M73 PASS marker'ını yazdıktan hemen sonra strict timeout oluştu
-- M74–M76 skipped
-- gerçek log okundu; assertion/runtime failure yok, timeout-only
-- bu nedenle kod patch'i atılmadı
-
-Attempt 2 — aynı exact `main` SHA üzerinde canonical retry:
-- workflow conclusion **SUCCESS**
-- canonical job `104147997745` SUCCESS
-- M0–M76 executable adımlarının tamamı SUCCESS
-- M73 / M74 / M75 / M76 marker'ları PASS
+`canonical` job `104157272375`:
+- M0–M77 executable adımlarının tamamı **SUCCESS**
+- exact M77 marker PASS
 - Post Checkout + Complete job SUCCESS
-- artifacts **0**
 
-Exact M76 marker:
-`M76_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_SESSION_PASS controlled=t1_01 savedDecisions=4 pendingRestore=true stableSave=true applicationLifecycle=true atomicBundle=M75 parityM75=true saveAuthority=M65 worldClubs=48 seed=20260903`
+Artifacts:
+- **0**
 
-M76 **CLOSED / MERGED / PASS**.
+Bu run ilk executable source/test/canonical kanıtıdır. Ardından M77 milestone dokümanı + proje özeti + bu devir notu eklendi/güncellendi. Bu nedenle **docs dahil final exact-head CI henüz bu notta PASS olarak yazılmamıştır** ve canlı GitHub'dan yeniden doğrulanmalıdır.
 
-## 5. M76 acceptance
+Beklenen exact M77 marker:
+`M77_PLAYER_PRESIDENT_INTERACTIVE_DECISION_FILE_SAVE_SLOT_STORE_PASS controlled=t1_01 savedDecisions=4 diskRoundTrip=true interruptedRecovery=true invalidBlocked=true stableSave=true atomicBundle=M75 saveAuthority=M65 worldClubs=48 seed=20260903`
 
-1. Aynı checkpoint/config exact aynı ilk pending request'i üretir — PASS.
-2. Dört cevap sonrası save/restore exact next pending request'e döner ve encoded bytes stabildir — PASS.
-3. Stale response fail-closed olur ve persisted transcript mutasyona uğramaz — PASS.
-4. Corrupt M75 bundle `restoreEncoded` sırasında reddedilir — PASS.
-5. Save→restore→completion uninterrupted session ile exact checkpoint/boundary/decision-count parity verir — PASS.
-6. M65/M74/M75 authority sınırı korunur — PASS.
+## 5. M77 acceptance
+
+1. File slot yeni store instance'ından exact pending request ve exact M75 bytes ile restore edilir.
+2. Overwrite yalnız en yeni exact M75 bundle'ı authoritative target olarak bırakır.
+3. Path traversal / invalid slot ID fail-closed reddedilir.
+4. Interrupted replacement committed backup'tan recovery edilir.
+5. Corrupt target M75 validation üzerinden fail-closed reddedilir.
+6. Slot listesi deterministic sıralıdır ve delete slot state'ini kaldırır.
+7. M65/M75/M76 authority sınırı korunur.
+
+İlk executable CI'da bu acceptance yüzeylerinin tamamı PASS'tir; merge için docs dahil **final exact HEAD** tekrar doğrulanacaktır.
 
 ## 6. Kalıcı çalışma kuralları
 
@@ -143,22 +130,27 @@ M76 **CLOSED / MERGED / PASS**.
 - Post-merge gerçek `main` executable doğrulaması bitmeden milestone CLOSED değildir.
 - Docs→CI→docs sonsuz döngüsü yapılmaz.
 - M65 tek persisted game-state authority'dir.
+- M75 atomik application save formatıdır; M77 bu formatın yerine geçmez.
 - Mevcut repo saf Dart deterministic simulation core'dur; Flutter/UI katmanı henüz kurulmamıştır.
 
 ## 7. Sıradaki kesin iş
 
-Şu anda yarım kalmış kod işi yoktur.
+M78 seçme. PR #80'u tamamla.
 
-Yeni sohbette kullanıcı **“devam et”** dediğinde:
-
-1. canlı `main` ve en son CI durumunu doğrula,
-2. `GENEL_PROJE_OZETI.md` + bu devir notunu oku,
-3. açık PR/branch durumunu kontrol et,
-4. repo mimarisi üzerinde fresh gap scan yap,
-5. oyunu gerçek ürüne yaklaştıran en küçük, test edilebilir ve deterministic sıradaki açığı seç,
-6. ancak bundan sonra M77 veya başka bir milestone öner / başlat.
-
-**M77 kapsamı önceden belirlenmiş değildir.**
+Sıra:
+1. canlı PR #80 head SHA'yı doğrula,
+2. docs dahil final exact-head `test` job: analyzer + **350 test** SUCCESS olmalı,
+3. final exact-head `canonical`: M0–M77 executable adımları SUCCESS olmalı,
+4. exact M77 marker PASS okunmalı,
+5. Post Checkout / Complete job ve artifacts=0 doğrulanmalı,
+6. strict 7 dakika nedeniyle outer canonical cancelled olursa gerçek log okunmalı; M77 + cleanup önceden SUCCESS ise timeout-only kabul edilebilir,
+7. PR mergeable durumu doğrulanmalı,
+8. draft'tan ready durumuna geçirilmeli,
+9. ready sonrası exact final HEAD tekrar kilitlenmeli,
+10. kullanıcıdan **exact final HEAD SHA için açık merge onayı** istenmeli,
+11. onay gelmeden merge edilmemeli,
+12. onay sonrası squash merge + `expected_head_sha`,
+13. post-merge gerçek `main` executable CI doğrulanmadan M77 CLOSED yazılmamalı.
 
 ## 8. Kullanıcı çalışma biçimi
 
