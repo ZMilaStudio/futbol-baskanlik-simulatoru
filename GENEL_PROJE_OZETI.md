@@ -31,7 +31,7 @@ Canonical dünya:
 - CI tam iki paralel job içerir: `test` + `canonical`.
 - Her job strict `timeout-minutes: 7`.
 - Artifact hedefi `0`.
-- CI kırmızıysa gerçek job logu okunmadan patch atılmaz.
+- CI kırmızı/cancelled ise gerçek job logu okunmadan patch atılmaz.
 - Her PR için merge öncesi PR'ın **exact final HEAD'i için açık kullanıcı onayı** gerekir.
 - Merge squash + exact-head lock ile yapılır.
 - Post-merge gerçek `main` executable doğrulaması bitmeden milestone CLOSED değildir.
@@ -52,143 +52,118 @@ Yeni sohbet başlangıç sırası:
 2. `GENEL_PROJE_OZETI.md` oku,
 3. `SOHBET_DEVIR_NOTU.md` oku,
 4. branch / PR / workflow / job / artifact durumunu canlı GitHub'dan yeniden doğrula,
-5. ancak bundan sonra sıradaki işi seç veya aktif milestone'u kaldığı yerden sürdür.
+5. ancak bundan sonra sıradaki işi seç.
 
 `DEVRALMA_1_AYLIK_GPT.md` canlı `main` üzerinde bulunmamaktadır.
 
 ## 4. CANLI DURUM — buradan devam et
 
-**M0–M75 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M76 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone: M76 — Player President Interactive Decision Application Session I.**
+**Aktif milestone yoktur.**
 
-Fresh live-main gap scan M75 sonrasında şu açığı buldu: M75 persistence bundle formatını çözmesine rağmen application/UI katmanı çalışan oturum sırasında M65 checkpoint + M74 transcript + M75 resume config'i ayrı ayrı eşleyip save/load lifecycle'ını elle yönetmek zorundaydı.
+**M77 seçilmemiş ve başlatılmamıştır.**
 
-M76 bu açığı yeni authority üretmeden tek application-facing lifecycle owner ile kapatır:
-- `PlayerPresidentInteractiveDecisionApplicationSession`
-- `advance()` / `submit(...)`
-- `encodePersistenceBundle()`
-- `restore(...)` / `restoreEncoded(...)`
-- pending/completed/answered state read surface.
+Yarım kalmış kod işi veya merge bekleyen milestone PR'ı devredilmiyor.
 
-Aktif branch:
-- `feat/m76-interactive-decision-application-session`
+Kullanıcı “devam et” dediğinde eski sohbetten M77 kapsamı varsayılmamalıdır. Canlı `main` üzerinde fresh gap scan yapılarak oyunu gerçek ürüne yaklaştıran en küçük, test edilebilir ve deterministic sonraki açık seçilmelidir.
 
-Aktif PR:
-- **#79 — DRAFT / OPEN**
-- başlık: `M76: interactive decision application session`
+## 5. Son kapanan milestone — M76
 
-İlk exact code HEAD:
-- `7711aa26287212e10e329ffa8b750653ecc7db95`
-
-İlk executable CI:
-- run `34892927092`
-- analyzer `No issues found!`
-- **344/344 tests PASS**
-- 5 M76 acceptance testi PASS
-- test job SUCCESS
-
-Bu ilk run M76 canonical workflow step'i eklenmeden önce source/test compile kanıtı almak için kullanıldı. Ardından M76 canonical marker step'i ve pre-merge docs eklendi. **Final exact-head PR CI henüz tamamlanmadan M76 merge-ready/PASS sayılmaz.**
-
-M76 milestone dokümanı:
-- `M76_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_SESSION_I.md`
-
-## 5. Son kapanan milestone — M75
-
-### M75 — Player President Interactive Decision Persistence Bundle I
+### M76 — Player President Interactive Decision Application Session I
 
 Durum: **CLOSED / MERGED / PASS**
 
-M75'in amacı, checkpoint-backed interaktif başkanlık oturumunun uygulama seviyesinde güvenli biçimde saklanabilmesi için şu üç parçayı tek atomik envelope altında eşlemekti:
+M76'nın amacı, M75 sonrasında application/UI katmanının M65 checkpoint + M74 transcript + M75 resume config'i ayrı ayrı eşleyip interactive save/load lifecycle'ını elle yönetmesi gereğini kaldırmaktı.
 
-- authoritative M65 game-state save,
-- M74 accepted-answer transcript save,
-- M73 resume için gereken minimal deterministic runtime config.
+M76 çözümü:
+- `PlayerPresidentInteractiveDecisionApplicationSession`
+- `resume(...)`
+- `restore(...)` / `restoreEncoded(...)`
+- `advance()` / `submit(...)`
+- `persistenceBundle`
+- `encodePersistenceBundle()`
+- `pendingDecision`
+- `answeredDecisionCount`
+- `completed`
 
-M75 yeni bir game-state authority oluşturmaz.
+Authority sınırı değişmedi:
+- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + save codec tek persisted **game-state authority** olmaya devam eder.
+- M74 accepted-answer transcript yalnız deterministic replay metadata'sıdır.
+- M75 atomik application persistence bundle'dır.
+- M76 yalnız runtime/application lifecycle composition sağlar; yeni game-state/save authority oluşturmaz.
+- Filesystem, Flutter widget/state, Android save-slot backend, database veya cloud-save authority eklenmedi.
 
-Authority sınırı:
-- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` tek persisted **game-state authority** olmaya devam eder.
-- M74 transcript yalnız deterministic replay metadata'sıdır.
-- M75 M65 + M74 + minimal M73 resume config'i versioned/checksummed outer persistence bundle içinde atomik olarak compose eder.
-- Partial runtime state, UI state, filesystem save-slot backend veya cloud-save authority oluşturulmaz.
-
-Ana M75 tipleri:
-- `PlayerPresidentInteractiveDecisionResumeConfig`
-- `PlayerPresidentInteractiveDecisionPersistenceBundle`
-- `PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec`
-
-Ana M75 dosyaları:
-- `lib/src/player_president/player_president_interactive_decision_persistence_bundle.dart`
-- `lib/player_president_interactive_decision_persistence_bundle.dart`
-- `test/m75_player_president_interactive_decision_persistence_bundle_test.dart`
-- `tool/run_m75_player_president_interactive_decision_persistence_bundle.dart`
-- `M75_PLAYER_PRESIDENT_INTERACTIVE_DECISION_PERSISTENCE_BUNDLE_I.md`
+Ana M76 dosyaları:
+- `lib/src/player_president/player_president_interactive_decision_application_session.dart`
+- `lib/player_president_interactive_decision_application_session.dart`
+- `test/m76_player_president_interactive_decision_application_session_test.dart`
+- `tool/run_m76_player_president_interactive_decision_application_session.dart`
+- `M76_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_SESSION_I.md`
+- `.github/workflows/m0-tests.yml`
 
 Acceptance:
-1. canonical bundle round-trip exact nested M65 + M74 save'lerini korur — PASS,
-2. restore exact pending request'e döner ve uninterrupted M74 parity verir — PASS,
-3. başka M65 save ile eşleştirilmiş checksum-valid stale transcript fail-closed olur — PASS,
-4. outer checksum corruption nested restore öncesinde reddedilir — PASS,
-5. valid outer checksum içindeki bozuk nested M65 save nested validation ile reddedilir — PASS,
-6. M65 tek persisted game-state authority olarak kalır — PASS.
+1. aynı checkpoint/config exact aynı ilk pending request'i üretir — PASS,
+2. dört cevap sonrası save/restore exact next pending request'e döner ve encoded bytes stabildir — PASS,
+3. stale response fail-closed olur ve persisted transcript mutasyona uğramaz — PASS,
+4. corrupt M75 bundle `restoreEncoded` sırasında reddedilir — PASS,
+5. save→restore→completion uninterrupted session ile exact checkpoint/boundary/decision-count parity verir — PASS,
+6. M65/M74/M75 authority sınırı korunur — PASS.
 
-Exact M75 marker:
-`M75_PLAYER_PRESIDENT_INTERACTIVE_DECISION_PERSISTENCE_BUNDLE_PASS controlled=t1_01 savedDecisions=4 pendingRestore=true canonicalRoundTrip=true atomicBundle=true nestedChecksums=true parityM74=true singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
+Exact M76 marker:
+`M76_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_SESSION_PASS controlled=t1_01 savedDecisions=4 pendingRestore=true stableSave=true applicationLifecycle=true atomicBundle=M75 parityM75=true saveAuthority=M65 worldClubs=48 seed=20260903`
 
-## 6. M75 merge ve CI kanıtı
+## 6. M76 merge ve CI kanıtı
 
 PR:
-- **#78 — MERGED / CLOSED**
-- branch: `feat/m75-interactive-decision-persistence-bundle`
-- final exact pre-merge HEAD: `6c71902ba8c8cd3398aac3e40828fb4093cdd436`
-- kullanıcı exact HEAD için açık merge onayı verdi
-- squash merge SHA: `c88d65f6c06769fa2298d92bc791f76a0ebf5bed`
+- **#79 — MERGED / CLOSED**
+- branch: `feat/m76-interactive-decision-application-session`
+- final exact pre-merge HEAD: `f84c50aac5deac7512ff7c7acd111cbc5d2fb8dd`
+- kullanıcı bu exact HEAD için açık merge onayı verdi
+- squash merge SHA: `3fdc084a988050b179892ebdc5818c9d032720a0`
 
 Final exact-head PR CI:
-- run `34888876382`
-- analyzer clean
-- 339/339 tests PASS
-- 5 M75 acceptance testi PASS
-- canonical executable M0–M75 SUCCESS
-- exact M75 marker PASS
+- run `34893560191`
+- analyzer `No issues found!`
+- **344/344 tests PASS**
+- 5 M76 acceptance testi PASS
+- canonical executable M0–M76 SUCCESS
+- exact M76 marker PASS
 - Post Checkout + Complete job SUCCESS
 - artifacts 0
-- canonical dış etiketi strict 7 dakika envelope sonunda `cancelled`; assertion/runtime failure yok
+- canonical dış etiketi yalnız strict 7 dakika envelope sonrasında `cancelled`; M76 dahil tüm executable adımlar önceden SUCCESS
 
 Post-merge gerçek `main` executable CI:
-- run `34890260125`
+- run `34894535027`
+- head SHA `3fdc084a988050b179892ebdc5818c9d032720a0`
+- event `push`
+- run number `489`
+
+Attempt 1:
 - test job SUCCESS
 - analyzer `No issues found!`
-- 339 tests PASS
-- 5 M75 acceptance testi PASS
-- canonical executable M0–M75 SUCCESS
-- M72, M73, M74 ve M75 exact marker'ları PASS
+- **344/344 tests PASS**
+- 5 M76 acceptance testi PASS
+- canonical M0–M72 SUCCESS
+- M73 kendi PASS marker'ını yazdıktan hemen sonra strict 7 dakika envelope doldu
+- M74–M76 bu ilk attempt'te çalışmadı
+- gerçek canonical logu incelendi; assertion/runtime failure olmadığı doğrulandı
+- timeout-only olduğu için kod patch'i atılmadı
+
+Attempt 2 — aynı exact `main` SHA üzerinde yalnız kanıt retry'sı:
+- workflow conclusion **SUCCESS**
+- canonical job `104147997745` **SUCCESS**
+- canonical executable M0–M76 **SUCCESS**
+- M73, M74, M75 ve M76 exact marker'ları PASS
 - Post Checkout + Complete job SUCCESS
-- artifacts 0
-- canonical dış etiketi yalnız strict 7 dakika envelope sonrasında `cancelled`; tüm executable adımlar önceden SUCCESS
+- artifacts **0**
+- repo/kod içeriği retry için değiştirilmedi
 
-M75 closure docs commit:
-- `f7ae064e63d1ef05bff841f54ed25253dd9b024c`
-
-Closure docs CI:
-- run `34891239476`
-- head SHA `f7ae064e63d1ef05bff841f54ed25253dd9b024c`
-- event `push`
-- test job SUCCESS
-- analyzer SUCCESS
-- canonical M0–M75 SUCCESS
-- Post Checkout + Complete job SUCCESS
-- strict 7 dakika outer envelope sonunda run/canonical conclusion `cancelled`
-- runtime/assertion failure yok
-- artifacts 0
-- retry açılmadı ve docs→CI→docs döngüsü üretilmedi
-
-M75 **CLOSED / MERGED / PASS**.
+M76 **CLOSED / MERGED / PASS**.
 
 ## 7. Yakın milestone zinciri
 
-- M76 — Interactive Decision Application Session — PR #79 — **ACTIVE / PRE-MERGE** — 344 tests on initial code HEAD.
+- M76 — Interactive Decision Application Session — PR #79 — merge `3fdc084a988050b179892ebdc5818c9d032720a0` — 344 tests.
 - M75 — Interactive Decision Persistence Bundle — PR #78 — merge `c88d65f6c06769fa2298d92bc791f76a0ebf5bed` — 339 tests.
 - M74 — Interactive Decision Transcript Snapshot — PR #77 — merge `6f03d14cfcba345a8f5873fccc2d603329b71e2c` — 334 tests.
 - M73 — Interactive Decision Session — PR #76 — merge `a82caf70f832c20e2da2929bcaddd26aad85b618` — 329 tests.
@@ -265,15 +240,15 @@ M76:
 
 ## 11. Bir sonraki sohbet için kesin talimat
 
-M76 aktifken yeni milestone seçme.
+Yeni sohbet başladığında doğrudan bir M77 fikrine atlama.
 
 Önce:
 1. canlı `main` HEAD,
-2. PR #79'un canlı head SHA / draft / mergeable durumu,
-3. exact-head workflow run / `test` / `canonical` / artifact durumu,
+2. son workflow run'ları,
+3. açık PR/branch durumu,
 4. `GENEL_PROJE_OZETI.md`,
 5. `SOHBET_DEVIR_NOTU.md`
 
 doğrulanmalıdır.
 
-Final exact-head CI henüz tamamlanmamışsa onu doğrula. Tüm executable gates başarılıysa PR'ı merge-ready hale getir, exact final HEAD'i tekrar kilitle ve kullanıcıdan **o SHA için açık merge onayı** iste. Onay gelmeden merge etme. Merge sonrası gerçek `main` executable CI doğrulanmadan M76 CLOSED yazma.
+Sonra repo üzerinde **fresh live-main gap scan** yapılarak sıradaki milestone belirlenmelidir.
