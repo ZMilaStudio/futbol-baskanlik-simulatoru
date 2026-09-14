@@ -1,6 +1,7 @@
 import '../core/seeded_rng.dart';
 import '../core/simulation_config.dart';
 import '../core/stable_hash.dart';
+import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../crisis/player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
