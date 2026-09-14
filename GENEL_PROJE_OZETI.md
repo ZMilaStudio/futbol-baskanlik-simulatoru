@@ -2,268 +2,248 @@
 
 Son güncelleme: 14 Eylül 2026
 
-## 1. Proje kimliği ve kalıcı ilkeler
+## 1. Proje kimliği
 
-ZMila Studio için geliştirilen Android futbol kulübü başkanlığı simülasyonu. Mevcut repo saf Dart deterministic simulation core'dur; Flutter/UI katmanı henüz bu repoda kurulmamıştır.
+ZMila Studio için geliştirilen futbol kulübü başkanlığı simülasyonu.
 
 > **Oyuncu teknik direktör değil, kulüp başkanıdır.**
 > **Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.**
 
 Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
-Canonical seed: `20260903`
-Dünya: 48 özgün kulüp, 3 lig × 16 kulüp, 720 lig maçı/sezon, 14.400 maç/20 sezon, 864 başlangıç oyuncusu.
 
-Kalıcı kurallar:
-- Live GitHub > proje dosyaları > eski sohbetler.
-- Deterministic seed/replay korunur; tarih `GameDate`, para integer minor-unit `Money` kullanır.
+Mevcut repo saf Dart deterministic simulation core'dur. Flutter/UI katmanı henüz bu repoda kurulmamıştır.
+
+Canonical dünya:
+- seed: `20260903`
+- 48 özgün kulüp
+- 3 lig × 16 kulüp
+- 720 lig maçı / sezon
+- 14.400 maç / 20 sezon
+- 864 başlangıç oyuncusu
+
+## 2. Kalıcı çalışma kuralları
+
+- **Live GitHub > proje dosyaları > eski sohbetler.**
+- Deterministic seed / replay / save-resume parity korunur.
+- Tarih `GameDate`, para integer minor-unit `Money` kullanır.
 - Eski public simulation semantiği sessizce değiştirilmez.
-- Save/load/resume determinism ve parity korunur.
 - PASS yalnız canlı CI kanıtıyla yazılır.
-- CI tam iki paralel job: `test` + `canonical`; her job strict `timeout-minutes: 7`.
+- CI tam iki paralel job içerir: `test` + `canonical`.
+- Her job strict `timeout-minutes: 7`.
 - Artifact hedefi `0`.
-- CI kırmızıysa gerçek failure logu okunmadan patch atılmaz.
-- `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır ve güncel tutulur.
-- Docs→CI→docs sonsuz döngüsü üretilmez.
-- Her yeni PR için merge öncesi o PR'ın exact final HEAD'i için açık kullanıcı onayı gerekir.
-- Merge exact-head kilidiyle ve squash yöntemiyle yapılır.
-- Merge sonrası gerçek `main` executable doğrulaması tamamlanmadan milestone CLOSED sayılmaz.
+- CI kırmızıysa gerçek job logu okunmadan patch atılmaz.
+- Her PR için merge öncesi PR'ın **exact final HEAD'i için açık kullanıcı onayı** gerekir.
+- Merge squash + exact-head lock ile yapılır.
+- Post-merge gerçek `main` executable doğrulaması bitmeden milestone CLOSED değildir.
+- Docs→CI→docs sonsuz döngüsü yapılmaz.
+- Yeni milestone seçmeden önce canlı `main` üzerinde fresh gap scan yapılır.
 
-`DEVRALMA_1_AYLIK_GPT.md` canlı `main` üzerinde bulunmamaktadır; çalışma kuralları için canlı GitHub + bu özet esas alınır.
+## 3. Devir dosyaları
 
-## 2. CANLI DURUM — buradan devam et
+Kalıcı proje özeti:
+- `GENEL_PROJE_OZETI.md`
+
+Yeni sohbet için hızlı devir notu:
+- `SOHBET_DEVIR_NOTU.md`
+- oluşturma commit'i: `95233a3e524b031e665f298774c9576676bd81ba`
+
+Yeni sohbet başlangıç sırası:
+1. canlı GitHub `main` HEAD'i doğrula,
+2. `GENEL_PROJE_OZETI.md` oku,
+3. `SOHBET_DEVIR_NOTU.md` oku,
+4. branch / PR / workflow / job / artifact durumunu canlı GitHub'dan yeniden doğrula,
+5. ancak bundan sonra sıradaki işi seç.
+
+`DEVRALMA_1_AYLIK_GPT.md` canlı `main` üzerinde bulunmamaktadır.
+
+## 4. CANLI DURUM — buradan devam et
 
 **M0–M75 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone yoktur. M76 otomatik seçilmemiştir.**
+**Aktif milestone yoktur.**
 
-Son kapanan milestone:
-**M75 — Player President Interactive Decision Persistence Bundle I — CLOSED / MERGED / PASS.**
+**M76 seçilmemiş ve başlatılmamıştır.**
 
-M75, application katmanının M65 game-state save + M74 accepted-answer transcript + M73 resume parametrelerini ayrı ayrı eşleme zorunluluğunu kaldırdı. Bunları tek versioned/checksummed outer persistence bundle içinde atomik olarak eşler; yeni game-state authority oluşturmaz.
+Yarım kalmış kod işi veya merge bekleyen milestone PR'ı devredilmiyor.
 
-Canlı kapanış özeti:
-- PR #78 — **MERGED / CLOSED**
-- Branch: `feat/m75-interactive-decision-persistence-bundle`
-- Base `main`: `8bfdef10789459aa6786f662b5a0ccc346299846`
-- Pre-doc exact code HEAD: `c052b40e775dd65d9d7f36ccdfe71b89249452ce`
-- Final exact pre-merge PR HEAD: `6c71902ba8c8cd3398aac3e40828fb4093cdd436`
-- Exact-head squash merge SHA: `c88d65f6c06769fa2298d92bc791f76a0ebf5bed`
-- Post-merge executable `main` push CI run: `34890260125`
-- Post-merge analyzer: `No issues found!`
-- Post-merge normal/non-canonical tests: **339/339 PASS**
-- M75'e ait 5 acceptance testi: **PASS**
-- Post-merge canonical executable adımları: **M0–M75 SUCCESS**
-- Post-merge exact M75 marker: **PASS**
-- Post Checkout + Complete job: **SUCCESS**
-- Canonical job dış etiketi strict 7 dakika envelope sonrasında `cancelled`; assertion/runtime failure yoktur ve tüm executable adımlar öncesinde SUCCESS tamamlanmıştır.
-- Artifacts: **0**
+Bir sonraki iş eski sohbetten varsayılmamalıdır. Kullanıcı “devam et” dediğinde canlı `main` fresh gap scan yapılarak oyunu gerçek ürüne yaklaştıran en küçük, test edilebilir ve deterministic sonraki açık seçilmelidir.
 
-Exact M75 marker:
-`M75_PLAYER_PRESIDENT_INTERACTIVE_DECISION_PERSISTENCE_BUNDLE_PASS controlled=t1_01 savedDecisions=4 pendingRestore=true canonicalRoundTrip=true atomicBundle=true nestedChecksums=true parityM74=true singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
+## 5. Son kapanan milestone — M75
 
-Authority değişmez:
-- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` tek persisted **game-state** authority'dir.
-- M74 transcript yalnız replay metadata'sıdır.
-- M75 yeni game-state schema değildir; existing M65 ve M74 codec'lerini minimal M73 resume config ile tek atomik application envelope altında compose eder.
-- Flutter/UI, filesystem/save-slot backend veya cloud save eklenmemiştir.
+### M75 — Player President Interactive Decision Persistence Bundle I
 
-Bir sonraki iş ancak yeni bir canlı `main` gap scan ile seçilmelidir. Eski sohbetten M76 kapsamı varsayılmamalıdır.
+Durum: **CLOSED / MERGED / PASS**
 
-## 3. M75 — Player President Interactive Decision Persistence Bundle I — CLOSED / MERGED / PASS
+M75'in amacı, checkpoint-backed interaktif başkanlık oturumunun uygulama seviyesinde güvenli biçimde saklanabilmesi için şu üç parçayı tek atomik envelope altında eşlemekti:
 
-### 3.1 Neden gerekliydi?
-
-M74 accepted-answer transcript'i durable yaptı fakat checkpoint-backed in-progress session restore için application katmanı üç parçayı ayrı ayrı doğru eşlemek zorundaydı:
 - authoritative M65 game-state save,
-- M74 transcript save,
-- M73 resume için gereken deterministic runtime knobs.
+- M74 accepted-answer transcript save,
+- M73 resume için gereken minimal deterministic runtime config.
 
-Bu ayrı pairing yüzeyi yanlış checkpoint + transcript eşleşmesi, eksik resume config veya application-level save-slot tutarsızlığı riski yaratıyordu.
+M75 yeni bir game-state authority oluşturmaz.
 
-### 3.2 Çözüm
+Authority sınırı:
+- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` tek persisted **game-state authority** olmaya devam eder.
+- M74 transcript yalnız deterministic replay metadata'sıdır.
+- M75 M65 + M74 + minimal M73 resume config'i versioned/checksummed outer persistence bundle içinde atomik olarak compose eder.
+- Partial runtime state, UI state, filesystem save-slot backend veya cloud-save authority oluşturulmaz.
 
-Ana tipler:
+Ana M75 tipleri:
 - `PlayerPresidentInteractiveDecisionResumeConfig`
 - `PlayerPresidentInteractiveDecisionPersistenceBundle`
 - `PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec`
 
-Bundle:
-- `PlayerPresidentTicketPricingRuntimeCheckpoint` (M65 authority),
-- `PlayerPresidentInteractiveDecisionTranscriptSnapshot` (M74 sidecar),
-- `seasonCount`, `hasFutureSeasonAfterReport`, `crisisActivationThreshold`, `candidateLimit` resume config'i taşır.
-
-Outer envelope canonical JSON + version + checksum kullanır. Nested M65 ve M74 save'leri kendi codec/version/checksum doğrulamalarını ayrıca korur. Restore M65 checkpoint'ten M73 session'ı kurar, M74 transcript'i deterministic replay eder ve exact pending request'i yeniden türetir.
-
-Persistence authority:
-- M65 tek persisted game-state authority olarak kalır.
-- M75 yalnız application-level atomic persistence envelope'dur.
-- M74 replay metadata'sı game state değildir.
-- M75 bundle içinde partial runtime state, UI state, filesystem/save-slot backend veya cloud-save authority oluşturulmaz.
-
-### 3.3 Acceptance
-
-1. Canonical bundle round-trip exact nested M65 + M74 save'lerini korur — PASS.
-2. Restore exact pending request'e döner ve uninterrupted M74 ile final checkpoint/boundary parity verir — PASS.
-3. Başka M65 save ile eşleştirilmiş checksum-valid stale transcript fail-closed olur — PASS.
-4. Outer checksum corruption nested restore öncesinde reddedilir — PASS.
-5. Valid outer checksum içindeki bozuk nested M65 save nested validation ile reddedilir — PASS.
-6. M65 tek persisted game-state authority olarak kalır — PASS.
-
-M75 dosyaları:
+Ana M75 dosyaları:
 - `lib/src/player_president/player_president_interactive_decision_persistence_bundle.dart`
 - `lib/player_president_interactive_decision_persistence_bundle.dart`
 - `test/m75_player_president_interactive_decision_persistence_bundle_test.dart`
 - `tool/run_m75_player_president_interactive_decision_persistence_bundle.dart`
 - `M75_PLAYER_PRESIDENT_INTERACTIVE_DECISION_PERSISTENCE_BUNDLE_I.md`
-- `.github/workflows/m0-tests.yml`
-- `GENEL_PROJE_OZETI.md`
 
-### 3.4 CI ve merge kanıtı
+Acceptance:
+1. canonical bundle round-trip exact nested M65 + M74 save'lerini korur — PASS,
+2. restore exact pending request'e döner ve uninterrupted M74 parity verir — PASS,
+3. başka M65 save ile eşleştirilmiş checksum-valid stale transcript fail-closed olur — PASS,
+4. outer checksum corruption nested restore öncesinde reddedilir — PASS,
+5. valid outer checksum içindeki bozuk nested M65 save nested validation ile reddedilir — PASS,
+6. M65 tek persisted game-state authority olarak kalır — PASS.
 
-Pre-doc exact code HEAD `c052b40e775dd65d9d7f36ccdfe71b89249452ce`:
-- `test`: SUCCESS
+Exact M75 marker:
+`M75_PLAYER_PRESIDENT_INTERACTIVE_DECISION_PERSISTENCE_BUNDLE_PASS controlled=t1_01 savedDecisions=4 pendingRestore=true canonicalRoundTrip=true atomicBundle=true nestedChecksums=true parityM74=true singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
+
+## 6. M75 merge ve CI kanıtı
+
+PR:
+- **#78 — MERGED / CLOSED**
+- branch: `feat/m75-interactive-decision-persistence-bundle`
+- final exact pre-merge HEAD: `6c71902ba8c8cd3398aac3e40828fb4093cdd436`
+- kullanıcı exact HEAD için açık merge onayı verdi
+- squash merge SHA: `c88d65f6c06769fa2298d92bc791f76a0ebf5bed`
+
+Final exact-head PR CI:
+- run `34888876382`
 - analyzer clean
 - 339/339 tests PASS
 - 5 M75 acceptance testi PASS
-- canonical attempt 1 M0–M75 + exact M75 marker + Post Checkout + Complete job SUCCESS; strict 7 dakika envelope sonunda dış conclusion `cancelled`
-- aynı exact HEAD'te yalnız canonical job bir kez retry edildi; M0–M75 + exact M75 marker + cleanup tekrar SUCCESS, dış envelope yine `cancelled`
-- runtime/assertion failure yok
-- üçüncü retry açılmadı
-- artifacts 0
-
-Final exact-head PR CI run `34888876382`, exact HEAD `6c71902ba8c8cd3398aac3e40828fb4093cdd436`:
-- `test`: SUCCESS
-- analyzer `No issues found!`
-- 339/339 tests PASS
-- 5 M75 acceptance testi PASS
-- M0–M75 executable adımlarının tamamı SUCCESS
+- canonical executable M0–M75 SUCCESS
 - exact M75 marker PASS
 - Post Checkout + Complete job SUCCESS
-- strict 7 dakika outer envelope sonrasında canonical job etiketi `cancelled`; gerçek assertion/runtime failure yok
 - artifacts 0
+- canonical dış etiketi strict 7 dakika envelope sonunda `cancelled`; assertion/runtime failure yok
 
-Kullanıcı exact HEAD `6c71902ba8c8cd3398aac3e40828fb4093cdd436` için açık merge onayı verdi.
+Post-merge gerçek `main` executable CI:
+- run `34890260125`
+- test job SUCCESS
+- analyzer `No issues found!`
+- 339 tests PASS
+- 5 M75 acceptance testi PASS
+- canonical executable M0–M75 SUCCESS
+- M72, M73, M74 ve M75 exact marker'ları PASS
+- Post Checkout + Complete job SUCCESS
+- artifacts 0
+- canonical dış etiketi yalnız strict 7 dakika envelope sonrasında `cancelled`; tüm executable adımlar önceden SUCCESS
 
-Exact-head squash merge:
-- PR #78 — MERGED / CLOSED
-- merge SHA: `c88d65f6c06769fa2298d92bc791f76a0ebf5bed`
+M75 closure docs commit:
+- `f7ae064e63d1ef05bff841f54ed25253dd9b024c`
 
-Post-merge gerçek `main` CI run `34890260125`:
-- `test`: **SUCCESS**
-- analyzer: `No issues found!`
-- **339 tests PASS**
-- M75'e ait 5 acceptance testi PASS
-- canonical M0–M75 executable adımlarının tamamı SUCCESS
-- exact M72 marker PASS
-- exact M73 marker PASS
-- exact M74 marker PASS
-- exact M75 marker PASS
-- Post Checkout SUCCESS
-- Complete job SUCCESS
-- canonical dış conclusion yalnız strict 7 dakika envelope sonrasında `cancelled`; tüm executable gates önceden başarıyla tamamlanmıştı
-- artifacts: **0**
+Closure docs CI:
+- run `34891239476`
+- head SHA `f7ae064e63d1ef05bff841f54ed25253dd9b024c`
+- event `push`
+- test job SUCCESS
+- analyzer SUCCESS
+- canonical M0–M75 SUCCESS
+- Post Checkout + Complete job SUCCESS
+- strict 7 dakika outer envelope sonunda run/canonical conclusion `cancelled`
+- runtime/assertion failure yok
+- artifacts 0
+- retry açılmadı ve docs→CI→docs döngüsü üretilmedi
 
 M75 **CLOSED / MERGED / PASS**.
 
-## 4. Son önceki milestone: M74 — Player President Interactive Decision Transcript Snapshot I — CLOSED / MERGED / PASS
+## 7. Yakın milestone zinciri
 
-M74, M73'ün runtime-only accepted-answer transcript'ini application lifecycle boyunca geri yüklenebilir versioned/checksummed replay sidecar haline getirdi. Pending context veya game state sidecar'a yazılmaz; M65 authority değişmez.
+- M75 — Interactive Decision Persistence Bundle — PR #78 — merge `c88d65f6c06769fa2298d92bc791f76a0ebf5bed` — 339 tests.
+- M74 — Interactive Decision Transcript Snapshot — PR #77 — merge `6f03d14cfcba345a8f5873fccc2d603329b71e2c` — 334 tests.
+- M73 — Interactive Decision Session — PR #76 — merge `a82caf70f832c20e2da2929bcaddd26aad85b618` — 329 tests.
+- M72 — Unified Decision Gateway Runtime — PR #75 — merge `44aa7f9c830551a4e980b9bd233153feb92d6d2c` — 324 tests.
+- M71 — eight-domain player-president runtime composition — CLOSED.
+- M70 — seven-domain composition — CLOSED.
+- M69 — sponsor composition — CLOSED.
+- M68 — facility composition — CLOSED.
+- M67 — promise/media/transfer/ticket composition — CLOSED.
+- M66 — transfer/ticket composition — CLOSED.
+- M65 — persisted player-president ticket-pricing runtime authority — CLOSED.
+- M0–M64 — CLOSED / MERGED / PASS.
 
-Kapanış kanıtı:
-- PR #77 — MERGED / CLOSED
-- final exact pre-merge PR HEAD: `bc799eb4333ced2419bca752330d98ca2d6380be`
-- exact-head squash merge SHA: `6f03d14cfcba345a8f5873fccc2d603329b71e2c`
-- post-merge executable main CI `34883829920`: SUCCESS
-- analyzer clean
-- 334/334 tests PASS
-- canonical M0–M74 SUCCESS
-- exact M74 marker PASS
-- artifacts 0
+## 8. Sistem mimarisi — kısa harita
 
-Exact M74 marker:
-`M74_PLAYER_PRESIDENT_INTERACTIVE_DECISION_TRANSCRIPT_SNAPSHOT_PASS controlled=t1_01 savedDecisions=4 pendingRestore=true canonicalRoundTrip=true parityM73=true transcriptOnly=true singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
+M0–M18:
+- sezon / kariyer / oyuncu / ekonomi / transfer / world / manager / contract / fan / media / vaat / seçim / başkanlık temelleri.
 
-## 5. M73 — Player President Interactive Decision Session I — CLOSED / MERGED / PASS
+M19–M24:
+- başkan trait feedback zinciri.
 
-M73, M72 synchronous gateway'ini gerçek UI/application akışına uygun deterministic replay tabanlı `pending request → later response → continue` session sınırına taşıdı. Partial simulation state pending iken commit edilmez; stale veya invalid response pending request'i tüketmeden reddedilir.
+M25–M32:
+- save/load, runtime snapshot, history compaction ve resume stress.
 
-Kapanış:
-- PR #76
-- final exact PR HEAD `8c890582f5e597bb0d1d2155250b3586ca0c0a40`
-- squash merge `a82caf70f832c20e2da2929bcaddd26aad85b618`
-- post-merge main CI `34872238972`: SUCCESS
-- 329 tests
-- M0–M73 PASS
-- artifacts 0
+M33–M39:
+- facility / academy / portfolio yatırımları ve başkan karar döngüsü.
 
-Exact marker:
-`M73_PLAYER_PRESIDENT_INTERACTIVE_DECISION_SESSION_PASS controlled=t1_01 decisions=9 uniqueKinds=9 pauseReplay=true parityM72=true singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
+M40–M48:
+- stadium attendance, fan trust, sponsor, crisis ve facility/sponsor/crisis runtime composition.
 
-## 6. M72 — Player President Unified Decision Gateway Runtime I — CLOSED / MERGED / PASS
+M49–M57:
+- player-president facility / sponsor / crisis / manager / transfer / promise / media kontrolleri.
 
-M72 facility, sponsor, crisis, manager review/replacement, promise, media, transfer strategy ve ticket pricing kararlarını tek application-facing `PlayerPresidentDecisionGateway` altında birleştirdi. Domain validation, tenure gate ve diğer 47 kulübün canonical AI yolu korunur.
+M58–M65:
+- tenure ownership gate ve tenure-gated player controls; M65 persisted runtime game-state authority.
 
-Kapanış:
-- PR #75
-- final exact HEAD `3868fa5c1ae3c03146cfc8c32628fde75f5e8a3b`
-- squash merge `44aa7f9c830551a4e980b9bd233153feb92d6d2c`
-- 324 tests
-- M0–M72 PASS
-- artifacts 0
+M66–M71:
+- tüm player-president domain'lerinin aynı M65 checkpoint authority üzerinde composition'ı.
 
-Exact marker:
-`M72_PLAYER_PRESIDENT_UNIFIED_DECISION_GATEWAY_RUNTIME_PASS controlled=t1_01 singleGateway=true managerCalls=1 gatewayCalls=7 singleCheckpoint=true saveAuthority=M65 worldClubs=48 seed=20260903`
+M72:
+- application-facing tek `PlayerPresidentDecisionGateway`.
 
-## 7. Yakın milestone geçmişi
+M73:
+- deterministic `pending request → response → continue` interactive session.
 
-- M75 — PR #78 merge `c88d65f6c06769fa2298d92bc791f76a0ebf5bed`; 339 tests; M0–M75 executable PASS; artifacts 0.
-- M74 — PR #77 merge `6f03d14cfcba345a8f5873fccc2d603329b71e2c`; 334 tests; M0–M74 PASS; artifacts 0.
-- M73 — PR #76 merge `a82caf70f832c20e2da2929bcaddd26aad85b618`; 329 tests; M0–M73 PASS; artifacts 0.
-- M72 — PR #75 merge `44aa7f9c830551a4e980b9bd233153feb92d6d2c`; 324 tests; M0–M72 PASS; artifacts 0.
-- M71 — PR #74 merge `fc373ee6dde881aa9bc730d0930924e7905725c9`; 321 tests; M0–M71 PASS; artifacts 0.
-- M70 — PR #73 merge `b66512f08240f978286d1b6eaa128bd02ef2cfdb`; 315 tests; M0–M70 PASS; artifacts 0.
-- M69 — PR #72 merge `bf94f3e411f30c0d4474067650ab18c491b4f997`; 309 tests; M0–M69 PASS; artifacts 0.
-- M68 — PR #71 merge `779a0eb4d5c79b80d5afc743b9a53341bf56fcf2`; 303 tests; M0–M68 PASS; artifacts 0.
-- M67 — PR #70 merge `9f4f3a3f314de29e770b2031de29c288a7761684`; 298 tests; M0–M67 PASS; artifacts 0.
-- M66 — PR #69 merge `7860ef0e03a4326a884595eeef37d0b088b6e14a`; 293 tests; M0–M66 PASS; artifacts 0.
-- M65 — PR #68 merge `9e4de0ea84446293155292af39d7e887f6cdab3b`; 288 tests; M0–M65 PASS; artifacts 0.
-- M64 — PR #67 merge `4a76d1546fa02675e1c94cd57621a82d70e15a8c`; 283 tests; M0–M64 PASS; artifacts 0.
-- M63 — PR #66 merge `72f5387fe416746244eb41cbc6aaaaf179f9442f`; 278 tests; M0–M63 PASS; artifacts 0.
-- M62 — PR #65 merge `64aab836ab707fe33c204465348f9bc0bc50a54f`; 273 tests; M0–M62 PASS; artifacts 0.
-- M61 — PR #64 merge `0a00895a185e4dc2b8a97485767be888a8bfde85`; 268 tests; M0–M61 PASS; artifacts 0.
-- M60 — PR #63 merge `b149e4f9c661ce5f2aa43f16ee4b5cbfc9b79b6d`; 263 tests; M0–M60 PASS; artifacts 0.
-- M59 — PR #62 merge `d49424573d7db1c2f02554bffec2e3b13c40b6dd`; 258 tests; M0–M59 PASS; artifacts 0.
+M74:
+- accepted-answer transcript için checksummed replay sidecar.
 
-## 8. Sistem zinciri ve authority sınırları
+M75:
+- M65 game-state save + M74 transcript + M73 resume config için atomik application persistence bundle.
 
-M0–M18 temel sezon/kariyer/oyuncu/ekonomi/transfer/world/manager/contract/fan/media/vaat/seçim/başkanlık; M19–M24 başkan trait feedback; M25–M32 save/runtime/history; M33–M39 facility/academy/portfolio; M40 stadium; M41 fan trust→attendance; M42 sponsor; M43 crisis; M44–M48 runtime composition; M49–M52 player-president facility/sponsor/crisis/manager controls; M53 transfer strategy runtime hook; M54 world bridge; M55 transfer strategy control; M56 promise; M57 media; M58 tenure ownership gate; M59–M64 tenure-gated player controls; M65 ticket pricing → real economy + persisted runtime authority; M66–M71 domain composition; M72 unified gateway; M73 interactive session; M74 transcript snapshot; M75 atomic application persistence bundle.
+## 9. Başkan trait etkileri
 
-Başkan/state gerçek etkileri:
 - `managerPatience`: manager dismissal + training priority + crisis response
 - `financialDiscipline`: transfer affordability + facility reserve + sponsor preference + crisis response + AI ticket pricing
 - `transferAmbition`: transfer activity + stadium priority + supporter crisis
 - `riskAppetite`: bid ceiling + stadium priority + sponsor preference + crisis response
 - `youthOrientation`: youth transfer preference + academy/training priority
 
-Authority zinciri:
+## 10. Authority zinciri
+
 - M58 player-president tenure ownership state'ini sağlar.
-- M59–M64 tenure-gated domain authority'lerini kurar.
-- M65 `PlayerPresidentTicketPricingRuntimeCheckpoint` + `PlayerPresidentTicketPricingRuntimeSaveCodec` tek persisted **game-state** authority'dir.
-- M66–M71 aynı M65 authority üzerinde domain'leri compose eder; yeni persisted authority üretmez.
-- M72 application/UI için tek runtime decision gateway sağlar.
-- M73 runtime-only deterministic interactive session sağlar.
-- M74 yalnız accepted-answer replay metadata sidecar'ını persist eder.
-- M75 M65 game-state save + M74 transcript + minimal M73 resume config'i tek checksummed outer envelope içinde atomik eşler; nested authority'leri değiştirmez.
+- M59–M64 tenure-gated domain control katmanlarını kurar.
+- M65 tek persisted **game-state authority**'dir.
+- M66–M71 yeni authority üretmeden M65 üzerinde domain composition yapar.
+- M72 tek application decision gateway sağlar.
+- M73 runtime-only interactive session sağlar.
+- M74 yalnız replay transcript metadata'sını persist eder.
+- M75 M65 + M74 + minimal M73 resume config'i tek outer persistence envelope içinde eşler; authority değiştirmez.
 
-## 9. Devir / çalışma talimatı
+## 11. Bir sonraki sohbet için kesin talimat
 
-1. Her işlemden önce canlı GitHub durumunu doğrula.
-2. `GENEL_PROJE_OZETI.md` kalıcı handoff dosyasıdır; milestone kapanışlarında güncellenir.
-3. Branch/commit/PR/workflow/job/log/artifact durumunu GitHub'dan doğrula.
-4. CI kırmızıysa gerçek logdan kök neden bul; tahminle patch atma.
-5. `timeout-minutes: 7`, tam iki job, artifacts `0`, determinism ve parity kurallarını koru.
-6. Eski public simulation semantiğini sessizce değiştirme.
-7. Yeni milestone seçmeden önce canlı `main` gap scan yap; eski sohbet kapsamını otomatik kabul etme.
-8. Her PR için merge öncesi exact final HEAD'e açık kullanıcı onayı al; squash + exact-head lock kullan; post-merge `main` executable gates doğrulanmadan milestone'u CLOSED sayma.
-9. Docs-only merge-ready/kapanış commit'i CI tetikliyorsa bu CI bir kez doğrulanır; sırf kendi run ID'sini yazmak için yeni docs commit atılmaz.
-10. M75 kapanmıştır. M76 veya sonraki milestone ancak yeni canlı `main` gap scan ile seçilir; otomatik başlatılmaz.
+Yeni sohbet başladığında doğrudan bir M76 fikrine atlama.
+
+Önce:
+1. canlı `main` HEAD,
+2. son workflow run'ları,
+3. açık PR/branch durumu,
+4. `GENEL_PROJE_OZETI.md`,
+5. `SOHBET_DEVIR_NOTU.md`
+
+doğrulanmalıdır.
+
+Sonra repo üzerinde **fresh live-main gap scan** yapılarak sıradaki milestone belirlenmelidir.
