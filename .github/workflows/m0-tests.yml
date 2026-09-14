@@ -268,3 +268,6 @@ jobs:
 
       - name: Run M77 player president interactive decision file save slot store
         run: dart run tool/run_m77_player_president_interactive_decision_file_save_slot_store.dart 20260903
+
+      - name: Run M78 player president interactive decision file save slot catalog
+        run: dart run tool/run_m78_player_president_interactive_decision_file_save_slot_catalog.dart 20260903
