@@ -259,3 +259,6 @@ jobs:
 
       - name: Run M74 player president interactive decision transcript snapshot
         run: dart run tool/run_m74_player_president_interactive_decision_transcript_snapshot.dart 20260903
+
+      - name: Run M75 player president interactive decision persistence bundle
+        run: dart run tool/run_m75_player_president_interactive_decision_persistence_bundle.dart 20260903
