@@ -15,26 +15,21 @@ Bu dosya yeni sohbette nerede kaldığımızı ve sıradaki kesin adımı taşı
 
 ## 2. Devredilen durum
 
-**M0–M81 CLOSED / MERGED / PASS.**
+**M0–M82 CLOSED / MERGED / PASS.**
 
-**M82 ACTIVE / PRE-MERGE.**
+**Aktif milestone yoktur. M83 preselect edilmemiştir.**
 
-M82:
-**Player President Interactive Decision New-Game Bootstrap File Save Slot Catalog I**
+Son kapanan milestone:
+**M82 — Player President Interactive Decision New-Game Bootstrap File Save Slot Catalog I**
 
 PR:
-**#85 — OPEN / DRAFT / PRE-MERGE**
+**#85 — MERGED**
 
-Branch:
-`feat/m82-new-game-bootstrap-file-save-slot-catalog`
+Approved exact final PR HEAD:
+`18b5a4e0644b6401334bd0419b5acd0d48e06f01`
 
-Executable parent code HEAD:
-`9ae3a13afd017022baca6e76cda56e6e14b56de1`
-
-Base `main`:
-`e1d90a20702a9bcfcc46aae3e9d779121cfa297e`
-
-Bu PRE-MERGE docs commit'i branch HEAD'ini ilerletir. Merge onayı yalnız docs-included final candidate exact SHA için alınmalıdır.
+Squash merge SHA:
+`d52b879668a9ef538ac45b15a1e294e86b1f64ac`
 
 ## 3. M82 çözümü
 
@@ -52,15 +47,6 @@ Davranış:
 - corrupt bytes ve divergent world fail-closed olur,
 - M77 `.fbs.json` checkpoint namespace'inden izole kalır.
 
-Summary alanları en az:
-- slotId,
-- controlledClubId / controlledClubName,
-- careerSeed,
-- answeredDecisionCount,
-- pendingDecisionKind,
-- resumeSeasonCount,
-- electionInterval.
-
 Authority değişmedi:
 - **M65 tek persisted game-state authority**,
 - M74 replay metadata,
@@ -73,31 +59,46 @@ Authority değişmedi:
 
 ## 4. M82 acceptance
 
-Executable parent exact SHA `9ae3a13afd017022baca6e76cda56e6e14b56de1` üzerinde:
-
 1. Bootstrap slot deterministic summary + read-only bytes — PASS.
 2. Deterministic list order + overwrite latest state — PASS.
 3. Missing/invalid slot M81 contract parity — PASS.
 4. Corrupt bytes + divergent world fail-closed — PASS.
 5. M77 checkpoint namespace isolation — PASS.
 
-## 5. M82 executable PRE-MERGE kanıtı
+## 5. M82 merge ve post-merge kanıtı
 
-PR workflow run:
-`34990552222`
+Approved exact final PR HEAD:
+`18b5a4e0644b6401334bd0419b5acd0d48e06f01`
+
+Squash merge SHA:
+`d52b879668a9ef538ac45b15a1e294e86b1f64ac`
+
+Post-merge gerçek `main` push workflow run:
+`35011219817` — run #516 — event `push`
+
+Exact tested `main` SHA:
+`d52b879668a9ef538ac45b15a1e294e86b1f64ac`
+
+Test job:
+`104534184354`
 
 - analyzer `No issues found!`
 - **377/377 tests PASS**
 - **5/5 M82 acceptance PASS**
-- test cleanup SUCCESS
-- canonical timing-only timeout denemelerinde target M82 çalışmadığı için PASS sayılmadı
-- aynı exact SHA üzerinde kod patch'i olmadan retry edildi
-- başarılı canonical job: `104504219474`
-- **M0–M82 SUCCESS**
-- M82 step SUCCESS
-- exact M82 marker PASS
 - Post Checkout + Complete job SUCCESS
-- artifacts **0**
+
+Canonical:
+- strict 7 dakikalık envelope nedeniyle bazı denemeler M77/M79 civarında timing-only cancelled oldu,
+- M82 çalışmayan denemeler kapanış kanıtı sayılmadı,
+- source/docs patch'i atmadan exact aynı merge SHA retry edildi,
+- başarılı canonical job: `104534182851`,
+- **M0–M82 SUCCESS**,
+- M82 step SUCCESS,
+- exact M82 marker PASS,
+- Post Checkout + Complete job SUCCESS.
+
+Artifacts:
+- run `35011219817` → **0**
 
 Exact marker:
 `M82_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_FILE_SAVE_SLOT_CATALOG_PASS controlled=t1_01 summaries=2 primaryAnswers=4 deterministicOrder=true readOnly=true metadataExact=true worldGuard=true m77Isolated=true saveAuthority=M65 replayMetadata=M74 bootstrap=M80 store=M81 worldClubs=48 seed=20260903`
@@ -119,11 +120,11 @@ Exact marker:
 
 ## 7. Sıradaki kesin iş
 
-1. PRE-MERGE docs commit'inden sonra oluşan docs-included final PR HEAD'i canlı oku.
-2. O exact SHA için analyzer + 377/377 + 5/5 M82 + canonical M0–M82 + marker + artifacts 0 doğrula; timing-only canonical timeout olursa exact aynı SHA retry et.
-3. PR #85'i Ready yap.
-4. Ready sonrası head/base/open/draft/mergeable state'i yeniden doğrula.
-5. Kullanıcıdan **exact final SHA** için açık squash-merge onayı iste.
-6. Onay gelmeden merge yapma.
+**Aktif milestone yoktur. M83 preselect edilmemiştir.**
 
-**M82 kapanmadan M83 seçme.**
+Bir sonraki geliştirme turunda:
+1. canlı GitHub `main` HEAD ve açık PR'ları doğrula,
+2. `GENEL_PROJE_OZETI.md` ve bu dosyayı oku,
+3. fresh live-main gap scan yap,
+4. gap scan sonucundaki en küçük doğal authority-safe milestone'u seç,
+5. M65'i tek persisted game-state authority olarak koru.

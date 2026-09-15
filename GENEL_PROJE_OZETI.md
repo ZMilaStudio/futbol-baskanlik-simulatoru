@@ -39,26 +39,21 @@ Canonical dünya:
 
 ## 3. CANLI DURUM — buradan devam et
 
-**M0–M81 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M82 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M82 ACTIVE / PRE-MERGE.**
+**Aktif milestone yoktur. M83 preselect edilmemiştir.**
 
-M82:
-**Player President Interactive Decision New-Game Bootstrap File Save Slot Catalog I**
+Son kapanan milestone:
+**M82 — Player President Interactive Decision New-Game Bootstrap File Save Slot Catalog I**
 
 PR:
-**#85 — OPEN / DRAFT / PRE-MERGE**
+**#85 — MERGED**
 
-Branch:
-`feat/m82-new-game-bootstrap-file-save-slot-catalog`
+Approved exact final PR HEAD:
+`18b5a4e0644b6401334bd0419b5acd0d48e06f01`
 
-M82 executable parent code HEAD:
-`9ae3a13afd017022baca6e76cda56e6e14b56de1`
-
-Base `main`:
-`e1d90a20702a9bcfcc46aae3e9d779121cfa297e`
-
-Bu PRE-MERGE doküman commit'i branch HEAD'ini yukarıdaki executable parent SHA'dan ilerletecektir. **Merge onayı yalnız docs-included final candidate SHA için istenecektir.**
+Squash merge SHA:
+`d52b879668a9ef538ac45b15a1e294e86b1f64ac`
 
 ## 4. M82 neden seçildi?
 
@@ -100,17 +95,7 @@ Authority sınırı değişmedi:
 - M81 exact M80 bootstrap bytes file adapter.
 - M82 yalnız read-only bootstrap catalog/projection; ikinci game-state authority değildir.
 
-M82 non-scope:
-- metadata sidecar,
-- M77 + M81 birleşik mixed load-game catalog,
-- M77'yi dual-format store'a çevirmek,
-- timestamp/nondeterministic metadata,
-- database/cloud/Flutter/provider state,
-- yeni persisted game-state authority.
-
 ## 6. M82 acceptance
-
-Executable parent SHA `9ae3a13afd017022baca6e76cda56e6e14b56de1` üzerinde:
 
 1. Bootstrap slot deterministic load-game metadata üretir ve bytes değişmez — **PASS**.
 2. List deterministic slot-id order kullanır ve overwrite sonrası latest state'i yansıtır — **PASS**.
@@ -118,38 +103,48 @@ Executable parent SHA `9ae3a13afd017022baca6e76cda56e6e14b56de1` üzerinde:
 4. Corrupt bytes + divergent supplied world fail-closed olur — **PASS**.
 5. Catalog M77 checkpoint namespace'inden izole kalır — **PASS**.
 
-## 7. M82 executable PRE-MERGE kanıtı
+## 7. M82 merge + post-merge kanıtı
 
-PR workflow run:
-`34990552222`
+Approved exact final PR HEAD:
+`18b5a4e0644b6401334bd0419b5acd0d48e06f01`
 
-Executable parent exact branch HEAD:
-`9ae3a13afd017022baca6e76cda56e6e14b56de1`
+Squash merge SHA:
+`d52b879668a9ef538ac45b15a1e294e86b1f64ac`
+
+Post-merge push workflow run:
+`35011219817` — run #516 — event `push`
+
+Exact tested `main` SHA:
+`d52b879668a9ef538ac45b15a1e294e86b1f64ac`
+
+Test job:
+`104534184354`
 
 Test evidence:
 - analyzer `No issues found!`
 - **377/377 tests PASS**
 - **5/5 M82 acceptance PASS**
-- test cleanup SUCCESS
+- Post Checkout + Complete job SUCCESS
 
 Canonical evidence:
-- strict 7 dakikalık envelope nedeniyle önceki denemeler M77/M79/M78 civarında timing-only cancelled oldu; M82 çalışmadığı için PASS sayılmadı,
-- aynı exact SHA üzerinde kod patch'i olmadan retry edildi,
-- başarılı canonical job: `104504219474`,
+- strict 7 dakikalık envelope nedeniyle bazı post-merge denemeler M77/M79 civarında timing-only cancelled oldu,
+- target M82 çalışmayan denemeler kapanış kanıtı sayılmadı,
+- exact aynı merge SHA üzerinde source/docs patch'i olmadan retry edildi,
+- başarılı post-merge canonical job: `104534182851`,
 - **M0–M82 tüm executable adımlar SUCCESS**,
 - M82 step SUCCESS,
 - Post Checkout + Complete job SUCCESS,
 - exact M82 marker PASS.
 
 Artifacts:
-- **0**
+- run `35011219817` → **0**
 
 Exact marker:
 `M82_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_FILE_SAVE_SLOT_CATALOG_PASS controlled=t1_01 summaries=2 primaryAnswers=4 deterministicOrder=true readOnly=true metadataExact=true worldGuard=true m77Isolated=true saveAuthority=M65 replayMetadata=M74 bootstrap=M80 store=M81 worldClubs=48 seed=20260903`
 
 ## 8. Yakın milestone zinciri
 
-- M82 — Bootstrap File Save Slot Catalog — PR #85 — **ACTIVE / PRE-MERGE**.
+- M82 — Bootstrap File Save Slot Catalog — PR #85 — merge `d52b879668a9ef538ac45b15a1e294e86b1f64ac` — 377 tests — **CLOSED / MERGED / PASS**.
 - M81 — Bootstrap File Save Slot Store — PR #84 — merge `76566493c7f5999487b53db4794088a75bbe6a7b` — 372 tests.
 - M80 — New-Game Bootstrap Snapshot — PR #83 — merge `44dbc898de57307050f4f26525886af32c999b51` — 366 tests.
 - M79 — Application New-Game Session — PR #82 — merge `1f75d9e7e363d17e429af77a7aa28c21a04e06ae` — 360 tests.
@@ -179,12 +174,12 @@ Exact marker:
 
 ## 10. Sıradaki kesin iş
 
-M82 henüz CLOSED değildir.
+**Aktif milestone yoktur. M83 seçilmiş değildir.**
 
-1. Bu PRE-MERGE docs commit'inin oluşturduğu **final docs-included PR HEAD** için CI yeniden doğrulanır.
-2. Analyzer, 377/377 tests, 5/5 M82 acceptance, canonical M0–M82, exact marker ve artifacts 0 tekrar kilitlenir.
-3. PR #85 Ready yapılır ve exact final HEAD + mergeability yeniden okunur.
-4. Kullanıcıdan **exact final SHA** için açık squash-merge onayı istenir.
-5. Onay gelmeden merge yapılmaz.
+Yeni çalışma başlatıldığında:
+1. canlı GitHub `main` HEAD ve açık PR'lar yeniden doğrulanır,
+2. bu dosya ve `SOHBET_DEVIR_NOTU.md` okunur,
+3. fresh live-main gap scan yapılır,
+4. yalnız o taramada çıkan en küçük doğal authority-safe milestone seçilir.
 
-**M83 seçilmez; önce M82 tam kapanır.**
+M65 tek persisted game-state authority olarak korunacaktır.
