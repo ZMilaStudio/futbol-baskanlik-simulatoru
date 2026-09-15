@@ -41,133 +41,115 @@ Canonical dünya:
 
 **M0–M81 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone yoktur.**
+**M82 ACTIVE / PRE-MERGE.**
 
-**M82 henüz seçilmemiştir.**
-
-Son kapanan milestone:
-**M81 — Player President Interactive Decision New-Game Bootstrap File Save Slot Store I**
+M82:
+**Player President Interactive Decision New-Game Bootstrap File Save Slot Catalog I**
 
 PR:
-**#84 — MERGED**
+**#85 — OPEN / DRAFT / PRE-MERGE**
 
-M81 final approved PR HEAD:
-`fb343a41cba6f79fb8b64c8590b8d4a57f8af3f5`
+Branch:
+`feat/m82-new-game-bootstrap-file-save-slot-catalog`
 
-M81 squash merge SHA:
-`76566493c7f5999487b53db4794088a75bbe6a7b`
+M82 executable parent code HEAD:
+`9ae3a13afd017022baca6e76cda56e6e14b56de1`
 
-Post-merge gerçek `main` workflow run:
-`34986135432`
+Base `main`:
+`e1d90a20702a9bcfcc46aae3e9d779121cfa297e`
 
-Post-merge canonical başarılı retry job:
-`104441763719`
+Bu PRE-MERGE doküman commit'i branch HEAD'ini yukarıdaki executable parent SHA'dan ilerletecektir. **Merge onayı yalnız docs-included final candidate SHA için istenecektir.**
 
-Bu kapanış doküman commit'i `main` HEAD'ini yukarıdaki merge SHA'dan sonra ilerletir. Yeni sohbette güncel HEAD canlı GitHub'dan yeniden okunmalıdır.
+## 4. M82 neden seçildi?
 
-## 4. M81 neden seçildi?
+Fresh live-main gap scan'de M81'in pre-checkpoint M80 bootstrap bytes'ını güvenli file slotlarında sakladığı ve slot ID'lerini listelediği; ancak M78'in checkpoint/M75 tarafında sunduğu gibi bootstrap slotları için güvenli, deterministik ve read-only bir load-game özeti bulunmadığı görüldü.
 
-M80 pre-checkpoint new-game ilerlemesini versioned/checksummed replay-only bootstrap + M74 transcript olarak encode edebiliyordu. M77 ise yalnız M75 checkpoint bundle için disk slotu sağlıyordu. Böylece pre-checkpoint bootstrap bytes için dayanıklı yerel dosya persistence katmanı eksik kalıyordu.
+Checkpoint + bootstrap slotlarını tek catalog altında birleştirmek daha geniş kapsamlı olacaktı. En küçük authority-safe adım, yalnız M81 bootstrap namespace'i üzerinde read-only catalog/projection eklemekti.
 
-En küçük authority-safe çözüm, M77'yi dual-format hale getirmek yerine ayrı bootstrap file adapter eklemekti.
+## 5. M82 çözümü
 
-## 5. M81 çözümü
-
-Yeni adapter:
-`PlayerPresidentInteractiveDecisionNewGameBootstrapFileSaveSlotStore`
+Yeni catalog:
+`PlayerPresidentInteractiveDecisionNewGameBootstrapFileSaveSlotCatalog`
 
 Davranış:
-- exact M80 bootstrap envelope bytes saklar,
-- ayrı `.fbs.bootstrap.json` namespace kullanır,
-- M77 `.fbs.json` checkpoint slotlarını değiştirmez,
-- atomic temp → target replacement + committed backup recovery uygular,
-- invalid/path-traversal slot ID'lerini fail-closed reddeder,
-- checkpoint-backed application session'ı disk mutation öncesi reddeder,
-- load sırasında M80 checksum/format validation + world fingerprint guard çalışır,
-- `listSlotIds`, `contains`, `delete` yalnız bootstrap namespace'ini görür.
+- M81 slotunu exact load ederek M80 checksum/format/world-fingerprint doğrulamasını çalıştırır,
+- M74 transcript replay/application session sonucundan load-game summary üretir,
+- metadata sidecar yazmaz,
+- inspect/list sırasında slot bytes'ını değiştirmez,
+- deterministic slot-id sırası kullanır,
+- overwrite sonrası latest bootstrap state'ini projekte eder,
+- corrupt bytes ve divergent supplied world durumunda fail-closed olur,
+- M77 `.fbs.json` checkpoint namespace'ini görmez veya değiştirmez.
+
+Summary yüzeyi en az şu alanları taşır:
+- slot ID,
+- controlled club ID/name,
+- career seed,
+- answered decision count,
+- pending decision kind,
+- resume season count,
+- election interval.
 
 Authority sınırı değişmedi:
 - **M65 tek persisted game-state authority.**
 - M74 accepted-answer replay metadata.
 - M75 checkpoint-backed atomik application bundle.
 - M77 M75-only checkpoint file-slot store.
-- M78 M75-backed read-only checkpoint catalog.
+- M78 M75-backed checkpoint catalog.
 - M80 pre-checkpoint replay-only bootstrap snapshot.
-- M81 yalnız exact M80 bytes file adapter; ikinci game-state authority değildir.
+- M81 exact M80 bootstrap bytes file adapter.
+- M82 yalnız read-only bootstrap catalog/projection; ikinci game-state authority değildir.
 
-M81 non-scope:
-- M77 formatını dual-format yapmak,
-- M78 catalog'a bootstrap metadata eklemek,
-- checkpoint + bootstrap slotlarını tek load-game catalog altında birleştirmek,
+M82 non-scope:
+- metadata sidecar,
+- M77 + M81 birleşik mixed load-game catalog,
+- M77'yi dual-format store'a çevirmek,
 - timestamp/nondeterministic metadata,
-- database/cloud/Flutter/provider state.
+- database/cloud/Flutter/provider state,
+- yeni persisted game-state authority.
 
-## 6. M81 acceptance
+## 6. M82 acceptance
 
-1. Fresh store exact pending request + stable M80 bytes restore eder — **PASS**.
-2. Overwrite yalnız latest M80 bootstrap'ı bırakır — **PASS**.
-3. Invalid slot ID + checkpoint-backed session write fail-closed ve disk mutation yok — **PASS**.
-4. Interrupted replacement committed backup'tan recover edilir — **PASS**.
-5. Corrupted bytes + divergent supplied world fail-closed — **PASS**.
-6. Bootstrap list/delete/contains M77 checkpoint namespace'inden izoledir — **PASS**.
+Executable parent SHA `9ae3a13afd017022baca6e76cda56e6e14b56de1` üzerinde:
 
-## 7. M81 final PRE-MERGE kanıtı
+1. Bootstrap slot deterministic load-game metadata üretir ve bytes değişmez — **PASS**.
+2. List deterministic slot-id order kullanır ve overwrite sonrası latest state'i yansıtır — **PASS**.
+3. Missing/invalid slot davranışı M81 contract'ını korur — **PASS**.
+4. Corrupt bytes + divergent supplied world fail-closed olur — **PASS**.
+5. Catalog M77 checkpoint namespace'inden izole kalır — **PASS**.
 
-Final approved exact HEAD:
-`fb343a41cba6f79fb8b64c8590b8d4a57f8af3f5`
+## 7. M82 executable PRE-MERGE kanıtı
 
-Final PR run:
-`34976042057`
+PR workflow run:
+`34990552222`
 
+Executable parent exact branch HEAD:
+`9ae3a13afd017022baca6e76cda56e6e14b56de1`
+
+Test evidence:
 - analyzer `No issues found!`
-- **372/372 tests PASS**
-- **6/6 M81 acceptance PASS**
-- canonical aynı exact SHA üzerinde timing retry sonrası **M0–M81 SUCCESS**
-- exact M81 marker PASS
-- Post Checkout + Complete job SUCCESS
-- artifacts **0**
-- PR Ready, `mergeable=true`
-- kullanıcı exact HEAD için açık merge onayı verdi
+- **377/377 tests PASS**
+- **5/5 M82 acceptance PASS**
+- test cleanup SUCCESS
 
-## 8. M81 POST-MERGE gerçek main kanıtı
-
-Squash merge SHA:
-`76566493c7f5999487b53db4794088a75bbe6a7b`
-
-Push workflow run:
-`34986135432`
-
-Test job:
-- analyzer: `No issues found!`
-- **372/372 tests PASS**
-- **6/6 M81 acceptance PASS**
-- Post Checkout + Complete job SUCCESS
-- job SUCCESS
-
-Canonical ilk deneme:
-- M0–M77 SUCCESS
-- M78 strict 7 dakikalık outer envelope sırasında cancelled
-- M79–M81 skipped
-- fonksiyonel hata değildi; M81 çalışmadığı için kapanış kanıtı sayılmadı
-
-Canonical aynı merge SHA retry:
-- job `104441763719`
-- **M0–M81 tüm executable adımlar SUCCESS**
-- M81 step SUCCESS
-- exact M81 marker PASS
-- Post Checkout + Complete job SUCCESS
+Canonical evidence:
+- strict 7 dakikalık envelope nedeniyle önceki denemeler M77/M79/M78 civarında timing-only cancelled oldu; M82 çalışmadığı için PASS sayılmadı,
+- aynı exact SHA üzerinde kod patch'i olmadan retry edildi,
+- başarılı canonical job: `104504219474`,
+- **M0–M82 tüm executable adımlar SUCCESS**,
+- M82 step SUCCESS,
+- Post Checkout + Complete job SUCCESS,
+- exact M82 marker PASS.
 
 Artifacts:
 - **0**
 
 Exact marker:
-`M81_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_FILE_SAVE_SLOT_STORE_PASS controlled=t1_01 savedDecisions=4 diskRoundTrip=true stableSave=true interruptedRecovery=true invalidBlocked=true worldGuard=true m77Isolated=true saveAuthority=M65 replayMetadata=M74 bootstrap=M80 worldClubs=48 seed=20260903`
+`M82_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_FILE_SAVE_SLOT_CATALOG_PASS controlled=t1_01 summaries=2 primaryAnswers=4 deterministicOrder=true readOnly=true metadataExact=true worldGuard=true m77Isolated=true saveAuthority=M65 replayMetadata=M74 bootstrap=M80 store=M81 worldClubs=48 seed=20260903`
 
-Sonuç:
-**M81 CLOSED / MERGED / PASS.**
+## 8. Yakın milestone zinciri
 
-## 9. Yakın milestone zinciri
-
+- M82 — Bootstrap File Save Slot Catalog — PR #85 — **ACTIVE / PRE-MERGE**.
 - M81 — Bootstrap File Save Slot Store — PR #84 — merge `76566493c7f5999487b53db4794088a75bbe6a7b` — 372 tests.
 - M80 — New-Game Bootstrap Snapshot — PR #83 — merge `44dbc898de57307050f4f26525886af32c999b51` — 366 tests.
 - M79 — Application New-Game Session — PR #82 — merge `1f75d9e7e363d17e429af77a7aa28c21a04e06ae` — 360 tests.
@@ -175,7 +157,7 @@ Sonuç:
 - M77 — File Save Slot Store — PR #80 — merge `be1f8d382d84be01a502a4849ebd43528d97a7b0` — 350 tests.
 - M76 ve öncesi — CLOSED / MERGED / PASS.
 
-## 10. Sistem mimarisi — kısa harita
+## 9. Sistem mimarisi — kısa harita
 
 - M0–M18: temel sezon/kariyer/world/başkanlık sistemleri.
 - M19–M24: başkan trait feedback.
@@ -193,13 +175,16 @@ Sonuç:
 - M79: application-owned deterministic season-0 new-game session.
 - M80: pre-checkpoint bootstrap + M74 transcript replay snapshot.
 - M81: exact M80 bootstrap bytes için ayrı atomic local file-slot store.
+- M82: M81 bootstrap slots için deterministic read-only load-game catalog.
 
-## 11. Sıradaki kesin iş
+## 10. Sıradaki kesin iş
 
-Aktif milestone yoktur. Sonraki `Devam et` çağrısında:
-1. canlı `main` HEAD yeniden doğrulanır,
-2. açık PR/branch/workflow/artifact durumu kontrol edilir,
-3. fresh live-main gap scan yapılır,
-4. ancak bu scan sonucunda en küçük güvenli sonraki milestone seçilir.
+M82 henüz CLOSED değildir.
 
-**M82 önceden tanımlı değildir. Fresh gap scan yapılmadan kapsam seçme veya kod yazma.**
+1. Bu PRE-MERGE docs commit'inin oluşturduğu **final docs-included PR HEAD** için CI yeniden doğrulanır.
+2. Analyzer, 377/377 tests, 5/5 M82 acceptance, canonical M0–M82, exact marker ve artifacts 0 tekrar kilitlenir.
+3. PR #85 Ready yapılır ve exact final HEAD + mergeability yeniden okunur.
+4. Kullanıcıdan **exact final SHA** için açık squash-merge onayı istenir.
+5. Onay gelmeden merge yapılmaz.
+
+**M83 seçilmez; önce M82 tam kapanır.**
