@@ -277,3 +277,6 @@ jobs:
 
       - name: Run M80 player president interactive decision new-game bootstrap snapshot
         run: dart run tool/run_m80_player_president_interactive_decision_new_game_bootstrap_snapshot.dart 20260903
+
+      - name: Run M81 player president interactive decision new-game bootstrap file save slot store
+        run: dart run tool/run_m81_player_president_interactive_decision_new_game_bootstrap_file_save_slot_store.dart 20260903
