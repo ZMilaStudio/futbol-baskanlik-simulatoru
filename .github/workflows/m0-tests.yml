@@ -274,3 +274,6 @@ jobs:
 
       - name: Run M79 player president interactive decision application new-game session
         run: dart run tool/run_m79_player_president_interactive_decision_application_new_game_session.dart 20260903
+
+      - name: Run M80 player president interactive decision new-game bootstrap snapshot
+        run: dart run tool/run_m80_player_president_interactive_decision_new_game_bootstrap_snapshot.dart 20260903
