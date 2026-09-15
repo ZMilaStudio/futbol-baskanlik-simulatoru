@@ -11,6 +11,7 @@ import 'package:futbol_baskanlik_m0/player_president_manager_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_media_statement_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
 import 'package:test/test.dart';
 
