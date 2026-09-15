@@ -1,16 +1,10 @@
 # M81 — Player President Interactive Decision New-Game Bootstrap File Save Slot Store I
 
-Status: **ACTIVE / PRE-MERGE**
+Status: **CLOSED / MERGED / PASS**
 
 ## Amaç
 
 M80 replay-only pre-checkpoint new-game bootstrap snapshot'ını yerel dosya slotunda güvenli ve deterministik biçimde saklamak.
-
-## Neden M81?
-
-M80 ile pre-checkpoint yeni oyun ilerlemesi versioned/checksummed bootstrap + M74 transcript olarak encode edilebiliyor. Ancak M77 file save-slot store yalnız M75 checkpoint bundle kabul ediyor ve pre-checkpoint new-game session'ı saklamıyor.
-
-Fresh live-main gap scan sonucu en küçük authority-safe açık M80 bootstrap bytes için disk persistence katmanıdır.
 
 ## Çözüm
 
@@ -22,9 +16,9 @@ Yeni adapter:
 - ayrı `.fbs.bootstrap.json` namespace kullanır,
 - M77 `.fbs.json` checkpoint slotlarını değiştirmez,
 - atomic temp → target replacement + committed backup recovery uygular,
-- slot ID path traversal korumasını M77 ile aynı sınırda tutar,
-- load sırasında M80 checksum/format validation ve world fingerprint guard aynen çalışır,
+- invalid/path-traversal slot ID'lerini fail-closed reddeder,
 - checkpoint-backed application session bootstrap slotuna yazılmadan önce fail-closed olur; disk mutation oluşmaz,
+- load sırasında M80 checksum/format validation + world fingerprint guard aynen çalışır,
 - list/delete/contains yalnız bootstrap namespace'ini görür.
 
 ## Authority sınırı
@@ -36,7 +30,7 @@ Değişmedi:
 - M77 M75-only checkpoint file-slot store.
 - M78 M75-backed read-only checkpoint catalog.
 - M80 pre-checkpoint bootstrap/replay snapshot.
-- M81 yalnız M80 bytes file adapter; yeni game-state authority değildir.
+- M81 yalnız exact M80 bytes file adapter; yeni game-state authority değildir.
 
 ## Non-scope
 
@@ -55,26 +49,60 @@ Değişmedi:
 5. Corrupted bootstrap bytes ve divergent supplied world fail-closed olur — **PASS**.
 6. Bootstrap list/delete/contains M77 checkpoint slot namespace'inden deterministik olarak izole kalır — **PASS**.
 
-## İlk executable CI kanıtı
+## Final PRE-MERGE kanıtı
 
-Exact HEAD:
-`b59bf5c23ce7a1b73683068a9aebcf32d395edb8`
+Final approved exact PR HEAD:
+`fb343a41cba6f79fb8b64c8590b8d4a57f8af3f5`
 
 PR workflow run:
-`34974945110`
+`34976042057`
+
+- analyzer `No issues found!`
+- **372/372 tests PASS**
+- **6/6 M81 acceptance PASS**
+- canonical aynı exact SHA üzerinde timeout retry sonrası **M0–M81 SUCCESS**
+- M81 step SUCCESS
+- exact M81 marker PASS
+- Post Checkout + Complete job SUCCESS
+- artifacts **0**
+- PR Ready / mergeable
+- kullanıcı exact HEAD için açık squash-merge onayı verdi
+
+## Merge
+
+PR:
+**#84 — MERGED**
+
+Squash merge SHA:
+`76566493c7f5999487b53db4794088a75bbe6a7b`
+
+Merge `expected_head_sha=fb343a41cba6f79fb8b64c8590b8d4a57f8af3f5` lock ile yapıldı.
+
+## POST-MERGE gerçek main kanıtı
+
+Push workflow run:
+`34986135432`
 
 Test job:
+- checkout exact real `main` SHA `76566493c7f5999487b53db4794088a75bbe6a7b`
 - analyzer `No issues found!`
 - **372/372 tests PASS**
 - **6/6 M81 acceptance PASS**
 - Post Checkout + Complete job SUCCESS
-- job SUCCESS
 
-Canonical job:
+Canonical ilk deneme:
+- M0–M77 SUCCESS
+- M78 strict 7 dakikalık outer envelope sırasında cancelled
+- M79–M81 skipped
+- fonksiyonel hata değildi; M81 hiç çalışmadığı için evidence gap bırakıyordu
+
+Canonical retry:
+- aynı real merge SHA üzerinde
+- job `104441763719`
 - **M0–M81 tüm executable adımlar SUCCESS**
 - M81 step SUCCESS
+- exact M81 marker PASS
 - Post Checkout + Complete job SUCCESS
-- job SUCCESS
 
 Artifacts:
 - **0**
@@ -90,15 +118,10 @@ Exact canonical marker:
 - `tool/run_m81_player_president_interactive_decision_new_game_bootstrap_file_save_slot_store.dart`
 - `.github/workflows/m0-tests.yml`
 
-## PRE-MERGE kapanış kapıları
+## Sonuç
 
-Bu doküman commit'i PR HEAD'ini ilk executable SHA'dan sonra ilerletecektir. Merge öncesi:
-1. canlı PR #84 final HEAD yeniden okunacak,
-2. o exact HEAD için analyzer + 372 tests + 6 acceptance doğrulanacak,
-3. canonical M0–M81 + exact marker + cleanup doğrulanacak,
-4. artifacts=0 doğrulanacak,
-5. PR Ready for review yapılacak,
-6. HEAD değişmedi + mergeable doğrulanacak,
-7. kullanıcıdan exact final SHA için açık merge onayı alınacak.
+**M81 CLOSED / MERGED / PASS.**
 
-**Onay olmadan merge yok. M81 kapanmadan M82 yok.**
+M65 persisted game-state authority olarak korunmuştur; M81 yalnız M80 replay-only bootstrap bytes için file adapter'dır ve M77 checkpoint persistence namespace'inden izoledir.
+
+**Aktif milestone yoktur. M82 ancak fresh live-main gap scan ile seçilebilir.**
