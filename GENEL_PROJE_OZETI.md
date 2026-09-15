@@ -52,110 +52,121 @@ Yeni sohbet başlangıcı:
 
 **M0–M79 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**Aktif milestone yoktur.**
+**M80 ACTIVE / PRE-MERGE.**
 
-**M80 henüz seçilmemiştir.**
+M80 adı:
+**Player President Interactive Decision New-Game Bootstrap Snapshot I**
 
-M79 final approved PR HEAD:
-`412acaee321da396858124aeea97d5fef1036255`
-
-M79 squash merge SHA:
-`1f75d9e7e363d17e429af77a7aa28c21a04e06ae`
+Branch:
+`feat/m80-interactive-decision-new-game-bootstrap-snapshot`
 
 PR:
-**#82 — MERGED**
+**#83 — OPEN / DRAFT / PRE-MERGE**
 
-Bu kapanış doküman commit'i `main` HEAD'ini merge SHA'dan sonra ilerletecektir. Yeni sohbet burada yazan merge SHA'yı güncel HEAD sanmamalı; canlı `main` her zaman yeniden okunmalıdır.
+İlk executable M80 HEAD:
+`8eef05379c36003f7ba6e5b013fceddaf0260c3d`
 
-## 5. Son kapanan milestone — M79
+İlk executable PR run:
+`34962878632`
 
-### M79 — Player President Interactive Decision Application New-Game Session I
+Bu PRE-MERGE doküman commit'i branch HEAD'ini yukarıdaki SHA'dan sonra ilerletecektir. Merge adımına geçmeden önce canlı PR HEAD'i yeniden okunmalı ve **o exact SHA** için CI yeniden doğrulanmalıdır.
 
-M79 öncesi açık:
-- M73 sezon 0'dan deterministic interactive new-game session başlatabiliyordu,
-- M76 application-session owner yalnız M65 checkpoint-backed `resume/restore` sunuyordu,
-- application/UI yeni oyunu application layer üzerinden başlatamıyor ve M73'e doğrudan inmek zorunda kalıyordu.
+## 5. Aktif milestone — M80
 
-M79 çözümü:
-- `PlayerPresidentInteractiveDecisionApplicationSession.start(...)`
-- session origin: `newGame` / `checkpoint`
-- `isNewGame`
-- `canPersist`
-- `checkpointOrNull`
-- `newGameElectionInterval`
+### M80 — Player President Interactive Decision New-Game Bootstrap Snapshot I
 
-Pre-checkpoint persistence özellikle **eklenmedi**:
-- `canPersist == false`,
-- `checkpointOrNull == null`,
-- M75 persistence isteği fail-closed,
-- tamamlanan new-game sonucu mevcut M65 checkpoint-backed M76 lifecycle'a handoff olur.
+Fresh live-main gap scan sonucu:
+- M79 application layer üzerinden sezon-0 new-game başlatabiliyor,
+- fakat M65 checkpoint oluşmadan M75 bundle üretmek bilinçli olarak fail-closed,
+- M73 pending karar sırasında partial world/game-state commit etmiyor,
+- M73 her accepted answer sonrası immutable başlangıç girdileri + accepted cevaplarla deterministik replay yapıyor,
+- bu nedenle pre-checkpoint ilerlemeyi güvenli biçimde saklamak için ikinci bir game-state authority yaratmaya gerek yok.
 
-Authority değişmedi:
-- M65 tek persisted game-state authority,
-- M74 replay transcript metadata,
-- M75 atomik application save formatı,
-- M76/M79 application lifecycle,
-- M77 exact M75 bytes file-slot storage,
-- M78 read-only load-game catalog.
+M80 çözümü:
+- `PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshot`
+- versioned/checksummed bootstrap codec
+- immutable `SimulationConfig`
+- `controlledClubId`
+- `electionInterval`
+- mevcut M75 `resumeConfig`
+- mevcut M74 transcript
+- supplied world için deterministic `worldFingerprint`
+- application-session üzerinde `newGameBootstrapSnapshot`
+- `encodeNewGameBootstrapSnapshot()`
+- `restoreNewGameBootstrap(...)`
+- `restoreEncodedNewGameBootstrap(...)`
+- `canPersistBootstrap`
 
-M79 yeni save codec, ikinci authority, M75/M77 format değişikliği, metadata sidecar, database, cloud sync veya Flutter/provider state eklemez.
+Restore semantiği:
+- world snapshot içine kopyalanmaz,
+- caller aynı `clubs` + `leagues` girdilerini yeniden sağlar,
+- fingerprint farklıysa transcript replay başlamadan fail-closed olur,
+- aynı world + aynı bootstrap + aynı transcript deterministik olarak aynı pending request'e ve aynı final M65 checkpoint'e ulaşır.
 
-Ana dosyalar:
-- `lib/src/application/player_president_interactive_decision_application_session.dart`
-- `test/m79_player_president_interactive_decision_application_new_game_session_test.dart`
-- `tool/run_m79_player_president_interactive_decision_application_new_game_session.dart`
+Authority sınırı değişmedi:
+- **M65 tek persisted game-state authority.**
+- M74 accepted-answer replay metadata.
+- M75 checkpoint-backed atomik application bundle.
+- M76/M79 application-session lifecycle.
+- M77 yalnız exact M75 bytes file-slot store.
+- M78 M75-backed read-only load-game catalog.
+- M80 yalnız pre-checkpoint bootstrap/replay metadata; partial runtime/world state değildir.
+
+M80 kapsamında özellikle yapılmayanlar:
+- M77 file-slot formatını bootstrap destekleyecek şekilde büyütmek,
+- M78 catalog'a bootstrap slot metadata eklemek,
+- ikinci game-state codec/authority,
+- partial world/runtime serialization,
+- database/cloud/Flutter/provider state.
+
+Ana M80 dosyaları:
+- `lib/src/player_president/player_president_interactive_decision_new_game_bootstrap_snapshot.dart`
+- `lib/player_president_interactive_decision_new_game_bootstrap_snapshot.dart`
+- `lib/src/player_president/player_president_interactive_decision_application_session.dart`
+- `test/m80_player_president_interactive_decision_new_game_bootstrap_snapshot_test.dart`
+- `tool/run_m80_player_president_interactive_decision_new_game_bootstrap_snapshot.dart`
 - `.github/workflows/m0-tests.yml`
-- `M79_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_NEW_GAME_SESSION_I.md`
+- `M80_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_SNAPSHOT_I.md`
 
-## 6. M79 acceptance
+## 6. M80 acceptance
 
-1. Application start M73 new-game ilk request'ini deterministic sahiplenir — PASS.
-2. Application new-game completion raw M73 ile exact parity verir — PASS.
-3. Pre-checkpoint M75 persistence fail-closed — PASS.
-4. Completed new-game checkpoint mevcut M76 lifecycle'a handoff olur — PASS.
-5. New-game input validation korunur — PASS.
-6. M65/M75/M77 authority sınırı korunur — PASS.
+1. Empty bootstrap snapshot deterministic ilk pending request'i restore eder — PASS.
+2. Accepted-answer transcript round-trip exact sonraki pending request'i restore eder — PASS.
+3. Bootstrap codec deterministic ve checksum-protected'dır — PASS.
+4. Divergent supplied world fingerprint mismatch ile replay öncesi fail-closed olur — PASS.
+5. Bootstrap restore sonrası completion, kesintisiz new-game ile exact M65/boundary/decision parity verir — PASS.
+6. M75 authority sınırı korunur; pre-checkpoint M75 hâlâ blocked, checkpoint-origin M80 bootstrap yüzeyini reddeder — PASS.
 
-## 7. M79 CI ve merge kanıtı
+## 7. İlk executable M80 CI kanıtı
 
-### Pre-merge final exact HEAD
+Exact executable HEAD:
+`8eef05379c36003f7ba6e5b013fceddaf0260c3d`
 
-PR #82 final exact HEAD:
-`412acaee321da396858124aeea97d5fef1036255`
+PR run:
+`34962878632`
 
-Final PR CI:
-- analyzer `No issues found!`
-- **360/360 tests PASS**
-- 5 M79 acceptance testi PASS
-- canonical retry ile **M0–M79 tüm executable adımları SUCCESS**
-- exact M79 marker PASS
+Test job:
+- analyzer: `No issues found!`
+- **366/366 tests PASS**
+- **6 M80 acceptance testi PASS**
 - Post Checkout + Complete job SUCCESS
-- artifacts **0**
+- test job SUCCESS
 
-### Post-merge gerçek main
+Canonical:
+- **M0–M80 tüm executable adımları SUCCESS**
+- M80 step SUCCESS
+- Post Checkout + Complete job SUCCESS
+- canonical job SUCCESS
 
-Squash merge SHA:
-`1f75d9e7e363d17e429af77a7aa28c21a04e06ae`
+Artifacts:
+- **0**
 
-Push workflow run:
-`34956503453`
-
-Kanıt:
-- run conclusion **success**
-- test job **SUCCESS**
-- Analyze **SUCCESS**
-- Run tests **SUCCESS**
-- canonical job **SUCCESS**
-- canonical **M0–M79 tüm executable adımları SUCCESS**
-- M79 step **SUCCESS**
-- Post Checkout + Complete job **SUCCESS**
-- artifacts **0**
-
-Exact M79 marker:
-`M79_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_NEW_GAME_SESSION_PASS controlled=t1_01 decisions=9 startOwned=true deterministic=true persistenceBlocked=true parityM73=true checkpointHandoff=true saveAuthority=M65 worldClubs=48 seed=20260903`
+Exact M80 marker:
+`M80_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_SNAPSHOT_PASS controlled=t1_01 decisions=9 bootstrapRoundTrip=true stableCodec=true worldGuard=true m75Blocked=true parity=true saveAuthority=M65 replayMetadata=M74 checkpointBundle=M75 worldClubs=48 seed=20260903`
 
 ## 8. Yakın milestone zinciri
 
+- M80 — New-Game Bootstrap Snapshot — PR #83 — ACTIVE / PRE-MERGE — 366 tests.
 - M79 — Application New-Game Session — PR #82 — merge `1f75d9e7e363d17e429af77a7aa28c21a04e06ae` — 360 tests.
 - M78 — File Save Slot Catalog — PR #81 — merge `cb9334341e42a8dacf629f4aa25f123b8a6f7160` — 355 tests.
 - M77 — File Save Slot Store — PR #80 — merge `be1f8d382d84be01a502a4849ebd43528d97a7b0` — 350 tests.
@@ -177,19 +188,23 @@ Exact M79 marker:
 - M72: tek application decision gateway.
 - M73: pending request → response → continue interactive runtime.
 - M74: accepted-answer transcript replay metadata.
-- M75: M65 + M74 + resume config atomik persistence bundle.
+- M75: M65 + M74 + resume config atomik checkpoint persistence bundle.
 - M76: checkpoint-backed application-session lifecycle.
 - M77: exact M75 bytes local file save-slot store.
-- M78: authoritative save-slot load-game catalog projection.
-- M79: application-owned deterministic season-0 new-game session; pre-checkpoint persistence bilinçli olarak kapalı.
+- M78: authoritative M75-backed save-slot load-game catalog projection.
+- M79: application-owned deterministic season-0 new-game session.
+- M80: pre-checkpoint new-game bootstrap + M74 transcript replay snapshot; M65 authority korunur.
 
 ## 10. Sıradaki kesin iş
 
-1. Canlı `main` HEAD'i yeniden doğrula.
-2. Açık PR/branch/workflow/artifact durumunu yeniden doğrula.
-3. **Fresh live-main gap scan** yap.
-4. M80'i ancak bu scan sonucunda seç.
-5. En küçük deterministic ve authority-safe açığı uygula.
-6. Merge öncesi exact final HEAD için yeniden açık kullanıcı onayı al.
+PRE-MERGE docs commit'inden sonra:
+1. PR #83 canlı final HEAD'i yeniden oku.
+2. Bu yeni exact HEAD için analyzer + **366 tests** + 6 M80 acceptance doğrula.
+3. Canonical M0–M80 + exact M80 marker + cleanup doğrula; timing timeout olursa aynı exact SHA canonical job'u retry et.
+4. Artifacts=0 doğrula.
+5. PR #83'ü Ready for review yap.
+6. Ready sonrası HEAD'in değişmediğini ve `mergeable=true` olduğunu yeniden doğrula.
+7. Kullanıcıdan **bu exact final SHA için açık merge onayı** iste.
 
-M80'i geçmiş sohbet tahmininden seçme.
+Onay olmadan merge etme.
+M80 kapanmadan M81 seçme.
