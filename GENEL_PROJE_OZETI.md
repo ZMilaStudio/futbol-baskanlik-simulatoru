@@ -50,47 +50,47 @@ Yeni sohbet başlangıcı:
 
 ## 4. CANLI DURUM — buradan devam et
 
-**M0–M79 CLOSED / MERGED / PASS ve `main` üzerindedir.**
+**M0–M80 CLOSED / MERGED / PASS ve `main` üzerindedir.**
 
-**M80 ACTIVE / PRE-MERGE.**
+**Aktif milestone yoktur.**
 
-M80 adı:
-**Player President Interactive Decision New-Game Bootstrap Snapshot I**
+**M81 henüz seçilmemiştir.**
 
-Branch:
-`feat/m80-interactive-decision-new-game-bootstrap-snapshot`
+Son kapanan milestone:
+**M80 — Player President Interactive Decision New-Game Bootstrap Snapshot I**
 
 PR:
-**#83 — OPEN / DRAFT / PRE-MERGE**
+**#83 — MERGED**
 
-İlk executable M80 HEAD:
-`8eef05379c36003f7ba6e5b013fceddaf0260c3d`
+M80 final approved PR HEAD:
+`99b94db11354be7650edbc362716896bcc66b74e`
 
-İlk executable PR run:
-`34962878632`
+M80 squash merge SHA:
+`44dbc898de57307050f4f26525886af32c999b51`
 
-Bu PRE-MERGE doküman commit'i branch HEAD'ini yukarıdaki SHA'dan sonra ilerletecektir. Merge adımına geçmeden önce canlı PR HEAD'i yeniden okunmalı ve **o exact SHA** için CI yeniden doğrulanmalıdır.
+Post-merge gerçek `main` workflow run:
+`34971253889`
 
-## 5. Aktif milestone — M80
+Bu kapanış doküman commit'i `main` HEAD'ini merge SHA'dan sonra ilerletecektir. Yeni sohbet burada yazan merge SHA'yı güncel HEAD sanmamalı; canlı `main` her zaman yeniden okunmalıdır.
+
+## 5. Son kapanan milestone — M80
 
 ### M80 — Player President Interactive Decision New-Game Bootstrap Snapshot I
 
-Fresh live-main gap scan sonucu:
-- M79 application layer üzerinden sezon-0 new-game başlatabiliyor,
-- fakat M65 checkpoint oluşmadan M75 bundle üretmek bilinçli olarak fail-closed,
-- M73 pending karar sırasında partial world/game-state commit etmiyor,
-- M73 her accepted answer sonrası immutable başlangıç girdileri + accepted cevaplarla deterministik replay yapıyor,
-- bu nedenle pre-checkpoint ilerlemeyi güvenli biçimde saklamak için ikinci bir game-state authority yaratmaya gerek yok.
+M80 öncesi açık:
+- M79 application layer üzerinden sezon-0 new-game başlatabiliyordu,
+- M65 checkpoint oluşmadan M75 bundle üretimi bilinçli olarak fail-closed idi,
+- M73 pending karar sırasında partial game-state commit etmiyor; immutable başlangıç girdileri + accepted cevaplarla deterministik replay yapıyordu.
 
 M80 çözümü:
 - `PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshot`
-- versioned/checksummed bootstrap codec
+- versioned/checksummed replay-only bootstrap codec
 - immutable `SimulationConfig`
 - `controlledClubId`
 - `electionInterval`
 - mevcut M75 `resumeConfig`
 - mevcut M74 transcript
-- supplied world için deterministic `worldFingerprint`
+- deterministic `worldFingerprint`
 - application-session üzerinde `newGameBootstrapSnapshot`
 - `encodeNewGameBootstrapSnapshot()`
 - `restoreNewGameBootstrap(...)`
@@ -98,17 +98,17 @@ M80 çözümü:
 - `canPersistBootstrap`
 
 Restore semantiği:
-- world snapshot içine kopyalanmaz,
+- world snapshot içine serialize edilmez,
 - caller aynı `clubs` + `leagues` girdilerini yeniden sağlar,
 - fingerprint farklıysa transcript replay başlamadan fail-closed olur,
-- aynı world + aynı bootstrap + aynı transcript deterministik olarak aynı pending request'e ve aynı final M65 checkpoint'e ulaşır.
+- aynı world + bootstrap + transcript aynı pending request'e ve tamamlanınca aynı M65 checkpoint'e deterministik ulaşır.
 
 Authority sınırı değişmedi:
 - **M65 tek persisted game-state authority.**
 - M74 accepted-answer replay metadata.
 - M75 checkpoint-backed atomik application bundle.
 - M76/M79 application-session lifecycle.
-- M77 yalnız exact M75 bytes file-slot store.
+- M77 exact M75 bytes file-slot store.
 - M78 M75-backed read-only load-game catalog.
 - M80 yalnız pre-checkpoint bootstrap/replay metadata; partial runtime/world state değildir.
 
@@ -134,39 +134,54 @@ Ana M80 dosyaları:
 2. Accepted-answer transcript round-trip exact sonraki pending request'i restore eder — PASS.
 3. Bootstrap codec deterministic ve checksum-protected'dır — PASS.
 4. Divergent supplied world fingerprint mismatch ile replay öncesi fail-closed olur — PASS.
-5. Bootstrap restore sonrası completion, kesintisiz new-game ile exact M65/boundary/decision parity verir — PASS.
-6. M75 authority sınırı korunur; pre-checkpoint M75 hâlâ blocked, checkpoint-origin M80 bootstrap yüzeyini reddeder — PASS.
+5. Bootstrap restore sonrası completion kesintisiz new-game ile exact M65/boundary/decision parity verir — PASS.
+6. M75 authority sınırı korunur; pre-checkpoint M75 blocked kalır ve checkpoint-origin M80 bootstrap yüzeyini reddeder — PASS.
 
-## 7. İlk executable M80 CI kanıtı
+## 7. M80 final CI ve merge kanıtı
 
-Exact executable HEAD:
-`8eef05379c36003f7ba6e5b013fceddaf0260c3d`
+### Pre-merge final exact HEAD
 
-PR run:
-`34962878632`
+PR #83 final approved HEAD:
+`99b94db11354be7650edbc362716896bcc66b74e`
 
-Test job:
-- analyzer: `No issues found!`
+Final PR workflow run:
+`34963832381`
+
+Kanıt:
+- analyzer `No issues found!`
 - **366/366 tests PASS**
 - **6 M80 acceptance testi PASS**
+- canonical **M0–M80 tüm executable adımları SUCCESS**
+- exact M80 marker PASS
 - Post Checkout + Complete job SUCCESS
-- test job SUCCESS
+- artifacts **0**
 
-Canonical:
-- **M0–M80 tüm executable adımları SUCCESS**
+### Post-merge gerçek main
+
+Squash merge SHA:
+`44dbc898de57307050f4f26525886af32c999b51`
+
+Push workflow run:
+`34971253889`
+
+Kanıt:
+- event `push`, head `main`, exact merge SHA
+- test job **SUCCESS**
+- analyzer `No issues found!`
+- **366/366 tests PASS**
+- **6 M80 acceptance testi PASS**
+- canonical job **SUCCESS**
+- canonical **M0–M80 tüm executable adımları SUCCESS**
 - M80 step SUCCESS
 - Post Checkout + Complete job SUCCESS
-- canonical job SUCCESS
-
-Artifacts:
-- **0**
+- artifacts **0**
 
 Exact M80 marker:
 `M80_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_SNAPSHOT_PASS controlled=t1_01 decisions=9 bootstrapRoundTrip=true stableCodec=true worldGuard=true m75Blocked=true parity=true saveAuthority=M65 replayMetadata=M74 checkpointBundle=M75 worldClubs=48 seed=20260903`
 
 ## 8. Yakın milestone zinciri
 
-- M80 — New-Game Bootstrap Snapshot — PR #83 — ACTIVE / PRE-MERGE — 366 tests.
+- M80 — New-Game Bootstrap Snapshot — PR #83 — merge `44dbc898de57307050f4f26525886af32c999b51` — 366 tests.
 - M79 — Application New-Game Session — PR #82 — merge `1f75d9e7e363d17e429af77a7aa28c21a04e06ae` — 360 tests.
 - M78 — File Save Slot Catalog — PR #81 — merge `cb9334341e42a8dacf629f4aa25f123b8a6f7160` — 355 tests.
 - M77 — File Save Slot Store — PR #80 — merge `be1f8d382d84be01a502a4849ebd43528d97a7b0` — 350 tests.
@@ -197,14 +212,11 @@ Exact M80 marker:
 
 ## 10. Sıradaki kesin iş
 
-PRE-MERGE docs commit'inden sonra:
-1. PR #83 canlı final HEAD'i yeniden oku.
-2. Bu yeni exact HEAD için analyzer + **366 tests** + 6 M80 acceptance doğrula.
-3. Canonical M0–M80 + exact M80 marker + cleanup doğrula; timing timeout olursa aynı exact SHA canonical job'u retry et.
-4. Artifacts=0 doğrula.
-5. PR #83'ü Ready for review yap.
-6. Ready sonrası HEAD'in değişmediğini ve `mergeable=true` olduğunu yeniden doğrula.
-7. Kullanıcıdan **bu exact final SHA için açık merge onayı** iste.
+1. Canlı `main` HEAD'i yeniden doğrula.
+2. Açık PR/branch/workflow/artifact durumunu yeniden doğrula.
+3. **Fresh live-main gap scan** yap.
+4. M81'i ancak bu scan sonucunda seç.
+5. En küçük deterministic ve authority-safe açığı uygula.
+6. Merge öncesi exact final HEAD için yeniden açık kullanıcı onayı al.
 
-Onay olmadan merge etme.
-M80 kapanmadan M81 seçme.
+M81'i geçmiş sohbet tahmininden seçme.
