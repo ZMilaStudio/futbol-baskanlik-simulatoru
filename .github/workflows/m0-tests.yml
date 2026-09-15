@@ -236,19 +236,19 @@ jobs:
       - name: Run M66 player president transfer ticket pricing runtime composition
         run: dart run tool/run_m66_player_president_tenure_gated_transfer_ticket_pricing_runtime_composition.dart 20260903
 
-      - name: Run M67 player president promise media transfer ticket runtime composition
+      - name: Run M67 player president promise media transfer ticket pricing runtime composition
         run: dart run tool/run_m67_player_president_tenure_gated_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
 
-      - name: Run M68 player president facility promise media transfer ticket runtime composition
+      - name: Run M68 player president facility promise media transfer ticket pricing runtime composition
         run: dart run tool/run_m68_player_president_tenure_gated_facility_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
 
-      - name: Run M69 player president facility sponsor promise media transfer ticket runtime composition
+      - name: Run M69 player president facility sponsor promise media transfer ticket pricing runtime composition
         run: dart run tool/run_m69_player_president_tenure_gated_facility_sponsor_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
 
-      - name: Run M70 player president facility sponsor crisis promise media transfer ticket runtime composition
+      - name: Run M70 player president facility sponsor crisis promise media transfer ticket pricing runtime composition
         run: dart run tool/run_m70_player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
 
-      - name: Run M71 player president facility sponsor crisis manager promise media transfer ticket runtime composition
+      - name: Run M71 player president facility sponsor crisis manager promise media transfer ticket pricing runtime composition
         run: dart run tool/run_m71_player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart 20260903
 
       - name: Run M72 player president unified decision gateway runtime
@@ -271,3 +271,6 @@ jobs:
 
       - name: Run M78 player president interactive decision file save slot catalog
         run: dart run tool/run_m78_player_president_interactive_decision_file_save_slot_catalog.dart 20260903
+
+      - name: Run M79 player president interactive decision application new-game session
+        run: dart run tool/run_m79_player_president_interactive_decision_application_new_game_session.dart 20260903
