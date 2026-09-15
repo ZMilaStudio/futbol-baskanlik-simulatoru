@@ -11,106 +11,97 @@ Bu dosya yeni sohbette nerede kaldığımızı ve sıradaki kesin adımı taşı
 3. Bu dosyayı oku.
 4. Açık PR / branch / workflow / job / artifact durumunu canlı GitHub'dan yeniden doğrula.
 5. Çelişkide **canlı GitHub kazanır**.
-6. Aktif milestone varsa onu bitir; fresh scan ile yeni milestone seçme.
+6. Aktif milestone varsa onu bitir; yoksa fresh gap scan yap.
 
 ## 2. Devredilen durum
 
-**M0–M78 CLOSED / MERGED / PASS.**
+**M0–M79 CLOSED / MERGED / PASS.**
 
-**M79 ACTIVE / PRE-MERGE.**
+**Aktif milestone yok.**
 
-Milestone:
+**M80 henüz seçilmedi.**
+
+Son kapanan milestone:
 **M79 — Player President Interactive Decision Application New-Game Session I**
 
-Branch:
-`feat/m79-interactive-decision-application-new-game-session`
-
 PR:
-**#82 — OPEN / DRAFT / PRE-MERGE**
+**#82 — MERGED**
 
-Executable code/workflow HEAD:
-`2cc2fa74b40ac8321e7e75b567715517b14f3aa7`
+Final approved PR HEAD:
+`412acaee321da396858124aeea97d5fef1036255`
 
-Bu devir/proje/milestone docs commit'i branch HEAD'ini yukarıdaki SHA'dan sonra ilerletecektir; yeni sohbet mutlaka canlı PR HEAD'i yeniden okumalıdır.
+Squash merge SHA:
+`1f75d9e7e363d17e429af77a7aa28c21a04e06ae`
 
-## 3. M79 neden seçildi?
+Bu kapanış doküman commit'i `main` HEAD'ini merge SHA'dan sonra ilerletecektir. Yeni sohbet mutlaka canlı `main` HEAD'i yeniden okumalıdır.
 
-Fresh live-main gap scan:
-- M73 deterministic sezon-0/new-game interactive session başlatabiliyor,
-- M76 application lifecycle yalnız checkpoint-backed `resume/restore` sağlıyordu,
-- UI/application yeni oyunu M76 üzerinden sahiplenemiyor, M73'e doğrudan inmek zorunda kalıyordu.
+## 3. M79 neyi kapattı?
 
-M79 bu application ownership boşluğunu kapatır.
+M73 sezon 0'dan deterministic interactive new-game session başlatabiliyordu; M76 application lifecycle ise yalnız checkpoint-backed `resume/restore` sağlıyordu.
 
-Pre-checkpoint save'i bu milestone çözmez; çünkü M75 M65 checkpoint authority'sine dayanır. Save formatını büyütmeden önce application start yüzeyini tamamlamak daha küçük ve güvenli adımdır.
-
-## 4. M79 çözümü
-
-`PlayerPresidentInteractiveDecisionApplicationSession.start(...)`
-
-eklendi.
-
-Session origin:
-- `newGame`
-- `checkpoint`
-
-Yeni yüzey:
+M79 ile:
+- `PlayerPresidentInteractiveDecisionApplicationSession.start(...)`
+- origin `newGame` / `checkpoint`
 - `isNewGame`
 - `canPersist`
 - `checkpointOrNull`
 - `newGameElectionInterval`
 
-Pre-checkpoint davranış:
-- persistence desteklenmez,
+eklendi.
+
+Pre-checkpoint save bu milestone'da bilinçli olarak eklenmedi:
 - `canPersist=false`,
 - M65 checkpoint yoktur,
-- M75 encode isteği fail-closed olur.
+- M75 encode isteği fail-closed,
+- tamamlanan new-game sonucu mevcut M76 checkpoint-backed lifecycle'a handoff olur.
 
-New-game tamamlanınca çıkan gerçek checkpoint mevcut M76 checkpoint-backed lifecycle'a aktarılabilir.
-
-Authority:
+Authority değişmedi:
 - M65 tek persisted game-state authority,
 - M74 replay transcript metadata,
 - M75 application save formatı,
 - M76/M79 application lifecycle,
 - M77 local file slot store,
-- M78 read-only catalog.
+- M78 read-only load-game catalog.
 
-## 5. M79 executable CI kanıtı
+## 4. M79 final CI / merge kanıtı
 
-Workflow run:
-`34931609477`
+### Pre-merge exact HEAD
 
-Test job:
-- **SUCCESS**
+Final PR HEAD:
+`412acaee321da396858124aeea97d5fef1036255`
+
+Kanıt:
 - analyzer `No issues found!`
 - **360/360 tests PASS**
 - 5 M79 acceptance testi PASS
-- cleanup SUCCESS
+- canonical retry sonunda **M0–M79 SUCCESS**
+- exact M79 marker PASS
+- Post Checkout + Complete job SUCCESS
+- artifacts **0**
 
-Canonical timing:
-- attempt 1: strict timeout, M79 çalışmadı,
-- attempt 2: strict timeout, M79 çalışmadı,
-- attempt 3: strict timeout, M79 çalışmadı,
-- attempt 4: strict timeout, M79 çalışmadı,
-- attempt 5: **SUCCESS**.
+### Post-merge gerçek main
 
-Attempt 5 canonical job:
-`104291384887`
+Merge SHA:
+`1f75d9e7e363d17e429af77a7aa28c21a04e06ae`
+
+Push workflow run:
+`34956503453`
 
 Kanıt:
-- M0–M79 tüm executable adımlar SUCCESS,
-- M79 step SUCCESS,
-- Post Checkout SUCCESS,
-- Complete job SUCCESS.
+- run conclusion **success**
+- test job SUCCESS
+- Analyze SUCCESS
+- Run tests SUCCESS
+- canonical job SUCCESS
+- M0–M79 tüm canonical executable adımlar SUCCESS
+- M79 step SUCCESS
+- Post Checkout + Complete job SUCCESS
+- artifacts **0**
 
 Exact marker:
 `M79_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_NEW_GAME_SESSION_PASS controlled=t1_01 decisions=9 startOwned=true deterministic=true persistenceBlocked=true parityM73=true checkpointHandoff=true saveAuthority=M65 worldClubs=48 seed=20260903`
 
-Artifacts:
-**0**
-
-## 6. Acceptance
+## 5. Acceptance
 
 1. Application start M73 sezon-0 deterministic first request'ini sahiplenir — PASS.
 2. New-game application completion raw M73 ile exact parity — PASS.
@@ -119,7 +110,7 @@ Artifacts:
 5. New-game validation korunur — PASS.
 6. M65/M75/M77 authority sınırı korunur — PASS.
 
-## 7. Kalıcı çalışma kuralları
+## 6. Kalıcı çalışma kuralları
 
 - **Live GitHub > proje dosyaları > eski sohbetler.**
 - PASS yalnız canlı CI kanıtıyla yazılır.
@@ -127,24 +118,20 @@ Artifacts:
 - Her job strict 7 dakika.
 - Artifacts 0.
 - Timeout'ta gerçek step/log okunur.
-- M79 çalışmadan timeout olan canonical run merge kanıtı değildir; aynı exact HEAD retry edilir.
+- Hedef milestone çalışmadan timeout olan canonical run merge kanıtı değildir; aynı exact HEAD retry edilir.
 - Sırf timeout için kod patch'i atılmaz.
 - Merge öncesi final exact HEAD kullanıcıya açıkça onaylatılır.
 - Merge squash + `expected_head_sha` lock.
 - Post-merge gerçek `main` CI bitmeden CLOSED yazılmaz.
 - Docs→CI→docs döngüsü yapılmaz.
 
-## 8. Sıradaki kesin iş
+## 7. Sıradaki kesin iş
 
-PRE-MERGE docs commit'inden sonra:
-1. PR #82'nin canlı HEAD'ini yeniden oku; bu yeni **final candidate SHA** olacak.
-2. Final exact HEAD CI run'ını bul.
-3. Analyzer + **360/360 tests** doğrula.
-4. Canonical'ın M79 marker + Post Checkout + Complete job'a ulaştığını doğrula; gerekirse aynı SHA canonical retry.
-5. Artifacts=0 doğrula.
-6. PR #82'yi Ready for review yap.
-7. Ready sonrası PR HEAD'in değişmediğini ve `mergeable=true` olduğunu yeniden doğrula.
-8. Kullanıcıdan **bu exact final SHA için açık merge onayı** iste.
+1. Canlı `main` HEAD'i yeniden doğrula.
+2. Açık PR/branch/workflow/artifact durumunu yeniden doğrula.
+3. Fresh live-main gap scan yap.
+4. M80'i ancak bu scan sonucunda seç.
+5. Seçilen kapsamı branch + acceptance + canonical ile uygula.
+6. Merge öncesi exact final HEAD için yeniden açık kullanıcı onayı iste.
 
-Kullanıcı onayı olmadan merge etme.
-M79 kapanmadan M80 seçme.
+M80'i geçmiş sohbet tahmininden seçme.
