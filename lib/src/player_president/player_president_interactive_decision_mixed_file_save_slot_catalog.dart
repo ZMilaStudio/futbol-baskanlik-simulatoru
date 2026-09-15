@@ -88,7 +88,8 @@ class PlayerPresidentInteractiveDecisionMixedSaveSlotSummary {
   String get identity => '${source.name}:$slotId';
 
   String get signature {
-    final sourceSignature = checkpointSummary?.signature ?? bootstrapSummary!.signature;
+    final sourceSignature =
+        checkpointSummary?.signature ?? bootstrapSummary!.signature;
     return 'source=${source.name}:$sourceSignature';
   }
 }
@@ -98,7 +99,8 @@ class PlayerPresidentInteractiveDecisionMixedSaveSlotSummary {
 ///
 /// Decode/checksum/replay/world validation is delegated to the source catalog.
 /// Consequently corrupt data still fails closed, and M65 remains the single
-/// persisted game-state authority.
+/// persisted game-state authority. Lists are ordered by slot id first and then
+/// checkpoint before bootstrap, so same-id entries remain stable and distinct.
 class PlayerPresidentInteractiveDecisionMixedFileSaveSlotCatalog {
   const PlayerPresidentInteractiveDecisionMixedFileSaveSlotCatalog({
     required this.checkpointCatalog,
