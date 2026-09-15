@@ -3,6 +3,7 @@ import '../crisis/crisis_decision_core.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
 import '../world/world_league.dart';
+import 'player_president_interactive_decision_new_game_bootstrap_snapshot.dart';
 import 'player_president_interactive_decision_persistence_bundle.dart';
 import 'player_president_interactive_decision_session.dart';
 import 'player_president_interactive_decision_transcript_snapshot.dart';
@@ -15,23 +16,27 @@ enum PlayerPresidentInteractiveDecisionApplicationSessionOrigin {
 /// Application-facing lifecycle owner for one interactive player-president
 /// session.
 ///
-/// M76 introduced the checkpoint-backed lifecycle. M79 also lets the
-/// application own M73's deterministic new-game start path without reaching
-/// into M73 directly. This still does not create a new persistence authority:
-/// pre-checkpoint new-game sessions are intentionally non-persistable until a
-/// later milestone defines a deterministic bootstrap save representation.
-/// M65 remains the only persisted game-state authority, accepted answers remain
-/// M74 replay metadata, and checkpoint-backed persistence remains the M75
-/// atomic bundle.
+/// M76 introduced the checkpoint-backed lifecycle. M79 added deterministic
+/// new-game start ownership. M80 adds replay-only pre-checkpoint bootstrap
+/// persistence without persisting partial game state: M65 remains the only
+/// game-state authority, M74 remains accepted-answer replay metadata, and M75
+/// remains the checkpoint-backed atomic persistence bundle.
 class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentInteractiveDecisionApplicationSession._({
     required this.origin,
     required PlayerPresidentTicketPricingRuntimeCheckpoint? checkpoint,
     required this.resumeConfig,
     required this.newGameElectionInterval,
+    required SimulationConfig? newGameConfig,
+    required String? newGameControlledClubId,
+    required String? newGameWorldFingerprint,
     required PlayerPresidentInteractiveDecisionTranscriptSession session,
     required this.bundleCodec,
+    required this.bootstrapCodec,
   })  : _checkpoint = checkpoint,
+        _newGameConfig = newGameConfig,
+        _newGameControlledClubId = newGameControlledClubId,
+        _newGameWorldFingerprint = newGameWorldFingerprint,
         _session = session;
 
   factory PlayerPresidentInteractiveDecisionApplicationSession.start({
@@ -46,6 +51,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     int candidateLimit = 5,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+        bootstrapCodec =
+        const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     final resumeConfig = PlayerPresidentInteractiveDecisionResumeConfig(
       seasonCount: seasonCount,
@@ -76,16 +84,92 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       checkpoint: null,
       resumeConfig: resumeConfig,
       newGameElectionInterval: electionInterval,
+      newGameConfig: config,
+      newGameControlledClubId: controlledClubId,
+      newGameWorldFingerprint:
+          PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshot
+              .worldFingerprintFor(clubs: clubs, leagues: leagues),
       session: PlayerPresidentInteractiveDecisionTranscriptSession(base),
       bundleCodec: bundleCodec,
+      bootstrapCodec: bootstrapCodec,
     );
   }
+
+  factory PlayerPresidentInteractiveDecisionApplicationSession
+      .restoreNewGameBootstrap({
+    required List<Club> clubs,
+    required List<WorldLeague> leagues,
+    required PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshot
+        snapshot,
+    PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
+        const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+        bootstrapCodec =
+        const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
+  }) {
+    snapshot.validateWorld(clubs: clubs, leagues: leagues);
+
+    final base = PlayerPresidentInteractiveDecisionSession.start(
+      clubs: clubs,
+      leagues: leagues,
+      config: snapshot.config,
+      controlledClubId: snapshot.controlledClubId,
+      seasonCount: snapshot.resumeConfig.seasonCount,
+      electionInterval: snapshot.electionInterval,
+      hasFutureSeasonAfterReport:
+          snapshot.resumeConfig.hasFutureSeasonAfterReport,
+      aiCrisisEngine: CrisisDecisionEngine(
+        activationThreshold:
+            snapshot.resumeConfig.crisisActivationThreshold,
+      ),
+      candidateLimit: snapshot.resumeConfig.candidateLimit,
+    );
+
+    return PlayerPresidentInteractiveDecisionApplicationSession._(
+      origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
+      checkpoint: null,
+      resumeConfig: snapshot.resumeConfig,
+      newGameElectionInterval: snapshot.electionInterval,
+      newGameConfig: snapshot.config,
+      newGameControlledClubId: snapshot.controlledClubId,
+      newGameWorldFingerprint: snapshot.worldFingerprint,
+      session: PlayerPresidentInteractiveDecisionTranscriptSession.restore(
+        session: base,
+        snapshot: snapshot.transcript,
+      ),
+      bundleCodec: bundleCodec,
+      bootstrapCodec: bootstrapCodec,
+    );
+  }
+
+  factory PlayerPresidentInteractiveDecisionApplicationSession
+      .restoreEncodedNewGameBootstrap({
+    required List<Club> clubs,
+    required List<WorldLeague> leagues,
+    required String encodedBootstrap,
+    PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
+        const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+        bootstrapCodec =
+        const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
+  }) =>
+          PlayerPresidentInteractiveDecisionApplicationSession
+              .restoreNewGameBootstrap(
+            clubs: clubs,
+            leagues: leagues,
+            snapshot: bootstrapCodec.decode(encodedBootstrap),
+            bundleCodec: bundleCodec,
+            bootstrapCodec: bootstrapCodec,
+          );
 
   factory PlayerPresidentInteractiveDecisionApplicationSession.resume({
     required PlayerPresidentTicketPricingRuntimeCheckpoint checkpoint,
     required PlayerPresidentInteractiveDecisionResumeConfig resumeConfig,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+        bootstrapCodec =
+        const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     checkpoint.validate();
     resumeConfig.validate();
@@ -103,8 +187,12 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       checkpoint: checkpoint,
       resumeConfig: resumeConfig,
       newGameElectionInterval: null,
+      newGameConfig: null,
+      newGameControlledClubId: null,
+      newGameWorldFingerprint: null,
       session: PlayerPresidentInteractiveDecisionTranscriptSession(base),
       bundleCodec: bundleCodec,
+      bootstrapCodec: bootstrapCodec,
     );
   }
 
@@ -112,6 +200,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required PlayerPresidentInteractiveDecisionPersistenceBundle bundle,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+        bootstrapCodec =
+        const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     bundle.validate();
     return PlayerPresidentInteractiveDecisionApplicationSession._(
@@ -119,8 +210,12 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       checkpoint: bundle.checkpoint,
       resumeConfig: bundle.resumeConfig,
       newGameElectionInterval: null,
+      newGameConfig: null,
+      newGameControlledClubId: null,
+      newGameWorldFingerprint: null,
       session: bundle.restoreSession(),
       bundleCodec: bundleCodec,
+      bootstrapCodec: bootstrapCodec,
     );
   }
 
@@ -128,11 +223,15 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required String encodedBundle,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+        bootstrapCodec =
+        const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     final bundle = bundleCodec.decode(encodedBundle);
     return PlayerPresidentInteractiveDecisionApplicationSession.restore(
       bundle: bundle,
       bundleCodec: bundleCodec,
+      bootstrapCodec: bootstrapCodec,
     );
   }
 
@@ -140,14 +239,25 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   final PlayerPresidentTicketPricingRuntimeCheckpoint? _checkpoint;
   final PlayerPresidentInteractiveDecisionResumeConfig resumeConfig;
   final int? newGameElectionInterval;
+  final SimulationConfig? _newGameConfig;
+  final String? _newGameControlledClubId;
+  final String? _newGameWorldFingerprint;
   final PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec
       bundleCodec;
+  final PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+      bootstrapCodec;
   final PlayerPresidentInteractiveDecisionTranscriptSession _session;
 
   bool get isNewGame =>
       origin == PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame;
 
   bool get canPersist => _checkpoint != null;
+
+  bool get canPersistBootstrap =>
+      isNewGame &&
+      _newGameConfig != null &&
+      _newGameControlledClubId != null &&
+      _newGameWorldFingerprint != null;
 
   PlayerPresidentTicketPricingRuntimeCheckpoint? get checkpointOrNull =>
       _checkpoint;
@@ -157,7 +267,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     if (checkpoint == null) {
       throw StateError(
         'New-game application sessions do not have an M65 checkpoint and '
-        'cannot be persisted by M75 before a bootstrap-save milestone.',
+        'cannot be persisted by M75 before checkpoint handoff.',
       );
     }
     return checkpoint;
@@ -168,6 +278,35 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       _session.pendingDecision;
   PlayerPresidentInteractiveSessionCompleted? get completed =>
       _session.completed;
+
+  PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshot
+      get newGameBootstrapSnapshot {
+    final config = _newGameConfig;
+    final controlledClubId = _newGameControlledClubId;
+    final worldFingerprint = _newGameWorldFingerprint;
+    final electionInterval = newGameElectionInterval;
+    if (!isNewGame ||
+        config == null ||
+        controlledClubId == null ||
+        worldFingerprint == null ||
+        electionInterval == null) {
+      throw StateError(
+        'Checkpoint-backed application sessions do not have an M80 '
+        'new-game bootstrap snapshot.',
+      );
+    }
+    return PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshot(
+      worldFingerprint: worldFingerprint,
+      config: config,
+      controlledClubId: controlledClubId,
+      electionInterval: electionInterval,
+      resumeConfig: resumeConfig,
+      transcript: _session.snapshot,
+    );
+  }
+
+  String encodeNewGameBootstrapSnapshot() =>
+      bootstrapCodec.encode(newGameBootstrapSnapshot);
 
   PlayerPresidentInteractiveDecisionPersistenceBundle get persistenceBundle {
     final checkpoint = _checkpoint;
