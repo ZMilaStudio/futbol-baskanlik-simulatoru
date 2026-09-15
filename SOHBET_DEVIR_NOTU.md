@@ -17,44 +17,49 @@ Bu dosya yeni sohbette nerede kaldığımızı ve sıradaki kesin adımı taşı
 
 **M0–M81 CLOSED / MERGED / PASS.**
 
-**Aktif milestone yoktur.**
+**M82 ACTIVE / PRE-MERGE.**
 
-**M82 henüz seçilmemiştir.**
-
-Son kapanan milestone:
-**M81 — Player President Interactive Decision New-Game Bootstrap File Save Slot Store I**
+M82:
+**Player President Interactive Decision New-Game Bootstrap File Save Slot Catalog I**
 
 PR:
-**#84 — MERGED**
+**#85 — OPEN / DRAFT / PRE-MERGE**
 
-Final approved exact PR HEAD:
-`fb343a41cba6f79fb8b64c8590b8d4a57f8af3f5`
+Branch:
+`feat/m82-new-game-bootstrap-file-save-slot-catalog`
 
-Squash merge SHA:
-`76566493c7f5999487b53db4794088a75bbe6a7b`
+Executable parent code HEAD:
+`9ae3a13afd017022baca6e76cda56e6e14b56de1`
 
-Post-merge gerçek `main` run:
-`34986135432`
+Base `main`:
+`e1d90a20702a9bcfcc46aae3e9d779121cfa297e`
 
-Başarılı post-merge canonical retry job:
-`104441763719`
+Bu PRE-MERGE docs commit'i branch HEAD'ini ilerletir. Merge onayı yalnız docs-included final candidate exact SHA için alınmalıdır.
 
-Bu closure docs commit'i `main` HEAD'ini merge SHA'dan sonra ilerletir; yeni sohbette güncel HEAD her zaman canlı GitHub'dan yeniden okunmalıdır.
+## 3. M82 çözümü
 
-## 3. M81 çözümü
-
-Yeni adapter:
-`PlayerPresidentInteractiveDecisionNewGameBootstrapFileSaveSlotStore`
+Yeni catalog:
+`PlayerPresidentInteractiveDecisionNewGameBootstrapFileSaveSlotCatalog`
 
 Davranış:
-- exact M80 replay-only bootstrap bytes saklar,
-- `.fbs.bootstrap.json` namespace kullanır,
-- M77 `.fbs.json` checkpoint slotlarından izoledir,
-- temp/backup ile atomic replacement + interrupted recovery sağlar,
-- invalid/path-traversal slot ID'lerini fail-closed reddeder,
-- checkpoint-backed session'ı disk mutation öncesi reddeder,
-- load sırasında M80 checksum + world fingerprint guard çalışır,
-- list/contains/delete yalnız bootstrap namespace'ini görür.
+- M81 bootstrap slotunu exact load eder,
+- M80 checksum/format/world fingerprint guard'ını aynen kullanır,
+- M74 replay/application session sonucundan deterministic read-only summary üretir,
+- metadata sidecar yazmaz,
+- slot bytes'ını değiştirmez,
+- list deterministic slot-id order kullanır,
+- overwrite sonrası latest bootstrap state'ini gösterir,
+- corrupt bytes ve divergent world fail-closed olur,
+- M77 `.fbs.json` checkpoint namespace'inden izole kalır.
+
+Summary alanları en az:
+- slotId,
+- controlledClubId / controlledClubName,
+- careerSeed,
+- answeredDecisionCount,
+- pendingDecisionKind,
+- resumeSeasonCount,
+- electionInterval.
 
 Authority değişmedi:
 - **M65 tek persisted game-state authority**,
@@ -63,73 +68,41 @@ Authority değişmedi:
 - M77 M75-only checkpoint file store,
 - M78 checkpoint catalog,
 - M80 replay-only bootstrap snapshot,
-- M81 yalnız exact M80 bytes file adapter.
+- M81 exact M80 bytes file store,
+- M82 yalnız read-only bootstrap catalog/projection.
 
-## 4. M81 acceptance
+## 4. M82 acceptance
 
-1. Fresh store exact pending request + stable M80 bytes restore eder — PASS.
-2. Overwrite yalnız latest M80 bootstrap'ı bırakır — PASS.
-3. Invalid ID + checkpoint-backed session write fail-closed, disk mutation yok — PASS.
-4. Interrupted replacement committed backup'tan recover edilir — PASS.
-5. Corrupt bytes + divergent supplied world fail-closed — PASS.
-6. Bootstrap slot operasyonları M77 checkpoint namespace'inden izoledir — PASS.
+Executable parent exact SHA `9ae3a13afd017022baca6e76cda56e6e14b56de1` üzerinde:
 
-## 5. M81 final PRE-MERGE kanıtı
+1. Bootstrap slot deterministic summary + read-only bytes — PASS.
+2. Deterministic list order + overwrite latest state — PASS.
+3. Missing/invalid slot M81 contract parity — PASS.
+4. Corrupt bytes + divergent world fail-closed — PASS.
+5. M77 checkpoint namespace isolation — PASS.
 
-Final exact HEAD:
-`fb343a41cba6f79fb8b64c8590b8d4a57f8af3f5`
+## 5. M82 executable PRE-MERGE kanıtı
 
 PR workflow run:
-`34976042057`
+`34990552222`
 
 - analyzer `No issues found!`
-- **372/372 tests PASS**
-- **6/6 M81 acceptance PASS**
-- canonical timing retry sonrası **M0–M81 SUCCESS**
-- exact M81 marker PASS
-- cleanup SUCCESS
-- artifacts **0**
-- Ready + mergeable
-- exact HEAD için kullanıcı merge onayı alındı
-
-## 6. M81 POST-MERGE kanıtı
-
-Real merge SHA:
-`76566493c7f5999487b53db4794088a75bbe6a7b`
-
-Push run:
-`34986135432`
-
-Test:
-- SUCCESS
-- analyzer `No issues found!`
-- **372/372 tests PASS**
-- **6/6 M81 acceptance PASS**
-- cleanup SUCCESS
-
-Canonical ilk deneme:
-- M0–M77 SUCCESS
-- M78 strict 7 dakikalık outer envelope sırasında cancelled
-- M79–M81 skipped
-- fonksiyonel hata değildi; target M81 çalışmadığı için evidence gap olarak retry edildi
-
-Canonical retry aynı real merge SHA:
-- job `104441763719`
-- **M0–M81 SUCCESS**
-- M81 step SUCCESS
-- exact M81 marker PASS
+- **377/377 tests PASS**
+- **5/5 M82 acceptance PASS**
+- test cleanup SUCCESS
+- canonical timing-only timeout denemelerinde target M82 çalışmadığı için PASS sayılmadı
+- aynı exact SHA üzerinde kod patch'i olmadan retry edildi
+- başarılı canonical job: `104504219474`
+- **M0–M82 SUCCESS**
+- M82 step SUCCESS
+- exact M82 marker PASS
 - Post Checkout + Complete job SUCCESS
-
-Artifacts:
-**0**
+- artifacts **0**
 
 Exact marker:
-`M81_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_FILE_SAVE_SLOT_STORE_PASS controlled=t1_01 savedDecisions=4 diskRoundTrip=true stableSave=true interruptedRecovery=true invalidBlocked=true worldGuard=true m77Isolated=true saveAuthority=M65 replayMetadata=M74 bootstrap=M80 worldClubs=48 seed=20260903`
+`M82_PLAYER_PRESIDENT_INTERACTIVE_DECISION_NEW_GAME_BOOTSTRAP_FILE_SAVE_SLOT_CATALOG_PASS controlled=t1_01 summaries=2 primaryAnswers=4 deterministicOrder=true readOnly=true metadataExact=true worldGuard=true m77Isolated=true saveAuthority=M65 replayMetadata=M74 bootstrap=M80 store=M81 worldClubs=48 seed=20260903`
 
-Sonuç:
-**M81 CLOSED / MERGED / PASS.**
-
-## 7. Kalıcı çalışma kuralları
+## 6. Kalıcı çalışma kuralları
 
 - **Live GitHub > proje dosyaları > eski sohbetler.**
 - PASS yalnız canlı CI kanıtıyla yazılır.
@@ -143,16 +116,14 @@ Sonuç:
 - Merge squash + `expected_head_sha` lock.
 - Post-merge gerçek `main` CI bitmeden CLOSED yazılmaz.
 - Closure docs tek atomik commit; docs→CI→docs döngüsü yapılmaz.
-- Closure-docs CI yalnız gözlemseldir; parent merge SHA tam executable evidence taşıyorsa timing-only timeout yeni retry/docs commit gerektirmez.
 
-## 8. Sıradaki kesin iş
+## 7. Sıradaki kesin iş
 
-Aktif milestone yoktur.
+1. PRE-MERGE docs commit'inden sonra oluşan docs-included final PR HEAD'i canlı oku.
+2. O exact SHA için analyzer + 377/377 + 5/5 M82 + canonical M0–M82 + marker + artifacts 0 doğrula; timing-only canonical timeout olursa exact aynı SHA retry et.
+3. PR #85'i Ready yap.
+4. Ready sonrası head/base/open/draft/mergeable state'i yeniden doğrula.
+5. Kullanıcıdan **exact final SHA** için açık squash-merge onayı iste.
+6. Onay gelmeden merge yapma.
 
-Sonraki `Devam et` çağrısında:
-1. canlı `main` HEAD'i yeniden oku,
-2. açık PR/branch/workflow/artifact durumunu doğrula,
-3. fresh live-main gap scan yap,
-4. en küçük authority-safe sonraki milestone'u ancak bu scan sonucunda seç.
-
-**M82 önceden tanımlı değildir. Fresh gap scan olmadan M82 seçme veya kod yazma.**
+**M82 kapanmadan M83 seçme.**
