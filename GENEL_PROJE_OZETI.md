@@ -41,12 +41,12 @@ Kalıcı mimari ve çalışma kararları için ayrıca `PROJE_KARARLARI.md` okun
 
 ## 3. CANLI DURUM — buradan devam et
 
-**M0–M84 CLOSED / MERGED / PASS.**
+**M0–M85 CLOSED / MERGED / PASS.**
 
-**M85 MERGED, fakat post-merge actual-main executable doğrulaması henüz tamamlanmadığı için CLOSED değildir.**
+**Aktif milestone yok. M86 preselect edilmedi.**
 
-M85:
-**Player President Interactive Decision Mixed File Save Slot Writer I**
+Son kapanan milestone:
+**M85 — Player President Interactive Decision Mixed File Save Slot Writer I**
 
 PR:
 **#88 — MERGED**
@@ -54,11 +54,11 @@ PR:
 Final kullanıcı-onaylı PR HEAD:
 `d216f435bf7a46c79e2c017b34310c5cc75e1d2f`
 
-Squash merge SHA / canlı M85 kod SHA:
+Squash merge SHA / M85 executable code SHA:
 `7191fb734291420a077f5954fbdf4028763bc5c8`
 
 Pre-merge final workflow:
-`35102296859` — run #528 — event `pull_request` — final successful attempt `3`
+`35102296859` — run #528 — event `pull_request` — successful attempt `3`
 
 Pre-merge exact final HEAD üzerinde:
 - analyzer SUCCESS,
@@ -70,16 +70,21 @@ Pre-merge exact final HEAD üzerinde:
 Post-merge actual-main workflow:
 `35108099919` — run #529 — event `push` — exact merge SHA `7191fb734291420a077f5954fbdf4028763bc5c8`
 
-Run #529 sonucu:
-- `test` job **SUCCESS**,
-- analyzer **SUCCESS**,
-- normal tests **SUCCESS**,
-- artifacts **0**,
-- canonical **M0–M75 SUCCESS**,
-- M76 strict 7 dakika sınırında `cancelled`,
-- M77–M85 `skipped`.
+Run #529 final successful retry:
+- run attempt **10**,
+- `test` job `104876041901` — **SUCCESS**,
+- analyzer — **SUCCESS**,
+- normal tests — **SUCCESS**,
+- canonical job `104876039906` — **SUCCESS**,
+- canonical **M0–M85 SUCCESS**,
+- M85 step **SUCCESS**,
+- exact M85 marker **PASS**,
+- Post Checkout + Complete job **SUCCESS**,
+- artifacts **0**.
 
-Bu nedenle run #529 **M85 actual-main kapanış kanıtı değildir**. Görülen durum timing-only timeout sınıfındadır; sıradaki iş aynı exact merge SHA üzerinde canonical retry'dır. M85 koduna sırf timing için patch atılmayacaktır.
+Bu executable kanıtla M85 actual-main gate tamamlandı ve milestone CLOSED oldu.
+
+Not: M85 merge SHA'dan sonra yalnız dokümantasyon amacıyla `ddf1b54a1811ae55ae6c2f9522c8cf68c48aefc8` commit'i `main`e eklenmişti. Run #529 gerçek `main` push run'ı olarak exact merge SHA'yı checkout edip doğruladığından executable kapanış kanıtı geçerlidir. Final closure docs bu kanıttan sonra güncellenmektedir.
 
 ## 4. M85 neden seçildi?
 
@@ -118,13 +123,13 @@ Authority sınırı:
 
 ## 6. M85 acceptance
 
-1. Checkpoint ve bootstrap session'ları doğru child store'a route eder — **PASS pre-merge**.
-2. Routed bytes doğrudan M77/M81 write'larının ürettiği bytes ile aynıdır — **PASS pre-merge**.
-3. Aynı raw slot ID iki ayrı M83 identity olarak korunur — **PASS pre-merge**.
-4. Same-id collision varken overwrite yalnız seçilen namespace'i değiştirir — **PASS pre-merge**.
-5. Invalid slot ID fail-closed kalır ve file mutation oluşturmaz — **PASS pre-merge**.
+1. Checkpoint ve bootstrap session'ları doğru child store'a route eder — **PASS**.
+2. Routed bytes doğrudan M77/M81 write'larının ürettiği bytes ile aynıdır — **PASS**.
+3. Aynı raw slot ID iki ayrı M83 identity olarak korunur — **PASS**.
+4. Same-id collision varken overwrite yalnız seçilen namespace'i değiştirir — **PASS**.
+5. Invalid slot ID fail-closed kalır ve file mutation oluşturmaz — **PASS**.
 
-Canonical M85 marker:
+Exact canonical M85 marker:
 `M85_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_WRITER_PASS controlled=t1_01 checkpointRouted=true bootstrapRouted=true collisionPreserved=true loadRoundTrip=true namespaceIsolation=true bytesDelegated=true invalidBlocked=true saveAuthority=M65 catalog=M83 loader=M84 checkpointStore=M77 bootstrapStore=M81 worldClubs=48 seed=20260903`
 
 ## 7. M85 kanıt zinciri
@@ -142,30 +147,34 @@ Başarılı PRE-MERGE canonical job:
 `104828461515`
 
 Pre-merge timing notu:
-- ilk exact-head CI'da analyzer M85 test dosyasındaki eksik runtime-checkpoint importu nedeniyle gerçek hata verdi; sadece eksik import düzeltildi,
+- ilk exact-head CI'da analyzer M85 test dosyasındaki eksik runtime-checkpoint importu nedeniyle gerçek hata verdi; yalnız eksik import düzeltildi,
 - sonraki canonical attempt'lerde strict 7 dakika nedeniyle timing-only timeout görüldü,
 - aynı exact HEAD değişmeden retry edildi,
-- final attempt 3 canonical M0–M85 tam SUCCESS oldu.
+- attempt 3 canonical M0–M85 tam SUCCESS oldu.
 
 PR #88 kullanıcı exact-HEAD onayından sonra `expected_head_sha=d216f435bf7a46c79e2c017b34310c5cc75e1d2f` kilidiyle squash merge edildi.
 
 Squash merge SHA:
 `7191fb734291420a077f5954fbdf4028763bc5c8`
 
-İlk post-merge run:
-`35108099919` — run #529 — event `push`
+Post-merge actual-main run:
+`35108099919` — run #529 — event `push` — head SHA `7191fb734291420a077f5954fbdf4028763bc5c8`
 
-Post-merge test job:
-`104834439486` — **SUCCESS**
+İlk post-merge attempt ve birkaç exact-SHA retry strict 7 dakika nedeniyle tail milestone'lara ulaşamadan timing-only cancelled oldu. Loglar tek tek incelendi; fonksiyonel hata görülmedi ve source/timing patch'i yapılmadı.
 
-Post-merge canonical job:
-`104834439090` — **CANCELLED / timing-only**
+Final post-merge başarılı retry:
+- run attempt `10`,
+- test job `104876041901` — SUCCESS,
+- canonical job `104876039906` — SUCCESS,
+- M0–M85 tüm canonical step'ler SUCCESS,
+- M85 marker PASS,
+- artifacts 0.
 
-Run #529 canonical M0–M75 SUCCESS tamamladı; M76 timeout sırasında cancelled olduğu için M77–M85 çalışmadı. Bu sebeple milestone henüz CLOSED değildir.
+Böylece M85 için merge öncesi exact-HEAD gate + merge sonrası exact-main executable gate ikisi de tamamlandı.
 
 ## 8. Yakın milestone zinciri
 
-- M85 — Mixed File Save Slot Writer — PR #88 — merge `7191fb734291420a077f5954fbdf4028763bc5c8` — **MERGED / post-merge verification pending**.
+- M85 — Mixed File Save Slot Writer — PR #88 — merge `7191fb734291420a077f5954fbdf4028763bc5c8` — **CLOSED / MERGED / PASS**.
 - M84 — Mixed File Save Slot Loader — PR #87 — merge `232efbbb60d52340f056504b8a25f34cbc3d52c7` — **CLOSED / MERGED / PASS**.
 - M83 — Mixed File Save Slot Catalog — PR #86 — merge `a71d9d83ae0f043f7e2d2e7f90e98840439bd53f` — CLOSED / MERGED / PASS.
 - M82 — Bootstrap File Save Slot Catalog — PR #85 — merge `d52b879668a9ef538ac45b15a1e294e86b1f64ac` — CLOSED / MERGED / PASS.
@@ -201,14 +210,13 @@ Run #529 canonical M0–M75 SUCCESS tamamladı; M76 timeout sırasında cancelle
 
 ## 10. Sıradaki kesin iş
 
-**Aktif milestone M85'tir; yeni milestone seçilmez.**
+**Aktif milestone yok. M86 preselect edilmedi.**
 
 Sıradaki adımlar:
-1. Run #529 canonical cancellation'ı timing-only olarak ele al ve **aynı exact merge SHA `7191fb734291420a077f5954fbdf4028763bc5c8`** üzerinde canonical retry et.
-2. Retry'da M85 marker dahil canonical M0–M85 tam SUCCESS kanıtını al.
-3. `test` SUCCESS + canonical M0–M85 SUCCESS + artifacts 0 actual-main kanıtı tamamlanınca M85'i CLOSED yaz.
-4. Closure docs'u tek atomik commit ile güncelle; closure-docs CI yalnız gözlemsel olsun.
-5. Ancak M85 tamamen kapandıktan sonra fresh live-main gap scan ile sonraki milestone değerlendirilsin.
+1. Final M85 closure docs commit'inin canlı `main` HEAD olduğunu doğrula.
+2. Closure-docs push CI oluşursa yalnız gözlemle; merge SHA `7191fb734291420a077f5954fbdf4028763bc5c8` üzerinde executable M0–M85 kanıt zaten tam olduğundan timing-only docs CI timeout yeni docs döngüsü başlatmaz.
+3. Yeni geliştirme öncesinde fresh live-`main` gap scan yap.
+4. En küçük doğal authority-safe boşluğu seç; ancak o zaman M86 kapsamını kilitle.
 
 **M86 preselect edilmedi.**
 
