@@ -1,6 +1,6 @@
 # M83 — Player President Interactive Decision Mixed File Save Slot Catalog I
 
-Status: **ACTIVE / PRE-MERGE**
+Status: **CLOSED / MERGED / PASS**
 
 ## Amaç
 
@@ -35,18 +35,6 @@ Davranış:
 - inspect/list hiçbir save byte’ı mutate etmez,
 - metadata sidecar veya yeni persisted schema oluşturmaz.
 
-Ortak projection alanları en az:
-- `source`
-- `slotId`
-- `controlledClubId`
-- `controlledClubName`
-- `answeredDecisionCount`
-- `pendingDecisionKind`
-- `sessionCompleted`
-- `resumeSeasonCount`
-- `hasFutureSeasonAfterReport`
-- source-specific exact summary
-
 ## Authority sınırı
 
 Değişmedi:
@@ -79,44 +67,69 @@ Değişmedi:
 4. Corrupt checkpoint child catalog üzerinden fail-closed kalır — **PASS**.
 5. Divergent bootstrap world child catalog üzerinden fail-closed kalır ve mixed catalog hiçbir yeni write/file üretmez — **PASS**.
 
-## PRE-MERGE executable kanıt zinciri
+## Final PRE-MERGE gate
 
-Executable exact branch HEAD:
-`9474bfc179d724c3001112babe93b564ffdf66e0`
+Final kullanıcı-onaylı PR HEAD:
+`1e69bfa0afab205fce80aec5282d158cf13bac34`
 
 PR:
-**#86 — OPEN / DRAFT / PRE-MERGE**
+**#86 — MERGED**
 
-Branch:
-`feat/m83-mixed-file-save-slot-catalog`
+Final docs-included pull-request run:
+`35074707295` — run #520
 
-Exact-head workflow run:
-`35016802229` — run #519 — event `pull_request`
+Final PRE-MERGE evidence:
+- analyzer `No issues found!`,
+- **382/382 tests PASS**,
+- **5/5 M83 acceptance PASS**,
+- canonical **M0–M83 SUCCESS**,
+- M83 step SUCCESS,
+- exact M83 marker PASS,
+- Post Checkout + Complete job SUCCESS,
+- artifacts **0**.
 
-Test job:
-`104721007080`
+## Squash merge
+
+User approval exact HEAD:
+`1e69bfa0afab205fce80aec5282d158cf13bac34`
+
+Squash merge SHA:
+`a71d9d83ae0f043f7e2d2e7f90e98840439bd53f`
+
+Merge sonrası canlı `main` HEAD bu SHA olarak doğrulandı.
+
+## Post-merge executable kanıtı
+
+Gerçek `main` push workflow run:
+`35075992189` — run #521 — event `push`
+
+Exact merge SHA:
+`a71d9d83ae0f043f7e2d2e7f90e98840439bd53f`
+
+Başarılı test job:
+`104746735582`
 
 Test evidence:
-- analyzer `No issues found!`
-- **382/382 tests PASS**
-- **5/5 M83 acceptance PASS**
-- Post Checkout + Complete job SUCCESS
+- analyzer `No issues found!`,
+- **382/382 tests PASS**,
+- **5/5 M83 acceptance PASS**,
+- Post Checkout + Complete job SUCCESS.
 
 Canonical evidence:
-- strict 7 dakikalık envelope nedeniyle önceki attempt’lerde target M83 çalışmadan timing-only cancellation görüldü,
-- target çalışmayan denemeler PASS sayılmadı,
-- source/docs patch’i atmadan aynı exact SHA üzerinde canonical job retry edildi,
-- başarılı canonical job: `104721005168`,
+- önceki post-merge attempt’lerde hedef M83 çalışmadan strict 7 dakikalık timing-only cancellation görüldü,
+- bu attempt’ler kapanış kanıtı sayılmadı,
+- source/docs değiştirilmeden aynı exact merge SHA üzerinde canonical job retry edildi,
+- başarılı canonical job: `104746734713`,
 - **M0–M83 tüm executable adımlar SUCCESS**,
 - M83 step SUCCESS,
 - Post Checkout + Complete job SUCCESS,
 - exact M83 marker logda doğrulandı.
 
 Artifacts:
-- run `35016802229` → **0**
+- run `35075992189` → **0**
 
-Exact canonical marker:
-`M83_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_CATALOG_PASS total=2 checkpoint=1 bootstrap=1 collision=2 deterministic=true readOnly=true saveAuthority=M65`
+Exact post-merge canonical marker:
+`M83_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_CATALOG_PASS controlled=t1_01 summaries=3 collisionPreserved=true deterministicOrder=true readOnly=true metadataExact=true worldGuard=true namespacesSeparate=true saveAuthority=M65 checkpointCatalog=M78 bootstrapCatalog=M82 worldClubs=48 seed=20260903`
 
 ## Ana dosyalar
 
@@ -126,24 +139,10 @@ Exact canonical marker:
 - `tool/run_m83_player_president_interactive_decision_mixed_file_save_slot_catalog.dart`
 - `.github/workflows/m0-tests.yml`
 
-## Merge gate
-
-M83 **henüz merge edilmemiştir** ve **CLOSED değildir**.
-
-Bu PRE-MERGE docs commit’i branch HEAD’ini değiştirecektir. Yeni docs-included final candidate SHA için yeniden:
-1. analyzer,
-2. **382/382 tests**,
-3. **5/5 M83 acceptance**,
-4. canonical **M0–M83**,
-5. exact M83 marker,
-6. cleanup,
-7. artifacts `0`
-kanıtı alınacaktır.
-
-Ancak bundan sonra PR #86 Ready for review yapılacak ve final exact SHA kullanıcıya açıkça squash-merge için onaylatılacaktır.
-
 ## Sonuç
 
-M83 executable kapsamı ve parent evidence hazırdır; milestone **ACTIVE / PRE-MERGE** durumundadır.
+M83 **CLOSED / MERGED / PASS**.
 
 M65 persisted game-state authority olarak korunmuştur. M83 yalnız checkpoint + bootstrap load-game summary’lerini typed, deterministic ve read-only biçimde birleştirir.
+
+Aktif milestone yoktur. **M84 preselect edilmemiştir.** Sıradaki milestone fresh live-`main` gap scan ile seçilecektir.
