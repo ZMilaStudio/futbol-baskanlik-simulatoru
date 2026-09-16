@@ -9,6 +9,7 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_new_game_bootstrap_file_save_slot_catalog.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_new_game_bootstrap_file_save_slot_store.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_persistence_bundle.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_unified_decision_gateway_runtime.dart';
 import 'package:test/test.dart';
 
