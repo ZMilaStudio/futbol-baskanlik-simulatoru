@@ -283,3 +283,6 @@ jobs:
 
       - name: Run M82 player president interactive decision new-game bootstrap file save slot catalog
         run: dart run tool/run_m82_player_president_interactive_decision_new_game_bootstrap_file_save_slot_catalog.dart 20260903
+
+      - name: Run M83 player president interactive decision mixed file save slot catalog
+        run: dart run tool/run_m83_player_president_interactive_decision_mixed_file_save_slot_catalog.dart 20260903
