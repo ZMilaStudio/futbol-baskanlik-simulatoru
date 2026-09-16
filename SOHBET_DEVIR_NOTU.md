@@ -15,48 +15,49 @@ Bu dosya yeni sohbette nerede kaldığımızı ve sıradaki kesin adımı taşı
 
 ## 2. Devredilen durum
 
-**M0–M83 CLOSED / MERGED / PASS.**
+**M0–M84 CLOSED / MERGED / PASS.**
 
-**Aktif milestone yok. M84 preselect edilmedi.**
+**Aktif milestone yok. M85 preselect edilmedi.**
 
 Son kapanan milestone:
-**M83 — Player President Interactive Decision Mixed File Save Slot Catalog I**
+**M84 — Player President Interactive Decision Mixed File Save Slot Loader I**
 
 PR:
-**#86 — MERGED**
+**#87 — MERGED**
 
 Final kullanıcı-onaylı PR HEAD:
-`1e69bfa0afab205fce80aec5282d158cf13bac34`
+`e5e6e1aa1dd35fd1dc64cba8cc8768c26bfedfe8`
 
 Squash merge SHA:
-`a71d9d83ae0f043f7e2d2e7f90e98840439bd53f`
+`232efbbb60d52340f056504b8a25f34cbc3d52c7`
 
 Post-merge executable workflow run:
-`35075992189` — run #521 — event `push`
+`35095632712` — run #525 — event `push`
 
-Post-merge exact merge SHA üzerinde M83 tam kanıtla kapandı.
+Post-merge exact merge SHA üzerinde M84 tam executable kanıtla kapandı.
 
-## 3. M83 çözümü
+## 3. M84 çözümü
 
-Yeni catalog:
-`PlayerPresidentInteractiveDecisionMixedFileSaveSlotCatalog`
+Yeni loader:
+`PlayerPresidentInteractiveDecisionMixedFileSaveSlotLoader`
 
-Yeni source enum:
+Kullandığı mevcut source enum:
 `PlayerPresidentInteractiveDecisionMixedSaveSlotSource`
 
-Yeni summary:
-`PlayerPresidentInteractiveDecisionMixedSaveSlotSummary`
+API:
+- `load(source, slotId)`
+- `loadSummary(summary)`
 
 Davranış:
-- M78 checkpoint catalog ile M82 bootstrap catalogu read-only composition olarak birleştirir,
-- physical storage namespace'lerini birleştirmez,
-- source açıkça `checkpoint` / `newGameBootstrap` olarak taşınır,
-- aynı raw slot ID iki namespace'te varsa iki entry de korunur,
-- stable identity `source:slotId`,
-- deterministic sıra slot ID ve source rank kullanır,
-- source-specific exact summary korunur,
-- checksum/decode/replay/world guard child cataloglara delege edilir,
-- metadata sidecar veya save mutation oluşturulmaz.
+- M83 mixed summary/source identity'sini doğrudan tüketir,
+- checkpoint load'u M77 checkpoint store'a unchanged delege eder,
+- new-game bootstrap load'u M81 bootstrap store'a unchanged delege eder,
+- bootstrap world validation M81/M80'de kalır,
+- mevcut `PlayerPresidentInteractiveDecisionApplicationSession?` döndürür,
+- same raw slot ID iki namespace'te olsa bile source sayesinde ayrı route edilir,
+- missing/invalid/corrupt davranış child store contract'larında kalır,
+- load sırasında save byte'ı mutate edilmez ve yeni file üretilmez,
+- yeni save schema, migration, metadata cache/sidecar veya persisted authority oluşturulmaz.
 
 Authority değişmedi:
 - **M65 tek persisted game-state authority**,
@@ -67,64 +68,72 @@ Authority değişmedi:
 - M80 replay-only bootstrap snapshot,
 - M81 bootstrap file store,
 - M82 bootstrap catalog,
-- M83 yalnız mixed read-only projection.
+- M83 mixed read-only catalog,
+- M84 yalnız source-aware load dispatcher.
 
-## 4. M83 acceptance
+## 4. M84 acceptance
 
-1. Her iki child catalog boşken empty mixed result — PASS.
-2. Checkpoint + bootstrap deterministic mixed order — PASS.
-3. Same raw slot ID collision iki typed identity ile korunur — PASS.
-4. Corrupt checkpoint fail-closed — PASS.
-5. Divergent bootstrap world fail-closed + mixed catalog read-only/no extra files — PASS.
+1. Checkpoint ve bootstrap load doğru child store'a route edilir — PASS.
+2. M83 same-id summaries namespace collapse olmadan yüklenir — PASS.
+3. Child missing ve slot-validation contract'ları korunur — PASS.
+4. Corrupt checkpoint decode fail-closed delege edilir — PASS.
+5. Bootstrap world guard delege edilir ve yeni save file oluşturulmaz — PASS.
 
-## 5. M83 kapanış kanıtı
+## 5. M84 kapanış kanıtı
 
-Final PRE-MERGE exact SHA:
-`1e69bfa0afab205fce80aec5282d158cf13bac34`
+Final PRE-MERGE kullanıcı-onaylı PR HEAD:
+`e5e6e1aa1dd35fd1dc64cba8cc8768c26bfedfe8`
 
 Final PRE-MERGE run:
-`35074707295` — run #520
+`35083729658` — run #524 — event `pull_request`
+
+Başarılı PRE-MERGE test job:
+`104781832188`
+
+Başarılı PRE-MERGE canonical job:
+`104781829177`
 
 Final PRE-MERGE gate:
 - analyzer `No issues found!`,
-- **382/382 tests PASS**,
-- **5/5 M83 acceptance PASS**,
-- canonical **M0–M83 SUCCESS**,
-- exact M83 marker PASS,
+- **387/387 tests PASS**,
+- **5/5 M84 acceptance PASS**,
+- canonical **M0–M84 SUCCESS**,
+- exact M84 marker PASS,
 - artifacts **0**.
 
-User exact SHA onayından sonra PR #86 squash merge edildi.
+Timing notu:
+- pre-merge canonical'ın önceki attempt'leri strict 7 dakika nedeniyle tail milestone'lara ulaşamadan timing-only cancelled oldu,
+- fonksiyonel hata kanıtı olmadığı için source değiştirilmedi,
+- aynı final PR HEAD retry edildi,
+- attempt 4 M0–M84 tam SUCCESS oldu.
+
+User exact HEAD onayından sonra PR #87 `expected_head_sha` kilidiyle squash merge edildi.
 
 Squash merge SHA:
-`a71d9d83ae0f043f7e2d2e7f90e98840439bd53f`
+`232efbbb60d52340f056504b8a25f34cbc3d52c7`
 
 Post-merge run:
-`35075992189` — run #521 — event `push`
+`35095632712` — run #525 — event `push`
 
 Başarılı post-merge test job:
-`104746735582`
+`104792143644`
 
 Başarılı post-merge canonical job:
-`104746734713`
+`104792143314`
 
 Post-merge evidence:
+- live `main` exact merge SHA `232efbbb60d52340f056504b8a25f34cbc3d52c7`,
 - analyzer `No issues found!`,
-- **382/382 tests PASS**,
-- **5/5 M83 acceptance PASS**,
-- **M0–M83 SUCCESS**,
-- M83 step SUCCESS,
-- exact M83 marker PASS,
+- **387/387 tests PASS**,
+- **5/5 M84 acceptance PASS**,
+- **M0–M84 SUCCESS**,
+- M84 step SUCCESS,
+- exact M84 marker PASS,
 - Post Checkout + Complete job SUCCESS,
 - artifacts **0**.
 
 Exact post-merge marker:
-`M83_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_CATALOG_PASS controlled=t1_01 summaries=3 collisionPreserved=true deterministicOrder=true readOnly=true metadataExact=true worldGuard=true namespacesSeparate=true saveAuthority=M65 checkpointCatalog=M78 bootstrapCatalog=M82 worldClubs=48 seed=20260903`
-
-Timing notu:
-- önceki post-merge canonical attempt'leri strict 7 dakika nedeniyle hedef M83 çalışmadan timing-only cancelled oldu,
-- PASS sayılmadılar,
-- source/docs değiştirilmeden exact merge SHA üzerinde retry edildi,
-- başarılı attempt M0–M83 tam yürüdü.
+`M84_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_LOADER_PASS controlled=t1_01 checkpointLoaded=true bootstrapLoaded=true collisionRouted=true missingNull=true bytesPreserved=true worldGuard=true namespacesSeparate=true saveAuthority=M65 catalog=M83 checkpointStore=M77 bootstrapStore=M81 worldClubs=48 seed=20260903`
 
 ## 6. Kalıcı çalışma kuralları
 
@@ -144,12 +153,12 @@ Timing notu:
 
 ## 7. Sıradaki kesin iş
 
-**Aktif milestone yok. M84 preselect edilmedi.**
+**Aktif milestone yok. M85 preselect edilmedi.**
 
 Sıradaki adımlar:
-1. Closure docs commit sonrası canlı `main` HEAD'ini doğrula.
+1. Bu closure docs commit'inin canlı `main` HEAD olduğunu doğrula.
 2. Closure-docs push CI oluşursa yalnız gözlemle; sonucu yazmak için yeni docs commit oluşturma.
 3. Yeni geliştirme öncesinde fresh live-`main` gap scan yap.
-4. En küçük doğal authority-safe boşluğu seç; ancak o zaman yeni milestone kapsamını kilitle.
+4. En küçük doğal authority-safe boşluğu seç; ancak o zaman M85 kapsamını kilitle.
 
 M65 tek persisted game-state authority olarak korunacaktır.
