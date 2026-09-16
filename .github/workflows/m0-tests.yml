@@ -289,3 +289,6 @@ jobs:
 
       - name: Run M84 player president interactive decision mixed file save slot loader
         run: dart run tool/run_m84_player_president_interactive_decision_mixed_file_save_slot_loader.dart 20260903
+
+      - name: Run M85 player president interactive decision mixed file save slot writer
+        run: dart run tool/run_m85_player_president_interactive_decision_mixed_file_save_slot_writer.dart 20260903
