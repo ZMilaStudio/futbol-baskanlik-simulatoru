@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — PROJE KARARLARI
 
-Son güncelleme: 16 Eylül 2026
+Son güncelleme: 17 Eylül 2026
 
 Bu dosyanın amacı geçici sohbet durumunu değil, **uzun ömürlü proje kararlarını** tek yerde tutmaktır. Güncel milestone/CI durumu için `GENEL_PROJE_OZETI.md`, sohbet devri için `SOHBET_DEVIR_NOTU.md`, gerçek kaynak durumu için canlı GitHub esas alınır.
 
@@ -39,7 +39,7 @@ Bir karar bu dosyada yazıyor olsa bile canlı kod ve açıkça daha yeni kullan
 - Seçilen iş mümkün olan **en küçük doğal authority-safe boşluk** olmalıdır.
 - Scope ve non-scope açıkça kilitlenir.
 - Gereksiz schema, migration, cache, sidecar, duplicate authority veya namespace birleştirme eklenmez.
-- Sonraki milestone numarası önceden doldurulmaz; örneğin mevcut iş M85 ise M86 ancak M85 kapandıktan sonraki live-main gap scan ile belirlenir.
+- Sonraki milestone numarası önceden doldurulmaz; mevcut iş kapandıktan sonra yeni numara ancak fresh live-main gap scan ile anlam kazanır.
 
 ## 5. CI ve kanıt kuralları
 
@@ -48,7 +48,7 @@ Bir karar bu dosyada yazıyor olsa bile canlı kod ve açıkça daha yeni kullan
 - Her job için strict `timeout-minutes: 7` korunur.
 - Artifact hedefi **0**.
 - Analyzer/test/canonical hatası görülürse gerçek step ve mümkünse job logu okunmadan patch atılmaz.
-- Canonical hedef milestone'a ulaşmadan 7 dakika nedeniyle kesilirse bu **timing-only** durum olarak incelenir.
+- Canonical hedef milestone'a ulaşmadan 7 dakika nedeniyle kesilirse bu timing-only durum olarak incelenir.
 - Timing-only timeout için source kodu değiştirilmez; aynı exact SHA yeniden çalıştırılır.
 - Bir önceki SHA'nın başarılı sonucu yeni HEAD için kanıt sayılmaz.
 - Pre-merge kanıt ile post-merge actual-main kanıtı birbirinden ayrıdır.
@@ -93,6 +93,7 @@ Yetki zinciri:
 - **M83** — checkpoint + bootstrap için typed mixed read-only projection.
 - **M84** — source-aware load dispatcher.
 - **M85** — application-session-origin-aware write dispatcher.
+- **M86** — M83 source-aware delete dispatcher.
 
 Hiçbiri M65'in persisted game-state authority rolünü devralmaz.
 
@@ -109,43 +110,61 @@ Kalıcı kurallar:
 - M83 source identity bu ayrımı görünür kılar.
 - M84 load sırasında source'a göre doğru child store'u seçer.
 - M85 write sırasında session origin'e göre doğru child store'u seçer.
+- M86 delete sırasında M83 source'a göre yalnız seçilen child store'u siler.
+- Sibling namespace same-id slot source-specific delete sırasında korunur.
 - Namespace'ler otomatik birleştirilmez.
 - Bootstrap slot otomatik olarak checkpoint slot ile değiştirilmez/silinmez.
 - Otomatik migration veya replacement policy ayrı bir milestone kararı olmadan eklenmez.
-- Child store'ların exact bytes, validation, overwrite ve interrupted-recovery semantics'i üst dispatcher katmanlarında yeniden uygulanmaz; unchanged delege edilir.
+- Child store'ların exact bytes, validation, overwrite, delete cleanup ve interrupted-recovery semantics'i üst dispatcher katmanlarında yeniden uygulanmaz; unchanged delege edilir.
 
-## 10. M85 ile kesinleşen write-routing kararı
+## 10. Mixed save-slot routing kararı
 
-M85'in kalıcı yaklaşımı:
+Kalıcı application yüzeyi şu sorumlulukları taşır:
 
-- checkpoint-backed `PlayerPresidentInteractiveDecisionApplicationSession` → M77 checkpoint store,
-- pre-checkpoint/new-game `PlayerPresidentInteractiveDecisionApplicationSession` → M81 bootstrap store,
-- writer typed M83 source döndürür,
-- same-id iki namespace ayrı kalır,
-- routed child-store bytes yeniden formatlanmaz,
-- invalid slot validation seçilen child store contract'ında kalır,
-- yeni save schema, metadata cache/sidecar, migration veya üçüncü store yaratılmaz.
+- M83 — iki fiziksel namespace'i typed source identity ile tek read-only mixed catalog görünümünde sunar.
+- M84 — typed source identity'yi doğru child loader'a route eder.
+- M85 — application session origin'ini doğru child writer/store'a route eder.
+- M86 — typed source identity veya M83 summary'yi doğru child delete operation'a route eder.
 
-M85'in bilinçli non-scope'u:
-- delete routing,
+Bu katmanlar:
+- üçüncü bir save namespace yaratmaz,
+- save bytes'ı yeniden formatlamaz,
+- child validation/cleanup/recovery contract'larını kopyalamaz,
+- namespace merge veya implicit migration yapmaz,
+- M65 dışında yeni persisted game-state authority oluşturmaz.
+
+## 11. M86 ile kesinleşen delete-routing kararı
+
+M86'in kalıcı yaklaşımı:
+
+- `checkpoint` source → M77 checkpoint store `delete`,
+- `newGameBootstrap` source → M81 bootstrap store `delete`,
+- `deleteSummary` M83 typed summary'nin `source + slotId` kimliğini aynen kullanır,
+- same-id sibling namespace otomatik silinmez,
+- missing source `false` döndürür ve sibling mutation oluşturmaz,
+- `.tmp` / `.bak` dahil child-store cleanup davranışı üst katmanda yeniden uygulanmaz,
+- invalid slot validation seçilen child store contract'ında kalır.
+
+M86'in bilinçli non-scope'u:
 - automatic bootstrap → checkpoint replacement/deletion,
 - namespace merge/migration,
-- yeni save bytes/schema,
+- bulk delete / delete-all policy,
+- yeni save schema, metadata cache/sidecar veya persisted authority,
 - Flutter/provider/UI state.
 
 Bu maddeler gelecekte ancak fresh live-main gap scan sonunda ayrı bir ihtiyaç olarak doğrulanırsa ele alınır.
 
-## 11. UI için ön karar
+## 12. UI için ön karar
 
 Flutter/UI henüz kurulmadığı için ekran mimarisi şu an persistence/core authority'yi değiştirecek şekilde tasarlanmayacaktır.
 
 UI geldiğinde temel ilke:
 - UI mevcut application/core servislerini tüketir,
 - provider/view-model yeni authoritative game state sahibi olmaz,
-- save/load/list/write davranışlarının asıl contract'ı core/application katmanında kalır,
+- save/load/list/write/delete davranışlarının asıl contract'ı core/application katmanında kalır,
 - deterministic test edilebilirlik korunur.
 
-## 12. Karar ekleme ve değiştirme kuralı
+## 13. Karar ekleme ve değiştirme kuralı
 
 Bu dosyaya yalnız şu tip kararlar eklenir:
 - ürün kimliğini uzun süre etkileyen kararlar,
