@@ -1,0 +1,20 @@
+name: futbol_baskanlik_app
+description: Flutter playable application shell for Futbol Baskanlik Simulator.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  futbol_baskanlik_m0:
+    path: ..
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
