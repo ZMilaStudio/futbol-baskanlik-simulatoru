@@ -16,35 +16,36 @@ Bu dosya yeni sohbette nerede kaldığımızı ve sıradaki kesin adımı taşı
 
 ## 2. Devredilen durum
 
-**M0–M86 CLOSED / MERGED / PASS.**
+**M0–M87 CLOSED / MERGED / PASS.**
 
-**Aktif milestone yok. M87 preselect edilmedi.**
+**Aktif milestone yok. M88 preselect edilmedi.**
 
 Son kapanan milestone:
-**M86 — Player President Interactive Decision Mixed File Save Slot Deleter I**
+**M87 — Player President Interactive Decision Mixed File Save Slot Service I**
 
 PR:
-**#89 — MERGED**
+**#90 — MERGED**
 
 Final kullanıcı-onaylı PR HEAD:
-`cb319f7fc37251792ed2e7b0b74a92b2d376800b`
+`064e19d3397f3e03c086fbab272ea628cf8905bf`
 
 Squash merge SHA / executable code SHA:
-`70f096a38e76894b909b334833409c4507a8fe4f`
+`290de87297af115301b1e9d6d3ff0c0b5980087c`
 
-## 3. M86 çözümü
+## 3. M87 çözümü
 
-Yeni deleter:
-`PlayerPresidentInteractiveDecisionMixedFileSaveSlotDeleter`
+Yeni unified façade:
+`PlayerPresidentInteractiveDecisionMixedFileSaveSlotService`
 
 Davranış:
-- checkpoint source → mevcut M77 checkpoint store `delete`,
-- new-game bootstrap source → mevcut M81 bootstrap store `delete`,
-- M83 typed summary `deleteSummary` ile exact source'a route edilir,
-- aynı raw slot ID sibling namespace'te korunur,
-- missing source `false` döndürür ve sibling namespace'e dokunmaz,
-- target/temp/backup cleanup ve invalid slot validation child store'lara delege edilir,
-- yeni save schema, migration, metadata cache/sidecar veya persisted authority yaratılmaz.
+- `list` / `inspect` → M83 mixed typed catalog,
+- `load` / `loadSummary` → M84 source-aware loader,
+- `save` → M85 session-origin-aware writer,
+- `delete` / `deleteSummary` → M86 source-aware deleter,
+- root factory gerçek checkpoint/bootstrap child store zincirini tek application-facing composition root üzerinden kurar,
+- same raw slot ID iki namespace'te ayrı typed identity olarak korunur,
+- child exact-bytes / validation / cleanup / recovery semantics'i yeniden uygulanmaz,
+- yeni save schema, migration, metadata cache/sidecar, namespace merge veya persisted authority yaratılmaz.
 
 Authority zinciri:
 - **M65 tek persisted game-state authority**,
@@ -58,57 +59,64 @@ Authority zinciri:
 - M83 mixed read-only catalog,
 - M84 source-aware loader,
 - M85 source-aware writer,
-- M86 source-aware deleter.
+- M86 source-aware deleter,
+- M87 unified application-facing façade.
 
-## 4. M86 acceptance
+M87 yalnız route/delegate eder; M65 authority rolünü devralmaz.
 
-1. Checkpoint/bootstrap delete doğru child store'a route edilir — PASS.
-2. Same-id sibling namespace source-specific delete sırasında korunur — PASS.
-3. M83 summary identity deletion'ı exact source'a route eder — PASS.
-4. Missing source `false` döndürür ve sibling mutation oluşturmaz — PASS.
-5. Child cleanup ve invalid-slot davranışı unchanged delege edilir / fail-closed kalır — PASS.
+## 4. M87 acceptance
+
+1. Tek façade üzerinden list + inspect — PASS.
+2. Save + load doğru child namespace/store zincirine delege edilir — PASS.
+3. Summary tabanlı routing exact typed source identity'yi korur — PASS.
+4. Same-id namespace collision typed identity olarak korunur — PASS.
+5. Source-specific delete sibling namespace'i korur — PASS.
+6. Root factory gerçek child store zincirini kurar — PASS.
+7. Invalid slot child validation contract'larında fail-closed kalır — PASS.
+8. M65 tek persisted game-state authority olarak kalır — PASS.
 
 Exact marker:
-`M86_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_DELETER_PASS controlled=t1_01 checkpointDeleted=true bootstrapDeleted=true collisionPreserved=true summaryRouted=true namespaceIsolation=true missingFalse=true cleanupDelegated=true invalidBlocked=true saveAuthority=M65 catalog=M83 loader=M84 writer=M85 checkpointStore=M77 bootstrapStore=M81 worldClubs=48 seed=20260903`
+`M87_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_SERVICE_PASS controlled=t1_01 unifiedFacade=true listInspect=true saveLoad=true summaryRouting=true collisionPreserved=true deleteIsolation=true rootFactory=true invalidBlocked=true saveAuthority=M65 catalog=M83 loader=M84 writer=M85 deleter=M86 checkpointStore=M77 bootstrapStore=M81 worldClubs=48 seed=20260903`
 
-## 5. M86 kapanış kanıtı
+## 5. M87 kapanış kanıtı
 
 Final PRE-MERGE run:
-`35125161506` — run #533 — event `pull_request`
+`35162467750` — run #537 — event `pull_request`
 
 Final PRE-MERGE işler:
-- test job `104922552313` — SUCCESS,
+- test job `105183751608` — SUCCESS,
 - Analyze — SUCCESS,
 - normal tests — SUCCESS,
-- canonical job `104922550855` — SUCCESS,
-- M0–M86 tüm canonical step'ler — SUCCESS,
-- M86 marker — PASS,
+- canonical job `105183750488` — SUCCESS,
+- M0–M87 tüm canonical step'ler — SUCCESS,
+- M87 marker — PASS,
 - artifacts — 0.
 
-Kullanıcı exact final HEAD'i onayladıktan sonra PR #89 squash merge edildi.
+Kullanıcı exact final HEAD `064e19d3397f3e03c086fbab272ea628cf8905bf` için açık merge onayı verdi ve PR #90 squash merge edildi.
 
 Post-merge actual-main run:
-`35150547145` — run #534 — event `push`
+`35217065854` — run #538 — event `push`
 
 Run exact head SHA:
-`70f096a38e76894b909b334833409c4507a8fe4f`
+`290de87297af115301b1e9d6d3ff0c0b5980087c`
 
-İlk iki post-merge canonical attempt strict 7 dakika nedeniyle tail'de timing-only cancelled oldu. Loglarda fonksiyonel hata görülmedi ve kod/workflow patch'i yapılmadı.
+İlk post-merge canonical attempt'lerde strict 7 dakika nedeniyle farklı tail noktalarında timing-only cancellation görüldü. Her seferinde gerçek step/log incelendi; fonksiyonel hata olmadığı doğrulandı ve kod/workflow patch'i yapılmadan aynı exact SHA retry edildi.
 
 Final executable attempt:
-- run attempt `3`,
-- test job `104982654233` — SUCCESS,
+- run attempt `10`,
+- test job `105265777969` — SUCCESS,
 - Analyze — SUCCESS,
 - normal tests — SUCCESS,
-- canonical job `104982652224`,
+- canonical job `105265775729` — SUCCESS,
 - exact merge SHA checkout — doğrulandı,
-- M0–M86 milestone step'leri — SUCCESS,
-- M86 step — SUCCESS,
-- exact M86 marker — PASS,
+- M0–M87 milestone step'leri — SUCCESS,
+- M87 step — SUCCESS,
+- exact M87 marker — PASS,
 - Post Checkout + Complete job — SUCCESS,
-- artifacts — 0.
+- artifacts — 0,
+- run-level conclusion — SUCCESS.
 
-Run-level conclusion strict timeout nedeniyle `cancelled` görünür; ancak cancellation M86 PASS marker'ından sonra oluştu ve hedef milestone dahil tüm executable milestone step'leri başarıyla tamamlandı. Bu nedenle M86 actual-main executable gate tamamlandı ve milestone **CLOSED / MERGED / PASS** oldu.
+Bu nedenle M87 actual-main executable gate tamamlandı ve milestone **CLOSED / MERGED / PASS** oldu.
 
 ## 6. Kalıcı çalışma kuralları
 
@@ -123,19 +131,19 @@ Run-level conclusion strict timeout nedeniyle `cancelled` görünür; ancak canc
 - Merge öncesi final exact HEAD kullanıcıya açıkça onaylatılır.
 - Merge squash + `expected_head_sha` lock.
 - Post-merge exact-main executable CI bitmeden CLOSED yazılmaz.
-- Closure docs executable kanıttan sonra tek atomik commit ile güncellenir.
+- Closure docs executable kanıttan sonra güncellenir.
 - Closure-docs push CI gözlemseldir; parent code SHA tam executable kanıta sahipse timing-only docs CI timeout yeni docs döngüsü yaratmaz.
 - Aktif milestone varken başka milestone seçilmez.
 
 ## 7. Sıradaki kesin iş
 
-**Aktif milestone yok. M87 preselect edilmedi.**
+**Aktif milestone yok. M88 preselect edilmedi.**
 
 Sıradaki adımlar:
-1. Final M86 closure docs commit'inin canlı `main` HEAD olduğunu doğrula.
+1. M87 closure docs commit'lerinin canlı `main` HEAD zincirinde olduğunu doğrula.
 2. Closure-docs push CI oluşursa yalnız gözlemle; sonucu yazmak için yeni docs commit oluşturma.
 3. Yeni geliştirme öncesinde fresh live-`main` gap scan yap.
 4. En küçük doğal authority-safe boşluğu seç.
-5. Ancak fresh gap scan sonrası M87 kapsamını kilitle.
+5. Ancak fresh gap scan sonrası M88 kapsamını kilitle.
 
 M65 tek persisted game-state authority olarak korunacaktır.
