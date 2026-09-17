@@ -94,6 +94,7 @@ Yetki zinciri:
 - **M84** — source-aware load dispatcher.
 - **M85** — application-session-origin-aware write dispatcher.
 - **M86** — M83 source-aware delete dispatcher.
+- **M87** — M83–M86 davranışlarını tek application-facing mixed save-slot façade altında compose eden delegasyon servisi.
 
 Hiçbiri M65'in persisted game-state authority rolünü devralmaz.
 
@@ -111,11 +112,12 @@ Kalıcı kurallar:
 - M84 load sırasında source'a göre doğru child store'u seçer.
 - M85 write sırasında session origin'e göre doğru child store'u seçer.
 - M86 delete sırasında M83 source'a göre yalnız seçilen child store'u siler.
+- M87 bu ayrımı gizleyip birleştirmez; yalnız mevcut typed routing servislerini tek application yüzeyinden sunar.
 - Sibling namespace same-id slot source-specific delete sırasında korunur.
 - Namespace'ler otomatik birleştirilmez.
 - Bootstrap slot otomatik olarak checkpoint slot ile değiştirilmez/silinmez.
 - Otomatik migration veya replacement policy ayrı bir milestone kararı olmadan eklenmez.
-- Child store'ların exact bytes, validation, overwrite, delete cleanup ve interrupted-recovery semantics'i üst dispatcher katmanlarında yeniden uygulanmaz; unchanged delege edilir.
+- Child store'ların exact bytes, validation, overwrite, delete cleanup ve interrupted-recovery semantics'i üst dispatcher/façade katmanlarında yeniden uygulanmaz; unchanged delege edilir.
 
 ## 10. Mixed save-slot routing kararı
 
@@ -125,6 +127,7 @@ Kalıcı application yüzeyi şu sorumlulukları taşır:
 - M84 — typed source identity'yi doğru child loader'a route eder.
 - M85 — application session origin'ini doğru child writer/store'a route eder.
 - M86 — typed source identity veya M83 summary'yi doğru child delete operation'a route eder.
+- M87 — `list`, `inspect`, `load`, `loadSummary`, `save`, `delete`, `deleteSummary` operasyonlarını M83–M86 üzerinden tek application-facing façade olarak expose eder ve root factory ile mevcut child store zincirini compose eder.
 
 Bu katmanlar:
 - üçüncü bir save namespace yaratmaz,
@@ -154,17 +157,31 @@ M86'in bilinçli non-scope'u:
 
 Bu maddeler gelecekte ancak fresh live-main gap scan sonunda ayrı bir ihtiyaç olarak doğrulanırsa ele alınır.
 
-## 12. UI için ön karar
+## 12. M87 ile kesinleşen unified façade kararı
+
+M87'in kalıcı yaklaşımı:
+
+- Application/UI consumer mixed save-slot işlemleri için öncelikle M87 unified façade'ını kullanabilir.
+- M87 business/save authority sahibi değildir; M83 catalog, M84 loader, M85 writer ve M86 deleter contract'larını compose eder.
+- `list` / `inspect` mixed typed identity'yi korur.
+- `loadSummary` / `deleteSummary` summary'nin source identity'sini değiştirmeden delege eder.
+- `save` session origin üzerinden mevcut M85 routing'ini kullanır.
+- Root factory M77 checkpoint ve M81 bootstrap store zincirini mevcut namespace ayrımıyla kurar.
+- Façade seviyesinde metadata cache, sidecar, automatic migration, replacement, namespace merge veya yeni persistence formatı eklenmez.
+
+Bu kararın amacı UI/application consumer'ı alt dispatcher wiring ayrıntısından ayırmak; fakat authority ve child-store semantics'ini değiştirmemektir.
+
+## 13. UI için ön karar
 
 Flutter/UI henüz kurulmadığı için ekran mimarisi şu an persistence/core authority'yi değiştirecek şekilde tasarlanmayacaktır.
 
 UI geldiğinde temel ilke:
-- UI mevcut application/core servislerini tüketir,
+- UI mevcut application/core servislerini tüketir; mixed save-slot işlemlerinde M87 façade doğal application entry point'tir,
 - provider/view-model yeni authoritative game state sahibi olmaz,
 - save/load/list/write/delete davranışlarının asıl contract'ı core/application katmanında kalır,
 - deterministic test edilebilirlik korunur.
 
-## 13. Karar ekleme ve değiştirme kuralı
+## 14. Karar ekleme ve değiştirme kuralı
 
 Bu dosyaya yalnız şu tip kararlar eklenir:
 - ürün kimliğini uzun süre etkileyen kararlar,
