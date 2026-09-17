@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../composition/app_composition.dart';
-import 'president_home_placeholder.dart';
+import 'president_home_screen.dart';
 
 class ClubSelectionScreen extends StatelessWidget {
   const ClubSelectionScreen({
@@ -53,7 +53,8 @@ class ClubSelectionScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => PresidentHomePlaceholder(
+                          builder: (_) => PresidentHomeScreen(
+                            composition: composition,
                             club: club,
                           ),
                         ),

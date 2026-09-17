@@ -14,6 +14,7 @@ void main() {
       final composition = AppComposition.withSaveDirectory(tempDirectory);
 
       expect(composition.world.clubs, hasLength(48));
+      expect(composition.simulationConfig.careerSeed, 20260903);
       expect(
         composition.saveDirectory.path,
         tempDirectory.absolute.path,

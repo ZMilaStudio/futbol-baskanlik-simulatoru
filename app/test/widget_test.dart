@@ -3,7 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_baskanlik_app/composition/app_composition.dart';
+import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
 import 'package:futbol_baskanlik_app/main.dart';
+import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
+import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_unified_decision_gateway_runtime.dart';
 
 void main() {
   late Directory tempDirectory;
@@ -72,7 +77,7 @@ void main() {
     expect(find.text(clubs.last.name), findsOneWidget);
   });
 
-  testWidgets('selecting a real club opens the President Home placeholder', (
+  testWidgets('selected club opens the real President Home lifecycle', (
     tester,
   ) async {
     await pumpApp(tester);
@@ -89,9 +94,67 @@ void main() {
       find.text('Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.'),
       findsOneWidget,
     );
+    expect(find.byKey(const Key('session-lifecycle-state')), findsOneWidget);
   });
 
-  testWidgets('back navigation returns through the Stage 2 flow', (
+  testWidgets('a real Pending step renders a readable decision kind', (
+    tester,
+  ) async {
+    final controller = GameFlowController(
+      world: composition.world,
+      config: composition.simulationConfig,
+    );
+    addTearDown(controller.dispose);
+    controller.startNewGame(composition.world.clubs.first);
+
+    final step = controller.currentStep;
+    expect(step, isA<PlayerPresidentInteractiveDecisionPending>());
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PresidentSessionStateView(step: step!),
+        ),
+      ),
+    );
+
+    expect(find.text('Karar bekleniyor'), findsOneWidget);
+    expect(find.byKey(const Key('decision-kind-label')), findsOneWidget);
+    final kindText = tester.widget<Text>(
+      find.byKey(const Key('decision-kind-label')),
+    );
+    expect(kindText.data, isNotEmpty);
+  });
+
+  testWidgets('an authoritative Completed step renders safely', (tester) async {
+    final world = composition.world;
+    final result = const PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine()
+        .simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: composition.simulationConfig,
+      controlledClubId: world.clubs.first.id,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: false,
+    );
+    final completed = PlayerPresidentInteractiveSessionCompleted(
+      result: result,
+      decisionCount: 0,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PresidentSessionStateView(step: completed),
+        ),
+      ),
+    );
+
+    expect(find.text('Sezon tamamlandı'), findsOneWidget);
+    expect(find.byKey(const Key('completed-season-info')), findsOneWidget);
+  });
+
+  testWidgets('back navigation returns through the Stage 3 flow', (
     tester,
   ) async {
     await pumpApp(tester);

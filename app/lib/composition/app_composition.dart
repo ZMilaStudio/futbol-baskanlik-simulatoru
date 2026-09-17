@@ -11,11 +11,13 @@ import 'package:path_provider/path_provider.dart';
 class AppComposition {
   AppComposition._({
     required this.world,
+    required this.simulationConfig,
     required this.saveDirectory,
     required this.saveSlots,
   });
 
   final FictionalWorldSetup world;
+  final SimulationConfig simulationConfig;
   final Directory saveDirectory;
   final PlayerPresidentInteractiveDecisionMixedFileSaveSlotService saveSlots;
 
@@ -29,6 +31,7 @@ class AppComposition {
 
   factory AppComposition.withSaveDirectory(Directory saveDirectory) {
     final world = const FictionalWorldFactory().build();
+    const simulationConfig = SimulationConfig(careerSeed: 20260903);
     final absoluteSaveDirectory = saveDirectory.absolute;
     final saveSlots =
         PlayerPresidentInteractiveDecisionMixedFileSaveSlotService(
@@ -39,6 +42,7 @@ class AppComposition {
 
     return AppComposition._(
       world: world,
+      simulationConfig: simulationConfig,
       saveDirectory: absoluteSaveDirectory,
       saveSlots: saveSlots,
     );
