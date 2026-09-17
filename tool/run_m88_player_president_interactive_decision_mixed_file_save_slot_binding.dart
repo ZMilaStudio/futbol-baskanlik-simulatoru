@@ -6,7 +6,6 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_catalog.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_service.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_persistence_bundle.dart';
-import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_unified_decision_gateway_runtime.dart';
 
 void main(List<String> args) {
@@ -81,14 +80,14 @@ void main(List<String> args) {
             PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame;
     final collisionDistinct = checkpointBound &&
         bootstrapBound &&
-        checkpoint!.identity != bootstrap!.identity;
+        checkpoint.identity != bootstrap.identity;
 
     final bootstrapBefore = service.inspect(
       source: PlayerPresidentInteractiveDecisionMixedSaveSlotSource
           .newGameBootstrap,
       slotId: 'shared',
     )!;
-    final savedSource = checkpoint!.saveBack();
+    final savedSource = checkpoint.saveBack();
     final bootstrapAfter = service.inspect(
       source: PlayerPresidentInteractiveDecisionMixedSaveSlotSource
           .newGameBootstrap,
