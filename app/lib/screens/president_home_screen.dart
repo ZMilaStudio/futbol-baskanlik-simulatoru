@@ -4,6 +4,7 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_sessio
 
 import '../composition/app_composition.dart';
 import '../controller/game_flow_controller.dart';
+import '../decisions/decision_panel.dart';
 
 class PresidentHomeScreen extends StatefulWidget {
   const PresidentHomeScreen({
@@ -88,21 +89,34 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
-                        if (_controller.loading)
+                        if (_controller.loading && step == null)
                           const CircularProgressIndicator()
-                        else if (errorMessage != null)
-                          Text(
-                            errorMessage,
-                            key: const Key('session-error'),
-                            textAlign: TextAlign.center,
-                          )
-                        else if (step != null)
-                          PresidentSessionStateView(step: step)
-                        else
-                          const Text(
-                            'Oyun oturumu hazırlanıyor.',
-                            key: Key('session-lifecycle-state'),
-                          ),
+                        else ...[
+                          if (_controller.loading) ...[
+                            const LinearProgressIndicator(),
+                            const SizedBox(height: 12),
+                          ],
+                          if (errorMessage != null) ...[
+                            Text(
+                              errorMessage,
+                              key: const Key('session-error'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: theme.colorScheme.error),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          if (step != null)
+                            PresidentSessionStateView(
+                              step: step,
+                              submitting: _controller.loading,
+                              onSubmit: _controller.submitChoice,
+                            )
+                          else if (errorMessage == null)
+                            const Text(
+                              'Oyun oturumu hazırlanıyor.',
+                              key: Key('session-lifecycle-state'),
+                            ),
+                        ],
                       ],
                     ),
                   ),
@@ -120,9 +134,13 @@ class PresidentSessionStateView extends StatelessWidget {
   const PresidentSessionStateView({
     super.key,
     required this.step,
+    this.submitting = false,
+    this.onSubmit,
   });
 
   final PlayerPresidentInteractiveSessionStep step;
+  final bool submitting;
+  final ValueChanged<Object>? onSubmit;
 
   @override
   Widget build(BuildContext context) {
@@ -130,20 +148,31 @@ class PresidentSessionStateView extends StatelessWidget {
     if (current is PlayerPresidentInteractiveDecisionPending) {
       return Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
             'Karar bekleniyor',
             key: Key('session-lifecycle-state'),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            _decisionKindLabel(current.request.kind),
+            decisionKindLabel(current.request.kind),
             key: const Key('decision-kind-label'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 4),
-          Text('Karar #${current.request.sequence}'),
+          Text(
+            'Karar #${current.request.sequence}',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          DecisionPanel(
+            pending: current,
+            submitting: submitting,
+            onSubmit: onSubmit,
+          ),
         ],
       );
     }
@@ -174,7 +203,7 @@ class PresidentSessionStateView extends StatelessWidget {
   }
 }
 
-String _decisionKindLabel(PlayerPresidentInteractiveDecisionKind kind) {
+String decisionKindLabel(PlayerPresidentInteractiveDecisionKind kind) {
   switch (kind) {
     case PlayerPresidentInteractiveDecisionKind.facilityInvestment:
       return 'Tesis yatırımı kararı';

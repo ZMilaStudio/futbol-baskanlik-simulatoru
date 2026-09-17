@@ -4,6 +4,8 @@ import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 
+import 'support/decision_test_support.dart';
+
 void main() {
   late FictionalWorldSetup world;
   late GameFlowController controller;
@@ -55,7 +57,7 @@ void main() {
     }
   });
 
-  test('keeps authoritative references without a copied persisted state', () {
+  test('keeps authoritative references without copied persisted state', () {
     final club = world.clubs.first;
     controller.startNewGame(club);
 
@@ -64,7 +66,7 @@ void main() {
     expect(controller.currentStep, isA<PlayerPresidentInteractiveSessionStep>());
   });
 
-  test('surfaces a presentation-safe error instead of a fake pending state', () {
+  test('surfaces a safe error instead of a fake pending state', () {
     const unknownClub = Club(
       id: 'not-in-canonical-world',
       name: 'Unknown Club',
@@ -76,5 +78,69 @@ void main() {
     expect(controller.session, isNull);
     expect(controller.currentStep, isNull);
     expect(controller.errorMessage, isNotNull);
+  });
+
+  test('submit moves from a real Pending to the next authoritative Pending', () {
+    controller.startNewGame(world.clubs.first);
+    final first =
+        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+
+    controller.submitChoice(canonicalChoiceForRequest(first.request));
+
+    expect(controller.errorMessage, isNull);
+    expect(
+      controller.currentStep,
+      isA<PlayerPresidentInteractiveDecisionPending>(),
+    );
+    expect(controller.session!.answeredDecisionCount, 1);
+  });
+
+  test('submit loop reaches the authoritative Completed state', () {
+    controller.startNewGame(world.clubs.first);
+
+    for (var guard = 0; guard < 100; guard++) {
+      final step = controller.currentStep;
+      if (step is PlayerPresidentInteractiveSessionCompleted) break;
+      final pending = step as PlayerPresidentInteractiveDecisionPending;
+      controller.submitChoice(canonicalChoiceForRequest(pending.request));
+      expect(controller.errorMessage, isNull);
+    }
+
+    expect(
+      controller.currentStep,
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+    expect(controller.session!.completed, same(controller.currentStep));
+  });
+
+  test('invalid submit does not fake progression or mutate answers', () {
+    controller.startNewGame(world.clubs.first);
+    final before = controller.currentStep;
+    final answeredBefore = controller.session!.answeredDecisionCount;
+
+    controller.submitChoice(Object());
+
+    expect(controller.errorMessage, isNotNull);
+    expect(controller.currentStep, same(before));
+    expect(controller.session!.answeredDecisionCount, answeredBefore);
+  });
+
+  test('core stale-response validation leaves current pending unchanged', () {
+    controller.startNewGame(world.clubs.first);
+    final first =
+        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+    controller.submitChoice(canonicalChoiceForRequest(first.request));
+    final second =
+        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+
+    expect(
+      () => controller.session!.submit(
+        request: first.request,
+        choice: canonicalChoiceForRequest(first.request),
+      ),
+      throwsStateError,
+    );
+    expect(controller.currentStep, same(second));
+    expect(controller.session!.pendingDecision, same(second.request));
   });
 }

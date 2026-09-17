@@ -113,7 +113,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PresidentSessionStateView(step: step!),
+          body: SingleChildScrollView(
+            child: PresidentSessionStateView(step: step!),
+          ),
         ),
       ),
     );
@@ -128,8 +130,9 @@ void main() {
 
   testWidgets('an authoritative Completed step renders safely', (tester) async {
     final world = composition.world;
-    final result = const PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine()
-        .simulateWithCheckpoint(
+    final result =
+        const PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine()
+            .simulateWithCheckpoint(
       clubs: world.clubs,
       leagues: world.leagues,
       config: composition.simulationConfig,

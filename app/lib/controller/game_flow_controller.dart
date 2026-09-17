@@ -62,4 +62,39 @@ class GameFlowController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Sends one player choice through the authoritative M76/M73 submit path.
+  ///
+  /// A failed validation never advances [_currentStep]. The loading flag is
+  /// presentation-only and prevents a second UI submit while this call runs.
+  void submitChoice(Object choice) {
+    if (_loading) return;
+
+    final session = _session;
+    final current = _currentStep;
+    if (session == null ||
+        current is! PlayerPresidentInteractiveDecisionPending) {
+      _errorMessage = 'Şu anda yanıtlanabilecek bir başkanlık kararı yok.';
+      notifyListeners();
+      return;
+    }
+
+    _loading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final next = session.submit(
+        request: current.request,
+        choice: choice,
+      );
+      _currentStep = next;
+    } catch (_) {
+      _errorMessage =
+          'Karar gönderilemedi. Mevcut karar değişmeden bırakıldı.';
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
 }
