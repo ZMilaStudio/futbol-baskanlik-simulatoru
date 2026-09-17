@@ -69,18 +69,17 @@ void main(List<String> args) {
       service: service,
       summary: summaries.last,
     );
+    if (checkpoint == null || bootstrap == null) {
+      throw StateError('M88 expected both typed bindings to open.');
+    }
 
-    final checkpointBound = checkpoint != null &&
-        checkpoint.identity == 'checkpoint:shared' &&
+    final checkpointBound = checkpoint.identity == 'checkpoint:shared' &&
         checkpoint.session.origin ==
             PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint;
-    final bootstrapBound = bootstrap != null &&
-        bootstrap.identity == 'newGameBootstrap:shared' &&
+    final bootstrapBound = bootstrap.identity == 'newGameBootstrap:shared' &&
         bootstrap.session.origin ==
             PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame;
-    final collisionDistinct = checkpointBound &&
-        bootstrapBound &&
-        checkpoint.identity != bootstrap.identity;
+    final collisionDistinct = checkpoint.identity != bootstrap.identity;
 
     final bootstrapBefore = service.inspect(
       source: PlayerPresidentInteractiveDecisionMixedSaveSlotSource
