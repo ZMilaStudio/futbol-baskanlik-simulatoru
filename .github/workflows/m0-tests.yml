@@ -298,3 +298,6 @@ jobs:
 
       - name: Run M87 player president interactive decision mixed file save slot service
         run: dart run tool/run_m87_player_president_interactive_decision_mixed_file_save_slot_service.dart 20260903
+
+      - name: Run M88 player president interactive decision mixed file save slot binding
+        run: dart run tool/run_m88_player_president_interactive_decision_mixed_file_save_slot_binding.dart 20260903
