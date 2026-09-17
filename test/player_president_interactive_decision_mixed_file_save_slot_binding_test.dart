@@ -197,6 +197,11 @@ void main() {
 
   test('M88 missing and invalid opens delegate existing M87 validation', () {
     final slots = service();
+    final before = root
+        .listSync(followLinks: false)
+        .map((entity) => entity.path)
+        .toSet();
+
     expect(
       PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.open(
         service: slots,
@@ -213,6 +218,11 @@ void main() {
       ),
       throwsArgumentError,
     );
-    expect(root.existsSync(), isFalse);
+
+    final after = root
+        .listSync(followLinks: false)
+        .map((entity) => entity.path)
+        .toSet();
+    expect(after, before);
   });
 }
