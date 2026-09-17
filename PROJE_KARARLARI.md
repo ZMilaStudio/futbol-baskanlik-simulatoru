@@ -50,6 +50,7 @@ Bir karar bu dosyada yazıyor olsa bile canlı kod ve açıkça daha yeni kullan
 - Analyzer/test/canonical hatası görülürse gerçek step ve mümkünse job logu okunmadan patch atılmaz.
 - Canonical hedef milestone'a ulaşmadan 7 dakika nedeniyle kesilirse bu timing-only durum olarak incelenir.
 - Timing-only timeout için source kodu değiştirilmez; aynı exact SHA yeniden çalıştırılır.
+- Hedef milestone step'i ve marker'ı tamamlanmışsa, daha sonra gelen top-level timeout/cancellation ayrıca step/log kanıtıyla değerlendirilir; skipped milestone başarı sayılmaz.
 - Bir önceki SHA'nın başarılı sonucu yeni HEAD için kanıt sayılmaz.
 - Pre-merge kanıt ile post-merge actual-main kanıtı birbirinden ayrıdır.
 
@@ -77,7 +78,7 @@ En kritik mimari karar:
 
 > **M65 tek persisted game-state authority olarak kalır.**
 
-Sonraki persistence katmanları yeni oyun state authority'si yaratmaz; mevcut state'i paketler, saklar, listeler, yönlendirir veya replay metadata ile tamamlar.
+Sonraki persistence katmanları yeni oyun state authority'si yaratmaz; mevcut state'i paketler, saklar, listeler, yönlendirir, transient olarak bağlar veya replay metadata ile tamamlar.
 
 Yetki zinciri:
 - **M65** — persisted game-state authority.
@@ -95,6 +96,7 @@ Yetki zinciri:
 - **M85** — application-session-origin-aware write dispatcher.
 - **M86** — M83 source-aware delete dispatcher.
 - **M87** — M83–M86 davranışlarını tek application-facing mixed save-slot façade altında compose eden delegasyon servisi.
+- **M88** — exact M83 typed slot identity ile yüklenen M76/M79 application session'ı yalnız runtime belleğinde bağlayan transient handle.
 
 Hiçbiri M65'in persisted game-state authority rolünü devralmaz.
 
@@ -113,11 +115,12 @@ Kalıcı kurallar:
 - M85 write sırasında session origin'e göre doğru child store'u seçer.
 - M86 delete sırasında M83 source'a göre yalnız seçilen child store'u siler.
 - M87 bu ayrımı gizleyip birleştirmez; yalnız mevcut typed routing servislerini tek application yüzeyinden sunar.
+- M88 açılmış slotun exact `source + slotId` kimliğini transient olarak taşır; aynı-id sibling namespace'i tek identity'ye dönüştürmez.
 - Sibling namespace same-id slot source-specific delete sırasında korunur.
 - Namespace'ler otomatik birleştirilmez.
 - Bootstrap slot otomatik olarak checkpoint slot ile değiştirilmez/silinmez.
 - Otomatik migration veya replacement policy ayrı bir milestone kararı olmadan eklenmez.
-- Child store'ların exact bytes, validation, overwrite, delete cleanup ve interrupted-recovery semantics'i üst dispatcher/façade katmanlarında yeniden uygulanmaz; unchanged delege edilir.
+- Child store'ların exact bytes, validation, overwrite, delete cleanup ve interrupted-recovery semantics'i üst dispatcher/façade/binding katmanlarında yeniden uygulanmaz; unchanged delege edilir.
 
 ## 10. Mixed save-slot routing kararı
 
@@ -128,6 +131,7 @@ Kalıcı application yüzeyi şu sorumlulukları taşır:
 - M85 — application session origin'ini doğru child writer/store'a route eder.
 - M86 — typed source identity veya M83 summary'yi doğru child delete operation'a route eder.
 - M87 — `list`, `inspect`, `load`, `loadSummary`, `save`, `delete`, `deleteSummary` operasyonlarını M83–M86 üzerinden tek application-facing façade olarak expose eder ve root factory ile mevcut child store zincirini compose eder.
+- M88 — açılan typed slot identity ile loaded application session'ı geçici olarak birlikte tutar; `saveBack` ve `delete` işlemlerini aynı exact source/slot üzerinden M87'ye delege eder.
 
 Bu katmanlar:
 - üçüncü bir save namespace yaratmaz,
@@ -171,17 +175,39 @@ M87'in kalıcı yaklaşımı:
 
 Bu kararın amacı UI/application consumer'ı alt dispatcher wiring ayrıntısından ayırmak; fakat authority ve child-store semantics'ini değiştirmemektir.
 
-## 13. UI için ön karar
+## 13. M88 ile kesinleşen transient binding kararı
+
+M88'in kalıcı yaklaşımı:
+
+- Bir mixed save slot açıldığında exact M83 `source + slotId` kimliği ile loaded application session aynı transient object üzerinde tutulabilir.
+- Binding metadata yalnız runtime belleğindedir; diske veya save bytes'a yazılmaz.
+- `saveBack()` session origin'in hâlâ bound source ile eşleşmesini doğrular ve M87/M85 üzerinden aynı raw slot ID'ye yazar.
+- `delete()` yalnız bound typed source'u M87/M86 üzerinden siler.
+- Same raw ID'nin diğer namespace'teki sibling slot'u korunur.
+- Stale summary veya missing slot açılışı `null` döner.
+- Invalid slot validation mevcut service/child-store contract'larına delege edilir ve disk mutation oluşturmadan fail-closed kalır.
+
+M88'in bilinçli non-scope'u:
+- persisted binding metadata / sidecar / cache,
+- rename / copy / bulk delete,
+- automatic bootstrap → checkpoint replacement veya migration,
+- namespace merge,
+- yeni save schema veya game-state authority,
+- Flutter/provider/UI state authority.
+
+## 14. UI için ön karar
 
 Flutter/UI henüz kurulmadığı için ekran mimarisi şu an persistence/core authority'yi değiştirecek şekilde tasarlanmayacaktır.
 
 UI geldiğinde temel ilke:
-- UI mevcut application/core servislerini tüketir; mixed save-slot işlemlerinde M87 façade doğal application entry point'tir,
+- UI mevcut application/core servislerini tüketir; mixed save-slot lifecycle için M87 façade doğal application entry point'tir,
+- açılmış bir slotla çalışılan ekran akışında M88 transient binding exact typed identity'yi taşımak için kullanılabilir,
 - provider/view-model yeni authoritative game state sahibi olmaz,
+- binding identity kalıcı UI metadata authority'sine dönüştürülmez,
 - save/load/list/write/delete davranışlarının asıl contract'ı core/application katmanında kalır,
 - deterministic test edilebilirlik korunur.
 
-## 14. Karar ekleme ve değiştirme kuralı
+## 15. Karar ekleme ve değiştirme kuralı
 
 Bu dosyaya yalnız şu tip kararlar eklenir:
 - ürün kimliğini uzun süre etkileyen kararlar,
