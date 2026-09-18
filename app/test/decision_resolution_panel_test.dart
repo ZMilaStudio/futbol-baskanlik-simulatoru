@@ -30,6 +30,11 @@ void main() {
     }
   });
 
+  String clubNameForId(String id) => composition.world.clubs
+      .singleWhere((club) => club.id == id)
+      .name;
+
+
   Map<PlayerPresidentInteractiveDecisionKind,
           PlayerPresidentInteractiveDecisionResolution>
       collectResolutions() {
@@ -166,7 +171,10 @@ void main() {
                   onContinue: controller.continueAfterResolution,
                 );
               }
-              return PresidentSessionStateView(step: controller.currentStep!);
+              return PresidentSessionStateView(
+                step: controller.currentStep!,
+                clubNameForId: clubNameForId,
+              );
             },
           ),
         ),
@@ -174,7 +182,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('decision-resolution-panel')), findsOneWidget);
-    expect(find.text('Sezon tamamlandı'), findsNothing);
+    expect(find.byKey(const Key('president-season-report-panel')), findsNothing);
 
     await tester.tap(
       find.byKey(const Key('decision-resolution-continue-button')),
@@ -182,6 +190,6 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('decision-resolution-panel')), findsNothing);
-    expect(find.text('Sezon tamamlandı'), findsOneWidget);
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
   });
 }
