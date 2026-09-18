@@ -8,11 +8,13 @@ import '../facility/president_academy_investment_orchestrator.dart';
 import '../facility/president_facility_portfolio_investment_orchestrator.dart';
 import '../league/club.dart';
 import '../manager/manager_fit_model.dart';
+import '../manager/manager_assignment.dart';
 import '../manager/player_president_manager_control.dart';
 import '../save/president_runtime_checkpoint.dart';
 import '../save/save_checksum.dart';
 import '../save/save_load_exception.dart';
 import '../sponsor/player_president_sponsor_control.dart';
+import '../sponsor/sponsor_system.dart';
 import '../sponsor/sponsor_system.dart';
 import '../world/world_league.dart';
 import 'player_president_tenure_control_gate.dart';
@@ -419,6 +421,13 @@ class _TenureGatedFacilityProvider
     );
   }
 
+  @override
+  void onApplied(PlayerPresidentFacilityRuntimeDecision decision) {
+    if (session.allows(decision.decision.presidentId)) {
+      delegate.onApplied(decision);
+    }
+  }
+
   int _attempts({
     required int current,
     required int target,
@@ -446,6 +455,16 @@ class _TenureGatedSponsorProvider extends PlayerSponsorDecisionProvider {
     }
     return PlayerSponsorOfferChoice(offerId: context.aiChoice.id);
   }
+
+  @override
+  void onApplied(
+    PlayerPresidentSponsorRuntimeDecision decision,
+    SponsorContract contract,
+  ) {
+    if (session.allows(decision.presidentId)) {
+      delegate.onApplied(decision, contract);
+    }
+  }
 }
 
 class _TenureGatedCrisisProvider extends PlayerCrisisDecisionProvider {
@@ -463,6 +482,13 @@ class _TenureGatedCrisisProvider extends PlayerCrisisDecisionProvider {
       return delegate.choose(context);
     }
     return PlayerCrisisActionChoice(action: context.aiDecision.action);
+  }
+
+  @override
+  void onApplied(PlayerPresidentCrisisRuntimeDecision decision) {
+    if (session.allows(decision.presidentId)) {
+      delegate.onApplied(decision);
+    }
   }
 }
 
@@ -493,5 +519,25 @@ class _TenureGatedManagerProvider extends PlayerManagerDecisionProvider {
       return delegate.chooseReplacement(context);
     }
     return PlayerManagerReplacementChoice(managerId: context.aiChoice.id);
+  }
+
+  @override
+  void onReviewApplied(
+    PlayerManagerReviewContext context,
+    PlayerManagerReviewChoice choice,
+  ) {
+    if (session.allows(context.presidentId)) {
+      delegate.onReviewApplied(context, choice);
+    }
+  }
+
+  @override
+  void onReplacementApplied(
+    PlayerPresidentManagerRuntimeDecision decision,
+    ManagerAssignment assignment,
+  ) {
+    if (session.allows(decision.presidentId)) {
+      delegate.onReplacementApplied(decision, assignment);
+    }
   }
 }

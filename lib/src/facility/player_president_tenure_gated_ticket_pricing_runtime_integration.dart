@@ -616,6 +616,9 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
         outcome: outcome,
       );
       _decisions[club.id] = decision;
+      if (canDelegate) {
+        playerProvider!.onApplied(decision);
+      }
       pricedMultipliers[club.id] = outcome.revenueMultiplierBps;
     }
 
