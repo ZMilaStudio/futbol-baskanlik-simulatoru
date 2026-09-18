@@ -1,0 +1,162 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:futbol_baskanlik_app/composition/app_composition.dart';
+import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
+import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
+
+import 'support/decision_test_support.dart';
+
+void main() {
+  late Directory tempDirectory;
+  late AppComposition composition;
+  late FictionalWorldSetup world;
+  late GameFlowController controller;
+
+  setUp(() {
+    tempDirectory = Directory.systemTemp.createTempSync('fbs-m89-flow-');
+    composition = AppComposition.withSaveDirectory(
+      Directory(
+        '${tempDirectory.path}${Platform.pathSeparator}save_slots',
+      ),
+    );
+    world = composition.world;
+    controller = GameFlowController(
+      world: world,
+      config: composition.simulationConfig,
+      saveSlots: composition.saveSlots,
+      slotIdFactory: () => 'career_controller_test',
+    );
+  });
+
+  tearDown(() {
+    controller.dispose();
+    if (tempDirectory.existsSync()) {
+      tempDirectory.deleteSync(recursive: true);
+    }
+  });
+
+  test('starts a real new-game application session for a canonical Club', () {
+    final club = world.clubs.first;
+
+    controller.startNewGame(club);
+
+    expect(controller.errorMessage, isNull);
+    expect(controller.loading, isFalse);
+    expect(controller.selectedClub, same(club));
+    expect(
+      controller.session,
+      isA<PlayerPresidentInteractiveDecisionApplicationSession>(),
+    );
+    expect(controller.session!.isNewGame, isTrue);
+  });
+
+  test('advances the application session to an authoritative boundary', () {
+    controller.startNewGame(world.clubs.first);
+
+    final step = controller.currentStep;
+    expect(step, isNotNull);
+    expect(
+      step,
+      anyOf(
+        isA<PlayerPresidentInteractiveDecisionPending>(),
+        isA<PlayerPresidentInteractiveSessionCompleted>(),
+      ),
+    );
+
+    if (step is PlayerPresidentInteractiveDecisionPending) {
+      expect(controller.session!.pendingDecision, same(step.request));
+    } else {
+      expect(controller.session!.completed, same(step));
+    }
+  });
+
+  test('keeps authoritative references without copied persisted state', () {
+    final club = world.clubs.first;
+    controller.startNewGame(club);
+
+    expect(controller.selectedClub, same(club));
+    expect(controller.session!.checkpointOrNull, isNull);
+    expect(controller.currentStep, isA<PlayerPresidentInteractiveSessionStep>());
+  });
+
+  test('surfaces a safe error instead of a fake pending state', () {
+    const unknownClub = Club(
+      id: 'not-in-canonical-world',
+      name: 'Unknown Club',
+      strength: 50,
+    );
+
+    controller.startNewGame(unknownClub);
+
+    expect(controller.session, isNull);
+    expect(controller.currentStep, isNull);
+    expect(controller.errorMessage, isNotNull);
+  });
+
+  test('submit moves from a real Pending to the next authoritative Pending', () {
+    controller.startNewGame(world.clubs.first);
+    final first =
+        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+
+    controller.submitChoice(canonicalChoiceForRequest(first.request));
+
+    expect(controller.errorMessage, isNull);
+    expect(
+      controller.currentStep,
+      isA<PlayerPresidentInteractiveDecisionPending>(),
+    );
+    expect(controller.session!.answeredDecisionCount, 1);
+  });
+
+  test('submit loop reaches the authoritative Completed state', () {
+    controller.startNewGame(world.clubs.first);
+
+    for (var guard = 0; guard < 100; guard++) {
+      final step = controller.currentStep;
+      if (step is PlayerPresidentInteractiveSessionCompleted) break;
+      final pending = step as PlayerPresidentInteractiveDecisionPending;
+      controller.submitChoice(canonicalChoiceForRequest(pending.request));
+      expect(controller.errorMessage, isNull);
+    }
+
+    expect(
+      controller.currentStep,
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+    expect(controller.session!.completed, same(controller.currentStep));
+  });
+
+  test('invalid submit does not fake progression or mutate answers', () {
+    controller.startNewGame(world.clubs.first);
+    final before = controller.currentStep;
+    final answeredBefore = controller.session!.answeredDecisionCount;
+
+    controller.submitChoice(Object());
+
+    expect(controller.errorMessage, isNotNull);
+    expect(controller.currentStep, same(before));
+    expect(controller.session!.answeredDecisionCount, answeredBefore);
+  });
+
+  test('core stale-response validation leaves current pending unchanged', () {
+    controller.startNewGame(world.clubs.first);
+    final first =
+        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+    controller.submitChoice(canonicalChoiceForRequest(first.request));
+    final second =
+        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+
+    expect(
+      () => controller.session!.submit(
+        request: first.request,
+        choice: canonicalChoiceForRequest(first.request),
+      ),
+      throwsStateError,
+    );
+    expect(controller.currentStep, same(second));
+    expect(controller.session!.pendingDecision, same(second.request));
+  });
+}

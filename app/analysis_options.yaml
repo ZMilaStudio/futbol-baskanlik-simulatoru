@@ -1,0 +1,5 @@
+# The Flutter application owns a local analyzer boundary.
+# Keep the root package's app/** exclusion while ensuring flutter analyze
+# inside app/ analyzes this package's lib/ and test/ sources.
+analyzer:
+  exclude: []
