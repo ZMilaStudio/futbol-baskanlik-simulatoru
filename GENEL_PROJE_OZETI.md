@@ -40,28 +40,27 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-**M0–M88 CLOSED / MERGED / PASS.**
+**M0–M89 CLOSED / MERGED / PASS.**
 
-Aktif milestone:
+**Aktif milestone yok. M90 preselect edilmedi.**
+
+Son kapanan milestone:
 
 # M89 — Flutter Playable Vertical Slice I
 
-Branch:
-`feat/m89-flutter-playable-vertical-slice`
+PR:
+**#92 — MERGED**
 
-Draft PR:
-**#92 — open / Draft / unmerged**
+Kullanıcı tarafından onaylanan final PR HEAD:
+`f03db45e69b3993d9688e3fbbf47624ec066c734`
 
-Live `main` HEAD:
-`2d08a98ece7cbe79e1ac1476c1c1a28d14d0bbee`
-
-M89 source + final-cleanup exact HEAD:
-`0d400c5573dc876fcb54d78281809db2ceb3c7b9`
+Squash merge SHA / M89 executable code SHA:
+`299c8f6ba898c490ff9a072c0381418e4aa1a499`
 
 M89 Aşama 1–6:
 **PASS**
 
-M89 henüz merge edilmemiştir ve CLOSED değildir.
+Post-merge actual-main Flutter ve Core executable doğrulamaları tamamlandı. M89 artık **CLOSED / MERGED / PASS**.
 
 ## 4. M89 mimari yönü
 
@@ -271,115 +270,122 @@ Latest exact-head Flutter analyze kanıtı:
 
 Bu, önceki 0.0s false-positive analyzer gate probleminin giderildiğini gösterir.
 
-## 13. Current exact-head CI
+## 13. M89 final pre-merge kanıtı
 
-Exact source/cleanup HEAD:
-`0d400c5573dc876fcb54d78281809db2ceb3c7b9`
+Kullanıcı tarafından onaylanan final PR HEAD:
+`f03db45e69b3993d9688e3fbbf47624ec066c734`
 
-### Flutter
+Final PR exact-head Flutter kanıtı:
+- run #15 / workflow `35334739016` — SUCCESS,
+- gerçek Flutter analyze — SUCCESS,
+- 37 tests — PASS,
+- Android debug APK — SUCCESS,
+- emulator launch — SUCCESS,
+- artifacts — 0.
+
+Final PR exact-head Core kanıtı:
+- run #563 / workflow `35334738958`,
+- normal Analyze + tests — SUCCESS,
+- canonical timing-only retry kuralıyla aynı exact SHA üzerinde attempt 3 — SUCCESS,
+- M0–M88 tamamı — SUCCESS,
+- skipped milestone yok,
+- artifacts — 0.
+
+## 14. PR #92 merge
+
+PR #92 kullanıcının exact final HEAD
+`f03db45e69b3993d9688e3fbbf47624ec066c734`
+için verdiği açık onaydan sonra Ready yapıldı.
+
+Merge öncesi HEAD tekrar doğrulandı ve değişmedi.
+
+Squash merge:
+- `expected_head_sha=f03db45e69b3993d9688e3fbbf47624ec066c734`
+- merge SHA: `299c8f6ba898c490ff9a072c0381418e4aa1a499`
+- PR #92 — MERGED.
+
+## 15. Post-merge actual-main executable kanıtı
+
+Actual executable `main` SHA:
+`299c8f6ba898c490ff9a072c0381418e4aa1a499`
+
+### Flutter actual-main
 
 Workflow:
-`35324386095` — **M89 Flutter App run #14 — SUCCESS**
+`35337399941` — **M89 Flutter App run #16 — event push — SUCCESS**
 
 Job:
-`105533945645` — SUCCESS
+`105575323525` — SUCCESS
 
 Kanıt:
-- Flutter analyze — SUCCESS, gerçek analiz süresi 8.6s,
-- Flutter tests — **37 tests PASS**,
-- Android debug APK — SUCCESS,
-- Android emulator launch — SUCCESS,
+- `Analyzing app...`
+- `No issues found! (ran in 6.8s)`
+- **37 tests PASS**
+- Android debug APK — SUCCESS
+- Android emulator launch — SUCCESS
 - marker:
   `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
 - artifacts — 0.
 
-### Core
+### Core actual-main
 
 Workflow:
-`35324386173` — **Core Simulation Tests run #562, attempt 4 — SUCCESS**
+`35337399947` — **Core Simulation Tests run #564 — event push — SUCCESS**
 
 Normal job:
-`105563555166` — SUCCESS
-- Analyze — SUCCESS,
-- tests — SUCCESS.
+`105575323848` — SUCCESS
+- Analyze — SUCCESS
+- normal tests — SUCCESS
 
 Canonical job:
-`105563554228` — SUCCESS
-- M0–M88 milestone step'lerinin tamamı — SUCCESS,
-- skipped milestone yok,
+`105575324082` — SUCCESS
+- M0–M88 milestone step'lerinin tamamı — SUCCESS
+- M88 exact marker — PASS
+- skipped milestone yok
 - artifacts — 0.
 
-## 14. PR #92 metadata
+M88 marker:
+`M88_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_BINDING_PASS ... saveAuthority=M65 ...`
 
-PR #92 body artık Stage 1–6'yı PASS olarak güncel anlatıyor.
+## 16. M89 kapanış sonucu
 
-Authority boundary bölümü de güncel:
-- M65 sole persisted authority,
+M89 final acceptance blocker'ı olan Flutter analyzer boundary problemi giderildi.
+
+Actual-main executable doğrulaması da tamamlandığı için:
+
+# **M89 — CLOSED / MERGED / PASS**
+
+Authority sonucu değişmedi:
+- **M65 tek persisted game-state authority**,
 - Flutter consumer/presentation layer,
-- AppComposition wiring-only,
-- GameFlowController transient,
-- M87/M88 existing roles retained,
-- automatic bootstrap→checkpoint migration yok.
+- `AppComposition` wiring-only,
+- `GameFlowController` transient lifecycle/presentation coordinator,
+- M87/M88 mevcut persistence/application contract'larını korur,
+- automatic bootstrap → checkpoint migration/delete yok,
+- duplicate gameplay/persistence authority yok.
 
-PR hâlâ:
-- open,
-- Draft,
-- unmerged.
+## 17. Bilinen non-blocker hardening notları
 
-## 15. Final audit sonrası kalan durum
-
-Analyzer blocker canlı branch'te düzeltilmiş ve exact-head CI tamamen yeşildir.
-
-Ancak **cleanup sonrası exact current HEAD için yeni bir formal FINAL ACCEPTANCE AUDIT henüz bu sohbet tarafından tekrar yapılmadı.**
-
-Bu nedenle güvenli current-state ifadesi:
-
-- M89 Aşama 1–6 PASS,
-- önceki final-audit blocker'ı source'ta düzeltilmiş,
-- cleanup exact HEAD CI green,
-- architecture/authority blocker yok,
-- PR #92 Draft/open/unmerged,
-- merge öncesi kullanıcıdan gelecek yeni prompt bekleniyor.
-
-## 16. Bilinen non-blocker hardening notları
-
-Bunlar M89 authority blocker değildir:
+Bunlar M89 blocker değildir ve kullanıcı istemeden yeni scope'a çevrilmemelidir:
 - `app/pubspec.lock` repoda yok,
 - Flutter workflow job adı hâlâ `flutter-stage-1`,
-- `actions/setup-java@v4` current runner'da deprecation warning veriyor,
+- `actions/setup-java@v4` deprecation warning verebilir,
 - Flutter workflow path filter root public API-only değişikliklerinde otomatik tetiklenmeyebilir,
 - emulator gate launch-smoke düzeyinde; tüm gameplay'i gerçek cihaz üzerinde tıklayan ayrı `integration_test` yok.
 
-Bunlardan hiçbiri kullanıcı talimatı olmadan yeni scope'a çevrilmemelidir.
-
-## 17. Önemli dokümantasyon notu
-
-`PROJE_KARARLARI.md` içindeki bazı M89 öncesi tarihsel ifadeler, özellikle “Flutter/UI henüz kurulmamıştır” cümlesi artık canlı repo durumunu yansıtmayabilir.
-
-Kaynak önceliği nedeniyle:
-**Live GitHub ve bu güncel özet current state için üstündür.**
-
-Kalıcı karar dosyası ancak kullanıcı ayrıca isterse / açık cleanup scope'u verirse güncellenmelidir.
+`PROJE_KARARLARI.md` içindeki M89 öncesi “Flutter/UI henüz kurulmamıştır” gibi tarihsel ifadeler current live state değildir. Current state için Live GitHub ve bu güncel özet üstündür. Bu closure kapsamında `PROJE_KARARLARI.md` değiştirilmedi.
 
 ## 18. Sıradaki kesin iş
 
-**KENDİLİĞİNDEN HİÇBİR İŞE BAŞLAMA.**
+**Aktif milestone yok. M90 preselect edilmedi.**
 
-Yeni sohbet:
-1. önce Live GitHub ile branch / PR / main / exact HEAD / latest CI durumunu doğrulasın,
-2. `GENEL_PROJE_OZETI.md`,
-3. `PROJE_KARARLARI.md`,
-4. `SOHBET_DEVIR_NOTU.md`
-dosyalarını okusun,
-5. kullanıcıdan yeni prompt beklesin.
+Yeni geliştirme ancak kullanıcı yeni prompt verdiğinde ve fresh live-`main` gap scan yapıldığında seçilmelidir.
 
 Kullanıcı yeni talimat vermeden:
+- M90 seçme,
+- yeni milestone başlatma,
 - kod yazma,
-- analyzer/CI cleanup başlatma,
-- commit oluşturma,
-- PR Ready yapma,
-- merge yapma,
-- docs closure yapma,
-- M90 seçme.
+- yeni branch/PR açma,
+- non-blocker hardening işlerini scope'a alma.
 
-M89 henüz merge edilmemiş ve CLOSED değildir.
+M65 tek persisted game-state authority olarak korunacaktır.
