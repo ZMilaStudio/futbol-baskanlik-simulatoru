@@ -80,6 +80,71 @@ class PlayerPresidentInteractiveSessionCompleted
   final int decisionCount;
 }
 
+/// Runtime-only base type for authoritative immediate consequences.
+///
+/// M90 Stage 1 defines only the typed contract seam. Concrete consequence
+/// subtypes are introduced when existing domain outputs are captured in Stage
+/// 2. A missing consequence therefore means "not captured yet", never a fake
+/// or inferred effect.
+sealed class PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentInteractiveDecisionConsequence();
+}
+
+/// Accepted interactive decision identity plus its runtime-only consequence.
+///
+/// This object is application feedback only. It is not persisted, encoded, or
+/// added to the M74 accepted-answer transcript. [acceptedChoice] is the exact
+/// validated choice object supplied to the successful submit call.
+class PlayerPresidentInteractiveDecisionResolution {
+  const PlayerPresidentInteractiveDecisionResolution({
+    required this.requestKey,
+    required this.kind,
+    required this.acceptedChoice,
+    this.consequence,
+  });
+
+  final String requestKey;
+  final PlayerPresidentInteractiveDecisionKind kind;
+  final Object acceptedChoice;
+  final PlayerPresidentInteractiveDecisionConsequence? consequence;
+
+  bool get hasConsequence => consequence != null;
+
+  T choiceAs<T>() {
+    final value = acceptedChoice;
+    if (value is! T) {
+      throw StateError(
+        'Decision ${kind.name} does not contain accepted choice type $T.',
+      );
+    }
+    return value as T;
+  }
+
+  T consequenceAs<T extends PlayerPresidentInteractiveDecisionConsequence>() {
+    final value = consequence;
+    if (value is! T) {
+      throw StateError(
+        'Decision ${kind.name} does not contain consequence type $T.',
+      );
+    }
+    return value;
+  }
+}
+
+/// Result of one successful additive interactive submission.
+///
+/// [nextStep] is produced by the same authoritative replay that accepts the
+/// choice. No second simulation pass is performed for resolution feedback.
+class PlayerPresidentInteractiveDecisionSubmissionResult {
+  const PlayerPresidentInteractiveDecisionSubmissionResult({
+    required this.resolution,
+    required this.nextStep,
+  });
+
+  final PlayerPresidentInteractiveDecisionResolution resolution;
+  final PlayerPresidentInteractiveSessionStep nextStep;
+}
+
 /// M73 turns M72's synchronous application gateway into a UI-drivable
 /// request/response session without changing canonical domain semantics.
 ///
@@ -245,7 +310,25 @@ class PlayerPresidentInteractiveDecisionSession {
     }
   }
 
+  /// Legacy M73 submit behavior.
+  ///
+  /// Observable semantics stay unchanged: validate one pending response,
+  /// accept it once, run one deterministic replay, and return only the next
+  /// Pending/Completed step.
   PlayerPresidentInteractiveSessionStep submit({
+    required PlayerPresidentInteractiveDecisionRequest request,
+    required Object choice,
+  }) =>
+      submitWithResolution(request: request, choice: choice).nextStep;
+
+  /// Additive M90 runtime submission surface.
+  ///
+  /// Stage 1 deliberately leaves [PlayerPresidentInteractiveDecisionResolution]
+  /// consequence data empty until Stage 2 wires existing authoritative domain
+  /// outputs into this seam. The accepted choice and [nextStep] already come
+  /// from one validation + one replay lifecycle; no duplicate simulation is
+  /// performed.
+  PlayerPresidentInteractiveDecisionSubmissionResult submitWithResolution({
     required PlayerPresidentInteractiveDecisionRequest request,
     required Object choice,
   }) {
@@ -271,7 +354,16 @@ class PlayerPresidentInteractiveDecisionSession {
       ),
     );
     _pending = null;
-    return advance();
+
+    final nextStep = advance();
+    return PlayerPresidentInteractiveDecisionSubmissionResult(
+      resolution: PlayerPresidentInteractiveDecisionResolution(
+        requestKey: request.key,
+        kind: request.kind,
+        acceptedChoice: choice,
+      ),
+      nextStep: nextStep,
+    );
   }
 
   static void _validateChoice(
