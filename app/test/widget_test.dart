@@ -6,7 +6,6 @@ import 'package:futbol_baskanlik_app/composition/app_composition.dart';
 import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
 import 'package:futbol_baskanlik_app/main.dart';
 import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
-import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_unified_decision_gateway_runtime.dart';
 
