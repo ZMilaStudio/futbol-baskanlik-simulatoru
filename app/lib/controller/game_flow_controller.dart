@@ -29,6 +29,8 @@ class GameFlowController extends ChangeNotifier {
   Club? _selectedClub;
   PlayerPresidentInteractiveDecisionApplicationSession? _session;
   PlayerPresidentInteractiveSessionStep? _currentStep;
+  PlayerPresidentInteractiveDecisionResolution? _currentResolution;
+  PlayerPresidentInteractiveSessionStep? _queuedNextStep;
   PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding? _binding;
   PlayerPresidentInteractiveDecisionMixedSaveSlotSummary? _saveSummary;
   bool _loading = false;
@@ -40,6 +42,11 @@ class GameFlowController extends ChangeNotifier {
   Club? get selectedClub => _selectedClub;
   PlayerPresidentInteractiveDecisionApplicationSession? get session => _session;
   PlayerPresidentInteractiveSessionStep? get currentStep => _currentStep;
+  PlayerPresidentInteractiveDecisionResolution? get currentResolution =>
+      _currentResolution;
+  PlayerPresidentInteractiveSessionStep? get queuedNextStep => _queuedNextStep;
+  bool get awaitingResolution =>
+      _currentResolution != null && _queuedNextStep != null;
   PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding? get binding =>
       _binding;
   PlayerPresidentInteractiveDecisionMixedSaveSlotSummary? get saveSummary =>
@@ -53,6 +60,7 @@ class GameFlowController extends ChangeNotifier {
   void startNewGame(Club club) {
     if (_loading || _persistenceBusy) return;
 
+    _clearResolutionFeedback();
     _selectedClub = club;
     _session = null;
     _currentStep = null;
@@ -98,6 +106,7 @@ class GameFlowController extends ChangeNotifier {
   ) {
     if (_loading || _persistenceBusy) return false;
 
+    _clearResolutionFeedback();
     _loading = true;
     _errorMessage = null;
     _persistenceError = null;
@@ -141,12 +150,14 @@ class GameFlowController extends ChangeNotifier {
     return loaded;
   }
 
-  /// Sends one player choice through the authoritative M76/M73 submit path.
+  /// Sends one player choice through the authoritative M76 resolution path.
   ///
-  /// A failed validation never advances [_currentStep]. The loading flag is
-  /// presentation-only and prevents a second UI submit while this call runs.
+  /// Successful submission advances the authoritative M76 session immediately,
+  /// but the resulting next boundary is held transiently until the player
+  /// acknowledges the authoritative resolution. No resolution state is
+  /// persisted by this controller.
   void submitChoice(Object choice) {
-    if (_loading || _persistenceBusy) return;
+    if (_loading || _persistenceBusy || _currentResolution != null) return;
 
     final session = _session;
     final current = _currentStep;
@@ -162,18 +173,43 @@ class GameFlowController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final next = session.submit(
+      final submission = session.submitWithResolution(
         request: current.request,
         choice: choice,
       );
-      _currentStep = next;
+      _currentResolution = submission.resolution;
+      _queuedNextStep = submission.nextStep;
+      _currentStep = null;
     } catch (_) {
+      _currentResolution = null;
+      _queuedNextStep = null;
       _errorMessage =
           'Karar gönderilemedi. Mevcut karar değişmeden bırakıldı.';
     } finally {
       _loading = false;
       notifyListeners();
     }
+  }
+
+  /// Reveals the authoritative boundary already produced by the accepted
+  /// submit. This is presentation-only: it never calls core advance/replay.
+  bool continueAfterResolution() {
+    if (_loading || _persistenceBusy) return false;
+
+    final resolution = _currentResolution;
+    final nextStep = _queuedNextStep;
+    if (resolution == null || nextStep == null) {
+      _errorMessage = 'Devam etmek için gösterilecek bir karar sonucu yok.';
+      notifyListeners();
+      return false;
+    }
+
+    _currentStep = nextStep;
+    _currentResolution = null;
+    _queuedNextStep = null;
+    _errorMessage = null;
+    notifyListeners();
+    return true;
   }
 
   /// Hands an authoritative Completed result to the existing checkpoint
@@ -218,6 +254,7 @@ class GameFlowController extends ChangeNotifier {
       );
       final nextStep = nextSession.advance();
 
+      _clearResolutionFeedback();
       _selectedClub = club;
       _session = nextSession;
       _currentStep = nextStep;
@@ -296,11 +333,20 @@ class GameFlowController extends ChangeNotifier {
         }
 
         // M88 can only bind an existing typed slot. Re-adopt the authoritative
-        // session loaded by that binding after the first M87 save.
+        // session loaded by that binding after the first M87 save. If a
+        // resolution is visible, keep it presentation-only and rebuild the
+        // queued boundary from the newly bound authoritative session.
+        final reboundStep = binding.session.advance();
         _binding = binding;
         _saveSummary = summary;
         _session = binding.session;
-        _currentStep = binding.session.advance();
+        if (_currentResolution != null) {
+          _currentStep = null;
+          _queuedNextStep = reboundStep;
+        } else {
+          _currentStep = reboundStep;
+          _queuedNextStep = null;
+        }
         _selectedClub = club;
         _persistenceMessage = 'Oyun kaydedildi.';
         saved = true;
@@ -313,6 +359,11 @@ class GameFlowController extends ChangeNotifier {
       notifyListeners();
     }
     return saved;
+  }
+
+  void _clearResolutionFeedback() {
+    _currentResolution = null;
+    _queuedNextStep = null;
   }
 
   Club? _clubById(String id) {

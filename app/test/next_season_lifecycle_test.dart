@@ -38,6 +38,8 @@ void main() {
       final pending = step as PlayerPresidentInteractiveDecisionPending;
       controller.submitChoice(canonicalChoiceForRequest(pending.request));
       expect(controller.errorMessage, isNull);
+      expect(controller.currentResolution, isNotNull);
+      expect(controller.continueAfterResolution(), isTrue);
     }
     fail('Interactive season did not reach Completed within the guard.');
   }
@@ -201,8 +203,9 @@ void main() {
       canonicalChoiceForRequest(restoredNext.request),
     );
     expect(controllerB.errorMessage, isNull);
+    expect(controllerB.currentResolution, isNotNull);
     final answeredAfterSubmit = controllerB.session!.answeredDecisionCount;
-    final stepAfterSubmit = controllerB.currentStep;
+    final stepAfterSubmit = controllerB.queuedNextStep;
     final checkpointBindingIdentity = controllerB.binding!.identity;
     expect(answeredAfterSubmit, nextAnswered + 1);
 

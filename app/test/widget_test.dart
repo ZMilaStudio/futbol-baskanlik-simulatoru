@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_baskanlik_app/composition/app_composition.dart';
 import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
+import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
+import 'package:futbol_baskanlik_app/decisions/decision_resolution_panel.dart';
 import 'package:futbol_baskanlik_app/main.dart';
 import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
@@ -117,6 +119,51 @@ void main() {
     );
     expect(find.byKey(const Key('session-lifecycle-state')), findsOneWidget);
     expect(find.byKey(const Key('save-game-button')), findsOneWidget);
+  });
+
+  testWidgets(
+      'Pending submits to resolution, save stays available, Continue opens next boundary',
+      (tester) async {
+    await pumpApp(tester);
+    await openClubSelection(tester);
+    await tester.tap(find.text(composition.world.clubs.first.name));
+    await tester.pumpAndSettle();
+
+    final decisionPanel = find.byType(DecisionPanel);
+    expect(decisionPanel, findsOneWidget);
+    final action = find
+        .descendant(
+          of: decisionPanel,
+          matching: find.byWidgetPredicate(
+            (widget) => widget is ButtonStyleButton && widget.onPressed != null,
+          ),
+        )
+        .first;
+    await tester.ensureVisible(action);
+    await tester.tap(action);
+    await tester.pump();
+
+    expect(find.byType(DecisionPanel), findsNothing);
+    expect(find.byType(DecisionResolutionPanel), findsOneWidget);
+    expect(find.byKey(const Key('decision-resolution-panel')), findsOneWidget);
+    expect(find.byKey(const Key('decision-resolution-kind')), findsOneWidget);
+    expect(find.byKey(const Key('decision-resolution-choice')), findsOneWidget);
+    expect(find.byKey(const Key('decision-resolution-result')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('save-game-button')));
+    await tester.pump();
+    expect(find.byType(DecisionResolutionPanel), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const Key('decision-resolution-continue-button')),
+    );
+    await tester.pump();
+
+    expect(find.byType(DecisionResolutionPanel), findsNothing);
+    expect(
+      find.byKey(const Key('session-lifecycle-state')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('saved bootstrap appears and Continue opens the exact save',
