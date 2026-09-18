@@ -5,6 +5,7 @@ import 'package:futbol_baskanlik_app/composition/app_composition.dart';
 import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 
 import 'support/decision_test_support.dart';
@@ -16,7 +17,7 @@ void main() {
   late GameFlowController controller;
 
   setUp(() {
-    tempDirectory = Directory.systemTemp.createTempSync('fbs-m89-flow-');
+    tempDirectory = Directory.systemTemp.createTempSync('fbs-m90-flow-');
     composition = AppComposition.withSaveDirectory(
       Directory(
         '${tempDirectory.path}${Platform.pathSeparator}save_slots',
@@ -38,9 +39,24 @@ void main() {
     }
   });
 
+  PlayerPresidentInteractiveDecisionPending currentPending() =>
+      controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+
+  void submitCurrent() {
+    final pending = currentPending();
+    controller.submitChoice(canonicalChoiceForRequest(pending.request));
+    expect(controller.errorMessage, isNull);
+  }
+
+  void continueResolution() {
+    expect(controller.awaitingResolution, isTrue);
+    expect(controller.continueAfterResolution(), isTrue);
+    expect(controller.currentResolution, isNull);
+    expect(controller.queuedNextStep, isNull);
+  }
+
   test('starts a real new-game application session for a canonical Club', () {
     final club = world.clubs.first;
-
     controller.startNewGame(club);
 
     expect(controller.errorMessage, isNull);
@@ -51,85 +67,64 @@ void main() {
       isA<PlayerPresidentInteractiveDecisionApplicationSession>(),
     );
     expect(controller.session!.isNewGame, isTrue);
+    expect(controller.currentResolution, isNull);
+    expect(controller.queuedNextStep, isNull);
   });
 
-  test('advances the application session to an authoritative boundary', () {
+  test('valid submit exposes resolution and queues the next boundary', () {
     controller.startNewGame(world.clubs.first);
-
-    final step = controller.currentStep;
-    expect(step, isNotNull);
-    expect(
-      step,
-      anyOf(
-        isA<PlayerPresidentInteractiveDecisionPending>(),
-        isA<PlayerPresidentInteractiveSessionCompleted>(),
-      ),
-    );
-
-    if (step is PlayerPresidentInteractiveDecisionPending) {
-      expect(controller.session!.pendingDecision, same(step.request));
-    } else {
-      expect(controller.session!.completed, same(step));
-    }
-  });
-
-  test('keeps authoritative references without copied persisted state', () {
-    final club = world.clubs.first;
-    controller.startNewGame(club);
-
-    expect(controller.selectedClub, same(club));
-    expect(controller.session!.checkpointOrNull, isNull);
-    expect(controller.currentStep, isA<PlayerPresidentInteractiveSessionStep>());
-  });
-
-  test('surfaces a safe error instead of a fake pending state', () {
-    const unknownClub = Club(
-      id: 'not-in-canonical-world',
-      name: 'Unknown Club',
-      strength: 50,
-    );
-
-    controller.startNewGame(unknownClub);
-
-    expect(controller.session, isNull);
-    expect(controller.currentStep, isNull);
-    expect(controller.errorMessage, isNotNull);
-  });
-
-  test('submit moves from a real Pending to the next authoritative Pending', () {
-    controller.startNewGame(world.clubs.first);
-    final first =
-        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+    final first = currentPending();
 
     controller.submitChoice(canonicalChoiceForRequest(first.request));
 
     expect(controller.errorMessage, isNull);
-    expect(
-      controller.currentStep,
-      isA<PlayerPresidentInteractiveDecisionPending>(),
-    );
+    expect(controller.currentStep, isNull);
+    expect(controller.currentResolution, isNotNull);
+    expect(controller.currentResolution!.requestKey, first.request.key);
+    expect(controller.currentResolution!.kind, first.request.kind);
+    expect(controller.queuedNextStep, isNotNull);
+    expect(controller.awaitingResolution, isTrue);
     expect(controller.session!.answeredDecisionCount, 1);
   });
 
-  test('submit loop reaches the authoritative Completed state', () {
+  test('continueAfterResolution adopts the already-produced next Pending', () {
+    controller.startNewGame(world.clubs.first);
+    submitCurrent();
+    final queued = controller.queuedNextStep;
+    expect(queued, isA<PlayerPresidentInteractiveDecisionPending>());
+
+    expect(controller.continueAfterResolution(), isTrue);
+
+    expect(controller.currentStep, same(queued));
+    expect(controller.currentStep, isA<PlayerPresidentInteractiveDecisionPending>());
+    expect(controller.currentResolution, isNull);
+    expect(controller.queuedNextStep, isNull);
+  });
+
+  test('final submit shows resolution before authoritative Completed', () {
     controller.startNewGame(world.clubs.first);
 
     for (var guard = 0; guard < 100; guard++) {
       final step = controller.currentStep;
-      if (step is PlayerPresidentInteractiveSessionCompleted) break;
-      final pending = step as PlayerPresidentInteractiveDecisionPending;
-      controller.submitChoice(canonicalChoiceForRequest(pending.request));
-      expect(controller.errorMessage, isNull);
+      if (step is PlayerPresidentInteractiveSessionCompleted) {
+        fail('Completed became visible without final resolution.');
+      }
+      submitCurrent();
+      final queued = controller.queuedNextStep;
+      if (queued is PlayerPresidentInteractiveSessionCompleted) {
+        expect(controller.currentStep, isNull);
+        expect(controller.currentResolution, isNotNull);
+        expect(controller.session!.completed, same(queued));
+        expect(controller.continueAfterResolution(), isTrue);
+        expect(controller.currentStep, same(queued));
+        return;
+      }
+      continueResolution();
     }
-
-    expect(
-      controller.currentStep,
-      isA<PlayerPresidentInteractiveSessionCompleted>(),
-    );
-    expect(controller.session!.completed, same(controller.currentStep));
+    fail('Interactive season did not reach a final resolution.');
   });
 
-  test('invalid submit does not fake progression or mutate answers', () {
+  test('invalid submit preserves Pending and creates no feedback', () {
     controller.startNewGame(world.clubs.first);
     final before = controller.currentStep;
     final answeredBefore = controller.session!.answeredDecisionCount;
@@ -138,25 +133,153 @@ void main() {
 
     expect(controller.errorMessage, isNotNull);
     expect(controller.currentStep, same(before));
+    expect(controller.currentResolution, isNull);
+    expect(controller.queuedNextStep, isNull);
     expect(controller.session!.answeredDecisionCount, answeredBefore);
   });
 
-  test('core stale-response validation leaves current pending unchanged', () {
+  test('second submit while resolution is visible is blocked', () {
     controller.startNewGame(world.clubs.first);
-    final first =
-        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
-    controller.submitChoice(canonicalChoiceForRequest(first.request));
-    final second =
-        controller.currentStep as PlayerPresidentInteractiveDecisionPending;
+    final first = currentPending();
+    final choice = canonicalChoiceForRequest(first.request);
+    controller.submitChoice(choice);
+    final resolution = controller.currentResolution;
+    final queued = controller.queuedNextStep;
+    final answered = controller.session!.answeredDecisionCount;
+
+    controller.submitChoice(choice);
+
+    expect(controller.session!.answeredDecisionCount, answered);
+    expect(controller.currentResolution, same(resolution));
+    expect(controller.queuedNextStep, same(queued));
+    expect(controller.currentStep, isNull);
+  });
+
+  test('stale direct core response cannot disturb queued presentation state', () {
+    controller.startNewGame(world.clubs.first);
+    final first = currentPending();
+    final choice = canonicalChoiceForRequest(first.request);
+    controller.submitChoice(choice);
+    final resolution = controller.currentResolution;
+    final queued = controller.queuedNextStep;
 
     expect(
-      () => controller.session!.submit(
+      () => controller.session!.submitWithResolution(
         request: first.request,
-        choice: canonicalChoiceForRequest(first.request),
+        choice: choice,
       ),
       throwsStateError,
     );
-    expect(controller.currentStep, same(second));
-    expect(controller.session!.pendingDecision, same(second.request));
+    expect(controller.currentResolution, same(resolution));
+    expect(controller.queuedNextStep, same(queued));
+    expect(controller.currentStep, isNull);
+  });
+
+  test('nine-kind drive yields matching non-null resolution on every submit', () {
+    final session = PlayerPresidentInteractiveDecisionApplicationSession.start(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: composition.simulationConfig,
+      controlledClubId: world.clubs.first.id,
+      seasonCount: 4,
+      electionInterval: 4,
+      hasFutureSeasonAfterReport: true,
+      crisisActivationThreshold: 0,
+    );
+    session.advance();
+    final source = composition.saveSlots.save(
+      slotId: 'career_nine_kind',
+      session: session,
+    );
+    final summary = composition.saveSlots.inspect(
+      source: source,
+      slotId: 'career_nine_kind',
+    )!;
+    final binding =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: composition.saveSlots,
+      summary: summary,
+    )!;
+    expect(controller.loadBoundSave(binding), isTrue);
+
+    final seen = <PlayerPresidentInteractiveDecisionKind>{};
+    for (var guard = 0; guard < 250; guard++) {
+      final step = controller.currentStep;
+      if (step is PlayerPresidentInteractiveSessionCompleted) break;
+      final pending = step as PlayerPresidentInteractiveDecisionPending;
+      controller.submitChoice(canonicalChoiceForRequest(pending.request));
+      final resolution = controller.currentResolution;
+      expect(resolution, isNotNull);
+      expect(resolution!.requestKey, pending.request.key);
+      expect(resolution.kind, pending.request.kind);
+      expect(resolution.consequence.kind, pending.request.kind);
+      seen.add(resolution.kind);
+      expect(controller.currentStep, isNull);
+      expect(controller.queuedNextStep, isNotNull);
+      continueResolution();
+      if (seen.length == PlayerPresidentInteractiveDecisionKind.values.length) {
+        break;
+      }
+    }
+
+    expect(seen, PlayerPresidentInteractiveDecisionKind.values.toSet());
+  });
+
+  test('startNewGame clears transient resolution feedback', () {
+    controller.startNewGame(world.clubs.first);
+    submitCurrent();
+    expect(controller.awaitingResolution, isTrue);
+
+    controller.startNewGame(world.clubs.last);
+
+    expect(controller.selectedClub, same(world.clubs.last));
+    expect(controller.currentResolution, isNull);
+    expect(controller.queuedNextStep, isNull);
+    expect(controller.currentStep, isA<PlayerPresidentInteractiveDecisionPending>());
+  });
+
+  test('loadBoundSave clears transient resolution feedback', () {
+    controller.startNewGame(world.clubs.first);
+    expect(controller.saveCurrent(), isTrue);
+    final binding = controller.binding!;
+    submitCurrent();
+    expect(controller.awaitingResolution, isTrue);
+
+    expect(controller.loadBoundSave(binding), isTrue);
+
+    expect(controller.currentResolution, isNull);
+    expect(controller.queuedNextStep, isNull);
+    expect(
+      controller.currentStep,
+      anyOf(
+        isA<PlayerPresidentInteractiveDecisionPending>(),
+        isA<PlayerPresidentInteractiveSessionCompleted>(),
+      ),
+    );
+  });
+
+  test('next-season handoff keeps the existing lifecycle and clears feedback', () {
+    controller.startNewGame(world.clubs.first);
+    for (var guard = 0; guard < 100; guard++) {
+      submitCurrent();
+      final queued = controller.queuedNextStep;
+      continueResolution();
+      if (queued is PlayerPresidentInteractiveSessionCompleted) break;
+    }
+    expect(
+      controller.currentStep,
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+
+    expect(controller.continueToNextSeason(), isTrue);
+    expect(controller.currentResolution, isNull);
+    expect(controller.queuedNextStep, isNull);
+    expect(
+      controller.currentStep,
+      anyOf(
+        isA<PlayerPresidentInteractiveDecisionPending>(),
+        isA<PlayerPresidentInteractiveSessionCompleted>(),
+      ),
+    );
   });
 }

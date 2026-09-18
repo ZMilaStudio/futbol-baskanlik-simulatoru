@@ -273,15 +273,24 @@ class PlayerPresidentInteractiveDecisionTranscriptSession {
   PlayerPresidentInteractiveSessionStep submit({
     required PlayerPresidentInteractiveDecisionRequest request,
     required Object choice,
+  }) =>
+      submitWithResolution(request: request, choice: choice).nextStep;
+
+  PlayerPresidentInteractiveDecisionSubmissionResult submitWithResolution({
+    required PlayerPresidentInteractiveDecisionRequest request,
+    required Object choice,
   }) {
     final entry =
         PlayerPresidentInteractiveDecisionTranscriptEntry.fromDecision(
       request: request,
       choice: choice,
     );
-    final next = _session.submit(request: request, choice: choice);
+    final result = _session.submitWithResolution(
+      request: request,
+      choice: choice,
+    );
     _entries.add(entry);
-    return next;
+    return result;
   }
 }
 

@@ -192,4 +192,14 @@ class _M69TenureGatedSponsorProvider extends PlayerSponsorDecisionProvider {
     }
     return PlayerSponsorOfferChoice(offerId: context.aiChoice.id);
   }
+
+  @override
+  void onApplied(
+    PlayerPresidentSponsorRuntimeDecision decision,
+    SponsorContract contract,
+  ) {
+    if (session.allows(decision.presidentId)) {
+      delegate.onApplied(decision, contract);
+    }
+  }
 }

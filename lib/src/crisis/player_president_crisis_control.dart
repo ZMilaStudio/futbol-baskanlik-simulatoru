@@ -54,6 +54,8 @@ abstract class PlayerCrisisDecisionProvider {
   const PlayerCrisisDecisionProvider();
 
   PlayerCrisisActionChoice choose(PlayerCrisisDecisionContext context);
+
+  void onApplied(PlayerPresidentCrisisRuntimeDecision decision) {}
 }
 
 class PlayerPresidentCrisisRuntimeDecision {
@@ -368,14 +370,14 @@ class _PlayerPresidentCrisisDecisionEngine extends CrisisDecisionEngine {
       scenario: scenario,
       action: selected.action,
     );
-    decisions.add(
-      PlayerPresidentCrisisRuntimeDecision(
-        context: playerContext,
-        choice: choice,
-        selectedDecision: selected,
-        resolution: resolution,
-      ),
+    final runtimeDecision = PlayerPresidentCrisisRuntimeDecision(
+      context: playerContext,
+      choice: choice,
+      selectedDecision: selected,
+      resolution: resolution,
     );
+    decisions.add(runtimeDecision);
+    provider.onApplied(runtimeDecision);
     return resolution;
   }
 }

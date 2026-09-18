@@ -81,6 +81,12 @@ abstract class PlayerTransferStrategyDecisionProvider {
   PlayerTransferStrategyChoice chooseTransferStrategy(
     PlayerTransferStrategyDecisionContext context,
   );
+
+  void onApplied(
+    PlayerTransferStrategyDecisionContext context,
+    PlayerTransferStrategyChoice choice,
+    PresidentManagementProfile effectiveProfile,
+  ) {}
 }
 
 /// M55 overlays a player-president transfer strategy on top of the AI profile
@@ -127,17 +133,18 @@ class PlayerPresidentTransferStrategyProfileProvider
       );
     }
 
-    final choice = provider.chooseTransferStrategy(
-      PlayerTransferStrategyDecisionContext(
-        window: context,
-        controlledClubId: controlledClubId,
-        aiProfile: aiProfile,
-      ),
+    final decisionContext = PlayerTransferStrategyDecisionContext(
+      window: context,
+      controlledClubId: controlledClubId,
+      aiProfile: aiProfile,
     );
+    final choice = provider.chooseTransferStrategy(decisionContext);
     choice.validate();
 
+    final effectiveProfile = choice.applyTo(aiProfile);
     final effective = Map<String, PresidentManagementProfile>.from(aiProfiles);
-    effective[controlledClubId] = choice.applyTo(aiProfile);
+    effective[controlledClubId] = effectiveProfile;
+    provider.onApplied(decisionContext, choice, effectiveProfile);
     return Map.unmodifiable(effective);
   }
 }

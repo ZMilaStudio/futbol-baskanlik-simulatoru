@@ -1,4 +1,5 @@
 import '../core/simulation_config.dart';
+import '../election/president_management_profile.dart';
 import '../crisis/crisis_decision_core.dart';
 import '../crisis/player_president_crisis_control.dart';
 import '../crisis/player_president_facility_control.dart';
@@ -6,6 +7,7 @@ import '../crisis/player_president_tenure_gated_facility_sponsor_crisis_promise_
 import '../facility/player_president_tenure_gated_ticket_pricing_control.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
+import '../manager/manager_assignment.dart';
 import '../manager/player_president_manager_control.dart';
 import '../manager/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart';
 import '../media/media_statement.dart';
@@ -13,6 +15,7 @@ import '../media/player_president_media_statement_control.dart';
 import '../promise/player_president_promise_control.dart';
 import '../promise/president_promise.dart';
 import '../sponsor/player_president_sponsor_control.dart';
+import '../sponsor/sponsor_system.dart';
 import '../transfer/player_president_transfer_strategy_control.dart';
 import '../world/world_league.dart';
 
@@ -64,6 +67,45 @@ abstract class PlayerPresidentDecisionGateway {
   MatchdayTicketPricingChoice chooseTicketPricing(
     PlayerPresidentTicketPricingDecisionContext context,
   );
+
+  void onFacilityInvestmentApplied(
+    PlayerPresidentFacilityRuntimeDecision decision,
+  ) {}
+
+  void onSponsorApplied(
+    PlayerPresidentSponsorRuntimeDecision decision,
+    SponsorContract contract,
+  ) {}
+
+  void onCrisisApplied(PlayerPresidentCrisisRuntimeDecision decision) {}
+
+  void onManagerReviewApplied(
+    PlayerManagerReviewContext context,
+    PlayerManagerReviewChoice choice,
+  ) {}
+
+  void onManagerReplacementApplied(
+    PlayerPresidentManagerRuntimeDecision decision,
+    ManagerAssignment assignment,
+  ) {}
+
+  void onPromiseApplied(
+    PlayerPromiseDecisionContext context,
+    PresidentPromise promise,
+  ) {}
+
+  void onMediaStatementApplied(
+    PlayerMediaStatementDecisionContext context,
+    MediaStatement statement,
+  ) {}
+
+  void onTransferStrategyApplied(
+    PlayerTransferStrategyDecisionContext context,
+    PlayerTransferStrategyChoice choice,
+    PresidentManagementProfile effectiveProfile,
+  ) {}
+
+  void onTicketPricingApplied(PlayerPresidentTicketPricingDecision decision) {}
 }
 
 /// M72 adapts one [PlayerPresidentDecisionGateway] to M71's eight existing
@@ -165,6 +207,10 @@ class _GatewayFacilityProvider extends PlayerFacilityInvestmentDecisionProvider 
     PlayerFacilityInvestmentContext context,
   ) =>
       gateway.chooseFacilityInvestment(context);
+
+  @override
+  void onApplied(PlayerPresidentFacilityRuntimeDecision decision) =>
+      gateway.onFacilityInvestmentApplied(decision);
 }
 
 class _GatewaySponsorProvider extends PlayerSponsorDecisionProvider {
@@ -175,6 +221,13 @@ class _GatewaySponsorProvider extends PlayerSponsorDecisionProvider {
   @override
   PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context) =>
       gateway.chooseSponsor(context);
+
+  @override
+  void onApplied(
+    PlayerPresidentSponsorRuntimeDecision decision,
+    SponsorContract contract,
+  ) =>
+      gateway.onSponsorApplied(decision, contract);
 }
 
 class _GatewayCrisisProvider extends PlayerCrisisDecisionProvider {
@@ -185,6 +238,10 @@ class _GatewayCrisisProvider extends PlayerCrisisDecisionProvider {
   @override
   PlayerCrisisActionChoice choose(PlayerCrisisDecisionContext context) =>
       gateway.chooseCrisisAction(context);
+
+  @override
+  void onApplied(PlayerPresidentCrisisRuntimeDecision decision) =>
+      gateway.onCrisisApplied(decision);
 }
 
 class _GatewayManagerProvider extends PlayerManagerDecisionProvider {
@@ -201,6 +258,20 @@ class _GatewayManagerProvider extends PlayerManagerDecisionProvider {
     PlayerManagerReplacementContext context,
   ) =>
       gateway.chooseManagerReplacement(context);
+
+  @override
+  void onReviewApplied(
+    PlayerManagerReviewContext context,
+    PlayerManagerReviewChoice choice,
+  ) =>
+      gateway.onManagerReviewApplied(context, choice);
+
+  @override
+  void onReplacementApplied(
+    PlayerPresidentManagerRuntimeDecision decision,
+    ManagerAssignment assignment,
+  ) =>
+      gateway.onManagerReplacementApplied(decision, assignment);
 }
 
 class _GatewayPromiseProvider extends PlayerPromiseDecisionProvider {
@@ -211,6 +282,13 @@ class _GatewayPromiseProvider extends PlayerPromiseDecisionProvider {
   @override
   PresidentPromiseType choosePromise(PlayerPromiseDecisionContext context) =>
       gateway.choosePromise(context);
+
+  @override
+  void onApplied(
+    PlayerPromiseDecisionContext context,
+    PresidentPromise promise,
+  ) =>
+      gateway.onPromiseApplied(context, promise);
 }
 
 class _GatewayMediaProvider extends PlayerMediaStatementDecisionProvider {
@@ -221,6 +299,13 @@ class _GatewayMediaProvider extends PlayerMediaStatementDecisionProvider {
   @override
   MediaStance chooseStance(PlayerMediaStatementDecisionContext context) =>
       gateway.chooseMediaStance(context);
+
+  @override
+  void onApplied(
+    PlayerMediaStatementDecisionContext context,
+    MediaStatement statement,
+  ) =>
+      gateway.onMediaStatementApplied(context, statement);
 }
 
 class _GatewayTransferProvider extends PlayerTransferStrategyDecisionProvider {
@@ -233,6 +318,14 @@ class _GatewayTransferProvider extends PlayerTransferStrategyDecisionProvider {
     PlayerTransferStrategyDecisionContext context,
   ) =>
       gateway.chooseTransferStrategy(context);
+
+  @override
+  void onApplied(
+    PlayerTransferStrategyDecisionContext context,
+    PlayerTransferStrategyChoice choice,
+    PresidentManagementProfile effectiveProfile,
+  ) =>
+      gateway.onTransferStrategyApplied(context, choice, effectiveProfile);
 }
 
 class _GatewayTicketPricingProvider
@@ -246,4 +339,8 @@ class _GatewayTicketPricingProvider
     PlayerPresidentTicketPricingDecisionContext context,
   ) =>
       gateway.chooseTicketPricing(context);
+
+  @override
+  void onApplied(PlayerPresidentTicketPricingDecision decision) =>
+      gateway.onTicketPricingApplied(decision);
 }

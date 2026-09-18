@@ -245,4 +245,170 @@ void main() {
       throwsA(isA<Exception>()),
     );
   });
+  test('M90 stage 3 M74 additive submit returns resolution and records once',
+      () {
+    final session =
+        PlayerPresidentInteractiveDecisionTranscriptSession(freshBase());
+    final pending =
+        session.advance() as PlayerPresidentInteractiveDecisionPending;
+    final choice = _choiceFor(pending.request);
+
+    final result = session.submitWithResolution(
+      request: pending.request,
+      choice: choice,
+    );
+
+    expect(result.resolution.requestKey, pending.request.key);
+    expect(result.resolution.kind, pending.request.kind);
+    expect(result.resolution.acceptedChoice, same(choice));
+    expect(result.resolution.consequence.kind, pending.request.kind);
+    expect(session.answeredDecisionCount, 1);
+    expect(session.snapshot.entries, hasLength(1));
+    expect(session.snapshot.entries.single.requestKey, pending.request.key);
+    expect(session.snapshot.entries.single.kind, pending.request.kind);
+    expect(result.nextStep, isA<PlayerPresidentInteractiveDecisionPending>());
+  });
+
+  test('M90 stage 3 M74 additive stale and invalid submits do not mutate transcript',
+      () {
+    final session =
+        PlayerPresidentInteractiveDecisionTranscriptSession(freshBase());
+    final first =
+        session.advance() as PlayerPresidentInteractiveDecisionPending;
+    final firstChoice = _choiceFor(first.request);
+    final accepted = session.submitWithResolution(
+      request: first.request,
+      choice: firstChoice,
+    );
+    final before = session.encodeSnapshot();
+    final beforeCount = session.answeredDecisionCount;
+
+    expect(
+      () => session.submitWithResolution(
+        request: first.request,
+        choice: firstChoice,
+      ),
+      throwsStateError,
+    );
+    expect(session.answeredDecisionCount, beforeCount);
+    expect(session.encodeSnapshot(), before);
+
+    final current =
+        accepted.nextStep as PlayerPresidentInteractiveDecisionPending;
+    expect(
+      () => session.submitWithResolution(
+        request: current.request,
+        choice: Object(),
+      ),
+      throwsArgumentError,
+    );
+    expect(session.answeredDecisionCount, beforeCount);
+    expect(session.encodeSnapshot(), before);
+  });
+
+  test('M90 stage 3 M74 legacy and additive submit keep nextStep and bytes parity',
+      () {
+    final legacy =
+        PlayerPresidentInteractiveDecisionTranscriptSession(freshBase());
+    final additive =
+        PlayerPresidentInteractiveDecisionTranscriptSession(freshBase());
+    final legacyPending =
+        legacy.advance() as PlayerPresidentInteractiveDecisionPending;
+    final additivePending =
+        additive.advance() as PlayerPresidentInteractiveDecisionPending;
+    expect(additivePending.request.key, legacyPending.request.key);
+
+    final legacyNext = legacy.submit(
+      request: legacyPending.request,
+      choice: _choiceFor(legacyPending.request),
+    );
+    final additiveResult = additive.submitWithResolution(
+      request: additivePending.request,
+      choice: _choiceFor(additivePending.request),
+    );
+
+    expect(additiveResult.nextStep.runtimeType, legacyNext.runtimeType);
+    expect(
+      (additiveResult.nextStep as PlayerPresidentInteractiveDecisionPending)
+          .request
+          .key,
+      (legacyNext as PlayerPresidentInteractiveDecisionPending).request.key,
+    );
+    expect(additive.encodeSnapshot(), legacy.encodeSnapshot());
+    expect(additive.answeredDecisionCount, legacy.answeredDecisionCount);
+  });
+
+  test('M90 stage 3 M74 additive restore keeps only current authoritative boundary',
+      () {
+    final source =
+        PlayerPresidentInteractiveDecisionTranscriptSession(freshBase());
+    PlayerPresidentInteractiveSessionStep step = source.advance();
+    for (var index = 0; index < 3; index++) {
+      final pending = step as PlayerPresidentInteractiveDecisionPending;
+      step = source
+          .submitWithResolution(
+            request: pending.request,
+            choice: _choiceFor(pending.request),
+          )
+          .nextStep;
+    }
+    final pendingBefore =
+        (step as PlayerPresidentInteractiveDecisionPending).request;
+    final encoded = source.encodeSnapshot();
+
+    final restored =
+        PlayerPresidentInteractiveDecisionTranscriptSession.restoreEncoded(
+      session: freshBase(),
+      encodedTranscript: encoded,
+    );
+    expect(restored.answeredDecisionCount, 3);
+    expect(restored.pendingDecision!.key, pendingBefore.key);
+    expect(restored.encodeSnapshot(), encoded);
+
+    final current =
+        restored.advance() as PlayerPresidentInteractiveDecisionPending;
+    expect(current.request.key, pendingBefore.key);
+    final result = restored.submitWithResolution(
+      request: current.request,
+      choice: _choiceFor(current.request),
+    );
+    expect(result.resolution.requestKey, current.request.key);
+    expect(result.resolution.kind, current.request.kind);
+    expect(restored.answeredDecisionCount, 4);
+  });
+
+  test('M90 stage 3 keeps M74 envelope and entry schema unchanged', () {
+    final session =
+        PlayerPresidentInteractiveDecisionTranscriptSession(freshBase());
+    final pending =
+        session.advance() as PlayerPresidentInteractiveDecisionPending;
+    session.submitWithResolution(
+      request: pending.request,
+      choice: _choiceFor(pending.request),
+    );
+
+    final root =
+        jsonDecode(session.encodeSnapshot()) as Map<String, dynamic>;
+    expect(
+      root.keys.toSet(),
+      {'format', 'saveVersion', 'checksum', 'payload'},
+    );
+    expect(
+      root['format'],
+      PlayerPresidentInteractiveDecisionTranscriptSaveCodec.format,
+    );
+    expect(
+      root['saveVersion'],
+      PlayerPresidentInteractiveDecisionTranscriptSaveCodec.currentSaveVersion,
+    );
+    final payload = root['payload'] as Map<String, dynamic>;
+    expect(payload.keys.toSet(), {'entries'});
+    final entry =
+        (payload['entries'] as List<dynamic>).single as Map<String, dynamic>;
+    expect(entry.keys.toSet(), {'requestKey', 'kind', 'choice'});
+    expect(entry.containsKey('resolution'), isFalse);
+    expect(entry.containsKey('consequence'), isFalse);
+  });
+
+
 }

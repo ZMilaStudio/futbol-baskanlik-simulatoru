@@ -7,6 +7,7 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_sessio
 import '../composition/app_composition.dart';
 import '../controller/game_flow_controller.dart';
 import '../decisions/decision_panel.dart';
+import '../decisions/decision_resolution_panel.dart';
 
 class PresidentHomeScreen extends StatefulWidget {
   const PresidentHomeScreen({
@@ -99,6 +100,7 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
         animation: _controller,
         builder: (context, _) {
           final step = _controller.currentStep;
+          final resolution = _controller.currentResolution;
           final errorMessage = _controller.errorMessage;
           final club = _controller.selectedClub;
           final busy = _controller.loading || _controller.persistenceBusy;
@@ -148,7 +150,9 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                           ),
                         ],
                         const SizedBox(height: 24),
-                        if (_controller.loading && step == null)
+                        if (_controller.loading &&
+                            step == null &&
+                            resolution == null)
                           const CircularProgressIndicator()
                         else ...[
                           if (busy) ...[
@@ -164,7 +168,15 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                             ),
                             const SizedBox(height: 12),
                           ],
-                          if (step != null)
+                          if (resolution != null)
+                            DecisionResolutionPanel(
+                              resolution: resolution,
+                              busy: busy,
+                              onContinue: busy
+                                  ? null
+                                  : _controller.continueAfterResolution,
+                            )
+                          else if (step != null)
                             PresidentSessionStateView(
                               step: step,
                               submitting: busy,

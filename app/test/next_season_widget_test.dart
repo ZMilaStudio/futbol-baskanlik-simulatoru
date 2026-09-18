@@ -40,6 +40,8 @@ void main() {
       }
       final pending = step as PlayerPresidentInteractiveDecisionPending;
       controller.submitChoice(canonicalChoiceForRequest(pending.request));
+      expect(controller.currentResolution, isNotNull);
+      expect(controller.continueAfterResolution(), isTrue);
     }
     throw StateError('Interactive season did not complete.');
   }

@@ -37,6 +37,11 @@ abstract class PlayerPromiseDecisionProvider {
   const PlayerPromiseDecisionProvider();
 
   PresidentPromiseType choosePromise(PlayerPromiseDecisionContext context);
+
+  void onApplied(
+    PlayerPromiseDecisionContext context,
+    PresidentPromise promise,
+  ) {}
 }
 
 /// M56 keeps M11's promise meanings and targets canonical while allowing the
@@ -76,14 +81,15 @@ class PlayerPresidentPromiseGenerator extends PromiseGenerator {
     if (context.clubId != controlledClubId) return aiPromise;
 
     final allowedTypes = allowedPromiseTypes(context);
-    final chosenType = provider.choosePromise(
-      PlayerPromiseDecisionContext(
-        context: context,
-        aiPromise: aiPromise,
-        allowedTypes: allowedTypes,
-      ),
+    final decisionContext = PlayerPromiseDecisionContext(
+      context: context,
+      aiPromise: aiPromise,
+      allowedTypes: allowedTypes,
     );
-    return canonicalPromiseFor(context: context, type: chosenType);
+    final chosenType = provider.choosePromise(decisionContext);
+    final promise = canonicalPromiseFor(context: context, type: chosenType);
+    provider.onApplied(decisionContext, promise);
+    return promise;
   }
 
   static List<PresidentPromiseType> allowedPromiseTypes(

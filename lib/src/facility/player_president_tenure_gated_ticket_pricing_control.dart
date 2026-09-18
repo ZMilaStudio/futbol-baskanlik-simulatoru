@@ -183,6 +183,8 @@ abstract class PlayerMatchdayTicketPricingDecisionProvider {
   MatchdayTicketPricingChoice choose(
     PlayerPresidentTicketPricingDecisionContext context,
   );
+
+  void onApplied(PlayerPresidentTicketPricingDecision decision) {}
 }
 
 class PlayerPresidentTicketPricingDecision {
@@ -307,14 +309,16 @@ class PlayerPresidentTenureGatedTicketPricingEngine {
           tenureControl.active &&
           president.presidentId == tenureControl.playerPresidentId;
       final choice = canDelegate ? playerProvider!.choose(context) : aiChoice;
-      decisions.add(
-        PlayerPresidentTicketPricingDecision(
-          context: context,
-          choice: choice,
-          providerCalled: canDelegate,
-          outcome: pricingPolicy.apply(base: base, tier: choice.tier),
-        ),
+      final decision = PlayerPresidentTicketPricingDecision(
+        context: context,
+        choice: choice,
+        providerCalled: canDelegate,
+        outcome: pricingPolicy.apply(base: base, tier: choice.tier),
       );
+      decisions.add(decision);
+      if (canDelegate) {
+        playerProvider!.onApplied(decision);
+      }
     }
     return PlayerPresidentTenureGatedTicketPricingResult(decisions: decisions);
   }

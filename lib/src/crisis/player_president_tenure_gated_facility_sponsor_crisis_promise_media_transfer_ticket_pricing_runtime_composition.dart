@@ -198,6 +198,13 @@ class _M70TenureGatedCrisisProvider extends PlayerCrisisDecisionProvider {
     }
     return PlayerCrisisActionChoice(action: context.aiDecision.action);
   }
+
+  @override
+  void onApplied(PlayerPresidentCrisisRuntimeDecision decision) {
+    if (session.allows(decision.presidentId)) {
+      delegate.onApplied(decision);
+    }
+  }
 }
 
 class _M70PlayerPresidentCrisisDecisionEngine extends CrisisDecisionEngine {
@@ -243,10 +250,20 @@ class _M70PlayerPresidentCrisisDecisionEngine extends CrisisDecisionEngine {
         'Player crisis choice must select one action for ${scenario.type.name}.',
       );
     }
-    return aiEngine.resolveAction(
+    final selected = matches.single;
+    final resolution = aiEngine.resolveAction(
       context: context,
       scenario: scenario,
-      action: matches.single.action,
+      action: selected.action,
     );
+    provider.onApplied(
+      PlayerPresidentCrisisRuntimeDecision(
+        context: playerContext,
+        choice: choice,
+        selectedDecision: selected,
+        resolution: resolution,
+      ),
+    );
+    return resolution;
   }
 }

@@ -48,12 +48,23 @@ void main() {
     final first =
         controllerA.currentStep as PlayerPresidentInteractiveDecisionPending;
     controllerA.submitChoice(canonicalChoiceForRequest(first.request));
-    final pendingBefore =
-        controllerA.currentStep as PlayerPresidentInteractiveDecisionPending;
+    final visibleResolution = controllerA.currentResolution;
+    final queuedBefore =
+        controllerA.queuedNextStep as PlayerPresidentInteractiveDecisionPending;
     final answeredBefore = controllerA.session!.answeredDecisionCount;
+    expect(controllerA.currentStep, isNull);
+    expect(visibleResolution, isNotNull);
 
     expect(controllerA.saveCurrent(), isTrue);
     expect(controllerA.binding, isNotNull);
+    expect(controllerA.currentResolution, same(visibleResolution));
+    expect(controllerA.currentStep, isNull);
+    final reboundQueued =
+        controllerA.queuedNextStep as PlayerPresidentInteractiveDecisionPending;
+    expect(reboundQueued.request.key, queuedBefore.request.key);
+    expect(controllerA.continueAfterResolution(), isTrue);
+    final pendingBefore =
+        controllerA.currentStep as PlayerPresidentInteractiveDecisionPending;
 
     final initialList = compositionA.saveSlots.list();
     expect(initialList, hasLength(1));
@@ -81,6 +92,8 @@ void main() {
 
     expect(controllerB.selectedClub!.id, club.id);
     expect(controllerB.session!.answeredDecisionCount, answeredBefore);
+    expect(controllerB.currentResolution, isNull);
+    expect(controllerB.queuedNextStep, isNull);
     final restored =
         controllerB.currentStep as PlayerPresidentInteractiveDecisionPending;
     expect(restored.request.kind, pendingBefore.request.kind);
@@ -119,10 +132,15 @@ void main() {
     final pending =
         controllerB.currentStep as PlayerPresidentInteractiveDecisionPending;
     controllerB.submitChoice(canonicalChoiceForRequest(pending.request));
-    final authoritativeAfterSubmit = controllerB.currentStep;
+    final visibleResolution = controllerB.currentResolution;
+    final authoritativeAfterSubmit = controllerB.queuedNextStep;
+    expect(controllerB.currentStep, isNull);
+    expect(visibleResolution, isNotNull);
     expect(controllerB.session!.answeredDecisionCount, answeredBefore + 1);
     expect(controllerB.saveCurrent(), isTrue);
     expect(controllerB.binding!.identity, bindingB.identity);
+    expect(controllerB.currentResolution, same(visibleResolution));
+    expect(controllerB.queuedNextStep, same(authoritativeAfterSubmit));
 
     final compositionC = composition();
     final summaryC = compositionC.saveSlots.list().single;
@@ -143,6 +161,8 @@ void main() {
       controllerC.session!.answeredDecisionCount,
       answeredBefore + 1,
     );
+    expect(controllerC.currentResolution, isNull);
+    expect(controllerC.queuedNextStep, isNull);
     if (authoritativeAfterSubmit is PlayerPresidentInteractiveDecisionPending) {
       final restored =
           controllerC.currentStep as PlayerPresidentInteractiveDecisionPending;

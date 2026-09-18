@@ -103,6 +103,8 @@ abstract class PlayerFacilityInvestmentDecisionProvider {
   const PlayerFacilityInvestmentDecisionProvider();
 
   PlayerFacilityInvestmentChoice choose(PlayerFacilityInvestmentContext context);
+
+  void onApplied(PlayerPresidentFacilityRuntimeDecision decision) {}
 }
 
 class PlayerPresidentFacilityRuntimeDecision {
@@ -513,9 +515,7 @@ class PlayerPresidentFacilityControlRuntimeEngine {
     final stadiumTarget =
         (beforeStadium + choice.stadiumUpgrades).clamp(0, StadiumInvestmentPolicy.maxLevel).toInt();
     final spend = current.totalInvestmentSpent - checkpoint.totalInvestmentSpent;
-    return (
-      current,
-      PlayerPresidentFacilityRuntimeDecision(
+    final runtimeDecision = PlayerPresidentFacilityRuntimeDecision(
         source: PlayerFacilityDecisionSource.player,
         requestedChoice: choice,
         decision: PresidentFacilityInvestmentRuntimeDecision(
@@ -538,8 +538,9 @@ class PlayerPresidentFacilityControlRuntimeEngine {
           portfolioCashReserveBasisPoints: portfolioPlan.cashReserveBasisPoints,
           spend: spend,
         ),
-      ),
-    );
+      );
+    provider!.onApplied(runtimeDecision);
+    return (current, runtimeDecision);
   }
 
   bool _preservesReserve(

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_new_game_bootstrap_snapshot.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_persistence_bundle.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_manager_control.dart';
@@ -102,6 +105,19 @@ void main() {
       PlayerPresidentInteractiveDecisionApplicationSession.resume(
         checkpoint: cloneCheckpoint(),
         resumeConfig: resumeConfig,
+      );
+
+  PlayerPresidentInteractiveDecisionApplicationSession freshNewGame() =>
+      PlayerPresidentInteractiveDecisionApplicationSession.start(
+        clubs: world.clubs,
+        leagues: world.leagues,
+        config: config,
+        controlledClubId: controlledClubId,
+        seasonCount: 1,
+        electionInterval: 4,
+        hasFutureSeasonAfterReport: true,
+        crisisActivationThreshold: 0,
+        candidateLimit: 5,
       );
 
   test('M76 exposes the deterministic pending request through one app session',
@@ -214,4 +230,269 @@ void main() {
     );
     expect(completed.decisionCount, uninterrupted.decisionCount);
   });
+  test('M90 stage 3 M76 additive checkpoint submit exposes authoritative result',
+      () {
+    final session = fresh();
+    final pending =
+        session.advance() as PlayerPresidentInteractiveDecisionPending;
+    final choice = _choiceFor(pending.request);
+
+    final result = session.submitWithResolution(
+      request: pending.request,
+      choice: choice,
+    );
+
+    expect(session.origin,
+        PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint);
+    expect(result.resolution.requestKey, pending.request.key);
+    expect(result.resolution.kind, pending.request.kind);
+    expect(result.resolution.acceptedChoice, same(choice));
+    expect(result.resolution.consequence.kind, pending.request.kind);
+    expect(session.answeredDecisionCount, 1);
+  });
+
+  test('M90 stage 3 M76 additive new-game submit exposes authoritative result',
+      () {
+    final session = freshNewGame();
+    final pending =
+        session.advance() as PlayerPresidentInteractiveDecisionPending;
+    final choice = _choiceFor(pending.request);
+
+    final result = session.submitWithResolution(
+      request: pending.request,
+      choice: choice,
+    );
+
+    expect(session.origin,
+        PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame);
+    expect(result.resolution.requestKey, pending.request.key);
+    expect(result.resolution.kind, pending.request.kind);
+    expect(result.resolution.acceptedChoice, same(choice));
+    expect(result.resolution.consequence.kind, pending.request.kind);
+    expect(session.answeredDecisionCount, 1);
+    expect(session.newGameBootstrapSnapshot.transcript.decisionCount, 1);
+  });
+
+  test('M90 stage 3 M76 passes all nine consequence kinds through application',
+      () {
+    final session = freshNewGame();
+    final seen = <PlayerPresidentInteractiveDecisionKind>{};
+    PlayerPresidentInteractiveSessionStep step = session.advance();
+    var guard = 0;
+
+    while (step is PlayerPresidentInteractiveDecisionPending) {
+      guard++;
+      if (guard > 100) {
+        throw StateError('M90 application consequence drive did not converge.');
+      }
+      final request = step.request;
+      final choice = _choiceFor(request);
+      final result = session.submitWithResolution(
+        request: request,
+        choice: choice,
+      );
+      expect(result.resolution.requestKey, request.key);
+      expect(result.resolution.kind, request.kind);
+      expect(result.resolution.acceptedChoice, same(choice));
+      expect(result.resolution.consequence.kind, request.kind);
+      seen.add(request.kind);
+      step = result.nextStep;
+    }
+
+    expect(seen, PlayerPresidentInteractiveDecisionKind.values.toSet());
+    expect(session.answeredDecisionCount, 9);
+    expect(step, isA<PlayerPresidentInteractiveSessionCompleted>());
+  });
+
+  test('M90 stage 3 M76 additive save restores at next checkpoint boundary',
+      () {
+    final source = fresh();
+    final pending =
+        source.advance() as PlayerPresidentInteractiveDecisionPending;
+    final result = source.submitWithResolution(
+      request: pending.request,
+      choice: _choiceFor(pending.request),
+    );
+    final next =
+        result.nextStep as PlayerPresidentInteractiveDecisionPending;
+    final encoded = source.encodePersistenceBundle();
+
+    final restored =
+        PlayerPresidentInteractiveDecisionApplicationSession.restoreEncoded(
+      encodedBundle: encoded,
+    );
+    expect(restored.answeredDecisionCount, 1);
+    expect(restored.pendingDecision!.key, next.request.key);
+    final restoredBoundary =
+        restored.advance() as PlayerPresidentInteractiveDecisionPending;
+    expect(restoredBoundary.request.key, next.request.key);
+    expect(restored.encodePersistenceBundle(), encoded);
+  });
+
+  test('M90 stage 3 M76 additive bootstrap restores at next new-game boundary',
+      () {
+    final source = freshNewGame();
+    final pending =
+        source.advance() as PlayerPresidentInteractiveDecisionPending;
+    final result = source.submitWithResolution(
+      request: pending.request,
+      choice: _choiceFor(pending.request),
+    );
+    final next =
+        result.nextStep as PlayerPresidentInteractiveDecisionPending;
+    final encoded = source.encodeNewGameBootstrapSnapshot();
+
+    final restored = PlayerPresidentInteractiveDecisionApplicationSession
+        .restoreEncodedNewGameBootstrap(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      encodedBootstrap: encoded,
+    );
+    expect(restored.answeredDecisionCount, 1);
+    expect(restored.pendingDecision!.key, next.request.key);
+    final restoredBoundary =
+        restored.advance() as PlayerPresidentInteractiveDecisionPending;
+    expect(restoredBoundary.request.key, next.request.key);
+    expect(restored.encodeNewGameBootstrapSnapshot(), encoded);
+  });
+
+  test('M90 stage 3 M76 additive stale and invalid submits do not mutate saves',
+      () {
+    final checkpointSession = fresh();
+    final first = checkpointSession.advance()
+        as PlayerPresidentInteractiveDecisionPending;
+    final firstChoice = _choiceFor(first.request);
+    final accepted = checkpointSession.submitWithResolution(
+      request: first.request,
+      choice: firstChoice,
+    );
+    final beforeBundle = checkpointSession.encodePersistenceBundle();
+    final beforeCount = checkpointSession.answeredDecisionCount;
+
+    expect(
+      () => checkpointSession.submitWithResolution(
+        request: first.request,
+        choice: firstChoice,
+      ),
+      throwsStateError,
+    );
+    expect(checkpointSession.encodePersistenceBundle(), beforeBundle);
+    expect(checkpointSession.answeredDecisionCount, beforeCount);
+
+    final current =
+        accepted.nextStep as PlayerPresidentInteractiveDecisionPending;
+    expect(
+      () => checkpointSession.submitWithResolution(
+        request: current.request,
+        choice: Object(),
+      ),
+      throwsArgumentError,
+    );
+    expect(checkpointSession.encodePersistenceBundle(), beforeBundle);
+    expect(checkpointSession.answeredDecisionCount, beforeCount);
+
+    final newGame = freshNewGame();
+    final newFirst =
+        newGame.advance() as PlayerPresidentInteractiveDecisionPending;
+    final newChoice = _choiceFor(newFirst.request);
+    final newAccepted = newGame.submitWithResolution(
+      request: newFirst.request,
+      choice: newChoice,
+    );
+    final beforeBootstrap = newGame.encodeNewGameBootstrapSnapshot();
+    final newCount = newGame.answeredDecisionCount;
+
+    expect(
+      () => newGame.submitWithResolution(
+        request: newFirst.request,
+        choice: newChoice,
+      ),
+      throwsStateError,
+    );
+    expect(newGame.encodeNewGameBootstrapSnapshot(), beforeBootstrap);
+    expect(newGame.answeredDecisionCount, newCount);
+
+    final newCurrent =
+        newAccepted.nextStep as PlayerPresidentInteractiveDecisionPending;
+    expect(
+      () => newGame.submitWithResolution(
+        request: newCurrent.request,
+        choice: Object(),
+      ),
+      throwsArgumentError,
+    );
+    expect(newGame.encodeNewGameBootstrapSnapshot(), beforeBootstrap);
+    expect(newGame.answeredDecisionCount, newCount);
+  });
+
+  test('M90 stage 3 keeps M75 and M80 encoded schemas unchanged', () {
+    final checkpointSession = fresh();
+    final checkpointPending = checkpointSession.advance()
+        as PlayerPresidentInteractiveDecisionPending;
+    checkpointSession.submitWithResolution(
+      request: checkpointPending.request,
+      choice: _choiceFor(checkpointPending.request),
+    );
+    final bundleRoot = jsonDecode(checkpointSession.encodePersistenceBundle())
+        as Map<String, dynamic>;
+    expect(
+      bundleRoot.keys.toSet(),
+      {'format', 'saveVersion', 'checksum', 'payload'},
+    );
+    expect(
+      bundleRoot['format'],
+      PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec.format,
+    );
+    expect(
+      bundleRoot['saveVersion'],
+      PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec
+          .currentSaveVersion,
+    );
+    final bundlePayload =
+        bundleRoot['payload'] as Map<String, dynamic>;
+    expect(
+      bundlePayload.keys.toSet(),
+      {'resumeConfig', 'gameStateSave', 'transcriptSave'},
+    );
+
+    final newGame = freshNewGame();
+    final newPending =
+        newGame.advance() as PlayerPresidentInteractiveDecisionPending;
+    newGame.submitWithResolution(
+      request: newPending.request,
+      choice: _choiceFor(newPending.request),
+    );
+    final bootstrapRoot =
+        jsonDecode(newGame.encodeNewGameBootstrapSnapshot())
+            as Map<String, dynamic>;
+    expect(
+      bootstrapRoot.keys.toSet(),
+      {'format', 'saveVersion', 'checksum', 'payload'},
+    );
+    expect(
+      bootstrapRoot['format'],
+      PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+          .format,
+    );
+    expect(
+      bootstrapRoot['saveVersion'],
+      PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
+          .currentSaveVersion,
+    );
+    final bootstrapPayload =
+        bootstrapRoot['payload'] as Map<String, dynamic>;
+    expect(
+      bootstrapPayload.keys.toSet(),
+      {
+        'worldFingerprint',
+        'config',
+        'controlledClubId',
+        'electionInterval',
+        'resumeConfig',
+        'transcript',
+      },
+    );
+  });
+
+
 }
