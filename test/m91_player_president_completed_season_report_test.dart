@@ -4,6 +4,7 @@ import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dar
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_persistence_bundle.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_manager_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_media_statement_control.dart';
