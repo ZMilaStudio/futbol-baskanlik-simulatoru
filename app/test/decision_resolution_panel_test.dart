@@ -160,22 +160,24 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: AnimatedBuilder(
-            animation: controller,
-            builder: (context, _) {
-              final resolution = controller.currentResolution;
-              if (resolution != null) {
-                return DecisionResolutionPanel(
-                  resolution: resolution,
-                  busy: false,
-                  onContinue: controller.continueAfterResolution,
+          body: SingleChildScrollView(
+            child: AnimatedBuilder(
+              animation: controller,
+              builder: (context, _) {
+                final resolution = controller.currentResolution;
+                if (resolution != null) {
+                  return DecisionResolutionPanel(
+                    resolution: resolution,
+                    busy: false,
+                    onContinue: controller.continueAfterResolution,
+                  );
+                }
+                return PresidentSessionStateView(
+                  step: controller.currentStep!,
+                  clubNameForId: clubNameForId,
                 );
-              }
-              return PresidentSessionStateView(
-                step: controller.currentStep!,
-                clubNameForId: clubNameForId,
-              );
-            },
+              },
+            ),
           ),
         ),
       ),
