@@ -8,6 +8,7 @@ import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
 import 'package:futbol_baskanlik_app/reports/president_season_report_panel.dart';
 import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
 import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 
 import 'support/decision_test_support.dart';
@@ -99,6 +100,101 @@ void main() {
     await tester.tap(find.byKey(const Key('continue-next-season-button')));
     await tester.pump();
     expect(continuePressed, isTrue);
+  });
+
+
+  testWidgets('bootstrap Completed reload renders report and keeps Save enabled',
+      (tester) async {
+    final controller = GameFlowController(
+      world: composition.world,
+      config: composition.simulationConfig,
+      saveSlots: composition.saveSlots,
+      slotIdFactory: () => 'career_m91_widget_bootstrap_completed',
+    );
+    addTearDown(controller.dispose);
+    controller.startNewGame(composition.world.clubs.first);
+    completeSeason(controller);
+    expect(controller.saveCurrent(), isTrue);
+    expect(controller.saveSummary!.isNewGameBootstrap, isTrue);
+
+    final recreated = AppComposition.withSaveDirectory(
+      Directory(
+        '${tempDirectory.path}${Platform.pathSeparator}save_slots',
+      ),
+    );
+    final summary = recreated.saveSlots.list().single;
+    final binding =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: recreated.saveSlots,
+      summary: summary,
+    )!;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PresidentHomeScreen.loaded(
+          composition: recreated,
+          binding: binding,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    final saveButton = tester.widget<IconButton>(
+      find.byKey(const Key('save-game-button')),
+    );
+    expect(saveButton.onPressed, isNotNull);
+  });
+
+  testWidgets('checkpoint Completed reload renders the same report boundary',
+      (tester) async {
+    final controller = GameFlowController(
+      world: composition.world,
+      config: composition.simulationConfig,
+      saveSlots: composition.saveSlots,
+      slotIdFactory: () => 'career_m91_widget_checkpoint_completed',
+    );
+    addTearDown(controller.dispose);
+    controller.startNewGame(composition.world.clubs.first);
+    completeSeason(controller);
+    expect(controller.continueToNextSeason(), isTrue);
+    final secondCompleted = completeSeason(controller);
+    final expected =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(secondCompleted);
+    expect(controller.saveCurrent(), isTrue);
+    expect(controller.saveSummary!.isCheckpoint, isTrue);
+
+    final recreated = AppComposition.withSaveDirectory(
+      Directory(
+        '${tempDirectory.path}${Platform.pathSeparator}save_slots',
+      ),
+    );
+    final summary = recreated.saveSlots.list().single;
+    final binding =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: recreated.saveSlots,
+      summary: summary,
+    )!;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PresidentHomeScreen.loaded(
+          composition: recreated,
+          binding: binding,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    expect(
+      find.text('Sezon ${expected.seasonIndex + 1} tamamlandı'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('${expected.finalPosition}. sıra'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('resumed next-season Pending uses the existing DecisionPanel',
