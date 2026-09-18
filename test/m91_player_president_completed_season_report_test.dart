@@ -179,16 +179,16 @@ void main() {
     newGameCompleted = _drive(newGameSession);
 
     final openingCheckpoint =
-        const PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine()
-            .simulateWithCheckpoint(
+        const PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine(
+      aiCrisisEngine: CrisisDecisionEngine(activationThreshold: 0),
+      candidateLimit: 5,
+    ).simulateWithCheckpoint(
       clubs: world.clubs,
       leagues: world.leagues,
       config: config,
       controlledClubId: controlledClubId,
       seasonCount: 1,
       hasFutureSeasonAfterReport: true,
-      aiCrisisEngine: const CrisisDecisionEngine(activationThreshold: 0),
-      candidateLimit: 5,
     ).checkpoint;
     checkpointSession =
         PlayerPresidentInteractiveDecisionApplicationSession.resume(
