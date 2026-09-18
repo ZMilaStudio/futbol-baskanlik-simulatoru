@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_baskanlik_app/composition/app_composition.dart';
 import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
 import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
+import 'package:futbol_baskanlik_app/reports/president_season_report_panel.dart';
 import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
+import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 
 import 'support/decision_test_support.dart';
@@ -46,8 +48,13 @@ void main() {
     throw StateError('Interactive season did not complete.');
   }
 
+  String clubNameForId(String id) => composition.world.clubs
+      .singleWhere((club) => club.id == id)
+      .name;
+
+
   testWidgets(
-      'Completed view shows authoritative checkpoint progress and next action',
+      'Completed view renders authoritative President Season Report and next action',
       (tester) async {
     final controller = GameFlowController(
       world: composition.world,
@@ -57,6 +64,7 @@ void main() {
     addTearDown(controller.dispose);
     controller.startNewGame(composition.world.clubs.first);
     final completed = completeSeason(controller);
+    final report = PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
 
     var continuePressed = false;
     await tester.pumpWidget(
@@ -65,6 +73,7 @@ void main() {
           body: SingleChildScrollView(
             child: PresidentSessionStateView(
               step: completed,
+              clubNameForId: clubNameForId,
               onContinueToNextSeason: () {
                 continuePressed = true;
               },
@@ -74,16 +83,17 @@ void main() {
       ),
     );
 
-    final checkpoint = completed.result.checkpoint;
-    expect(find.text('Sezon tamamlandı'), findsOneWidget);
+    expect(find.byType(PresidentSeasonReportPanel), findsOneWidget);
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    expect(find.byKey(const Key('season-report-title')), findsOneWidget);
     expect(
-      find.text('Tamamlanan sezon sayısı: ${checkpoint.completedSeasons}'),
+      find.text(
+        '${clubNameForId(report.controlledClubId)} • ${report.leagueName}',
+      ),
       findsOneWidget,
     );
-    expect(
-      find.text('Sıradaki sezon indeksi: ${checkpoint.nextSeasonIndex}'),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('completed-season-count')), findsNothing);
+    expect(find.byKey(const Key('next-season-index')), findsNothing);
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('continue-next-season-button')));
