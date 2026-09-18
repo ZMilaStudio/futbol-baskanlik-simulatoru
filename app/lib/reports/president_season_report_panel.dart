@@ -217,7 +217,6 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        key: key,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
@@ -242,7 +241,6 @@ class _ReportLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        key: key,
         padding: const EdgeInsets.only(bottom: 5),
         child: Text(text),
       );
