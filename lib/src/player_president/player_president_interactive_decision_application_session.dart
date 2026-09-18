@@ -330,5 +330,11 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required PlayerPresidentInteractiveDecisionRequest request,
     required Object choice,
   }) =>
-      _session.submit(request: request, choice: choice);
+      submitWithResolution(request: request, choice: choice).nextStep;
+
+  PlayerPresidentInteractiveDecisionSubmissionResult submitWithResolution({
+    required PlayerPresidentInteractiveDecisionRequest request,
+    required Object choice,
+  }) =>
+      _session.submitWithResolution(request: request, choice: choice);
 }
