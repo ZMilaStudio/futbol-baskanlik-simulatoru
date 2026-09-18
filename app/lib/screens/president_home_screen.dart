@@ -101,6 +101,7 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
           final step = _controller.currentStep;
           final errorMessage = _controller.errorMessage;
           final club = _controller.selectedClub;
+          final busy = _controller.loading || _controller.persistenceBusy;
 
           return Center(
             child: SingleChildScrollView(
@@ -150,7 +151,7 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                         if (_controller.loading && step == null)
                           const CircularProgressIndicator()
                         else ...[
-                          if (_controller.loading) ...[
+                          if (busy) ...[
                             const LinearProgressIndicator(),
                             const SizedBox(height: 12),
                           ],
@@ -166,8 +167,13 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                           if (step != null)
                             PresidentSessionStateView(
                               step: step,
-                              submitting: _controller.loading,
+                              submitting: busy,
                               onSubmit: _controller.submitChoice,
+                              onContinueToNextSeason: busy
+                                  ? null
+                                  : () {
+                                      _controller.continueToNextSeason();
+                                    },
                             )
                           else if (errorMessage == null)
                             const Text(
@@ -194,11 +200,13 @@ class PresidentSessionStateView extends StatelessWidget {
     required this.step,
     this.submitting = false,
     this.onSubmit,
+    this.onContinueToNextSeason,
   });
 
   final PlayerPresidentInteractiveSessionStep step;
   final bool submitting;
   final ValueChanged<Object>? onSubmit;
+  final VoidCallback? onContinueToNextSeason;
 
   @override
   Widget build(BuildContext context) {
@@ -236,9 +244,9 @@ class PresidentSessionStateView extends StatelessWidget {
     }
 
     final completed = current as PlayerPresidentInteractiveSessionCompleted;
+    final checkpoint = completed.result.checkpoint;
     final boundaries = completed.result.boundaries;
-    final completedSeason =
-        boundaries.isEmpty ? null : boundaries.last.seasonIndex + 1;
+    final lastBoundary = boundaries.isEmpty ? null : boundaries.last;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -247,15 +255,32 @@ class PresidentSessionStateView extends StatelessWidget {
           'Sezon tamamlandı',
           key: Key('session-lifecycle-state'),
         ),
-        if (completedSeason != null) ...[
-          const SizedBox(height: 8),
+        const SizedBox(height: 8),
+        Text(
+          'Tamamlanan sezon sayısı: ${checkpoint.completedSeasons}',
+          key: const Key('completed-season-count'),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Sıradaki sezon indeksi: ${checkpoint.nextSeasonIndex}',
+          key: const Key('next-season-index'),
+        ),
+        if (lastBoundary != null) ...[
+          const SizedBox(height: 4),
           Text(
-            'Tamamlanan sezon: $completedSeason',
+            'Son sezon: ${lastBoundary.seasonIndex + 1}',
             key: const Key('completed-season-info'),
           ),
         ],
         const SizedBox(height: 4),
         Text('Yanıtlanan karar: ${completed.decisionCount}'),
+        const SizedBox(height: 16),
+        FilledButton.icon(
+          key: const Key('continue-next-season-button'),
+          onPressed: onContinueToNextSeason,
+          icon: const Icon(Icons.skip_next),
+          label: const Text('Sonraki Sezona Geç'),
+        ),
       ],
     );
   }

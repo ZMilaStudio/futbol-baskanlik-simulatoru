@@ -176,6 +176,69 @@ class GameFlowController extends ChangeNotifier {
     }
   }
 
+  /// Hands an authoritative Completed result to the existing checkpoint
+  /// application lifecycle.
+  ///
+  /// The new session is created only through M79's public resume contract.
+  /// Any previous M88 binding remains the identity of the old slot and is
+  /// deliberately detached after a successful handoff. The old slot stays on
+  /// disk; the next checkpoint-origin session will make its first save via M87.
+  bool continueToNextSeason() {
+    if (_loading || _persistenceBusy) return false;
+
+    final currentSession = _session;
+    final currentStep = _currentStep;
+    if (currentSession == null ||
+        currentStep is! PlayerPresidentInteractiveSessionCompleted) {
+      _errorMessage = 'Sonraki sezona geçmek için sezon tamamlanmış olmalı.';
+      notifyListeners();
+      return false;
+    }
+
+    _loading = true;
+    _errorMessage = null;
+    _persistenceError = null;
+    _persistenceMessage = null;
+    notifyListeners();
+
+    var continued = false;
+    try {
+      final checkpoint = currentStep.result.checkpoint;
+      final club = _clubById(checkpoint.controlledClubId);
+      if (club == null) {
+        throw StateError(
+          'Controlled club ${checkpoint.controlledClubId} is not canonical.',
+        );
+      }
+
+      final nextSession =
+          PlayerPresidentInteractiveDecisionApplicationSession.resume(
+        checkpoint: checkpoint,
+        resumeConfig: currentSession.resumeConfig,
+      );
+      final nextStep = nextSession.advance();
+
+      _selectedClub = club;
+      _session = nextSession;
+      _currentStep = nextStep;
+
+      // A binding owns one exact typed slot + one exact loaded session. The
+      // resumed checkpoint-origin session is a new authoritative session and
+      // must not inherit the previous slot identity implicitly.
+      _binding = null;
+      _saveSummary = null;
+      continued = true;
+    } catch (_) {
+      // Keep the previous Completed session/step/binding untouched.
+      _errorMessage =
+          'Sonraki sezon başlatılamadı. Tamamlanan sezon korunuyor.';
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+    return continued;
+  }
+
   /// Persists the authoritative application session.
   ///
   /// Fresh sessions route only through M87. Once the first slot exists it is
