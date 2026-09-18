@@ -169,7 +169,10 @@ void main() {
     );
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('continue-next-season-button')));
+    final continueButton =
+        find.byKey(const Key('continue-next-season-button'));
+    await tester.ensureVisible(continueButton);
+    await tester.tap(continueButton);
     await tester.pump();
     expect(continued, isTrue);
   });
