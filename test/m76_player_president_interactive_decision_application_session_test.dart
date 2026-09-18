@@ -275,7 +275,7 @@ void main() {
 
   test('M90 stage 3 M76 passes all nine consequence kinds through application',
       () {
-    final session = fresh();
+    final session = freshNewGame();
     final seen = <PlayerPresidentInteractiveDecisionKind>{};
     PlayerPresidentInteractiveSessionStep step = session.advance();
     var guard = 0;
