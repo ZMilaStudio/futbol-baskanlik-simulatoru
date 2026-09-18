@@ -40,68 +40,82 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-**M0–M89 CLOSED / MERGED / PASS.**
+**M0–M90 CLOSED / MERGED / PASS.**
 
-Aktif milestone:
+Son kapanan milestone:
 
 # M90 — Decision Resolution Feedback I
 
-Branch:
-`feat/m90-decision-resolution-feedback`
+PR:
+**#93 — MERGED**
 
-Draft PR:
-**#93 — open / Draft / unmerged**
+Onaylanan exact merge HEAD:
+`e262b69000b65d3fe114557d3ac5016ce48ad174`
 
-M90 branch başlangıç `main` SHA:
-`2811989bff385eeca3b28b9393fbd55306b67e20`
+Squash merge / M90 executable main SHA:
+`c81b8f1619820ce8a2fad0a7ebd1e3394ba0ce3b`
 
-Son doğrulanmış **source HEAD**:
-`4f539f6129751c6114b8f53b0c2c3b9c96c9c12d`
-
-M90 durum:
+M90 Aşama durumu:
 - Aşama 1 — **PASS**
 - Aşama 2 — **PASS**
-- Aşama 3 — **IMPLEMENTED / normal suite PASS / canonical final verification INCOMPLETE**
-- Aşama 4 — **BAŞLANMADI**
-- Flutter/controller/UI — M90 kapsamında henüz değiştirilmedi
+- Aşama 3 — **PASS**
+- Aşama 4 — **PASS**
+- Aşama 5 — **PASS**
+- Final classification — **A) READY / NO BLOCKER**
+- Merge — **COMPLETED**
+- Post-merge actual-main executable verification — **SUCCESS**
 
-Authority sınırı değişmedi:
+M90 final ürün lifecycle:
+`Pending → accepted choice → authoritative immediate decision resolution → Devam Et → authoritative next Pending / Completed`
+
+Authority sınırı:
 - **M65 tek persisted game-state authority**
-- M74 yalnız accepted-choice replay metadata
+- M74 yalnız accepted-choice replay metadata: `requestKey / kind / choice`
+- M75 checkpoint persistence bundle
+- M76 application lifecycle + additive resolution exposure
+- M87/M88 save-slot lifecycle unchanged
 - resolution/consequence runtime-only
-- M76 application lifecycle / exposure
-- persistence/save schema değişikliği yok
+- Flutter presentation/transient coordination only
+- resolution/presentation state save bytes'a girmez
 
-M90 Aşama 3 exact source HEAD CI:
+Final pre-merge exact-head kanıtı:
+- Flutter run #17 / `35381990658` — SUCCESS
+  - real Flutter analyze — SUCCESS
+  - 44 tests PASS
+  - Android debug APK SUCCESS
+  - emulator launch SUCCESS
+  - artifacts 0
+- Core run #576 / `35381990555`, final attempt 2 — SUCCESS
+  - Analyze SUCCESS
+  - 429 tests PASS
+  - canonical M0–M88 SUCCESS
+  - skipped milestone yok
+  - artifacts 0
 
-Core Simulation Tests:
-- run #574 / `35360774369`
-- exact source SHA: `4f539f6129751c6114b8f53b0c2c3b9c96c9c12d`
-- Analyze — **SUCCESS**
-- normal tests — **SUCCESS**
-- **429 tests passed**
-- artifacts — **0**
+Post-merge actual-main executable kanıtı, executable merge SHA
+`c81b8f1619820ce8a2fad0a7ebd1e3394ba0ce3b`
+üzerinde:
+- M89 Flutter App run #18 / `35389490910` — SUCCESS
+  - `No issues found! (ran in 8.4s)`
+  - 44 tests PASS
+  - Android debug APK SUCCESS
+  - Android emulator launch SUCCESS
+  - marker: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
+  - artifacts 0
+- Core Simulation Tests run #577 / `35389490940` — SUCCESS
+  - Analyze SUCCESS
+  - 429 tests PASS
+  - canonical M0–M88 tamamı SUCCESS
+  - M88 PASS marker mevcut
+  - skipped milestone yok
+  - artifacts 0
 
-Canonical:
-- attempt 1: M0–M76 yolu geçti; M76 PASS marker sonrasında workflow infrastructure cancellation
-- aynı exact SHA üzerinde timing-only retry attempt 2 yapıldı
-- attempt 2: **M0–M79 PASS**
-- M79 marker:
-  `M79_PLAYER_PRESIDENT_INTERACTIVE_DECISION_APPLICATION_NEW_GAME_SESSION_PASS ... saveAuthority=M65 ...`
-- M79 PASS'tan hemen sonra `The operation was canceled.`
-- M80–M88 bu nedenle çalışmadı / skipped
-- bu, source assertion/test failure değildir; ancak M0–M88 full SUCCESS tamamlanmadığı için Aşama 3 henüz PASS ilan edilmemiştir
+Bu nedenle:
+# **M90 — CLOSED / MERGED / PASS**
 
-Çok önemli:
-Bu dokümantasyon commit'i source kodunu değiştirmeden branch HEAD'ini ilerletebilir.
-Bu nedenle gelecekte:
-- live PR HEAD ayrıca doğrulanmalı,
-- `4f539f61...` **son doğrulanmış M90 Aşama 3 source HEAD** olarak ayrıştırılmalı,
-- docs-only descendant HEAD otomatik olarak yeni source acceptance sonucu sayılmamalıdır.
-
-Son kapanan milestone M89:
-**CLOSED / MERGED / PASS**.
-PR #92 merge ve actual-main kanıtları aşağıdaki tarihsel M89 bölümlerinde korunmaktadır.
+Yeni milestone henüz seçilmemiştir.
+Kullanıcı açık prompt vermeden yeni milestone/gap scan/branch/PR başlatılmamalıdır.
+Yeni çalışma istendiğinde önce live `main` doğrulanmalı ve fresh gap scan yapılmalıdır.
 
 ## 4. M89 mimari yönü
 
@@ -416,123 +430,124 @@ Bunlar M89 blocker değildir ve kullanıcı istemeden yeni scope'a çevrilmemeli
 
 `PROJE_KARARLARI.md` içindeki M89 öncesi “Flutter/UI henüz kurulmamıştır” gibi tarihsel ifadeler current live state değildir. Current state için Live GitHub ve bu güncel özet üstündür. Bu closure kapsamında `PROJE_KARARLARI.md` değiştirilmedi.
 
-## 18. M90 Aşama 1–3 teknik durumu ve sıradaki davranış
+## 18. M90 kapanış sonucu
+
+M90 — Decision Resolution Feedback I tamamlandı.
 
 ### Aşama 1 — Backward-Compatible Runtime Resolution Contract
-
 **PASS.**
-
-M73'e additive:
-`submitWithResolution(...) -> PlayerPresidentInteractiveDecisionSubmissionResult`
-eklendi.
-
-Legacy:
-`submit(...) -> PlayerPresidentInteractiveSessionStep`
-observable semantics'i korunur.
-
-Resolution runtime-only'dir:
-- M65 değildir,
-- transcript değildir,
-- save state değildir,
-- codec/schema değildir.
+M73 additive `submitWithResolution(...)` contract'ı eklendi; legacy `submit(...)` nextStep semantics'i korundu.
 
 ### Aşama 2 — Nine-Kind Authoritative Consequence Capture
-
 **PASS.**
-
-Dokuz decision kind'ın tamamı için authoritative immediate consequence runtime capture çalışır:
-1. facility investment
-2. sponsor
-3. crisis
-4. manager review
-5. manager replacement
-6. promise
-7. media statement
-8. transfer strategy
-9. ticket pricing
-
-Capture:
-- domain'in zaten ürettiği authoritative result'tan gelir,
-- current submit sequence/request'e exact bound'dur,
-- geçmiş replay consequence current resolution olarak sızmaz,
-- future prediction veya Flutter-side business logic üretmez.
-
-Aşama 2 final source HEAD:
-`cae6b18ea6417fef5c4b71ef0bdd38b55f04c70f`
-
-Aşama 2 exact-head run #571 / `35358399187`:
-- Analyze SUCCESS
-- 417 tests PASS
-- canonical M0–M88 SUCCESS
-- artifacts 0
+Dokuz decision kind'ın tamamında consequence, ilgili domain'in zaten applied authoritative sonucundan capture edilir. Current submit request/sequence'e exact bound'dur; geçmiş replay consequence current result'a sızmaz.
 
 ### Aşama 3 — M74 / M76 Additive Resolution Integration
+**PASS.**
+M74 additive pass-through + accepted-choice transcript davranışı korunur. M76 newGame/checkpoint application boundary'de additive resolution expose eder. M74 formatı, M75 ve M80 encoded schema değişmedi.
 
-**IMPLEMENTED; final canonical acceptance henüz kapanmadı.**
+### Aşama 4 — Flutter Transient Decision Resolution Feedback Flow
+**PASS.**
+`GameFlowController` yalnız transient:
+- current resolution,
+- queued authoritative nextStep
+taşır.
 
-Ana implementation commit:
-`61c06f1f1babf629903aae2b0376de4b0834a73f`
-— `feat(m90): expose additive resolution through app session`
+Successful submit:
+- M76 `submitWithResolution(...)`
+- resolution görünür
+- next Pending/Completed queue'da tutulur
+- `Devam Et` yalnız queued authoritative step'i reveal eder
+- yeniden submit/advance/replay/simulation yapmaz
 
-Test import cleanup:
-`a5def29b43fdad0fad531616beb2555ecc52cf81`
+`DecisionResolutionPanel` dokuz public consequence subtype'ını presentation-only render eder.
+Flutter gameplay sonucu/formülü yeniden hesaplamaz.
 
-9-kind application fixture correction:
-`4f539f6129751c6114b8f53b0c2c3b9c96c9c12d`
+Save davranışı:
+- resolution görünürken save mümkündür
+- existing M88 `saveBack()` transient feedback'i bozmaz
+- fresh M87 save sonrası yeni M88-bound session authoritative olarak adopt edilir
+- queued boundary yeni bound session'ın restored current boundary'sine rebase edilir
+- resolution persisted değildir
+- recreation/load historical resolution restore etmez
 
-M74:
-- additive `submitWithResolution(...)` expose eder,
-- underlying M73 result'ını reconstruction yapmadan geçirir,
-- transcript entry yalnız authoritative submit SUCCESS sonrasında bir kez eklenir,
-- stale/invalid submit transcript'i mutate etmez,
-- legacy `submit()` additive result `.nextStep` üzerinden compatible kalır,
-- transcript format/saveVersion/entry schema unchanged,
-- historical resolution persistence veya restore queue yok.
+### Aşama 5 — Final Acceptance / Regression Audit
+**PASS — A) READY / NO BLOCKER.**
 
-M76:
-- additive `submitWithResolution(...)` M74'e delege eder,
-- newGame ve checkpoint origin desteklenir,
-- 9/9 consequence application boundary'ye pass-through edilir,
-- resolution serialize edilmez,
-- save/bootstrap sonrası restore next authoritative Pending/Completed boundary'ye gelir,
-- stale/invalid submit persistence/bootstrap bytes'ını mutate etmez.
+Audit sonucunda:
+- authority blocker yok
+- persistence blocker yok
+- legacy compatibility blocker yok
+- single-execution blocker yok
+- request-binding blocker yok
+- nine-kind domain blocker yok
+- Flutter business-logic duplication yok
+- M87/M88 regression yok
+- analyzer boundary regression yok
 
-M75 ve M80 encoded schema unchanged.
-M65 authority unchanged.
-Flutter/controller/UI untouched.
+### Merge
 
-### Son doğrulama
+Kullanıcının açık onay verdiği exact PR HEAD:
+`e262b69000b65d3fe114557d3ac5016ce48ad174`
 
-Exact source HEAD:
-`4f539f6129751c6114b8f53b0c2c3b9c96c9c12d`
+PR #93 Ready yapıldı, HEAD tekrar doğrulandı ve değişmedi.
 
-Run #574 / `35360774369`:
-- Analyze SUCCESS
-- normal tests SUCCESS
-- **429 tests PASS**
+Squash merge:
+- `expected_head_sha=e262b69000b65d3fe114557d3ac5016ce48ad174`
+- merge SHA: `c81b8f1619820ce8a2fad0a7ebd1e3394ba0ce3b`
+- PR #93 — MERGED
+
+### Post-merge actual-main proof
+
+Executable merge SHA:
+`c81b8f1619820ce8a2fad0a7ebd1e3394ba0ce3b`
+
+Flutter:
+- M89 Flutter App run #18 / `35389490910` — SUCCESS
+- real analyze: `No issues found! (ran in 8.4s)`
+- 44 tests PASS
+- Android debug APK SUCCESS
+- Android emulator launch SUCCESS
 - artifacts 0
-- canonical attempt 2 M0–M79 PASS
-- M79 PASS sonrasında infrastructure cancellation
-- M80–M88 skipped
 
-Bu nedenle resmi durum:
-**M90 Aşama 3 = IMPLEMENTED / NORMAL PASS / CANONICAL FINAL VERIFICATION INCOMPLETE**
+Core:
+- Core Simulation Tests run #577 / `35389490940` — SUCCESS
+- Analyze SUCCESS
+- 429 tests PASS
+- canonical M0–M88 SUCCESS
+- skipped milestone yok
+- M88 marker PASS
+- artifacts 0
 
-### Yeni sohbet için kesin kilit
+Final authority sonucu:
+> **M65 tek persisted game-state authority olarak kalır.**
 
-Kullanıcı yeni prompt vermeden:
-- live GitHub doğrulaması başlatma,
-- CI retry başlatma,
-- source patch yapma,
-- commit oluşturma,
-- PR metadata değiştirme,
-- Aşama 3'ü PASS ilan etme,
-- Aşama 4'e başlama,
-- Flutter/controller/UI değiştirme,
-- PR Ready yapma,
-- merge yapma,
-- docs closure yapma,
-- yeni milestone seçme.
+M90 resolution/consequence:
+- runtime-only,
+- M74 transcript değildir,
+- M65 değildir,
+- save schema değildir,
+- save slot metadata değildir,
+- reload edilen presentation state değildir.
 
-**Yeni sohbet açıldığında hiçbir otomatik işlem yapma. DUR ve kullanıcının açık promptunu bekle.**
+# **M90 — CLOSED / MERGED / PASS**
 
+### Sonraki davranış
+
+Yeni milestone otomatik seçilmez.
+
+Yeni sohbet veya yeni görevde kullanıcı açık prompt vermeden:
+- live GitHub sorgusu başlatma,
+- gap scan başlatma,
+- branch/PR açma,
+- kod yazma,
+- CI başlatma,
+- yeni milestone numarası belirleme.
+
+Kullanıcı yeni geliştirme istediğinde:
+1. live `main` doğrula,
+2. güncel repo dosyalarını oku,
+3. fresh live-main gap scan yap,
+4. en küçük doğal authority-safe gap'i öner/uygula.
+
+**Kullanıcı promptu gelmeden DUR.**
