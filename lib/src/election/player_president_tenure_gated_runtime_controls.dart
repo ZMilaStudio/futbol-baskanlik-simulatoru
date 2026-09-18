@@ -15,7 +15,6 @@ import '../save/save_checksum.dart';
 import '../save/save_load_exception.dart';
 import '../sponsor/player_president_sponsor_control.dart';
 import '../sponsor/sponsor_system.dart';
-import '../sponsor/sponsor_system.dart';
 import '../world/world_league.dart';
 import 'player_president_tenure_control_gate.dart';
 import 'president_tenure.dart';
