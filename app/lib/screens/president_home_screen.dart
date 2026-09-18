@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_catalog.dart';
+import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 
 import '../composition/app_composition.dart';
 import '../controller/game_flow_controller.dart';
 import '../decisions/decision_panel.dart';
 import '../decisions/decision_resolution_panel.dart';
+import '../reports/president_season_report_panel.dart';
 
 class PresidentHomeScreen extends StatefulWidget {
   const PresidentHomeScreen({
@@ -66,6 +68,18 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  String _clubNameForId(String clubId) {
+    final matches = widget.composition.world.clubs
+        .where((club) => club.id == clubId)
+        .toList(growable: false);
+    if (matches.length != 1) {
+      throw StateError(
+        'Canonical club display name requires exactly one match for $clubId.',
+      );
+    }
+    return matches.single.name;
   }
 
   @override
@@ -180,6 +194,7 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                             PresidentSessionStateView(
                               step: step,
                               submitting: busy,
+                              clubNameForId: _clubNameForId,
                               onSubmit: _controller.submitChoice,
                               onContinueToNextSeason: busy
                                   ? null
@@ -213,12 +228,14 @@ class PresidentSessionStateView extends StatelessWidget {
     this.submitting = false,
     this.onSubmit,
     this.onContinueToNextSeason,
+    this.clubNameForId,
   });
 
   final PlayerPresidentInteractiveSessionStep step;
   final bool submitting;
   final ValueChanged<Object>? onSubmit;
   final VoidCallback? onContinueToNextSeason;
+  final ClubDisplayNameResolver? clubNameForId;
 
   @override
   Widget build(BuildContext context) {
@@ -256,46 +273,58 @@ class PresidentSessionStateView extends StatelessWidget {
     }
 
     final completed = current as PlayerPresidentInteractiveSessionCompleted;
-    final checkpoint = completed.result.checkpoint;
-    final boundaries = completed.result.boundaries;
-    final lastBoundary = boundaries.isEmpty ? null : boundaries.last;
+    final resolver = clubNameForId;
+    if (resolver == null) {
+      return _SeasonReportErrorView(
+        onContinueToNextSeason: onContinueToNextSeason,
+      );
+    }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'Sezon tamamlandı',
-          key: Key('session-lifecycle-state'),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Tamamlanan sezon sayısı: ${checkpoint.completedSeasons}',
-          key: const Key('completed-season-count'),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Sıradaki sezon indeksi: ${checkpoint.nextSeasonIndex}',
-          key: const Key('next-season-index'),
-        ),
-        if (lastBoundary != null) ...[
-          const SizedBox(height: 4),
+    try {
+      final report =
+          PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+      return PresidentSeasonReportPanel(
+        report: report,
+        clubNameForId: resolver,
+        onContinueToNextSeason: onContinueToNextSeason,
+        busy: submitting,
+        decisionCount: completed.decisionCount,
+      );
+    } on StateError {
+      return _SeasonReportErrorView(
+        onContinueToNextSeason: onContinueToNextSeason,
+      );
+    }
+  }
+}
+
+
+class _SeasonReportErrorView extends StatelessWidget {
+  const _SeasonReportErrorView({
+    required this.onContinueToNextSeason,
+  });
+
+  final VoidCallback? onContinueToNextSeason;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
-            'Son sezon: ${lastBoundary.seasonIndex + 1}',
-            key: const Key('completed-season-info'),
+            'Sezon raporu authoritative veriden oluşturulamadı.',
+            key: const Key('season-report-error'),
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            key: const Key('continue-next-season-button'),
+            onPressed: onContinueToNextSeason,
+            icon: const Icon(Icons.skip_next),
+            label: const Text('Sonraki Sezona Geç'),
           ),
         ],
-        const SizedBox(height: 4),
-        Text('Yanıtlanan karar: ${completed.decisionCount}'),
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          key: const Key('continue-next-season-button'),
-          onPressed: onContinueToNextSeason,
-          icon: const Icon(Icons.skip_next),
-          label: const Text('Sonraki Sezona Geç'),
-        ),
-      ],
-    );
-  }
+      );
 }
 
 String decisionKindLabel(PlayerPresidentInteractiveDecisionKind kind) {
