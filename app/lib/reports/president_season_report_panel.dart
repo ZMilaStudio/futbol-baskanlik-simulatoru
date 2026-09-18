@@ -144,32 +144,7 @@ class PresidentSeasonReportPanel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 18),
-        _Section(
-          title: 'Başkanlık Vaadi',
-          children: [
-            if (promise == null)
-              const _ReportLine(
-                key: Key('season-report-promise'),
-                text: 'Bu sezon değerlendirilen başkanlık vaadi yok.',
-              )
-            else ...[
-              _ReportLine(
-                key: const Key('season-report-promise'),
-                text: _promiseTypeLabel(promise.promise.type),
-              ),
-              _ReportLine(
-                text:
-                    'Sonuç: ${_promiseStatusLabel(promise.resolution.status)}',
-              ),
-              _ReportLine(
-                text: 'Gerekçe: ${_promiseReasonLabel(promise.resolution.reason)}',
-              ),
-              _ReportLine(
-                text: 'Değerlendirme puanı: ${promise.resolution.score}',
-              ),
-            ],
-          ],
-        ),
+        PresidentSeasonPromiseSection(promise: promise),
         if (decisionCount != null) ...[
           const SizedBox(height: 16),
           Text(
@@ -185,6 +160,46 @@ class PresidentSeasonReportPanel extends StatelessWidget {
           icon: const Icon(Icons.skip_next),
           label: const Text('Sonraki Sezona Geç'),
         ),
+      ],
+    );
+  }
+}
+
+
+class PresidentSeasonPromiseSection extends StatelessWidget {
+  const PresidentSeasonPromiseSection({
+    super.key,
+    required this.promise,
+  });
+
+  final PromiseSeasonSnapshot? promise;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = promise;
+    return _Section(
+      title: 'Başkanlık Vaadi',
+      children: [
+        if (current == null)
+          const _ReportLine(
+            key: Key('season-report-promise'),
+            text: 'Bu sezon değerlendirilen başkanlık vaadi yok.',
+          )
+        else ...[
+          _ReportLine(
+            key: const Key('season-report-promise'),
+            text: _promiseTypeLabel(current.promise.type),
+          ),
+          _ReportLine(
+            text: 'Sonuç: ${_promiseStatusLabel(current.resolution.status)}',
+          ),
+          _ReportLine(
+            text: 'Gerekçe: ${_promiseReasonLabel(current.resolution.reason)}',
+          ),
+          _ReportLine(
+            text: 'Değerlendirme puanı: ${current.resolution.score}',
+          ),
+        ],
       ],
     );
   }
