@@ -262,9 +262,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PresidentSessionStateView(
-            step: completed,
-            clubNameForId: clubNameForId,
+          body: SingleChildScrollView(
+            child: PresidentSessionStateView(
+              step: completed,
+              clubNameForId: clubNameForId,
+            ),
           ),
         ),
       ),
