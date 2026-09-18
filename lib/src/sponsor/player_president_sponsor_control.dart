@@ -61,6 +61,11 @@ abstract class PlayerSponsorDecisionProvider {
   const PlayerSponsorDecisionProvider();
 
   PlayerSponsorOfferChoice choose(PlayerSponsorDecisionContext context);
+
+  void onApplied(
+    PlayerPresidentSponsorRuntimeDecision decision,
+    SponsorContract contract,
+  ) {}
 }
 
 class PlayerPresidentSponsorRuntimeDecision {
@@ -455,13 +460,13 @@ class PlayerPresidentSponsorSystemEngine extends SponsorSystemEngine {
       totalRevenuePaid:
           baseline.checkpoint.totalRevenuePaid + revenue - baselineRevenue,
     );
-    decisions.add(
-      PlayerPresidentSponsorRuntimeDecision(
-        context: context,
-        choice: choice,
-        selectedOffer: selected,
-      ),
+    final runtimeDecision = PlayerPresidentSponsorRuntimeDecision(
+      context: context,
+      choice: choice,
+      selectedOffer: selected,
     );
+    decisions.add(runtimeDecision);
+    provider.onApplied(runtimeDecision, contract);
     return SponsorSeasonResolution(
       seasonIndex: seasonIndex,
       contracts: contracts,

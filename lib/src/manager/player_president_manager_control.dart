@@ -124,6 +124,16 @@ abstract class PlayerManagerDecisionProvider {
   PlayerManagerReplacementChoice chooseReplacement(
     PlayerManagerReplacementContext context,
   );
+
+  void onReviewApplied(
+    PlayerManagerReviewContext context,
+    PlayerManagerReviewChoice choice,
+  ) {}
+
+  void onReplacementApplied(
+    PlayerPresidentManagerRuntimeDecision decision,
+    ManagerAssignment assignment,
+  ) {}
 }
 
 class PlayerPresidentManagerRuntimeDecision {
@@ -532,6 +542,7 @@ class PlayerPresidentManagerControlCareerEngine {
           'Controlled manager cannot be retained because the manager is unavailable.',
         );
       }
+      managerProvider!.onReviewApplied(reviewContext, reviewChoice);
     }
 
     if (reviewChoice == PlayerManagerReviewChoice.retain) {
@@ -607,16 +618,18 @@ class PlayerPresidentManagerControlCareerEngine {
     final selected = selectedMatches.single;
 
     if (aiChange != null && selected.manager.id == aiNextManager.id) {
+      final runtimeDecision = PlayerPresidentManagerRuntimeDecision(
+        reviewContext: reviewContext,
+        reviewChoice: reviewChoice,
+        reviewProviderCalled: reviewProviderCalled,
+        replacementContext: replacementContext,
+        replacementChoice: choice,
+        selectedManager: selected.manager,
+      );
+      managerProvider!.onReplacementApplied(runtimeDecision, aiAssignment);
       return _AppliedManagerDecision(
         checkpoint: checkpoint,
-        decision: PlayerPresidentManagerRuntimeDecision(
-          reviewContext: reviewContext,
-          reviewChoice: reviewChoice,
-          reviewProviderCalled: reviewProviderCalled,
-          replacementContext: replacementContext,
-          replacementChoice: choice,
-          selectedManager: selected.manager,
-        ),
+        decision: runtimeDecision,
       );
     }
 
@@ -639,16 +652,18 @@ class PlayerPresidentManagerControlCareerEngine {
       change: nextChange,
       oldChange: aiChange,
     );
+    final runtimeDecision = PlayerPresidentManagerRuntimeDecision(
+      reviewContext: reviewContext,
+      reviewChoice: reviewChoice,
+      reviewProviderCalled: reviewProviderCalled,
+      replacementContext: replacementContext,
+      replacementChoice: choice,
+      selectedManager: selected.manager,
+    );
+    managerProvider!.onReplacementApplied(runtimeDecision, nextAssignment);
     return _AppliedManagerDecision(
       checkpoint: patched,
-      decision: PlayerPresidentManagerRuntimeDecision(
-        reviewContext: reviewContext,
-        reviewChoice: reviewChoice,
-        reviewProviderCalled: reviewProviderCalled,
-        replacementContext: replacementContext,
-        replacementChoice: choice,
-        selectedManager: selected.manager,
-      ),
+      decision: runtimeDecision,
     );
   }
 

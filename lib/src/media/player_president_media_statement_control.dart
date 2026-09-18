@@ -36,6 +36,11 @@ abstract class PlayerMediaStatementDecisionProvider {
   const PlayerMediaStatementDecisionProvider();
 
   MediaStance chooseStance(PlayerMediaStatementDecisionContext context);
+
+  void onApplied(
+    PlayerMediaStatementDecisionContext context,
+    MediaStatement statement,
+  ) {}
 }
 
 /// M57 preserves M10's canonical statement-event generation while allowing the
@@ -77,13 +82,12 @@ class PlayerPresidentMediaStatementEngine extends MediaStatementEngine {
     if (clubSeason.clubId != controlledClubId) return aiStatement;
 
     final allowedStances = List<MediaStance>.unmodifiable(MediaStance.values);
-    final chosenStance = provider.chooseStance(
-      PlayerMediaStatementDecisionContext(
-        clubSeason: clubSeason,
-        aiStatement: aiStatement,
-        allowedStances: allowedStances,
-      ),
+    final decisionContext = PlayerMediaStatementDecisionContext(
+      clubSeason: clubSeason,
+      aiStatement: aiStatement,
+      allowedStances: allowedStances,
     );
+    final chosenStance = provider.chooseStance(decisionContext);
     if (!allowedStances.contains(chosenStance)) {
       throw ArgumentError.value(
         chosenStance,
@@ -92,7 +96,7 @@ class PlayerPresidentMediaStatementEngine extends MediaStatementEngine {
       );
     }
 
-    return MediaStatement(
+    final statement = MediaStatement(
       id: aiStatement.id,
       clubId: aiStatement.clubId,
       targetManagerId: aiStatement.targetManagerId,
@@ -100,6 +104,8 @@ class PlayerPresidentMediaStatementEngine extends MediaStatementEngine {
       topic: aiStatement.topic,
       stance: chosenStance,
     );
+    provider.onApplied(decisionContext, statement);
+    return statement;
   }
 }
 

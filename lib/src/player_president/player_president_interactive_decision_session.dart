@@ -1,10 +1,12 @@
 import '../core/simulation_config.dart';
+import '../election/president_management_profile.dart';
 import '../crisis/crisis_decision_core.dart';
 import '../crisis/player_president_crisis_control.dart';
 import '../crisis/player_president_facility_control.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_control.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
+import '../manager/manager_assignment.dart';
 import '../manager/player_president_manager_control.dart';
 import '../manager/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart';
 import '../media/media_statement.dart';
@@ -12,6 +14,7 @@ import '../media/player_president_media_statement_control.dart';
 import '../promise/player_president_promise_control.dart';
 import '../promise/president_promise.dart';
 import '../sponsor/player_president_sponsor_control.dart';
+import '../sponsor/sponsor_system.dart';
 import '../transfer/player_president_transfer_strategy_control.dart';
 import '../world/world_league.dart';
 import 'player_president_unified_decision_gateway_runtime.dart';
@@ -88,27 +91,157 @@ class PlayerPresidentInteractiveSessionCompleted
 /// or inferred effect.
 sealed class PlayerPresidentInteractiveDecisionConsequence {
   const PlayerPresidentInteractiveDecisionConsequence();
+
+  PlayerPresidentInteractiveDecisionKind get kind;
+  String get controlledClubId;
 }
 
-/// Accepted interactive decision identity plus its runtime-only consequence.
-///
-/// This object is application feedback only. It is not persisted, encoded, or
-/// added to the M74 accepted-answer transcript. [acceptedChoice] is the exact
-/// validated choice object supplied to the successful submit call.
+final class PlayerPresidentFacilityInvestmentConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentFacilityInvestmentConsequence(this.decision);
+  final PlayerPresidentFacilityRuntimeDecision decision;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.facilityInvestment;
+  @override
+  String get controlledClubId => decision.clubId;
+}
+
+final class PlayerPresidentSponsorConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentSponsorConsequence({
+    required this.decision,
+    required this.contract,
+  });
+  final PlayerPresidentSponsorRuntimeDecision decision;
+  final SponsorContract contract;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.sponsor;
+  @override
+  String get controlledClubId => decision.clubId;
+}
+
+final class PlayerPresidentCrisisConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentCrisisConsequence(this.decision);
+  final PlayerPresidentCrisisRuntimeDecision decision;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.crisis;
+  @override
+  String get controlledClubId => decision.clubId;
+}
+
+final class PlayerPresidentManagerReviewConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentManagerReviewConsequence({
+    required this.context,
+    required this.choice,
+  });
+  final PlayerManagerReviewContext context;
+  final PlayerManagerReviewChoice choice;
+  bool get retained => choice == PlayerManagerReviewChoice.retain;
+  bool get replacementRequired => choice == PlayerManagerReviewChoice.replace;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.managerReview;
+  @override
+  String get controlledClubId => context.clubId;
+}
+
+final class PlayerPresidentManagerReplacementConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentManagerReplacementConsequence({
+    required this.decision,
+    required this.assignment,
+  });
+  final PlayerPresidentManagerRuntimeDecision decision;
+  final ManagerAssignment assignment;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.managerReplacement;
+  @override
+  String get controlledClubId => decision.clubId;
+}
+
+final class PlayerPresidentPromiseConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentPromiseConsequence({
+    required this.context,
+    required this.promise,
+  });
+  final PlayerPromiseDecisionContext context;
+  final PresidentPromise promise;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.promise;
+  @override
+  String get controlledClubId => context.controlledClubId;
+}
+
+final class PlayerPresidentMediaStatementConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentMediaStatementConsequence({
+    required this.context,
+    required this.statement,
+  });
+  final PlayerMediaStatementDecisionContext context;
+  final MediaStatement statement;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.mediaStatement;
+  @override
+  String get controlledClubId => context.controlledClubId;
+}
+
+final class PlayerPresidentTransferStrategyConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentTransferStrategyConsequence({
+    required this.context,
+    required this.effectiveProfile,
+  });
+  final PlayerTransferStrategyDecisionContext context;
+  final PresidentManagementProfile effectiveProfile;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.transferStrategy;
+  @override
+  String get controlledClubId => context.controlledClubId;
+}
+
+final class PlayerPresidentTicketPricingConsequence
+    extends PlayerPresidentInteractiveDecisionConsequence {
+  const PlayerPresidentTicketPricingConsequence(this.decision);
+  final PlayerPresidentTicketPricingDecision decision;
+  @override
+  PlayerPresidentInteractiveDecisionKind get kind =>
+      PlayerPresidentInteractiveDecisionKind.ticketPricing;
+  @override
+  String get controlledClubId => decision.context.clubId;
+}
+
 class PlayerPresidentInteractiveDecisionResolution {
-  const PlayerPresidentInteractiveDecisionResolution({
+  PlayerPresidentInteractiveDecisionResolution({
     required this.requestKey,
     required this.kind,
     required this.acceptedChoice,
-    this.consequence,
-  });
+    required this.consequence,
+  }) {
+    if (consequence.kind != kind) {
+      throw ArgumentError(
+        'Resolution kind ${kind.name} does not match consequence '
+        '${consequence.kind.name}.',
+      );
+    }
+  }
 
   final String requestKey;
   final PlayerPresidentInteractiveDecisionKind kind;
   final Object acceptedChoice;
-  final PlayerPresidentInteractiveDecisionConsequence? consequence;
+  final PlayerPresidentInteractiveDecisionConsequence consequence;
 
-  bool get hasConsequence => consequence != null;
+  bool get hasConsequence => true;
 
   T choiceAs<T>() {
     final value = acceptedChoice;
@@ -131,16 +264,11 @@ class PlayerPresidentInteractiveDecisionResolution {
   }
 }
 
-/// Result of one successful additive interactive submission.
-///
-/// [nextStep] is produced by the same authoritative replay that accepts the
-/// choice. No second simulation pass is performed for resolution feedback.
 class PlayerPresidentInteractiveDecisionSubmissionResult {
   const PlayerPresidentInteractiveDecisionSubmissionResult({
     required this.resolution,
     required this.nextStep,
   });
-
   final PlayerPresidentInteractiveDecisionResolution resolution;
   final PlayerPresidentInteractiveSessionStep nextStep;
 }
@@ -251,15 +379,22 @@ class PlayerPresidentInteractiveDecisionSession {
   PlayerPresidentInteractiveDecisionRequest? get pendingDecision => _pending;
   PlayerPresidentInteractiveSessionCompleted? get completed => _completed;
 
-  PlayerPresidentInteractiveSessionStep advance() {
+  PlayerPresidentInteractiveSessionStep advance() => _advanceInternal().step;
+
+  _InteractiveAdvanceResult _advanceInternal({int? captureSequence}) {
     final completed = _completed;
-    if (completed != null) return completed;
+    if (completed != null) return _InteractiveAdvanceResult(step: completed);
     final pending = _pending;
     if (pending != null) {
-      return PlayerPresidentInteractiveDecisionPending(pending);
+      return _InteractiveAdvanceResult(
+        step: PlayerPresidentInteractiveDecisionPending(pending),
+      );
     }
 
-    final gateway = _InteractiveReplayGateway(_answers);
+    final gateway = _InteractiveReplayGateway(
+      _answers,
+      captureSequence: captureSequence,
+    );
     final engine = PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine(
       gateway: gateway,
       aiCrisisEngine: _aiCrisisEngine,
@@ -298,7 +433,10 @@ class PlayerPresidentInteractiveDecisionSession {
         decisionCount: _answers.length,
       );
       _completed = next;
-      return next;
+      return _InteractiveAdvanceResult(
+        step: next,
+        consequence: gateway.capturedConsequence,
+      );
     } on _PendingInteractiveDecision catch (signal) {
       if (gateway.consumedDecisionCount != _answers.length) {
         throw StateError(
@@ -306,28 +444,19 @@ class PlayerPresidentInteractiveDecisionSession {
         );
       }
       _pending = signal.request;
-      return PlayerPresidentInteractiveDecisionPending(signal.request);
+      return _InteractiveAdvanceResult(
+        step: PlayerPresidentInteractiveDecisionPending(signal.request),
+        consequence: gateway.capturedConsequence,
+      );
     }
   }
 
-  /// Legacy M73 submit behavior.
-  ///
-  /// Observable semantics stay unchanged: validate one pending response,
-  /// accept it once, run one deterministic replay, and return only the next
-  /// Pending/Completed step.
   PlayerPresidentInteractiveSessionStep submit({
     required PlayerPresidentInteractiveDecisionRequest request,
     required Object choice,
   }) =>
       submitWithResolution(request: request, choice: choice).nextStep;
 
-  /// Additive M90 runtime submission surface.
-  ///
-  /// Stage 1 deliberately leaves [PlayerPresidentInteractiveDecisionResolution]
-  /// consequence data empty until Stage 2 wires existing authoritative domain
-  /// outputs into this seam. The accepted choice and [nextStep] already come
-  /// from one validation + one replay lifecycle; no duplicate simulation is
-  /// performed.
   PlayerPresidentInteractiveDecisionSubmissionResult submitWithResolution({
     required PlayerPresidentInteractiveDecisionRequest request,
     required Object choice,
@@ -355,14 +484,30 @@ class PlayerPresidentInteractiveDecisionSession {
     );
     _pending = null;
 
-    final nextStep = advance();
+    final advanced = _advanceInternal(captureSequence: request.sequence);
+    final consequence = advanced.consequence;
+    if (consequence == null) {
+      throw StateError(
+        'Accepted ${request.kind.name} decision did not emit an authoritative '
+        'runtime consequence.',
+      );
+    }
+    if (consequence.kind != request.kind ||
+        consequence.controlledClubId != request.clubId) {
+      throw StateError(
+        'Captured consequence does not match submitted decision '
+        '${request.key}.',
+      );
+    }
+
     return PlayerPresidentInteractiveDecisionSubmissionResult(
       resolution: PlayerPresidentInteractiveDecisionResolution(
         requestKey: request.key,
         kind: request.kind,
         acceptedChoice: choice,
+        consequence: consequence,
       ),
-      nextStep: nextStep,
+      nextStep: advanced.step,
     );
   }
 
@@ -491,6 +636,15 @@ class PlayerPresidentInteractiveDecisionSession {
   }
 }
 
+class _InteractiveAdvanceResult {
+  const _InteractiveAdvanceResult({
+    required this.step,
+    this.consequence,
+  });
+  final PlayerPresidentInteractiveSessionStep step;
+  final PlayerPresidentInteractiveDecisionConsequence? consequence;
+}
+
 class _RecordedInteractiveDecision {
   const _RecordedInteractiveDecision({
     required this.requestKey,
@@ -508,10 +662,16 @@ class _PendingInteractiveDecision implements Exception {
 }
 
 class _InteractiveReplayGateway extends PlayerPresidentDecisionGateway {
-  _InteractiveReplayGateway(this.answers);
+  _InteractiveReplayGateway(
+    this.answers, {
+    this.captureSequence,
+  });
 
   final List<_RecordedInteractiveDecision> answers;
+  final int? captureSequence;
   int _cursor = 0;
+  PlayerPresidentInteractiveDecisionRequest? _lastResolvedRequest;
+  PlayerPresidentInteractiveDecisionConsequence? capturedConsequence;
 
   int get consumedDecisionCount => _cursor;
 
@@ -550,7 +710,42 @@ class _InteractiveReplayGateway extends PlayerPresidentDecisionGateway {
       );
     }
     _cursor++;
+    _lastResolvedRequest = request;
     return choice as T;
+  }
+
+  void _capture(
+    PlayerPresidentInteractiveDecisionKind kind,
+    String controlledClubId,
+    PlayerPresidentInteractiveDecisionConsequence consequence,
+  ) {
+    final target = captureSequence;
+    if (target == null) return;
+    final request = _lastResolvedRequest;
+    if (request == null || request.sequence != target) return;
+    if (request.kind != kind || consequence.kind != kind) {
+      throw StateError(
+        'Consequence kind does not match replay request ${request.key}.',
+      );
+    }
+    if (request.clubId != controlledClubId ||
+        consequence.controlledClubId != controlledClubId) {
+      throw StateError(
+        'Consequence club does not match replay request ${request.key}.',
+      );
+    }
+    final recorded = answers[target - 1];
+    if (recorded.requestKey != request.key) {
+      throw StateError(
+        'Consequence request binding diverged at sequence $target.',
+      );
+    }
+    if (capturedConsequence != null) {
+      throw StateError(
+        'Decision ${request.key} emitted more than one consequence.',
+      );
+    }
+    capturedConsequence = consequence;
   }
 
   @override
@@ -644,5 +839,116 @@ class _InteractiveReplayGateway extends PlayerPresidentDecisionGateway {
         clubId: context.clubId,
         contextSignature: context.signature,
         context: context,
+      );
+
+  @override
+  void onFacilityInvestmentApplied(
+    PlayerPresidentFacilityRuntimeDecision decision,
+  ) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.facilityInvestment,
+        decision.clubId,
+        PlayerPresidentFacilityInvestmentConsequence(decision),
+      );
+
+  @override
+  void onSponsorApplied(
+    PlayerPresidentSponsorRuntimeDecision decision,
+    SponsorContract contract,
+  ) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.sponsor,
+        decision.clubId,
+        PlayerPresidentSponsorConsequence(
+          decision: decision,
+          contract: contract,
+        ),
+      );
+
+  @override
+  void onCrisisApplied(PlayerPresidentCrisisRuntimeDecision decision) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.crisis,
+        decision.clubId,
+        PlayerPresidentCrisisConsequence(decision),
+      );
+
+  @override
+  void onManagerReviewApplied(
+    PlayerManagerReviewContext context,
+    PlayerManagerReviewChoice choice,
+  ) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.managerReview,
+        context.clubId,
+        PlayerPresidentManagerReviewConsequence(
+          context: context,
+          choice: choice,
+        ),
+      );
+
+  @override
+  void onManagerReplacementApplied(
+    PlayerPresidentManagerRuntimeDecision decision,
+    ManagerAssignment assignment,
+  ) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.managerReplacement,
+        decision.clubId,
+        PlayerPresidentManagerReplacementConsequence(
+          decision: decision,
+          assignment: assignment,
+        ),
+      );
+
+  @override
+  void onPromiseApplied(
+    PlayerPromiseDecisionContext context,
+    PresidentPromise promise,
+  ) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.promise,
+        context.controlledClubId,
+        PlayerPresidentPromiseConsequence(
+          context: context,
+          promise: promise,
+        ),
+      );
+
+  @override
+  void onMediaStatementApplied(
+    PlayerMediaStatementDecisionContext context,
+    MediaStatement statement,
+  ) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.mediaStatement,
+        context.controlledClubId,
+        PlayerPresidentMediaStatementConsequence(
+          context: context,
+          statement: statement,
+        ),
+      );
+
+  @override
+  void onTransferStrategyApplied(
+    PlayerTransferStrategyDecisionContext context,
+    PlayerTransferStrategyChoice choice,
+    PresidentManagementProfile effectiveProfile,
+  ) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.transferStrategy,
+        context.controlledClubId,
+        PlayerPresidentTransferStrategyConsequence(
+          context: context,
+          effectiveProfile: effectiveProfile,
+        ),
+      );
+
+  @override
+  void onTicketPricingApplied(PlayerPresidentTicketPricingDecision decision) =>
+      _capture(
+        PlayerPresidentInteractiveDecisionKind.ticketPricing,
+        decision.context.clubId,
+        PlayerPresidentTicketPricingConsequence(decision),
       );
 }
