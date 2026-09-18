@@ -217,9 +217,21 @@ void _expectAuthoritativeConsequence(
           (consequence as PlayerPresidentCrisisConsequence).decision;
       expect(result.choice, same(selected));
       expect(result.selectedDecision.action, selected.action);
+      final applied = result.resolution.decision.effect;
+      expect(result.resolution.decision.action, selected.action);
       expect(
-        result.resolution.decision.effect.signature,
-        result.selectedDecision.effect.signature,
+        applied.cashDelta.minorUnits,
+        result.resolution.finance.cash.minorUnits -
+            result.context.finance.cash.minorUnits,
+      );
+      expect(
+        applied.fanTrustDelta,
+        result.resolution.fan.overallTrust - result.context.fan.overallTrust,
+      );
+      expect(
+        applied.mediaCredibilityDelta,
+        result.resolution.media.credibility -
+            result.context.media.credibility,
       );
       return;
     case PlayerPresidentInteractiveDecisionKind.managerReview:
