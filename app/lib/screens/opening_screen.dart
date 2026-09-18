@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../composition/app_composition.dart';
 import 'club_selection_screen.dart';
+import 'save_list_screen.dart';
 
 class OpeningScreen extends StatelessWidget {
   const OpeningScreen({
@@ -66,18 +67,20 @@ class OpeningScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     key: const Key('load-game-button'),
-                    onPressed: null,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => SaveListScreen(
+                            composition: composition,
+                          ),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.folder_open_outlined),
                     label: const Padding(
                       padding: EdgeInsets.symmetric(vertical: 14),
                       child: Text('Kayıt Yükle'),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Kayıt yükleme sonraki aşamada etkinleştirilecek.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall,
                   ),
                 ],
               ),

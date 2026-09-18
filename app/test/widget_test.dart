@@ -38,6 +38,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  GameFlowController saveOneGame(String slotId) {
+    final controller = GameFlowController(
+      world: composition.world,
+      config: composition.simulationConfig,
+      saveSlots: composition.saveSlots,
+      slotIdFactory: () => slotId,
+    );
+    addTearDown(controller.dispose);
+    controller.startNewGame(composition.world.clubs.first);
+    expect(controller.saveCurrent(), isTrue);
+    return controller;
+  }
+
   testWidgets('opening screen exposes the two primary actions', (tester) async {
     await pumpApp(tester);
 
@@ -48,7 +61,16 @@ void main() {
     final loadButton = tester.widget<OutlinedButton>(
       find.widgetWithText(OutlinedButton, 'Kayıt Yükle'),
     );
-    expect(loadButton.onPressed, isNull);
+    expect(loadButton.onPressed, isNotNull);
+  });
+
+  testWidgets('Kayıt Yükle opens the real mixed save list', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Kayıt Yükle'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kayıtlar'), findsOneWidget);
+    expect(find.byKey(const Key('empty-save-list')), findsOneWidget);
   });
 
   testWidgets('Yeni Oyun opens canonical club selection', (tester) async {
@@ -95,6 +117,46 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('session-lifecycle-state')), findsOneWidget);
+    expect(find.byKey(const Key('save-game-button')), findsOneWidget);
+  });
+
+  testWidgets('saved bootstrap appears and Continue opens the exact save',
+      (tester) async {
+    final controller = saveOneGame('career_widget_load');
+    final summary = controller.saveSummary!;
+
+    await pumpApp(tester);
+    await tester.tap(find.text('Kayıt Yükle'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(composition.world.clubs.first.name), findsOneWidget);
+    expect(find.textContaining('Yeni oyun kaydı'), findsOneWidget);
+    expect(
+      find.byKey(Key('continue-${summary.identity}')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(Key('continue-${summary.identity}')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Başkanlık Merkezi'), findsNWidgets(2));
+    expect(find.byKey(const Key('bound-save-status')), findsOneWidget);
+    expect(find.text(composition.world.clubs.first.name), findsOneWidget);
+  });
+
+  testWidgets('load screen deletes the exact listed typed save', (tester) async {
+    final controller = saveOneGame('career_widget_delete');
+    final summary = controller.saveSummary!;
+
+    await pumpApp(tester);
+    await tester.tap(find.text('Kayıt Yükle'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(Key('delete-${summary.identity}')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('empty-save-list')), findsOneWidget);
+    expect(composition.saveSlots.list(), isEmpty);
   });
 
   testWidgets('a real Pending step renders a readable decision kind', (
@@ -103,6 +165,7 @@ void main() {
     final controller = GameFlowController(
       world: composition.world,
       config: composition.simulationConfig,
+      saveSlots: composition.saveSlots,
     );
     addTearDown(controller.dispose);
     controller.startNewGame(composition.world.clubs.first);
@@ -157,7 +220,7 @@ void main() {
     expect(find.byKey(const Key('completed-season-info')), findsOneWidget);
   });
 
-  testWidgets('back navigation returns through the Stage 3 flow', (
+  testWidgets('back navigation returns through the Stage 5 flow', (
     tester,
   ) async {
     await pumpApp(tester);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_catalog.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 
 import '../composition/app_composition.dart';
@@ -10,11 +12,20 @@ class PresidentHomeScreen extends StatefulWidget {
   const PresidentHomeScreen({
     super.key,
     required this.composition,
-    required this.club,
-  });
+    required Club club,
+  })  : _club = club,
+        _binding = null;
+
+  const PresidentHomeScreen.loaded({
+    super.key,
+    required this.composition,
+    required PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding binding,
+  })  : _club = null,
+        _binding = binding;
 
   final AppComposition composition;
-  final Club club;
+  final Club? _club;
+  final PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding? _binding;
 
   @override
   State<PresidentHomeScreen> createState() => _PresidentHomeScreenState();
@@ -29,14 +40,31 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
     _controller = GameFlowController(
       world: widget.composition.world,
       config: widget.composition.simulationConfig,
+      saveSlots: widget.composition.saveSlots,
     );
-    _controller.startNewGame(widget.club);
+    final binding = widget._binding;
+    if (binding != null) {
+      _controller.loadBoundSave(binding);
+    } else {
+      _controller.startNewGame(widget._club!);
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _save() {
+    final saved = _controller.saveCurrent();
+    if (!mounted) return;
+    final message = saved
+        ? (_controller.persistenceMessage ?? 'Kayıt tamamlandı.')
+        : (_controller.persistenceError ?? 'Kayıt tamamlanamadı.');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -46,12 +74,33 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Başkanlık Merkezi'),
+        actions: [
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) => IconButton(
+              key: const Key('save-game-button'),
+              tooltip: 'Kaydet',
+              onPressed: _controller.session != null &&
+                      !_controller.loading &&
+                      !_controller.persistenceBusy
+                  ? _save
+                  : null,
+              icon: _controller.persistenceBusy
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+            ),
+          ),
+        ],
       ),
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
           final step = _controller.currentStep;
           final errorMessage = _controller.errorMessage;
+          final club = _controller.selectedClub;
 
           return Center(
             child: SingleChildScrollView(
@@ -71,7 +120,7 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                         ),
                         const SizedBox(height: 18),
                         Text(
-                          widget.club.name,
+                          club?.name ?? 'Kariyer yükleniyor',
                           key: const Key('selected-club-name'),
                           textAlign: TextAlign.center,
                           style: theme.textTheme.headlineSmall?.copyWith(
@@ -88,6 +137,15 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                           'Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.',
                           textAlign: TextAlign.center,
                         ),
+                        if (_controller.saveSummary != null) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            'Kayıt bağlı • '
+                            '${_sourceLabel(_controller.saveSummary!.source)}',
+                            key: const Key('bound-save-status'),
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         if (_controller.loading && step == null)
                           const CircularProgressIndicator()
@@ -225,3 +283,13 @@ String decisionKindLabel(PlayerPresidentInteractiveDecisionKind kind) {
       return 'Bilet fiyatlandırma kararı';
   }
 }
+
+String _sourceLabel(
+  PlayerPresidentInteractiveDecisionMixedSaveSlotSource source,
+) =>
+    switch (source) {
+      PlayerPresidentInteractiveDecisionMixedSaveSlotSource.checkpoint =>
+        'Kariyer kaydı',
+      PlayerPresidentInteractiveDecisionMixedSaveSlotSource.newGameBootstrap =>
+        'Yeni oyun kaydı',
+    };

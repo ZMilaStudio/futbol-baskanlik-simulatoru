@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:futbol_baskanlik_app/composition/app_composition.dart';
 import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
@@ -7,19 +10,32 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_sessio
 import 'support/decision_test_support.dart';
 
 void main() {
+  late Directory tempDirectory;
+  late AppComposition composition;
   late FictionalWorldSetup world;
   late GameFlowController controller;
 
   setUp(() {
-    world = const FictionalWorldFactory().build();
+    tempDirectory = Directory.systemTemp.createTempSync('fbs-m89-flow-');
+    composition = AppComposition.withSaveDirectory(
+      Directory(
+        '${tempDirectory.path}${Platform.pathSeparator}save_slots',
+      ),
+    );
+    world = composition.world;
     controller = GameFlowController(
       world: world,
-      config: const SimulationConfig(careerSeed: 20260903),
+      config: composition.simulationConfig,
+      saveSlots: composition.saveSlots,
+      slotIdFactory: () => 'career_controller_test',
     );
   });
 
   tearDown(() {
     controller.dispose();
+    if (tempDirectory.existsSync()) {
+      tempDirectory.deleteSync(recursive: true);
+    }
   });
 
   test('starts a real new-game application session for a canonical Club', () {
