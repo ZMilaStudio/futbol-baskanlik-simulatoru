@@ -275,9 +275,7 @@ class PresidentSessionStateView extends StatelessWidget {
     final completed = current as PlayerPresidentInteractiveSessionCompleted;
     final resolver = clubNameForId;
     if (resolver == null) {
-      return _SeasonReportErrorView(
-        onContinueToNextSeason: onContinueToNextSeason,
-      );
+      return const _SeasonReportErrorView();
     }
 
     try {
@@ -291,39 +289,22 @@ class PresidentSessionStateView extends StatelessWidget {
         decisionCount: completed.decisionCount,
       );
     } on StateError {
-      return _SeasonReportErrorView(
-        onContinueToNextSeason: onContinueToNextSeason,
-      );
+      return const _SeasonReportErrorView();
     }
   }
 }
 
 
 class _SeasonReportErrorView extends StatelessWidget {
-  const _SeasonReportErrorView({
-    required this.onContinueToNextSeason,
-  });
-
-  final VoidCallback? onContinueToNextSeason;
+  const _SeasonReportErrorView();
 
   @override
-  Widget build(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Sezon raporu authoritative veriden oluşturulamadı.',
-            key: const Key('season-report-error'),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            key: const Key('continue-next-season-button'),
-            onPressed: onContinueToNextSeason,
-            icon: const Icon(Icons.skip_next),
-            label: const Text('Sonraki Sezona Geç'),
-          ),
-        ],
+  Widget build(BuildContext context) => Text(
+        'Sezon raporu authoritative veriden oluşturulamadı. '
+        'Kariyer ilerletilmedi.',
+        key: const Key('season-report-error'),
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Theme.of(context).colorScheme.error),
       );
 }
 
