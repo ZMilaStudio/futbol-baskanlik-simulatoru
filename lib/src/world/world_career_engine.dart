@@ -19,6 +19,7 @@ import 'world_career_simulation_result.dart';
 import 'world_checkpoint.dart';
 import 'world_finance_hooks.dart';
 import 'world_league.dart';
+import 'world_opening_state_initializer.dart';
 import 'world_roster_hooks.dart';
 import 'world_transfer_hooks.dart';
 
@@ -56,18 +57,18 @@ class WorldCareerEngine {
     _validateSeasonCount(seasonCount);
     _validateSetup(clubs, leagues);
 
-    final baseClubs = List<Club>.unmodifiable(clubs);
-    final initialLeagues = _sortedLeagues(leagues);
-    final initialPlayers = poolGenerator.generate(
-      clubs: baseClubs,
-      careerSeed: config.careerSeed,
-      simulationVersion: config.simulationVersion,
-    );
-    final initialFinanceStates = _initialFinanceStates(
-      clubs: baseClubs,
-      leagues: initialLeagues,
+    final opening = WorldOpeningStateInitializer(
+      poolGenerator: poolGenerator,
+      economyEngine: economyEngine,
+    ).prepare(
+      clubs: clubs,
+      leagues: leagues,
       config: config,
     );
+    final baseClubs = opening.baseClubs;
+    final initialLeagues = opening.leagues;
+    final initialPlayers = opening.players;
+    final initialFinanceStates = opening.financeStates;
 
     return _simulateSegment(
       baseClubs: baseClubs,
@@ -103,18 +104,18 @@ class WorldCareerEngine {
     _validateSeasonCount(seasonCount);
     _validateSetup(clubs, leagues);
 
-    final baseClubs = List<Club>.unmodifiable(clubs);
-    final initialLeagues = _sortedLeagues(leagues);
-    final initialPlayers = poolGenerator.generate(
-      clubs: baseClubs,
-      careerSeed: config.careerSeed,
-      simulationVersion: config.simulationVersion,
-    );
-    final initialFinanceStates = _initialFinanceStates(
-      clubs: baseClubs,
-      leagues: initialLeagues,
+    final opening = WorldOpeningStateInitializer(
+      poolGenerator: poolGenerator,
+      economyEngine: economyEngine,
+    ).prepare(
+      clubs: clubs,
+      leagues: leagues,
       config: config,
     );
+    final baseClubs = opening.baseClubs;
+    final initialLeagues = opening.leagues;
+    final initialPlayers = opening.players;
+    final initialFinanceStates = opening.financeStates;
     final run = _simulateSegment(
       baseClubs: baseClubs,
       openingLeagues: initialLeagues,
@@ -455,30 +456,6 @@ class WorldCareerEngine {
     if (seasonCount <= 0) {
       throw ArgumentError.value(seasonCount, 'seasonCount', 'Must be positive.');
     }
-  }
-
-  List<ClubFinanceState> _initialFinanceStates({
-    required List<Club> clubs,
-    required List<WorldLeague> leagues,
-    required SimulationConfig config,
-  }) {
-    final byId = {for (final club in clubs) club.id: club};
-    final states = <ClubFinanceState>[];
-    for (final league in leagues) {
-      final leagueClubs = league.clubIds
-          .map((clubId) => byId[clubId]!)
-          .toList(growable: false);
-      states.addAll(
-        economyEngine.initialStates(
-          clubs: leagueClubs,
-          careerSeed: config.careerSeed,
-          simulationVersion: config.simulationVersion,
-          economicScaleBps: league.tier.economicScaleBps,
-        ),
-      );
-    }
-    states.sort((a, b) => a.clubId.compareTo(b.clubId));
-    return List.unmodifiable(states);
   }
 
   _LeagueTransition _promoteAndRelegate({

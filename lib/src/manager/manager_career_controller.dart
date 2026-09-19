@@ -13,6 +13,7 @@ import 'manager_assignment.dart';
 import 'manager_career_season.dart';
 import 'manager_fit_model.dart';
 import 'manager_impact_model.dart';
+import 'manager_opening_state_initializer.dart';
 import 'manager_patience_policy.dart';
 import 'manager_pool_generator.dart';
 
@@ -341,62 +342,24 @@ class ManagerCareerController implements WorldCareerHooks {
     required List<WorldLeague> leagues,
     required List<ClubFinanceState> financeStates,
   }) {
-    _managers = poolGenerator.generate(
+    final opening = ManagerOpeningStateInitializer(
+      poolGenerator: poolGenerator,
+      fitModel: fitModel,
+    ).prepare(
       careerSeed: careerSeed,
       simulationVersion: simulationVersion,
+      initialSeasonIndex: seasonIndex,
+      clubs: clubs,
+      players: players,
+      leagues: leagues,
+      financeStates: financeStates,
     );
+    _managers = opening.managers;
     _managerById = {for (final manager in _managers) manager.id: manager};
-    final playersByClub = _playersByClub(players);
-    final financeByClub = {
-      for (final state in financeStates) state.clubId: state,
-    };
-    final tierByClub = _tierByClub(leagues);
-    final available = _managerById.keys.toSet();
-    final assignments = <String, ManagerAssignment>{};
-    final orderedClubs = List<Club>.of(clubs)
-      ..sort((a, b) {
-        final tierCompare =
-            tierByClub[a.id]!.level.compareTo(tierByClub[b.id]!.level);
-        if (tierCompare != 0) return tierCompare;
-        final strengthCompare = b.strength.compareTo(a.strength);
-        return strengthCompare != 0 ? strengthCompare : a.id.compareTo(b.id);
-      });
-
-    for (final club in orderedClubs) {
-      final clubPlayers = playersByClub[club.id] ?? const <Player>[];
-      final finance = financeByClub[club.id]!;
-      final tier = tierByClub[club.id]!;
-      final manager = _selectBestManager(
-        availableManagerIds: available,
-        club: club,
-        players: clubPlayers,
-        leagueTier: tier,
-        financeState: finance,
-        seasonIndex: seasonIndex,
-      );
-      final fit = fitModel.score(
-        manager: manager,
-        club: club,
-        players: clubPlayers,
-        leagueTier: tier,
-        financeState: finance,
-      );
-      assignments[club.id] = ManagerAssignment(
-        clubId: club.id,
-        managerId: manager.id,
-        appointedSeasonIndex: seasonIndex,
-        completedSeasons: 0,
-        boardRelationship: _initialRelationship(
-          clubId: club.id,
-          manager: manager,
-          fitScore: fit,
-          seasonIndex: seasonIndex,
-        ),
-      );
-      available.remove(manager.id);
-    }
-
-    _assignments = Map.unmodifiable(assignments);
+    _assignments = Map.unmodifiable({
+      for (final assignment in opening.assignments)
+        assignment.clubId: assignment,
+    });
     _initialized = true;
   }
 

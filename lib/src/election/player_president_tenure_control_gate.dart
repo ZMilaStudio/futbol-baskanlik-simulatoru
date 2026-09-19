@@ -21,6 +21,16 @@ class PlayerPresidentTenureControlState {
   final int? lostAtCompletedSeason;
   final String? successorPresidentId;
 
+  factory PlayerPresidentTenureControlState.initial({
+    required String controlledClubId,
+    required String playerPresidentId,
+  }) =>
+      PlayerPresidentTenureControlState(
+        controlledClubId: controlledClubId,
+        playerPresidentId: playerPresidentId,
+        status: PlayerPresidentTenureControlStatus.active,
+      );
+
   bool get active => status == PlayerPresidentTenureControlStatus.active;
   bool get lost => status == PlayerPresidentTenureControlStatus.lost;
 

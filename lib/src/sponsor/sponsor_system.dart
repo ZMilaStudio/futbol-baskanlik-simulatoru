@@ -81,6 +81,13 @@ class SponsorRuntimeCheckpoint {
   final List<SponsorContract> activeContracts;
   final Money totalRevenuePaid;
 
+  factory SponsorRuntimeCheckpoint.initial({required int seasonIndex}) =>
+      SponsorRuntimeCheckpoint(
+        nextSeasonIndex: seasonIndex,
+        activeContracts: const [],
+        totalRevenuePaid: Money.zero,
+      );
+
   void validate() {
     if (nextSeasonIndex < 0) {
       throw StateError('Sponsor next season index cannot be negative.');
