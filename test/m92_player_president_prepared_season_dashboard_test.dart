@@ -1,4 +1,3 @@
-import 'package:futbol_baskanlik_m0/facility_sponsor_crisis_runtime_composition.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
@@ -12,7 +11,6 @@ import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
-import 'package:futbol_baskanlik_m0/sponsor_runtime_integration.dart';
 import 'package:test/test.dart';
 
 Object _choiceFor(
