@@ -10,6 +10,7 @@ import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
 import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart';
 
 import 'support/decision_test_support.dart';
 
@@ -198,6 +199,47 @@ void main() {
       find.text('${expected.finalPosition}. sıra'),
       findsOneWidget,
     );
+  });
+
+
+  testWidgets('malformed Completed report fails closed without next-season CTA',
+      (tester) async {
+    final controller = GameFlowController(
+      world: composition.world,
+      config: composition.simulationConfig,
+      saveSlots: composition.saveSlots,
+    );
+    addTearDown(controller.dispose);
+    controller.startNewGame(composition.world.clubs.first);
+    final completed = completeSeason(controller);
+    final boundary = completed.result.boundaries.single;
+    final malformed = PlayerPresidentInteractiveSessionCompleted(
+      result: PlayerPresidentUnifiedManagerRuntimeCareerResult(
+        checkpoint: completed.result.checkpoint,
+        boundaries: [boundary, boundary],
+      ),
+      decisionCount: completed.decisionCount,
+    );
+
+    var continued = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PresidentSessionStateView(
+            step: malformed,
+            clubNameForId: clubNameForId,
+            onContinueToNextSeason: () {
+              continued = true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('season-report-error')), findsOneWidget);
+    expect(find.byKey(const Key('president-season-report-panel')), findsNothing);
+    expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
+    expect(continued, isFalse);
   });
 
   testWidgets('resumed next-season Pending uses the existing DecisionPanel',
