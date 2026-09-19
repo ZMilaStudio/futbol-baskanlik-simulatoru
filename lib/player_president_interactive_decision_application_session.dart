@@ -1,1 +1,2 @@
 export 'src/player_president/player_president_interactive_decision_application_session.dart';
+export 'src/player_president/player_president_prepared_season_dashboard_snapshot.dart';
