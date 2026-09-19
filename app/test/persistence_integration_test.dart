@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_baskanlik_app/composition/app_composition.dart';
 import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
+import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_catalog.dart';
@@ -30,6 +31,39 @@ void main() {
           '${tempDirectory.path}${Platform.pathSeparator}save_slots',
         ),
       );
+
+
+  PlayerPresidentInteractiveSessionCompleted driveToCompleted(
+    GameFlowController controller,
+  ) {
+    for (var guard = 0; guard < 100; guard++) {
+      final step = controller.currentStep;
+      if (step is PlayerPresidentInteractiveSessionCompleted) {
+        return step;
+      }
+      final pending = step as PlayerPresidentInteractiveDecisionPending;
+      controller.submitChoice(canonicalChoiceForRequest(pending.request));
+      expect(controller.currentResolution, isNotNull);
+      expect(controller.continueAfterResolution(), isTrue);
+    }
+    throw StateError('Interactive season did not complete.');
+  }
+
+  void expectReportParity(
+    PlayerPresidentCompletedSeasonReport actual,
+    PlayerPresidentCompletedSeasonReport expected,
+  ) {
+    expect(actual.seasonIndex, expected.seasonIndex);
+    expect(actual.controlledClubId, expected.controlledClubId);
+    expect(actual.leagueTier, expected.leagueTier);
+    expect(actual.finalPosition, expected.finalPosition);
+    expect(actual.standing.points, expected.standing.points);
+    expect(actual.championClubId, expected.championClubId);
+    expect(actual.finance.signature, expected.finance.signature);
+    expect(actual.manager.id, expected.manager.id);
+    expect(actual.managerSeason.signature, expected.managerSeason.signature);
+    expect(actual.promise?.signature, expected.promise?.signature);
+  }
 
   test(
       'fresh new-game save survives app recreation with exact pending parity',
@@ -267,4 +301,206 @@ void main() {
     expect(staleBinding, isNull);
     expect(c.saveSlots.list(), isEmpty);
   });
+
+  test('fresh bootstrap Completed save rebounds and reloads the same report', () {
+    final compositionA = composition();
+    final controllerA = GameFlowController(
+      world: compositionA.world,
+      config: compositionA.simulationConfig,
+      saveSlots: compositionA.saveSlots,
+      slotIdFactory: () => 'career_m91_completed_bootstrap',
+    );
+    addTearDown(controllerA.dispose);
+    controllerA.startNewGame(compositionA.world.clubs.first);
+
+    final completedBefore = driveToCompleted(controllerA);
+    final reportBefore =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(completedBefore);
+
+    expect(controllerA.saveCurrent(), isTrue);
+    expect(
+      controllerA.currentStep,
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+    expect(controllerA.saveSummary!.isNewGameBootstrap, isTrue);
+    final reboundReport = PlayerPresidentCompletedSeasonReport.fromCompleted(
+      controllerA.currentStep as PlayerPresidentInteractiveSessionCompleted,
+    );
+    expectReportParity(reboundReport, reportBefore);
+
+    final compositionB = composition();
+    final summaryB = compositionB.saveSlots.list().single;
+    final bindingB =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: compositionB.saveSlots,
+      summary: summaryB,
+    )!;
+    final controllerB = GameFlowController(
+      world: compositionB.world,
+      config: compositionB.simulationConfig,
+      saveSlots: compositionB.saveSlots,
+    );
+    addTearDown(controllerB.dispose);
+
+    expect(controllerB.loadBoundSave(bindingB), isTrue);
+    expect(
+      controllerB.currentStep,
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+    final reportAfter = PlayerPresidentCompletedSeasonReport.fromCompleted(
+      controllerB.currentStep as PlayerPresidentInteractiveSessionCompleted,
+    );
+    expectReportParity(reportAfter, reportBefore);
+    expect(controllerB.currentResolution, isNull);
+    expect(controllerB.queuedNextStep, isNull);
+  });
+
+  test('bound Completed saveBack preserves and reloads the same report', () {
+    final compositionA = composition();
+    final controllerA = GameFlowController(
+      world: compositionA.world,
+      config: compositionA.simulationConfig,
+      saveSlots: compositionA.saveSlots,
+      slotIdFactory: () => 'career_m91_completed_saveback',
+    );
+    addTearDown(controllerA.dispose);
+    controllerA.startNewGame(compositionA.world.clubs.first);
+    expect(controllerA.saveCurrent(), isTrue);
+    final bindingIdentity = controllerA.binding!.identity;
+
+    final completed = driveToCompleted(controllerA);
+    final reportBefore =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+    expect(controllerA.saveCurrent(), isTrue);
+    expect(controllerA.binding!.identity, bindingIdentity);
+    expect(
+      controllerA.currentStep,
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+
+    final compositionB = composition();
+    final summaryB = compositionB.saveSlots.list().single;
+    final bindingB =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: compositionB.saveSlots,
+      summary: summaryB,
+    )!;
+    final controllerB = GameFlowController(
+      world: compositionB.world,
+      config: compositionB.simulationConfig,
+      saveSlots: compositionB.saveSlots,
+    );
+    addTearDown(controllerB.dispose);
+    expect(controllerB.loadBoundSave(bindingB), isTrue);
+
+    final reportAfter = PlayerPresidentCompletedSeasonReport.fromCompleted(
+      controllerB.currentStep as PlayerPresidentInteractiveSessionCompleted,
+    );
+    expectReportParity(reportAfter, reportBefore);
+  });
+
+  test('checkpoint-origin Completed reloads the same authoritative report', () {
+    final compositionA = composition();
+    final slotIds = <String>[
+      'career_m91_first_season',
+      'career_m91_checkpoint_completed',
+    ];
+    var slotIndex = 0;
+    final controllerA = GameFlowController(
+      world: compositionA.world,
+      config: compositionA.simulationConfig,
+      saveSlots: compositionA.saveSlots,
+      slotIdFactory: () => slotIds[slotIndex++],
+    );
+    addTearDown(controllerA.dispose);
+    controllerA.startNewGame(compositionA.world.clubs.first);
+
+    driveToCompleted(controllerA);
+    expect(controllerA.continueToNextSeason(), isTrue);
+    expect(
+      controllerA.session!.origin,
+      PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
+    );
+
+    final secondCompleted = driveToCompleted(controllerA);
+    final reportBefore =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(secondCompleted);
+    expect(controllerA.saveCurrent(), isTrue);
+    expect(controllerA.saveSummary!.isCheckpoint, isTrue);
+
+    final compositionB = composition();
+    final checkpointSummary = compositionB.saveSlots
+        .list()
+        .singleWhere((summary) => summary.isCheckpoint);
+    final bindingB =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: compositionB.saveSlots,
+      summary: checkpointSummary,
+    )!;
+    final controllerB = GameFlowController(
+      world: compositionB.world,
+      config: compositionB.simulationConfig,
+      saveSlots: compositionB.saveSlots,
+    );
+    addTearDown(controllerB.dispose);
+
+    expect(controllerB.loadBoundSave(bindingB), isTrue);
+    expect(
+      controllerB.currentStep,
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+    final reportAfter = PlayerPresidentCompletedSeasonReport.fromCompleted(
+      controllerB.currentStep as PlayerPresidentInteractiveSessionCompleted,
+    );
+    expectReportParity(reportAfter, reportBefore);
+  });
+
+  test('next-season save reload does not restore the previous season report', () {
+    final compositionA = composition();
+    final controllerA = GameFlowController(
+      world: compositionA.world,
+      config: compositionA.simulationConfig,
+      saveSlots: compositionA.saveSlots,
+      slotIdFactory: () => 'career_m91_next_boundary',
+    );
+    addTearDown(controllerA.dispose);
+    controllerA.startNewGame(compositionA.world.clubs.first);
+
+    final completed = driveToCompleted(controllerA);
+    final oldReport =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+    expect(controllerA.continueToNextSeason(), isTrue);
+    expect(
+      controllerA.currentStep,
+      isA<PlayerPresidentInteractiveDecisionPending>(),
+    );
+    expect(controllerA.saveCurrent(), isTrue);
+
+    final compositionB = composition();
+    final summaryB = compositionB.saveSlots.list().single;
+    final bindingB =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: compositionB.saveSlots,
+      summary: summaryB,
+    )!;
+    final controllerB = GameFlowController(
+      world: compositionB.world,
+      config: compositionB.simulationConfig,
+      saveSlots: compositionB.saveSlots,
+    );
+    addTearDown(controllerB.dispose);
+    expect(controllerB.loadBoundSave(bindingB), isTrue);
+
+    expect(
+      controllerB.currentStep,
+      isA<PlayerPresidentInteractiveDecisionPending>(),
+    );
+    expect(controllerB.currentResolution, isNull);
+    expect(controllerB.queuedNextStep, isNull);
+    expect(
+      controllerB.session!.checkpointOrNull!.nextSeasonIndex,
+      greaterThan(oldReport.seasonIndex),
+    );
+  });
+
 }

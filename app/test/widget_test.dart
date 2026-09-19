@@ -52,6 +52,11 @@ void main() {
     return controller;
   }
 
+  String clubNameForId(String id) => composition.world.clubs
+      .singleWhere((club) => club.id == id)
+      .name;
+
+
   testWidgets('opening screen exposes the two primary actions', (tester) async {
     await pumpApp(tester);
 
@@ -257,13 +262,19 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PresidentSessionStateView(step: completed),
+          body: SingleChildScrollView(
+            child: PresidentSessionStateView(
+              step: completed,
+              clubNameForId: clubNameForId,
+            ),
+          ),
         ),
       ),
     );
 
-    expect(find.text('Sezon tamamlandı'), findsOneWidget);
-    expect(find.byKey(const Key('completed-season-info')), findsOneWidget);
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    expect(find.byKey(const Key('season-report-title')), findsOneWidget);
+    expect(find.byKey(const Key('completed-season-info')), findsNothing);
   });
 
   testWidgets('back navigation returns through the Stage 5 flow', (
