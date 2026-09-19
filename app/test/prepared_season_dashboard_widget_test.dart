@@ -252,6 +252,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: PresidentHomeScreen.loaded(
+          key: const ValueKey('m92-bootstrap-loaded-home'),
           composition: composition,
           binding: bootstrapBinding,
         ),
@@ -284,6 +285,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: PresidentHomeScreen.loaded(
+          key: const ValueKey('m92-checkpoint-loaded-home'),
           composition: composition,
           binding: checkpointBinding,
         ),
