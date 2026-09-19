@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 18 Eylül 2026
+Son güncelleme: 19 Eylül 2026
 
 ## 1. Proje kimliği
 
@@ -40,82 +40,72 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-**M0–M90 CLOSED / MERGED / PASS.**
+# **M0–M91 CLOSED / MERGED / PASS.**
 
 Son kapanan milestone:
 
-# M90 — Decision Resolution Feedback I
+# M91 — President Season Report I
 
 PR:
-**#93 — MERGED**
+**#94 — MERGED / CLOSED**
 
-Onaylanan exact merge HEAD:
-`e262b69000b65d3fe114557d3ac5016ce48ad174`
+Kullanıcının onayladığı exact PR HEAD:
+`fed669993a82744f3f7892b9266c357fd7eb5cb5`
 
-Squash merge / M90 executable main SHA:
-`c81b8f1619820ce8a2fad0a7ebd1e3394ba0ce3b`
+Squash merge / executable main SHA:
+`35bc2c3da9d90f887f1bcfcc2d750a38a413ebd0`
 
-M90 Aşama durumu:
+M91 Aşama durumu:
 - Aşama 1 — **PASS**
 - Aşama 2 — **PASS**
 - Aşama 3 — **PASS**
 - Aşama 4 — **PASS**
-- Aşama 5 — **PASS**
-- Final classification — **A) READY / NO BLOCKER**
+- Final classification — **A — READY / NO BLOCKER**
 - Merge — **COMPLETED**
-- Post-merge actual-main executable verification — **SUCCESS**
+- Post-merge actual-main executable acceptance — **PASS**
 
-M90 final ürün lifecycle:
-`Pending → accepted choice → authoritative immediate decision resolution → Devam Et → authoritative next Pending / Completed`
+Final lifecycle:
+`Final Decision → Decision Resolution → Devam Et → authoritative Completed → PlayerPresidentCompletedSeasonReport → PresidentSeasonReportPanel → Sonraki Sezona Geç`
 
-Authority sınırı:
-- **M65 tek persisted game-state authority**
-- M74 yalnız accepted-choice replay metadata: `requestKey / kind / choice`
-- M75 checkpoint persistence bundle
-- M76 application lifecycle + additive resolution exposure
-- M87/M88 save-slot lifecycle unchanged
-- resolution/consequence runtime-only
-- Flutter presentation/transient coordination only
-- resolution/presentation state save bytes'a girmez
+Kalıcı teknik sonuç:
+- `PlayerPresidentCompletedSeasonReport` public read-only application projection'dır.
+- Contract exactly-one-season `Completed` root ister.
+- Sporting result, completed-season finance, historical completed-season manager ve promise result authoritative veriden gelir.
+- Flutter nested M71→M65→M48→M47 runtime graph traversal yapmaz.
+- `GameFlowController` yeni season-report state authority kazanmaz.
+- Season Report persisted değildir; authoritative `Completed` restore edilirse yeniden türetilir.
+- `seasonReportShown` veya persisted report snapshot/cache/sidecar yoktur.
+- Invalid report authority UI'da fail-closed olur ve next-season continuation sunulmaz.
+- **M65 sole persisted game-state authority olarak kalır.**
+- M74/M75/M80/M77–M88 unchanged.
+- FBS-01 / FBS-02 / FBS-03 tetiklenmedi.
 
-Final pre-merge exact-head kanıtı:
-- Flutter run #17 / `35381990658` — SUCCESS
-  - real Flutter analyze — SUCCESS
-  - 44 tests PASS
-  - Android debug APK SUCCESS
-  - emulator launch SUCCESS
-  - artifacts 0
-- Core run #576 / `35381990555`, final attempt 2 — SUCCESS
-  - Analyze SUCCESS
-  - 429 tests PASS
-  - canonical M0–M88 SUCCESS
-  - skipped milestone yok
-  - artifacts 0
-
-Post-merge actual-main executable kanıtı, executable merge SHA
-`c81b8f1619820ce8a2fad0a7ebd1e3394ba0ce3b`
+Post-merge actual-main executable kanıtı, executable SHA
+`35bc2c3da9d90f887f1bcfcc2d750a38a413ebd0`
 üzerinde:
-- M89 Flutter App run #18 / `35389490910` — SUCCESS
-  - `No issues found! (ran in 8.4s)`
-  - 44 tests PASS
+- M89 Flutter App run #33 / `35447739837`, final attempt 2 — **SUCCESS**
+  - `Analyzing app...`
+  - `No issues found! (ran in 7.7s)`
+  - 53 tests PASS
   - Android debug APK SUCCESS
   - Android emulator launch SUCCESS
   - marker: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
   - artifacts 0
-- Core Simulation Tests run #577 / `35389490940` — SUCCESS
+- Core Simulation Tests run #596 / `35447739836`, final attempt 4 — **SUCCESS**
   - Analyze SUCCESS
-  - 429 tests PASS
+  - 438 tests PASS
   - canonical M0–M88 tamamı SUCCESS
+  - skipped milestone 0
   - M88 PASS marker mevcut
-  - skipped milestone yok
   - artifacts 0
 
 Bu nedenle:
-# **M90 — CLOSED / MERGED / PASS**
+# **M91 — CLOSED / MERGED / PASS**
 
-Yeni milestone henüz seçilmemiştir.
-Kullanıcı açık prompt vermeden yeni milestone/gap scan/branch/PR başlatılmamalıdır.
-Yeni çalışma istendiğinde önce live `main` doğrulanmalı ve fresh gap scan yapılmalıdır.
+Aktif milestone:
+**YOK**
+
+Kullanıcı yeni geliştirme promptu vermeden M92 seçilmez, fresh gap scan yapılmaz, branch/PR açılmaz veya yeni feature başlatılmaz.
 
 ## 4. M89 mimari yönü
 
@@ -551,3 +541,79 @@ Kullanıcı yeni geliştirme istediğinde:
 4. en küçük doğal authority-safe gap'i öner/uygula.
 
 **Kullanıcı promptu gelmeden DUR.**
+
+## 19. M91 kapanış sonucu
+
+# M91 — President Season Report I
+
+M91, PR #94 ile merge edildi ve actual-main executable proof tamamlandı.
+
+### Final lifecycle
+
+`Final Decision`
+→ `Decision Resolution`
+→ `Devam Et`
+→ authoritative `Completed`
+→ `PlayerPresidentCompletedSeasonReport`
+→ `PresidentSeasonReportPanel`
+→ `Sonraki Sezona Geç`
+
+### Kalıcı application/authority contract
+
+- `PlayerPresidentCompletedSeasonReport` public read-only application projection'dır.
+- Projection yalnız exactly-one-season authoritative `Completed` root'tan üretilir.
+- Sporting result authoritative completed-season league result'tan gelir.
+- Finance authoritative completed-season finance seam'inden gelir; next-season finance state report yerine kullanılmaz.
+- Manager, completed-season historical manager'dır; post-season replacement manager geçmiş sezon sonucu olarak gösterilmez.
+- Promise sonucu canonical authoritative promise resolution'dır; promise yoksa nullable kalır.
+- Flutter nested M71→M65→M48→M47 runtime graph traversal yapmaz.
+- `GameFlowController` report için yeni state authority kazanmaz.
+- Season Report persisted değildir.
+- Authoritative `Completed` restore edilirse report yeniden türetilir.
+- `seasonReportShown` yoktur.
+- Persisted report snapshot/cache/sidecar yoktur.
+- Invalid report authority UI'da fail-closed olur; next-season continuation sunulmaz.
+- **M65 sole persisted game-state authority olarak kalır.**
+- M74/M75/M80/M77–M88 persistence/application contracts unchanged.
+- FBS-01 / FBS-02 / FBS-03 tetiklenmedi.
+
+### Merge ve executable proof
+
+Approved exact PR HEAD:
+`fed669993a82744f3f7892b9266c357fd7eb5cb5`
+
+Squash merge executable SHA:
+`35bc2c3da9d90f887f1bcfcc2d750a38a413ebd0`
+
+Flutter actual-main:
+- M89 Flutter App run #33 / `35447739837`
+- final attempt 2 — SUCCESS
+- real analyze: `No issues found! (ran in 7.7s)`
+- 53 tests PASS
+- Android debug APK SUCCESS
+- Android emulator launch SUCCESS
+- marker: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
+- artifacts 0
+
+Core actual-main:
+- Core Simulation Tests run #596 / `35447739836`
+- final attempt 4 — SUCCESS
+- Analyze SUCCESS
+- 438 tests PASS
+- canonical M0–M88 tamamı SUCCESS
+- skipped milestone 0
+- M88 marker PASS
+- artifacts 0
+
+İlk üç canonical attempt source/assertion failure olmadan timing-only cancellation yaşadı; exact executable SHA üzerinde retry kuralı uygulandı ve attempt 4 tam SUCCESS oldu. Flutter attempt 1'de emulator package service `Broken pipe (32)` infrastructure failure'ı yaşandı; aynı exact SHA üzerinde attempt 2 tam SUCCESS oldu.
+
+M91 post-merge actual-main executable acceptance — **PASS**.
+
+# **M91 — CLOSED / MERGED / PASS**
+# **M0–M91 — CLOSED / MERGED / PASS**
+
+Aktif milestone:
+**YOK**
+
+Yeni milestone otomatik seçilmez. Kullanıcı yeni geliştirme promptu verdiğinde live `main` üzerinden fresh gap scan yapılır; o zamana kadar M92 seçilmez, branch/PR açılmaz ve yeni feature başlatılmaz.
+

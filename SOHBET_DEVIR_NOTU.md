@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — SOHBET DEVİR NOTU
 
-Son güncelleme: 18 Eylül 2026
+Son güncelleme: 19 Eylül 2026
 
 Bu dosyanın amacı yeni sohbetin projeyi doğru bağlamla devralmasıdır.
 
@@ -14,7 +14,7 @@ Bu dosyanın amacı yeni sohbetin projeyi doğru bağlamla devralmasıdır.
 - kod yazma,
 - branch/PR açma,
 - yeni milestone seçme,
-- closure/merge işlemi yapma.
+- fresh gap scan başlatma.
 
 Kullanıcı prompt verdikten sonra:
 **Live GitHub > güncel repo dosyaları > eski sohbet bilgisi**.
@@ -24,147 +24,130 @@ Kullanıcı prompt verdikten sonra:
 Repo:
 `ZMilaStudio/futbol-baskanlik-simulatoru`
 
-# **M0–M90 CLOSED / MERGED / PASS**
+# **M0–M91 — CLOSED / MERGED / PASS**
 
 Son kapanan milestone:
-**M90 — Decision Resolution Feedback I**
+**M91 — President Season Report I**
 
-PR #93:
-- merged
+PR #94:
+- MERGED / CLOSED
 - squash merge
 
 Kullanıcının onayladığı exact PR HEAD:
-`e262b69000b65d3fe114557d3ac5016ce48ad174`
+`fed669993a82744f3f7892b9266c357fd7eb5cb5`
 
-M90 executable merge SHA:
-`c81b8f1619820ce8a2fad0a7ebd1e3394ba0ce3b`
+M91 executable squash merge SHA:
+`35bc2c3da9d90f887f1bcfcc2d750a38a413ebd0`
 
-M90 Aşamaları:
+M91:
 - Aşama 1 PASS
 - Aşama 2 PASS
 - Aşama 3 PASS
 - Aşama 4 PASS
-- Aşama 5 PASS
-- final audit: **A) READY / NO BLOCKER**
+- final classification: **A — READY / NO BLOCKER**
 - merge: completed
-- actual-main executable proof: completed
+- post-merge actual-main executable acceptance: **PASS**
 
-## 2. M90 final ürün contract'ı
+## 2. M91 final ürün contract'ı
 
-Lifecycle:
+Final lifecycle:
 
-`Pending → accepted choice → authoritative immediate decision resolution → Devam Et → authoritative next Pending / Completed`
+`Final Decision`
+→ `Decision Resolution`
+→ `Devam Et`
+→ authoritative `Completed`
+→ `PlayerPresidentCompletedSeasonReport`
+→ `PresidentSeasonReportPanel`
+→ `Sonraki Sezona Geç`
 
-Kesin authority:
-- **M65 = sole persisted game-state authority**
-- M74 = accepted-choice replay metadata only
-- M75 = checkpoint bundle
-- M76 = application lifecycle / additive resolution exposure
-- M87/M88 = existing mixed save-slot lifecycle
-- resolution/consequence = runtime-only
-- Flutter = presentation/transient coordination only
+Kalıcı teknik sonuç:
+- `PlayerPresidentCompletedSeasonReport` public read-only application projection'dır.
+- Exactly-one-season authoritative `Completed` contract'ı kullanılır.
+- Sporting result authoritative completed-season result'tan gelir.
+- Finance authoritative completed-season finance'tır.
+- Manager historical completed-season manager'dır; post-season replacement manager geçmiş sezon sonucu değildir.
+- Promise result canonical authoritative resolution'dır ve promise yoksa nullable kalır.
+- Flutter nested M71→M65→M48→M47 runtime graph traversal yapmaz.
+- `GameFlowController` yeni report state authority kazanmaz.
+- Season Report persisted değildir.
+- Authoritative `Completed` restore edilirse report yeniden türetilir.
+- `seasonReportShown` yoktur.
+- Persisted report snapshot/cache/sidecar yoktur.
+- Invalid report authority UI'da fail-closed olur.
+- Invalid report durumunda next-season continuation sunulmaz.
+- **M65 sole persisted game-state authority olarak kalır.**
+- M74/M75/M80/M77–M88 unchanged.
+- FBS-01 / FBS-02 / FBS-03 tetiklenmedi.
 
-Resolution:
-- serialize edilmez
-- M74 transcript'e eklenmez
-- M75/M80 schema'yı değiştirmez
-- save metadata değildir
-- reload'da historical feedback olarak restore edilmez
+## 3. Post-merge actual-main executable proof
 
-M74 transcript entry:
-- requestKey
-- kind
-- choice
+Executable SHA:
+`35bc2c3da9d90f887f1bcfcc2d750a38a413ebd0`
 
-## 3. Flutter M90 behavior
+### Flutter
 
-`GameFlowController` transient:
-- `currentResolution`
-- `queuedNextStep`
-
-Successful choice:
-1. M76 `submitWithResolution(...)`
-2. authoritative resolution tutulur
-3. authoritative nextStep queue edilir
-4. next Pending/Completed henüz gösterilmez
-5. `Devam Et` queued step'i açar
-
-`Devam Et`:
-- core advance çağırmaz
-- submit çağırmaz
-- replay/simulation çalıştırmaz
-
-`DecisionResolutionPanel` dokuz consequence subtype'ını public core fields'tan render eder.
-Flutter consequence/gameplay formülü uydurmaz.
-
-Save while resolution:
-- save çalışır
-- resolution transient kalır
-- fresh M87 save sonrası M88-bound session yeniden authoritative adopt edilir
-- queued boundary bound session'ın restored current boundary'sine rebase edilir
-- reload resolution göstermez
-
-## 4. Final exact-head pre-merge CI
-
-PR HEAD:
-`e262b69000b65d3fe114557d3ac5016ce48ad174`
-
-Flutter:
-- M89 Flutter App run #17 / `35381990658`
-- SUCCESS
-- real analyze SUCCESS
-- 44 tests PASS
-- Android APK SUCCESS
-- emulator launch SUCCESS
-- artifacts 0
-
-Core:
-- Core Simulation Tests run #576 / `35381990555`
-- final attempt 2 SUCCESS
-- Analyze SUCCESS
-- 429 tests PASS
-- canonical M0–M88 SUCCESS
-- skipped milestone yok
-- artifacts 0
-
-## 5. Post-merge actual-main executable proof
-
-Executable merge SHA:
-`c81b8f1619820ce8a2fad0a7ebd1e3394ba0ce3b`
-
-Flutter:
-- M89 Flutter App run #18 / `35389490910`
-- SUCCESS
-- `No issues found! (ran in 8.4s)`
-- 44 tests PASS
+M89 Flutter App:
+- run #33 / `35447739837`
+- final attempt 2 — **SUCCESS**
+- `Analyzing app...`
+- `No issues found! (ran in 7.7s)`
+- 53 tests PASS
 - Android debug APK SUCCESS
-- emulator launch SUCCESS
-- marker: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
+- Android emulator launch SUCCESS
+- marker:
+  `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
 - artifacts 0
 
-Core:
-- Core Simulation Tests run #577 / `35389490940`
-- SUCCESS
+Attempt 1 source/app failure değildi; emulator boot sonrası APK install sırasında Android package service `Broken pipe (32)` verdi. Aynı exact executable SHA üzerinde retry edildi ve attempt 2 tam SUCCESS oldu.
+
+### Core
+
+Core Simulation Tests:
+- run #596 / `35447739836`
+- final attempt 4 — **SUCCESS**
 - Analyze SUCCESS
-- 429 tests PASS
-- canonical M0–M88 SUCCESS
-- skipped milestone yok
+- 438 tests PASS
+- canonical M0–M88 tamamı SUCCESS
+- skipped milestone 0
 - M88 PASS marker mevcut
 - artifacts 0
 
-## 6. Sıradaki iş
+Canonical attempt 1–3 source/assertion failure olmadan timing-only cancellation yaşadı. Aynı exact executable SHA üzerinde retry kuralı uygulandı; attempt 4 tam SUCCESS oldu.
 
-**Aktif geliştirme milestone'u yok.**
+M88 marker:
+`M88_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_BINDING_PASS ... saveAuthority=M65 ...`
 
-Yeni milestone otomatik seçilmemeli.
+## 4. Authority özeti
 
-Kullanıcı yeni geliştirme promptu verdiğinde:
-1. live `main` HEAD doğrulanmalı,
-2. `GENEL_PROJE_OZETI.md`, `PROJE_KARARLARI.md`, `SOHBET_DEVIR_NOTU.md` okunmalı,
-3. fresh live-main gap scan yapılmalı,
-4. en küçük doğal authority-safe gap üzerinden yeni milestone belirlenmeli.
+- **M65 = sole persisted game-state authority**
+- M74 = accepted-choice replay metadata
+- M75 = checkpoint persistence bundle
+- M76 = application lifecycle
+- M77–M88 = mevcut save-slot/persistence application zinciri; M91 ile değişmedi
+- M90 decision resolution = runtime-only transient feedback
+- M91 season report = read-only derived application projection; persisted authority değildir
+- Flutter = presentation/transient coordination consumer
 
-Eski sohbetten sıradaki milestone tahmin edilmemeli.
+## 5. Sıradaki iş
+
+**Aktif milestone: YOK.**
+
+M92 belirlenmemiştir.
+
+Kullanıcı yeni geliştirme promptu vermeden:
+- M92 seçme,
+- fresh gap scan yapma,
+- branch/PR açma,
+- yeni feature başlatma,
+- source veya docs değiştirme.
+
+Kullanıcı yeni geliştirme istediğinde:
+1. live `main` HEAD doğrula,
+2. `GENEL_PROJE_OZETI.md`, `PROJE_KARARLARI.md`, `SOHBET_DEVIR_NOTU.md` oku,
+3. live `main` üzerinden fresh gap scan yap,
+4. en küçük doğal authority-safe gap'i seç.
+
+Eski sohbetten sıradaki milestone tahmin edilmez.
 
 # DUR
 
