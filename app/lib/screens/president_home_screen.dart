@@ -7,6 +7,7 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_sessio
 
 import '../composition/app_composition.dart';
 import '../controller/game_flow_controller.dart';
+import '../dashboard/president_prepared_season_dashboard_panel.dart';
 import '../decisions/decision_panel.dart';
 import '../decisions/decision_resolution_panel.dart';
 import '../reports/president_season_report_panel.dart';
@@ -117,6 +118,10 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
           final resolution = _controller.currentResolution;
           final errorMessage = _controller.errorMessage;
           final club = _controller.selectedClub;
+          final preparedDashboard = _controller.preparedSeasonDashboard;
+          final showPreparedDashboard = preparedDashboard != null &&
+              (resolution != null ||
+                  step is PlayerPresidentInteractiveDecisionPending);
           final busy = _controller.loading || _controller.persistenceBusy;
 
           return Center(
@@ -181,6 +186,14 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                               style: TextStyle(color: theme.colorScheme.error),
                             ),
                             const SizedBox(height: 12),
+                          ],
+                          if (showPreparedDashboard) ...[
+                            PresidentPreparedSeasonDashboardPanel(
+                              snapshot: preparedDashboard,
+                            ),
+                            const SizedBox(height: 20),
+                            const Divider(),
+                            const SizedBox(height: 20),
                           ],
                           if (resolution != null)
                             DecisionResolutionPanel(

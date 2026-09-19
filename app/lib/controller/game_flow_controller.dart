@@ -5,6 +5,7 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_catalog.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_service.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_prepared_season_dashboard_snapshot.dart';
 
 import '../persistence/slot_id_generator.dart';
 
@@ -41,6 +42,8 @@ class GameFlowController extends ChangeNotifier {
 
   Club? get selectedClub => _selectedClub;
   PlayerPresidentInteractiveDecisionApplicationSession? get session => _session;
+  PlayerPresidentPreparedSeasonDashboardSnapshot? get preparedSeasonDashboard =>
+      _session?.preparedSeasonDashboard;
   PlayerPresidentInteractiveSessionStep? get currentStep => _currentStep;
   PlayerPresidentInteractiveDecisionResolution? get currentResolution =>
       _currentResolution;
