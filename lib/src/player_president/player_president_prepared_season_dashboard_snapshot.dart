@@ -117,10 +117,11 @@ class PlayerPresidentPreparedSeasonDashboardSnapshot {
           'Active prepared dashboard player president is not the incumbent.',
         );
       }
-    } else if (playerControl.successorPresidentId !=
+    } else if (playerControl.playerPresidentId ==
         presidentTenure.president.id) {
       throw StateError(
-        'Lost prepared dashboard player control does not match incumbent.',
+        'Lost prepared dashboard player control cannot still own the '
+        'incumbent president.',
       );
     }
 
