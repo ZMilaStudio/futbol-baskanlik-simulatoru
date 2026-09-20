@@ -75,6 +75,7 @@ void main() {
 
   late FictionalWorldSetup world;
   late String turnoverClubId;
+  late PlayerPresidentTicketPricingRuntimeCheckpoint beforeLossCheckpoint;
   late PlayerPresidentTicketPricingRuntimeCheckpoint lostCheckpoint;
 
   setUpAll(() {
@@ -106,18 +107,28 @@ void main() {
       (clubId) => beforeByClub[clubId] != afterByClub[clubId],
     );
 
-    lostCheckpoint =
-        const PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine()
-            .simulateWithCheckpoint(
-      clubs: world.clubs,
-      leagues: world.leagues,
-      config: config,
-      controlledClubId: turnoverClubId,
-      seasonCount: 4,
-      electionInterval: 4,
-      hasFutureSeasonAfterReport: true,
-    ).checkpoint;
+    const gatewayEngine =
+        PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine();
+    beforeLossCheckpoint = gatewayEngine
+        .simulateWithCheckpoint(
+          clubs: world.clubs,
+          leagues: world.leagues,
+          config: config,
+          controlledClubId: turnoverClubId,
+          seasonCount: 3,
+          electionInterval: 4,
+          hasFutureSeasonAfterReport: true,
+        )
+        .checkpoint;
+    lostCheckpoint = gatewayEngine
+        .resume(
+          checkpoint: beforeLossCheckpoint,
+          seasonCount: 1,
+          hasFutureSeasonAfterReport: true,
+        )
+        .checkpoint;
 
+    expect(beforeLossCheckpoint.tenureControl.active, isTrue);
     expect(lostCheckpoint.tenureControl.lost, isTrue);
     expect(lostCheckpoint.tenureControl.lostAtCompletedSeason, 4);
   });
@@ -164,6 +175,30 @@ void main() {
     expect(next.checkpointOrNull, same(completed.result.checkpoint));
     expect(next.completed, isNull);
     expect(next.pendingDecision, isNull);
+  });
+
+  test('M93 M92 opening control can be active before final lost boundary', () {
+    final session = PlayerPresidentInteractiveDecisionApplicationSession.resume(
+      checkpoint: checkpointCodec.decode(
+        checkpointCodec.encode(beforeLossCheckpoint),
+      ),
+      resumeConfig: resumeConfig,
+    );
+
+    final opening = session.preparedSeasonDashboard;
+    expect(opening.playerControlActive, isTrue);
+    expect(opening.playerControl.status, PlayerPresidentTenureControlStatus.active);
+
+    const gatewayEngine =
+        PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine();
+    final finalBoundary = gatewayEngine.resume(
+      checkpoint: beforeLossCheckpoint,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    );
+    expect(finalBoundary.checkpoint.tenureControl.lost, isTrue);
+    expect(finalBoundary.checkpoint.tenureControl.lostAtCompletedSeason, 4);
+    expect(opening.playerControlActive, isTrue);
   });
 
   test('M93 lost checkpoint resumes generically but player continuation fails closed',
