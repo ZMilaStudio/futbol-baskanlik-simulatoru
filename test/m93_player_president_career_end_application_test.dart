@@ -247,9 +247,7 @@ void main() {
         PlayerPresidentInteractiveDecisionApplicationSession.restoreEncoded(
       encodedBundle: encoded,
     );
-    expect(restored.completedTenureControl, isNull);
-    final restoredStep = restored.advance();
-    expect(restoredStep, isA<PlayerPresidentInteractiveSessionCompleted>());
+    expect(restored.completed, isA<PlayerPresidentInteractiveSessionCompleted>());
     expect(restored.completedTenureControl!.signature, before.signature);
     expect(restored.completedTenureControl!.lostAtCompletedSeason, 4);
     expect(PlayerPresidentTicketPricingRuntimeSaveCodec.currentSaveVersion, 1);
