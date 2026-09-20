@@ -6,8 +6,10 @@ import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_persistence_bundle.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart';
 
 import 'support/decision_test_support.dart';
 
@@ -47,6 +49,49 @@ void main() {
     final pending = currentPending();
     controller.submitChoice(canonicalChoiceForRequest(pending.request));
     expect(controller.errorMessage, isNull);
+  }
+
+  PlayerPresidentTicketPricingRuntimeCheckpoint realLostCheckpoint() {
+    const domainEngine = PresidentDomainCareerEngine();
+    final beforeElection = domainEngine.simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: composition.simulationConfig,
+      seasonCount: 3,
+      electionInterval: 4,
+      hasFutureSeasonAfterReport: true,
+    );
+    final afterElection = domainEngine.resume(
+      checkpoint: beforeElection.checkpoint,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    );
+    final beforeByClub = {
+      for (final state in beforeElection.checkpoint.presidentRuntime.clubs)
+        state.clubId: state.tenure.president.id,
+    };
+    final afterByClub = {
+      for (final state in afterElection.checkpoint.presidentRuntime.clubs)
+        state.clubId: state.tenure.president.id,
+    };
+    final turnoverClubId = beforeByClub.keys.firstWhere(
+      (clubId) => beforeByClub[clubId] != afterByClub[clubId],
+    );
+
+    final checkpoint =
+        const PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransferTicketPricingRuntimeCareerEngine()
+            .simulateWithCheckpoint(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: composition.simulationConfig,
+      controlledClubId: turnoverClubId,
+      seasonCount: 4,
+      electionInterval: 4,
+      hasFutureSeasonAfterReport: true,
+    ).checkpoint;
+    expect(checkpoint.tenureControl.lost, isTrue);
+    expect(checkpoint.tenureControl.lostAtCompletedSeason, 4);
+    return checkpoint;
   }
 
   void continueResolution() {
@@ -261,33 +306,13 @@ void main() {
 
   test('lost Completed blocks player continuation and preserves controller state',
       () {
-    controller.startNewGame(world.clubs.first);
-    for (var guard = 0; guard < 100; guard++) {
-      if (controller.currentStep is PlayerPresidentInteractiveSessionCompleted) {
-        break;
-      }
-      submitCurrent();
-      continueResolution();
-    }
-
-    final activeCompleted =
-        controller.currentStep as PlayerPresidentInteractiveSessionCompleted;
-    final activeCheckpoint = activeCompleted.result.checkpoint;
-    final activeControl = activeCheckpoint.tenureControl;
-    final lostCheckpoint = PlayerPresidentTicketPricingRuntimeCheckpoint(
-      runtime: activeCheckpoint.runtime,
-      tenureControl: PlayerPresidentTenureControlState(
-        controlledClubId: activeControl.controlledClubId,
-        playerPresidentId: activeControl.playerPresidentId,
-        status: PlayerPresidentTenureControlStatus.lost,
-        lostAtCompletedSeason: 4,
-        successorPresidentId: 'm93-successor-president',
-      ),
-    );
     final lostSession =
         PlayerPresidentInteractiveDecisionApplicationSession.resume(
-      checkpoint: lostCheckpoint,
-      resumeConfig: controller.session!.resumeConfig,
+      checkpoint: realLostCheckpoint(),
+      resumeConfig: const PlayerPresidentInteractiveDecisionResumeConfig(
+        seasonCount: 1,
+        hasFutureSeasonAfterReport: true,
+      ),
     );
     expect(
       lostSession.advance(),
