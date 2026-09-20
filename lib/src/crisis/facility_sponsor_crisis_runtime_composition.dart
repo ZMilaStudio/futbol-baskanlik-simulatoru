@@ -425,10 +425,8 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
       trainingGroundFacilities: trainingGroundFacilities,
       totalInvestmentSpent: totalInvestmentSpent,
     );
-    final openingSponsor = SponsorRuntimeCheckpoint(
-      nextSeasonIndex: config.seasonIndex,
-      activeContracts: const [],
-      totalRevenuePaid: Money.zero,
+    final openingSponsor = SponsorRuntimeCheckpoint.initial(
+      seasonIndex: config.seasonIndex,
     );
     final profiles = <String, PresidentManagementProfile>{};
     final fans = <String, FanState>{};

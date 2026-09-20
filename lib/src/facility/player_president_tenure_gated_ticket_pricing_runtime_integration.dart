@@ -426,10 +426,9 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
       stadiumLevelsByClub: stadiums,
       fanStatesByClub: fans,
       presidentProfilesByClub: profiles,
-      tenureControl: PlayerPresidentTenureControlState(
+      tenureControl: PlayerPresidentTenureControlState.initial(
         controlledClubId: controlledClubId,
         playerPresidentId: playerPresidentId!,
-        status: PlayerPresidentTenureControlStatus.active,
       ),
     );
   }
