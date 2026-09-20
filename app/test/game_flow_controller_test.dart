@@ -7,6 +7,8 @@ import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_control_gate.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 
 import 'support/decision_test_support.dart';
 
@@ -255,6 +257,74 @@ void main() {
         isA<PlayerPresidentInteractiveDecisionPending>(),
         isA<PlayerPresidentInteractiveSessionCompleted>(),
       ),
+    );
+  });
+
+  test('lost Completed blocks player continuation and preserves controller state',
+      () {
+    controller.startNewGame(world.clubs.first);
+    for (var guard = 0; guard < 100; guard++) {
+      if (controller.currentStep is PlayerPresidentInteractiveSessionCompleted) {
+        break;
+      }
+      submitCurrent();
+      continueResolution();
+    }
+
+    final activeCompleted =
+        controller.currentStep as PlayerPresidentInteractiveSessionCompleted;
+    final activeCheckpoint = activeCompleted.result.checkpoint;
+    final activeControl = activeCheckpoint.tenureControl;
+    final lostCheckpoint = PlayerPresidentTicketPricingRuntimeCheckpoint(
+      runtime: activeCheckpoint.runtime,
+      tenureControl: PlayerPresidentTenureControlState(
+        controlledClubId: activeControl.controlledClubId,
+        playerPresidentId: activeControl.playerPresidentId,
+        status: PlayerPresidentTenureControlStatus.lost,
+        lostAtCompletedSeason: 4,
+        successorPresidentId: 'm93-successor-president',
+      ),
+    );
+    final lostSession =
+        PlayerPresidentInteractiveDecisionApplicationSession.resume(
+      checkpoint: lostCheckpoint,
+      resumeConfig: controller.session!.resumeConfig,
+    );
+    expect(
+      lostSession.advance(),
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+
+    const slotId = 'career_m93_lost_controller';
+    final source = composition.saveSlots.save(
+      slotId: slotId,
+      session: lostSession,
+    );
+    final summary = composition.saveSlots.inspect(
+      source: source,
+      slotId: slotId,
+    )!;
+    final binding =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: composition.saveSlots,
+      summary: summary,
+    )!;
+
+    expect(controller.loadBoundSave(binding), isTrue);
+    expect(controller.completedTenureControl!.lost, isTrue);
+    expect(controller.completedTenureControl!.lostAtCompletedSeason, 4);
+
+    final stepBefore = controller.currentStep;
+    final bindingBefore = controller.binding;
+    final summaryBefore = controller.saveSummary!.signature;
+
+    expect(controller.continueToNextSeason(), isFalse);
+    expect(controller.currentStep, same(stepBefore));
+    expect(controller.binding, same(bindingBefore));
+    expect(controller.saveSummary!.signature, summaryBefore);
+    expect(
+      controller.errorMessage,
+      'Başkanlık görevin sona erdi. Bu kariyerde sonraki sezona geçilemez.',
     );
   });
 
