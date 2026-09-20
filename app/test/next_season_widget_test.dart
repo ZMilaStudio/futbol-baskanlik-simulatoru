@@ -4,12 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_baskanlik_app/composition/app_composition.dart';
 import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
+import 'package:futbol_baskanlik_app/career/president_career_end_panel.dart';
 import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
 import 'package:futbol_baskanlik_app/reports/president_season_report_panel.dart';
 import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
+import 'package:futbol_baskanlik_app/main.dart';
 import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_control_gate.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart';
 
 import 'support/decision_test_support.dart';
@@ -201,6 +206,103 @@ void main() {
     );
   });
 
+
+  testWidgets(
+      'lost Completed keeps report, saves, reopens, and returns to Opening',
+      (tester) async {
+    final fixture = GameFlowController(
+      world: composition.world,
+      config: composition.simulationConfig,
+      saveSlots: composition.saveSlots,
+      slotIdFactory: () => 'career_m93_lost_widget',
+    );
+    addTearDown(fixture.dispose);
+    fixture.startNewGame(composition.world.clubs.first);
+    final activeCompleted = completeSeason(fixture);
+    final activeCheckpoint = activeCompleted.result.checkpoint;
+    final activeControl = activeCheckpoint.tenureControl;
+    final lostCheckpoint = PlayerPresidentTicketPricingRuntimeCheckpoint(
+      runtime: activeCheckpoint.runtime,
+      tenureControl: PlayerPresidentTenureControlState(
+        controlledClubId: activeControl.controlledClubId,
+        playerPresidentId: activeControl.playerPresidentId,
+        status: PlayerPresidentTenureControlStatus.lost,
+        lostAtCompletedSeason: 4,
+        successorPresidentId: 'm93-successor-private-id',
+      ),
+    );
+    final lostSession =
+        PlayerPresidentInteractiveDecisionApplicationSession.resume(
+      checkpoint: lostCheckpoint,
+      resumeConfig: fixture.session!.resumeConfig,
+    );
+    expect(
+      lostSession.advance(),
+      isA<PlayerPresidentInteractiveSessionCompleted>(),
+    );
+
+    const slotId = 'career_m93_lost_widget';
+    final source = composition.saveSlots.save(
+      slotId: slotId,
+      session: lostSession,
+    );
+    expect(
+      composition.saveSlots.inspect(source: source, slotId: slotId),
+      isNotNull,
+    );
+
+    await tester.pumpWidget(FutbolBaskanlikApp(composition: composition));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('load-game-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Devam Et'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PresidentSeasonReportPanel), findsOneWidget);
+    expect(find.byType(PresidentCareerEndPanel), findsOneWidget);
+    expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
+    expect(find.text('Başkanlık Görevin Sona Erdi'), findsOneWidget);
+    expect(
+      find.text('Kulüp yönetimindeki görevin bu sezon sonunda sona erdi.'),
+      findsOneWidget,
+    );
+    expect(find.text('4. sezon sonunda.'), findsOneWidget);
+    expect(find.textContaining('m93-successor-private-id'), findsNothing);
+    expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
+    expect(find.byKey(const Key('prepared-season-dashboard')), findsNothing);
+
+    final saveFinder = find.byKey(const Key('save-game-button'));
+    expect(saveFinder, findsOneWidget);
+    expect(tester.widget<IconButton>(saveFinder).onPressed, isNotNull);
+    await tester.tap(saveFinder);
+    await tester.pump();
+    expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('career-end-main-menu-button')),
+    );
+    await tester.tap(find.byKey(const Key('career-end-main-menu-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('new-game-button')), findsOneWidget);
+    expect(find.byKey(const Key('load-game-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('load-game-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Devam Et'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
+    expect(find.text('4. sezon sonunda.'), findsOneWidget);
+    expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('career-end-main-menu-button')),
+    );
+    await tester.tap(find.byKey(const Key('career-end-main-menu-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('new-game-button')), findsOneWidget);
+  });
 
   testWidgets('malformed Completed report fails closed without next-season CTA',
       (tester) async {
