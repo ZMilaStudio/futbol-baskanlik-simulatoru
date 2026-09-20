@@ -9,8 +9,10 @@ import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
 import 'package:futbol_baskanlik_app/reports/president_season_report_panel.dart';
 import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
 import 'package:futbol_baskanlik_app/main.dart';
+import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_persistence_bundle.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_binding.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
@@ -37,6 +39,49 @@ void main() {
       tempDirectory.deleteSync(recursive: true);
     }
   });
+
+  PlayerPresidentTicketPricingRuntimeCheckpoint realLostCheckpoint() {
+    const domainEngine = PresidentDomainCareerEngine();
+    final beforeElection = domainEngine.simulateWithCheckpoint(
+      clubs: composition.world.clubs,
+      leagues: composition.world.leagues,
+      config: composition.simulationConfig,
+      seasonCount: 3,
+      electionInterval: 4,
+      hasFutureSeasonAfterReport: true,
+    );
+    final afterElection = domainEngine.resume(
+      checkpoint: beforeElection.checkpoint,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    );
+    final beforeByClub = {
+      for (final state in beforeElection.checkpoint.presidentRuntime.clubs)
+        state.clubId: state.tenure.president.id,
+    };
+    final afterByClub = {
+      for (final state in afterElection.checkpoint.presidentRuntime.clubs)
+        state.clubId: state.tenure.president.id,
+    };
+    final turnoverClubId = beforeByClub.keys.firstWhere(
+      (clubId) => beforeByClub[clubId] != afterByClub[clubId],
+    );
+
+    final checkpoint =
+        const PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransferTicketPricingRuntimeCareerEngine()
+            .simulateWithCheckpoint(
+      clubs: composition.world.clubs,
+      leagues: composition.world.leagues,
+      config: composition.simulationConfig,
+      controlledClubId: turnoverClubId,
+      seasonCount: 4,
+      electionInterval: 4,
+      hasFutureSeasonAfterReport: true,
+    ).checkpoint;
+    expect(checkpoint.tenureControl.lost, isTrue);
+    expect(checkpoint.tenureControl.lostAtCompletedSeason, 4);
+    return checkpoint;
+  }
 
   PlayerPresidentInteractiveSessionCompleted completeSeason(
     GameFlowController controller,
@@ -209,31 +254,13 @@ void main() {
   testWidgets(
       'lost Completed keeps report, saves, reopens, and returns to Opening',
       (tester) async {
-    final fixture = GameFlowController(
-      world: composition.world,
-      config: composition.simulationConfig,
-      saveSlots: composition.saveSlots,
-      slotIdFactory: () => 'career_m93_lost_widget',
-    );
-    addTearDown(fixture.dispose);
-    fixture.startNewGame(composition.world.clubs.first);
-    final activeCompleted = completeSeason(fixture);
-    final activeCheckpoint = activeCompleted.result.checkpoint;
-    final activeControl = activeCheckpoint.tenureControl;
-    final lostCheckpoint = PlayerPresidentTicketPricingRuntimeCheckpoint(
-      runtime: activeCheckpoint.runtime,
-      tenureControl: PlayerPresidentTenureControlState(
-        controlledClubId: activeControl.controlledClubId,
-        playerPresidentId: activeControl.playerPresidentId,
-        status: PlayerPresidentTenureControlStatus.lost,
-        lostAtCompletedSeason: 4,
-        successorPresidentId: 'm93-successor-private-id',
-      ),
-    );
     final lostSession =
         PlayerPresidentInteractiveDecisionApplicationSession.resume(
-      checkpoint: lostCheckpoint,
-      resumeConfig: fixture.session!.resumeConfig,
+      checkpoint: realLostCheckpoint(),
+      resumeConfig: const PlayerPresidentInteractiveDecisionResumeConfig(
+        seasonCount: 1,
+        hasFutureSeasonAfterReport: true,
+      ),
     );
     expect(
       lostSession.advance(),
@@ -267,7 +294,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('4. sezon sonunda.'), findsOneWidget);
-    expect(find.textContaining('m93-successor-private-id'), findsNothing);
+    expect(find.textContaining('president_'), findsNothing);
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
     expect(find.byKey(const Key('prepared-season-dashboard')), findsNothing);
 
