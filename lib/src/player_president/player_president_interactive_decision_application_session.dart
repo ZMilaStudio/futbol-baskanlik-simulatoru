@@ -317,6 +317,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentInteractiveSessionCompleted? get completed =>
       _session.completed;
 
+  PlayerPresidentTenureControlState? get completedTenureControl =>
+      _session.completed?.result.checkpoint.tenureControl;
+
   PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshot
       get newGameBootstrapSnapshot {
     final config = _newGameConfig;
@@ -361,6 +364,27 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   }
 
   String encodePersistenceBundle() => bundleCodec.encode(persistenceBundle);
+
+  PlayerPresidentInteractiveDecisionApplicationSession
+      continuePlayerCareerToNextSeason() {
+    final completed = _session.completed;
+    if (completed == null) {
+      throw StateError(
+        'Player career can continue only after the interactive session completes.',
+      );
+    }
+    if (completed.result.checkpoint.tenureControl.lost) {
+      throw StateError(
+        'Player career cannot continue after presidency control is lost.',
+      );
+    }
+    return PlayerPresidentInteractiveDecisionApplicationSession.resume(
+      checkpoint: completed.result.checkpoint,
+      resumeConfig: resumeConfig,
+      bundleCodec: bundleCodec,
+      bootstrapCodec: bootstrapCodec,
+    );
+  }
 
   PlayerPresidentInteractiveSessionStep advance() => _session.advance();
 
