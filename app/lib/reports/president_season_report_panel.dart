@@ -10,6 +10,7 @@ class PresidentSeasonReportPanel extends StatelessWidget {
     required this.report,
     required ClubDisplayNameResolver clubNameForId,
     required this.onContinueToNextSeason,
+    this.canContinueToNextSeason = true,
     this.busy = false,
     this.decisionCount,
   })  : controlledClubName = clubNameForId(report.controlledClubId),
@@ -19,6 +20,7 @@ class PresidentSeasonReportPanel extends StatelessWidget {
   final String controlledClubName;
   final String championClubName;
   final VoidCallback? onContinueToNextSeason;
+  final bool canContinueToNextSeason;
   final bool busy;
   final int? decisionCount;
 
@@ -153,13 +155,15 @@ class PresidentSeasonReportPanel extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
         ],
-        const SizedBox(height: 22),
-        FilledButton.icon(
-          key: const Key('continue-next-season-button'),
-          onPressed: busy ? null : onContinueToNextSeason,
-          icon: const Icon(Icons.skip_next),
-          label: const Text('Sonraki Sezona Geç'),
-        ),
+        if (canContinueToNextSeason) ...[
+          const SizedBox(height: 22),
+          FilledButton.icon(
+            key: const Key('continue-next-season-button'),
+            onPressed: busy ? null : onContinueToNextSeason,
+            icon: const Icon(Icons.skip_next),
+            label: const Text('Sonraki Sezona Geç'),
+          ),
+        ],
       ],
     );
   }
