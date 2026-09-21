@@ -162,8 +162,11 @@ void main() {
     expect(tester.getRect(lastPosition).top, greaterThan(480));
     expect(tester.getRect(farRight).left, greaterThan(320));
 
-    await tester.drag(
-      find.byKey(const Key('completed-season-table-horizontal-scroll')),
+    final horizontalFinder =
+        find.byKey(const Key('completed-season-table-horizontal-scroll'));
+    final horizontalTopLeft = tester.getTopLeft(horizontalFinder);
+    await tester.dragFrom(
+      Offset(300, horizontalTopLeft.dy + 100),
       const Offset(-4000, 0),
     );
     await tester.pumpAndSettle();
