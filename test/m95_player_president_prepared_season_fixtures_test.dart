@@ -2,10 +2,10 @@ import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_persistence_bundle.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_manager_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_media_statement_control.dart';
-import 'package:futbol_baskanlik_m0/player_president_prepared_season_fixtures_snapshot.dart';
 import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart';
@@ -406,36 +406,47 @@ void main() {
       }
     }
 
-    expect(
-      movedCheckpoint,
-      isNotNull,
-      reason: 'Deterministic real runtime must expose a moved controlled club.',
-    );
-    expect(oldLeague!.tier, isNot(nextLeague!.tier));
+    final selectedCheckpoint = movedCheckpoint;
+    final selectedOldLeague = oldLeague;
+    final selectedNextLeague = nextLeague;
+    final selectedClubId = movedClubId;
+    if (selectedCheckpoint == null ||
+        selectedOldLeague == null ||
+        selectedNextLeague == null ||
+        selectedClubId == null) {
+      fail('Deterministic real runtime exposed no moved controlled club.');
+    }
+
+    expect(selectedOldLeague.tier, isNot(selectedNextLeague.tier));
 
     final resumed = PlayerPresidentInteractiveDecisionApplicationSession.resume(
-      checkpoint: movedCheckpoint!,
+      checkpoint: selectedCheckpoint,
       resumeConfig: resumeConfig,
     );
     final snapshot = resumed.preparedSeasonFixtures;
-    final expectedOpponents =
-        nextLeague!.clubIds.where((id) => id != movedClubId).toSet();
-    final oldOpponents =
-        oldLeague!.clubIds.where((id) => id != movedClubId).toSet();
+    final expectedOpponents = selectedNextLeague.clubIds
+        .where((id) => id != selectedClubId)
+        .toSet();
+    final oldOpponents = selectedOldLeague.clubIds
+        .where((id) => id != selectedClubId)
+        .toSet();
     final actualOpponents =
         snapshot.fixtures.map((fixture) => fixture.opponentClubId).toSet();
 
     expect(expectedOpponents, isNot(equals(oldOpponents)));
-    expect(snapshot.leagueTier, nextLeague!.tier);
+    expect(snapshot.leagueTier, selectedNextLeague.tier);
     expect(actualOpponents, expectedOpponents);
-    expect(snapshot.fixtures, hasLength(2 * (nextLeague!.clubIds.length - 1)));
+    expect(
+      snapshot.fixtures,
+      hasLength(2 * (selectedNextLeague.clubIds.length - 1)),
+    );
     expect(
       snapshot.fixtures.where((fixture) => fixture.isHome),
-      hasLength(nextLeague!.clubIds.length - 1),
+      hasLength(selectedNextLeague.clubIds.length - 1),
     );
     expect(
       snapshot.fixtures.where((fixture) => !fixture.isHome),
-      hasLength(nextLeague!.clubIds.length - 1),
+      hasLength(selectedNextLeague.clubIds.length - 1),
     );
   });
 
