@@ -6,6 +6,7 @@ import '../election/president_tenure.dart';
 import '../fan/fan_state.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
+import '../league/fixture_generator.dart';
 import '../manager/manager_opening_state_initializer.dart';
 import '../player/player.dart';
 import '../player/team_strength_calculator.dart';
@@ -14,6 +15,7 @@ import '../world/world_league.dart';
 import '../world/world_opening_state_initializer.dart';
 import 'player_president_interactive_decision_new_game_bootstrap_snapshot.dart';
 import 'player_president_prepared_season_dashboard_snapshot.dart';
+import 'player_president_prepared_season_fixtures_snapshot.dart';
 import 'player_president_prepared_squad_snapshot.dart';
 import 'player_president_interactive_decision_persistence_bundle.dart';
 import 'player_president_interactive_decision_session.dart';
@@ -41,6 +43,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required PlayerPresidentPreparedSeasonDashboardSnapshot
         preparedSeasonDashboard,
     required PlayerPresidentPreparedSquadSnapshot preparedSquad,
+    required PlayerPresidentPreparedSeasonFixturesSnapshot
+        preparedSeasonFixtures,
     required SimulationConfig? newGameConfig,
     required String? newGameControlledClubId,
     required String? newGameWorldFingerprint,
@@ -50,6 +54,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   })  : _checkpoint = checkpoint,
         _preparedSeasonDashboard = preparedSeasonDashboard,
         _preparedSquad = preparedSquad,
+        _preparedSeasonFixtures = preparedSeasonFixtures,
         _newGameConfig = newGameConfig,
         _newGameControlledClubId = newGameControlledClubId,
         _newGameWorldFingerprint = newGameWorldFingerprint,
@@ -113,6 +118,11 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       controlledClubId: controlledClubId,
       seasonIndex: config.seasonIndex,
     );
+    final preparedSeasonFixtures = _preparedSeasonFixturesForNewGame(
+      opening: opening,
+      controlledClubId: controlledClubId,
+      seasonIndex: config.seasonIndex,
+    );
     return PlayerPresidentInteractiveDecisionApplicationSession._(
       origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
       checkpoint: null,
@@ -120,6 +130,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       newGameElectionInterval: electionInterval,
       preparedSeasonDashboard: preparedSeasonDashboard,
       preparedSquad: preparedSquad,
+      preparedSeasonFixtures: preparedSeasonFixtures,
       newGameConfig: config,
       newGameControlledClubId: controlledClubId,
       newGameWorldFingerprint:
@@ -178,6 +189,11 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       controlledClubId: snapshot.controlledClubId,
       seasonIndex: snapshot.config.seasonIndex,
     );
+    final preparedSeasonFixtures = _preparedSeasonFixturesForNewGame(
+      opening: opening,
+      controlledClubId: snapshot.controlledClubId,
+      seasonIndex: snapshot.config.seasonIndex,
+    );
 
     return PlayerPresidentInteractiveDecisionApplicationSession._(
       origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
@@ -186,6 +202,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       newGameElectionInterval: snapshot.electionInterval,
       preparedSeasonDashboard: preparedSeasonDashboard,
       preparedSquad: preparedSquad,
+      preparedSeasonFixtures: preparedSeasonFixtures,
       newGameConfig: snapshot.config,
       newGameControlledClubId: snapshot.controlledClubId,
       newGameWorldFingerprint: snapshot.worldFingerprint,
@@ -241,6 +258,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     final preparedSeasonDashboard =
         _preparedDashboardForCheckpoint(checkpoint);
     final preparedSquad = _preparedSquadForCheckpoint(checkpoint);
+    final preparedSeasonFixtures =
+        _preparedSeasonFixturesForCheckpoint(checkpoint);
     return PlayerPresidentInteractiveDecisionApplicationSession._(
       origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
       checkpoint: checkpoint,
@@ -248,6 +267,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       newGameElectionInterval: null,
       preparedSeasonDashboard: preparedSeasonDashboard,
       preparedSquad: preparedSquad,
+      preparedSeasonFixtures: preparedSeasonFixtures,
       newGameConfig: null,
       newGameControlledClubId: null,
       newGameWorldFingerprint: null,
@@ -269,6 +289,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     final preparedSeasonDashboard =
         _preparedDashboardForCheckpoint(bundle.checkpoint);
     final preparedSquad = _preparedSquadForCheckpoint(bundle.checkpoint);
+    final preparedSeasonFixtures =
+        _preparedSeasonFixturesForCheckpoint(bundle.checkpoint);
     final restoredSession = bundle.restoreSession();
     return PlayerPresidentInteractiveDecisionApplicationSession._(
       origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
@@ -277,6 +299,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       newGameElectionInterval: null,
       preparedSeasonDashboard: preparedSeasonDashboard,
       preparedSquad: preparedSquad,
+      preparedSeasonFixtures: preparedSeasonFixtures,
       newGameConfig: null,
       newGameControlledClubId: null,
       newGameWorldFingerprint: null,
@@ -307,6 +330,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   final PlayerPresidentPreparedSeasonDashboardSnapshot
       _preparedSeasonDashboard;
   final PlayerPresidentPreparedSquadSnapshot _preparedSquad;
+  final PlayerPresidentPreparedSeasonFixturesSnapshot _preparedSeasonFixtures;
   final PlayerPresidentInteractiveDecisionResumeConfig resumeConfig;
   final int? newGameElectionInterval;
   final SimulationConfig? _newGameConfig;
@@ -325,6 +349,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       get preparedSeasonDashboard => _preparedSeasonDashboard;
 
   PlayerPresidentPreparedSquadSnapshot get preparedSquad => _preparedSquad;
+
+  PlayerPresidentPreparedSeasonFixturesSnapshot get preparedSeasonFixtures =>
+      _preparedSeasonFixtures;
 
   bool get canPersist => _checkpoint != null;
 
@@ -723,6 +750,196 @@ PlayerPresidentPreparedSquadSnapshot _preparedSquadFromPlayers({
     controlledClubId: controlledClubId,
     seasonIndex: seasonIndex,
     players: selected,
+  );
+}
+
+
+PlayerPresidentPreparedSeasonFixturesSnapshot
+    _preparedSeasonFixturesForNewGame({
+  required WorldOpeningState opening,
+  required String controlledClubId,
+  required int seasonIndex,
+}) {
+  final league = _singlePreparedWhere(
+    opening.leagues,
+    (item) => item.clubIds.contains(controlledClubId),
+    'controlled-club prepared fixture league',
+  );
+  return _preparedSeasonFixturesFromLeague(
+    baseClubs: opening.baseClubs,
+    league: league,
+    controlledClubId: controlledClubId,
+    seasonIndex: seasonIndex,
+  );
+}
+
+PlayerPresidentPreparedSeasonFixturesSnapshot
+    _preparedSeasonFixturesForCheckpoint(
+  PlayerPresidentTicketPricingRuntimeCheckpoint checkpoint,
+) {
+  checkpoint.validate();
+  final world =
+      checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime.world;
+  if (world.nextSeasonIndex != checkpoint.nextSeasonIndex) {
+    throw StateError(
+      'Prepared fixture checkpoint source has inconsistent season cursors.',
+    );
+  }
+  final league = _singlePreparedWhere(
+    world.nextSeasonLeagues,
+    (item) => item.clubIds.contains(checkpoint.controlledClubId),
+    'controlled-club prepared fixture checkpoint league',
+  );
+  return _preparedSeasonFixturesFromLeague(
+    baseClubs: world.baseClubs,
+    league: league,
+    controlledClubId: checkpoint.controlledClubId,
+    seasonIndex: checkpoint.nextSeasonIndex,
+  );
+}
+
+PlayerPresidentPreparedSeasonFixturesSnapshot
+    _preparedSeasonFixturesFromLeague({
+  required List<Club> baseClubs,
+  required WorldLeague league,
+  required String controlledClubId,
+  required int seasonIndex,
+}) {
+  if (controlledClubId.isEmpty) {
+    throw StateError('Prepared fixtures controlled club cannot be empty.');
+  }
+  if (seasonIndex < 0) {
+    throw StateError('Prepared fixtures season index cannot be negative.');
+  }
+
+  final leagueClubIds = <String>{};
+  for (final clubId in league.clubIds) {
+    if (clubId.isEmpty || !leagueClubIds.add(clubId)) {
+      throw StateError('Prepared fixture league club IDs must be unique.');
+    }
+  }
+  if (league.clubIds.where((id) => id == controlledClubId).length != 1) {
+    throw StateError(
+      'Prepared fixtures require exactly one controlled-club league membership.',
+    );
+  }
+
+  final clubById = <String, Club>{};
+  for (final club in baseClubs) {
+    if (club.id.isEmpty || clubById.containsKey(club.id)) {
+      throw StateError('Prepared fixture base club IDs must be unique.');
+    }
+    clubById[club.id] = club;
+  }
+
+  final orderedLeagueClubs = <Club>[];
+  for (final clubId in league.clubIds) {
+    final club = clubById[clubId];
+    if (club == null) {
+      throw StateError(
+        'Prepared fixture league references unknown base club ${clubId}.',
+      );
+    }
+    orderedLeagueClubs.add(club);
+  }
+
+  final clubCount = orderedLeagueClubs.length;
+  if (clubCount < 2 || clubCount.isOdd) {
+    throw StateError(
+      'Prepared fixture league requires an even number of at least two clubs.',
+    );
+  }
+
+  final generated = const FixtureGenerator().generateDoubleRoundRobin(
+    clubs: orderedLeagueClubs,
+    seasonIndex: seasonIndex,
+  );
+  final expectedTotal = clubCount * (clubCount - 1);
+  final expectedControlled = 2 * (clubCount - 1);
+  final expectedHomeAway = clubCount - 1;
+  final expectedRoundMax = expectedControlled;
+
+  if (generated.length != expectedTotal) {
+    throw StateError(
+      'Prepared fixture generator count mismatch: ${generated.length} != '
+      '${expectedTotal}.',
+    );
+  }
+
+  final generatedIds = <String>{};
+  final selectedRounds = <int>{};
+  final selected = <PlayerPresidentPreparedSeasonFixture>[];
+  var homeCount = 0;
+  var awayCount = 0;
+
+  for (final fixture in generated) {
+    if (fixture.id.isEmpty || !generatedIds.add(fixture.id)) {
+      throw StateError('Prepared fixture IDs must be non-empty and unique.');
+    }
+    if (fixture.seasonIndex != seasonIndex) {
+      throw StateError('Prepared fixture season index mismatch.');
+    }
+    if (fixture.homeClubId == fixture.awayClubId) {
+      throw StateError('Prepared fixtures cannot contain self fixtures.');
+    }
+    if (!leagueClubIds.contains(fixture.homeClubId) ||
+        !leagueClubIds.contains(fixture.awayClubId)) {
+      throw StateError(
+        'Prepared fixture generator produced a club outside the prepared league.',
+      );
+    }
+    if (fixture.round < 1 || fixture.round > expectedRoundMax) {
+      throw StateError('Prepared fixture round is outside the season range.');
+    }
+
+    final isHome = fixture.homeClubId == controlledClubId;
+    final isAway = fixture.awayClubId == controlledClubId;
+    if (!isHome && !isAway) continue;
+    if (isHome == isAway) {
+      throw StateError(
+        'Prepared controlled fixture must contain the club exactly once.',
+      );
+    }
+
+    final opponentClubId =
+        isHome ? fixture.awayClubId : fixture.homeClubId;
+    if (opponentClubId == controlledClubId ||
+        !leagueClubIds.contains(opponentClubId)) {
+      throw StateError('Prepared fixture opponent is invalid.');
+    }
+    if (!selectedRounds.add(fixture.round)) {
+      throw StateError('Prepared fixture rounds must be unique per club.');
+    }
+
+    if (isHome) {
+      homeCount++;
+    } else {
+      awayCount++;
+    }
+    selected.add(
+      PlayerPresidentPreparedSeasonFixture(
+        fixtureId: fixture.id,
+        round: fixture.round,
+        opponentClubId: opponentClubId,
+        isHome: isHome,
+      ),
+    );
+  }
+
+  if (selected.length != expectedControlled ||
+      homeCount != expectedHomeAway ||
+      awayCount != expectedHomeAway ||
+      selectedRounds.length != expectedControlled) {
+    throw StateError(
+      'Prepared controlled fixture balance/count contract failed.',
+    );
+  }
+
+  return PlayerPresidentPreparedSeasonFixturesSnapshot(
+    controlledClubId: controlledClubId,
+    seasonIndex: seasonIndex,
+    leagueTier: league.tier,
+    fixtures: selected,
   );
 }
 

@@ -12,6 +12,7 @@ import '../dashboard/president_prepared_season_dashboard_panel.dart';
 import '../decisions/decision_panel.dart';
 import '../decisions/decision_resolution_panel.dart';
 import '../reports/president_season_report_panel.dart';
+import 'president_prepared_season_fixtures_screen.dart';
 import 'president_prepared_squad_screen.dart';
 
 class PresidentHomeScreen extends StatefulWidget {
@@ -122,10 +123,15 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
           final club = _controller.selectedClub;
           final preparedDashboard = _controller.preparedSeasonDashboard;
           final preparedSquad = _controller.preparedSquad;
+          final preparedFixtures = _controller.preparedSeasonFixtures;
           final showPreparedDashboard = preparedDashboard != null &&
               (resolution != null ||
                   step is PlayerPresidentInteractiveDecisionPending);
           final showPreparedSquad = preparedSquad != null &&
+              club != null &&
+              (resolution != null ||
+                  step is PlayerPresidentInteractiveDecisionPending);
+          final showPreparedFixtures = preparedFixtures != null &&
               club != null &&
               (resolution != null ||
                   step is PlayerPresidentInteractiveDecisionPending);
@@ -203,25 +209,58 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                             PresidentPreparedSeasonDashboardPanel(
                               snapshot: preparedDashboard,
                             ),
-                            if (showPreparedSquad) ...[
+                            if (showPreparedSquad ||
+                                showPreparedFixtures) ...[
                               const SizedBox(height: 12),
-                              OutlinedButton.icon(
-                                key: const Key('prepared-squad-button'),
-                                onPressed: busy
-                                    ? null
-                                    : () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (_) =>
-                                                PresidentPreparedSquadScreen(
-                                              snapshot: preparedSquad,
-                                              clubName: club.name,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                icon: const Icon(Icons.groups_outlined),
-                                label: const Text('Kadroyu Gör'),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (showPreparedSquad)
+                                    OutlinedButton.icon(
+                                      key: const Key('prepared-squad-button'),
+                                      onPressed: busy
+                                          ? null
+                                          : () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute<void>(
+                                                  builder: (_) =>
+                                                      PresidentPreparedSquadScreen(
+                                                    snapshot: preparedSquad,
+                                                    clubName: club.name,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                      icon: const Icon(Icons.groups_outlined),
+                                      label: const Text('Kadroyu Gör'),
+                                    ),
+                                  if (showPreparedSquad &&
+                                      showPreparedFixtures)
+                                    const SizedBox(height: 8),
+                                  if (showPreparedFixtures)
+                                    OutlinedButton.icon(
+                                      key: const Key(
+                                        'prepared-season-fixtures-button',
+                                      ),
+                                      onPressed: busy
+                                          ? null
+                                          : () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute<void>(
+                                                  builder: (_) =>
+                                                      PresidentPreparedSeasonFixturesScreen(
+                                                    snapshot: preparedFixtures,
+                                                    clubNameForId:
+                                                        _clubNameForId,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                      icon:
+                                          const Icon(Icons.calendar_month_outlined),
+                                      label: const Text('Fikstürü Gör'),
+                                    ),
+                                ],
                               ),
                             ],
                             const SizedBox(height: 20),
