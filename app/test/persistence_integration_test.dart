@@ -63,6 +63,15 @@ void main() {
     expect(actual.manager.id, expected.manager.id);
     expect(actual.managerSeason.signature, expected.managerSeason.signature);
     expect(actual.promise?.signature, expected.promise?.signature);
+    expect(actual.leagueTable, isNotNull);
+    expect(expected.leagueTable, isNotNull);
+    expect(actual.leagueTable!.signature, expected.leagueTable!.signature);
+    expect(
+      actual.leagueTable!.rows.map((row) => row.clubId).toList(growable: false),
+      expected.leagueTable!.rows
+          .map((row) => row.clubId)
+          .toList(growable: false),
+    );
   }
 
   test(

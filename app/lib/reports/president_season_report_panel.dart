@@ -9,6 +9,7 @@ class PresidentSeasonReportPanel extends StatelessWidget {
     super.key,
     required this.report,
     required ClubDisplayNameResolver clubNameForId,
+    required this.onOpenLeagueTable,
     required this.onContinueToNextSeason,
     this.canContinueToNextSeason = true,
     this.busy = false,
@@ -19,6 +20,7 @@ class PresidentSeasonReportPanel extends StatelessWidget {
   final PlayerPresidentCompletedSeasonReport report;
   final String controlledClubName;
   final String championClubName;
+  final VoidCallback? onOpenLeagueTable;
   final VoidCallback? onContinueToNextSeason;
   final bool canContinueToNextSeason;
   final bool busy;
@@ -92,6 +94,18 @@ class PresidentSeasonReportPanel extends StatelessWidget {
               ),
           ],
         ),
+        if (report.leagueTable != null) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const Key('completed-season-league-table-button'),
+              onPressed: busy ? null : onOpenLeagueTable,
+              icon: const Icon(Icons.table_chart_outlined),
+              label: const Text('Puan Durumunu Gör'),
+            ),
+          ),
+        ],
         const SizedBox(height: 18),
         _Section(
           key: const Key('season-report-finance'),
