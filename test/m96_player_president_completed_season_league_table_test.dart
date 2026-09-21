@@ -10,6 +10,7 @@ import 'package:futbol_baskanlik_m0/player_president_media_statement_control.dar
 import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
 import 'package:test/test.dart';
 
@@ -406,17 +407,17 @@ void main() {
       fail('Deterministic real runtime exposed no moved controlled club.');
     }
 
-    expect(movement!.from, isNot(movement!.to));
-    expect(movedSnapshot!.leagueTier, movement!.from);
-    expect(beforeLeague!.tier, movement!.from);
-    expect(afterLeague!.tier, movement!.to);
+    expect(movement.from, isNot(movement.to));
+    expect(movedSnapshot.leagueTier, movement.from);
+    expect(beforeLeague.tier, movement.from);
+    expect(afterLeague.tier, movement.to);
     expect(
-      movedSnapshot!.rows.map((row) => row.clubId).toSet(),
-      beforeLeague!.clubIds.toSet(),
+      movedSnapshot.rows.map((row) => row.clubId).toSet(),
+      beforeLeague.clubIds.toSet(),
     );
     expect(
       movedSnapshot!.rows.map((row) => row.clubId).toSet(),
-      isNot(equals(afterLeague!.clubIds.toSet())),
+      isNot(equals(afterLeague.clubIds.toSet())),
     );
   });
 }
