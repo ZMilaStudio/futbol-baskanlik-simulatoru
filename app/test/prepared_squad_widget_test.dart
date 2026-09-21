@@ -106,6 +106,26 @@ void main() {
         ],
       );
 
+  PlayerPresidentPreparedSquadSnapshot longListSnapshot() {
+    const positions = PlayerPosition.values;
+    return PlayerPresidentPreparedSquadSnapshot(
+      controlledClubId: 'club',
+      seasonIndex: 2,
+      players: List.generate(28, (index) {
+        final padded = index.toString().padLeft(2, '0');
+        return PlayerPresidentPreparedSquadPlayer(
+          playerId: 'scroll-player-$padded',
+          name: 'Oyuncu $padded Uzun Test Soyadı',
+          position: positions[index % positions.length],
+          age: 18 + (index % 16),
+          ability: 60 + (index % 24).toDouble(),
+          potential: 70 + (index % 25).toDouble(),
+          isAcademyGraduate: index % 7 == 0,
+        );
+      }),
+    );
+  }
+
   testWidgets('Pending shows Kadroyu Gör and opens read-only squad screen',
       (tester) async {
     await pumpNewGame(tester);
@@ -227,7 +247,7 @@ void main() {
     }
   });
 
-  testWidgets('320px and textScale 1.5 render without horizontal overflow',
+  testWidgets('320px and textScale 2.0 render without horizontal overflow',
       (tester) async {
     tester.view.physicalSize = const Size(320, 900);
     tester.view.devicePixelRatio = 1;
@@ -240,7 +260,7 @@ void main() {
       MaterialApp(
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
-            textScaler: const TextScaler.linear(1.5),
+            textScaler: const TextScaler.linear(2.0),
           ),
           child: child!,
         ),
@@ -273,6 +293,43 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.byKey(const Key('prepared-squad-list')), findsOneWidget);
+  });
+
+  testWidgets('long prepared squad scroll reaches the final player',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final snapshot = longListSnapshot();
+    expect(snapshot.players, hasLength(28));
+    final finalPlayerName = snapshot.players.last.name;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PresidentPreparedSquadScreen(
+          snapshot: snapshot,
+          clubName: 'Test Kulübü',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final list = find.byKey(const Key('prepared-squad-list'));
+    expect(list, findsOneWidget);
+    expect(find.text(finalPlayerName), findsNothing);
+
+    for (var drag = 0;
+        drag < 10 && find.text(finalPlayerName).evaluate().isEmpty;
+        drag++) {
+      await tester.drag(list, const Offset(0, -420));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text(finalPlayerName), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('bootstrap and checkpoint loads expose prepared squad entry',

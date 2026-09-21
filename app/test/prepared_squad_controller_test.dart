@@ -67,15 +67,23 @@ void main() {
     controller.startNewGame(composition.world.clubs.first);
     final before = controller.preparedSquad!;
     final signature = before.signature;
+    final openingSeasonIndex = before.seasonIndex;
+    expect(controller.session!.isNewGame, isTrue);
 
     expect(controller.saveCurrent(), isTrue);
+    expect(controller.session!.isNewGame, isTrue);
+    expect(controller.saveSummary!.isNewGameBootstrap, isTrue);
+    expect(controller.preparedSquad!.seasonIndex, openingSeasonIndex);
     expect(controller.preparedSquad!.signature, signature);
     expect(controller.preparedSquad, isNot(same(before)));
 
     final rebound = controller.preparedSquad;
     expect(controller.saveCurrent(), isTrue);
+    expect(controller.session!.isNewGame, isTrue);
+    expect(controller.saveSummary!.isNewGameBootstrap, isTrue);
     expect(controller.preparedSquad, same(rebound));
     expect(controller.preparedSquad!.signature, signature);
+    expect(controller.preparedSquad!.seasonIndex, openingSeasonIndex);
   });
 
   test('bootstrap reopen preserves prepared squad semantic', () {

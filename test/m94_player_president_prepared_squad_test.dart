@@ -10,6 +10,7 @@ import 'package:futbol_baskanlik_m0/player_president_prepared_squad_snapshot.dar
 import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_sponsor_crisis_manager_promise_media_transfer_ticket_pricing_runtime_composition.dart';
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
 import 'package:futbol_baskanlik_m0/src/world/world_opening_state_initializer.dart';
 import 'package:test/test.dart';
@@ -96,10 +97,36 @@ void main() {
   late FictionalWorldSetup world;
   late String controlledClubId;
   late PlayerPresidentInteractiveSessionCompleted completed;
+  late PlayerPresidentTicketPricingRuntimeCheckpoint runtimeCheckpoint;
+
+  PlayerPresidentTicketPricingRuntimeCheckpoint runtimeCheckpointFor(
+    String clubId,
+  ) =>
+      const PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransferTicketPricingRuntimeCareerEngine()
+          .simulateWithCheckpoint(
+        clubs: world.clubs,
+        leagues: world.leagues,
+        config: config,
+        controlledClubId: clubId,
+        seasonCount: 1,
+        electionInterval: 4,
+        hasFutureSeasonAfterReport: true,
+      ).checkpoint;
+
+  PlayerPresidentTicketPricingRuntimeCheckpoint nextRuntimeCheckpoint(
+    PlayerPresidentTicketPricingRuntimeCheckpoint checkpoint,
+  ) =>
+      const PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransferTicketPricingRuntimeCareerEngine()
+          .resume(
+        checkpoint: checkpoint,
+        seasonCount: 1,
+        hasFutureSeasonAfterReport: true,
+      ).checkpoint;
 
   setUpAll(() {
     world = const FictionalWorldFactory().build();
     controlledClubId = world.clubs.first.id;
+    runtimeCheckpoint = runtimeCheckpointFor(controlledClubId);
     completed = _drive(
       PlayerPresidentInteractiveDecisionApplicationSession.start(
         clubs: world.clubs,
@@ -271,17 +298,33 @@ void main() {
   });
 
   test('08 free agents are not part of the checkpoint playing squad', () {
-    final checkpoint = completed.result.checkpoint;
+    var checkpoint = runtimeCheckpoint;
+    var worldCheckpoint =
+        checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime.world;
+    var freeAgentIds = worldCheckpoint.nextSeasonPlayers
+        .where((player) => player.isFreeAgent)
+        .map((player) => player.id)
+        .toSet();
+
+    for (var guard = 0; freeAgentIds.isEmpty && guard < 6; guard++) {
+      checkpoint = nextRuntimeCheckpoint(checkpoint);
+      worldCheckpoint =
+          checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime.world;
+      freeAgentIds = worldCheckpoint.nextSeasonPlayers
+          .where((player) => player.isFreeAgent)
+          .map((player) => player.id)
+          .toSet();
+    }
+
+    expect(
+      freeAgentIds,
+      isNotEmpty,
+      reason: 'The deterministic runtime fixture must contain a real free agent.',
+    );
     final session = PlayerPresidentInteractiveDecisionApplicationSession.resume(
       checkpoint: checkpoint,
       resumeConfig: resumeConfig,
     );
-    final worldCheckpoint =
-        checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime.world;
-    final freeAgentIds = worldCheckpoint.nextSeasonPlayers
-        .where((player) => player.isFreeAgent)
-        .map((player) => player.id)
-        .toSet();
     expect(
       session.preparedSquad.players
           .where((player) => freeAgentIds.contains(player.playerId)),
@@ -424,37 +467,68 @@ void main() {
   });
 
   test('20 active loan membership follows loanClubId/player.clubId', () {
-    final checkpoint = completed.result.checkpoint;
+    final baselineAdvanced =
+        runtimeCheckpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime;
+    expect(baselineAdvanced.transfer.activeLoans, isNotEmpty);
+    final targetClubId = baselineAdvanced.transfer.activeLoans.first.loanClubId;
+    final checkpoint = runtimeCheckpointFor(targetClubId);
+    final advanced =
+        checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime;
+    final incoming = advanced.transfer.activeLoans
+        .where((loan) => loan.loanClubId == checkpoint.controlledClubId)
+        .toList(growable: false);
+    expect(
+      incoming,
+      isNotEmpty,
+      reason: 'The controlled club must have a real active loaned-in player.',
+    );
+
+    final loan = incoming.first;
+    final canonicalPlayer = advanced.world.nextSeasonPlayers
+        .singleWhere((player) => player.id == loan.playerId);
     final session = PlayerPresidentInteractiveDecisionApplicationSession.resume(
       checkpoint: checkpoint,
       resumeConfig: resumeConfig,
     );
-    final advanced =
-        checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime;
     final ids =
         session.preparedSquad.players.map((player) => player.playerId).toSet();
-    expect(advanced.transfer.activeLoans, isNotEmpty);
-    for (final loan in advanced.transfer.activeLoans) {
-      expect(ids.contains(loan.playerId),
-          loan.loanClubId == checkpoint.controlledClubId);
-    }
+
+    expect(loan.loanClubId, checkpoint.controlledClubId);
+    expect(canonicalPlayer.clubId, loan.loanClubId);
+    expect(ids, contains(loan.playerId));
   });
 
   test('21 active loan parent ownership never overrides playing membership', () {
-    final checkpoint = completed.result.checkpoint;
+    final baselineAdvanced =
+        runtimeCheckpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime;
+    expect(baselineAdvanced.transfer.activeLoans, isNotEmpty);
+    final targetClubId =
+        baselineAdvanced.transfer.activeLoans.first.parentClubId;
+    final checkpoint = runtimeCheckpointFor(targetClubId);
+    final advanced =
+        checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime;
+    final outgoing = advanced.transfer.activeLoans
+        .where((loan) => loan.parentClubId == checkpoint.controlledClubId)
+        .toList(growable: false);
+    expect(
+      outgoing,
+      isNotEmpty,
+      reason: 'The controlled club must have a real active loaned-out player.',
+    );
+
+    final loan = outgoing.first;
+    final canonicalPlayer = advanced.world.nextSeasonPlayers
+        .singleWhere((player) => player.id == loan.playerId);
     final session = PlayerPresidentInteractiveDecisionApplicationSession.resume(
       checkpoint: checkpoint,
       resumeConfig: resumeConfig,
     );
-    final advanced =
-        checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime;
     final ids =
         session.preparedSquad.players.map((player) => player.playerId).toSet();
-    for (final loan in advanced.transfer.activeLoans) {
-      if (loan.parentClubId == checkpoint.controlledClubId) {
-        expect(ids.contains(loan.playerId), isFalse);
-      }
-    }
+
+    expect(loan.loanClubId, isNot(checkpoint.controlledClubId));
+    expect(canonicalPlayer.clubId, loan.loanClubId);
+    expect(ids, isNot(contains(loan.playerId)));
   });
 
   test('22 duplicate player IDs fail closed', () {
