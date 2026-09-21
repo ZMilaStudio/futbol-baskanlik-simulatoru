@@ -81,7 +81,7 @@ void main() {
     expect(find.byKey(const Key('completed-season-league-data-table')), findsOneWidget);
     for (var position = 1; position <= 16; position++) {
       expect(
-        find.byKey(ValueKey('completed-season-table-row-$position')),
+        find.byKey(ValueKey('completed-season-table-position-$position')),
         findsOneWidget,
       );
     }
@@ -165,14 +165,14 @@ void main() {
 
     await tester.drag(
       find.byKey(const Key('completed-season-table-vertical-scroll')),
-      const Offset(0, -1000),
+      const Offset(0, -4000),
     );
     await tester.pumpAndSettle();
     expect(tester.getRect(lastPosition).top, lessThan(480));
 
     await tester.drag(
       find.byKey(const Key('completed-season-table-horizontal-scroll')),
-      const Offset(-1000, 0),
+      const Offset(-4000, 0),
     );
     await tester.pumpAndSettle();
     expect(tester.getRect(farRight).left, lessThan(320));

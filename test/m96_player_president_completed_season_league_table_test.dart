@@ -416,7 +416,7 @@ void main() {
       beforeLeague.clubIds.toSet(),
     );
     expect(
-      movedSnapshot!.rows.map((row) => row.clubId).toSet(),
+      movedSnapshot.rows.map((row) => row.clubId).toSet(),
       isNot(equals(afterLeague.clubIds.toSet())),
     );
   });
