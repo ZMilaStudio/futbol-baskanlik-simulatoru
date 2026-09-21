@@ -314,7 +314,17 @@ void main() {
     expect(find.textContaining('1. Hafta'), findsOneWidget);
     expect(find.textContaining('Çok Uzun İsimli Rakip Kulüp'), findsWidgets);
     expect(find.text('Ev'), findsWidgets);
-    expect(find.text('Deplasman'), findsWidgets);
+    expect(tester.takeException(), isNull);
+
+    final list = find.byKey(const Key('prepared-season-fixtures-list'));
+    for (var drag = 0;
+        drag < 4 && find.text('Deplasman').evaluate().isEmpty;
+        drag++) {
+      await tester.drag(list, const Offset(0, -280));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('Deplasman'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
