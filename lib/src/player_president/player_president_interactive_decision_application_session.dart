@@ -7,12 +7,14 @@ import '../fan/fan_state.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
 import '../manager/manager_opening_state_initializer.dart';
+import '../player/player.dart';
 import '../player/team_strength_calculator.dart';
 import '../sponsor/sponsor_system.dart';
 import '../world/world_league.dart';
 import '../world/world_opening_state_initializer.dart';
 import 'player_president_interactive_decision_new_game_bootstrap_snapshot.dart';
 import 'player_president_prepared_season_dashboard_snapshot.dart';
+import 'player_president_prepared_squad_snapshot.dart';
 import 'player_president_interactive_decision_persistence_bundle.dart';
 import 'player_president_interactive_decision_session.dart';
 import 'player_president_interactive_decision_transcript_snapshot.dart';
@@ -38,6 +40,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required this.newGameElectionInterval,
     required PlayerPresidentPreparedSeasonDashboardSnapshot
         preparedSeasonDashboard,
+    required PlayerPresidentPreparedSquadSnapshot preparedSquad,
     required SimulationConfig? newGameConfig,
     required String? newGameControlledClubId,
     required String? newGameWorldFingerprint,
@@ -46,6 +49,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required this.bootstrapCodec,
   })  : _checkpoint = checkpoint,
         _preparedSeasonDashboard = preparedSeasonDashboard,
+        _preparedSquad = preparedSquad,
         _newGameConfig = newGameConfig,
         _newGameControlledClubId = newGameControlledClubId,
         _newGameWorldFingerprint = newGameWorldFingerprint,
@@ -91,11 +95,23 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       ),
       candidateLimit: candidateLimit,
     );
+    final opening = const WorldOpeningStateInitializer().prepare(
+      clubs: clubs,
+      leagues: leagues,
+      config: config,
+    );
     final preparedSeasonDashboard = _preparedDashboardForNewGame(
       clubs: clubs,
       leagues: leagues,
       config: config,
       controlledClubId: controlledClubId,
+      opening: opening,
+    );
+    final preparedSquad = _preparedSquadFromPlayers(
+      clubs: clubs,
+      players: opening.players,
+      controlledClubId: controlledClubId,
+      seasonIndex: config.seasonIndex,
     );
     return PlayerPresidentInteractiveDecisionApplicationSession._(
       origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
@@ -103,6 +119,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       resumeConfig: resumeConfig,
       newGameElectionInterval: electionInterval,
       preparedSeasonDashboard: preparedSeasonDashboard,
+      preparedSquad: preparedSquad,
       newGameConfig: config,
       newGameControlledClubId: controlledClubId,
       newGameWorldFingerprint:
@@ -143,11 +160,23 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       ),
       candidateLimit: snapshot.resumeConfig.candidateLimit,
     );
+    final opening = const WorldOpeningStateInitializer().prepare(
+      clubs: clubs,
+      leagues: leagues,
+      config: snapshot.config,
+    );
     final preparedSeasonDashboard = _preparedDashboardForNewGame(
       clubs: clubs,
       leagues: leagues,
       config: snapshot.config,
       controlledClubId: snapshot.controlledClubId,
+      opening: opening,
+    );
+    final preparedSquad = _preparedSquadFromPlayers(
+      clubs: clubs,
+      players: opening.players,
+      controlledClubId: snapshot.controlledClubId,
+      seasonIndex: snapshot.config.seasonIndex,
     );
 
     return PlayerPresidentInteractiveDecisionApplicationSession._(
@@ -156,6 +185,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       resumeConfig: snapshot.resumeConfig,
       newGameElectionInterval: snapshot.electionInterval,
       preparedSeasonDashboard: preparedSeasonDashboard,
+      preparedSquad: preparedSquad,
       newGameConfig: snapshot.config,
       newGameControlledClubId: snapshot.controlledClubId,
       newGameWorldFingerprint: snapshot.worldFingerprint,
@@ -210,12 +240,14 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     );
     final preparedSeasonDashboard =
         _preparedDashboardForCheckpoint(checkpoint);
+    final preparedSquad = _preparedSquadForCheckpoint(checkpoint);
     return PlayerPresidentInteractiveDecisionApplicationSession._(
       origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
       checkpoint: checkpoint,
       resumeConfig: resumeConfig,
       newGameElectionInterval: null,
       preparedSeasonDashboard: preparedSeasonDashboard,
+      preparedSquad: preparedSquad,
       newGameConfig: null,
       newGameControlledClubId: null,
       newGameWorldFingerprint: null,
@@ -236,6 +268,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     bundle.validate();
     final preparedSeasonDashboard =
         _preparedDashboardForCheckpoint(bundle.checkpoint);
+    final preparedSquad = _preparedSquadForCheckpoint(bundle.checkpoint);
     final restoredSession = bundle.restoreSession();
     return PlayerPresidentInteractiveDecisionApplicationSession._(
       origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
@@ -243,6 +276,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       resumeConfig: bundle.resumeConfig,
       newGameElectionInterval: null,
       preparedSeasonDashboard: preparedSeasonDashboard,
+      preparedSquad: preparedSquad,
       newGameConfig: null,
       newGameControlledClubId: null,
       newGameWorldFingerprint: null,
@@ -272,6 +306,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   final PlayerPresidentTicketPricingRuntimeCheckpoint? _checkpoint;
   final PlayerPresidentPreparedSeasonDashboardSnapshot
       _preparedSeasonDashboard;
+  final PlayerPresidentPreparedSquadSnapshot _preparedSquad;
   final PlayerPresidentInteractiveDecisionResumeConfig resumeConfig;
   final int? newGameElectionInterval;
   final SimulationConfig? _newGameConfig;
@@ -288,6 +323,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
 
   PlayerPresidentPreparedSeasonDashboardSnapshot
       get preparedSeasonDashboard => _preparedSeasonDashboard;
+
+  PlayerPresidentPreparedSquadSnapshot get preparedSquad => _preparedSquad;
 
   bool get canPersist => _checkpoint != null;
 
@@ -407,6 +444,7 @@ PlayerPresidentPreparedSeasonDashboardSnapshot _preparedDashboardForNewGame({
   required List<WorldLeague> leagues,
   required SimulationConfig config,
   required String controlledClubId,
+  required WorldOpeningState opening,
 }) {
   final controlledClub = _singlePreparedWhere(
     clubs,
@@ -428,11 +466,6 @@ PlayerPresidentPreparedSeasonDashboardSnapshot _preparedDashboardForNewGame({
     );
   }
 
-  final opening = const WorldOpeningStateInitializer().prepare(
-    clubs: clubs,
-    leagues: leagues,
-    config: config,
-  );
   final preparedLeague = _singlePreparedWhere(
     opening.leagues,
     (league) => league.clubIds.contains(controlledClubId),
@@ -630,6 +663,66 @@ PlayerPresidentPreparedSeasonDashboardSnapshot _preparedDashboardForCheckpoint(
     stadiumFacility: stadium,
     trainingGroundFacility: trainingGround,
     activeSponsor: activeSponsor,
+  );
+}
+
+
+PlayerPresidentPreparedSquadSnapshot _preparedSquadForCheckpoint(
+  PlayerPresidentTicketPricingRuntimeCheckpoint checkpoint,
+) {
+  checkpoint.validate();
+  final world =
+      checkpoint.runtime.runtime.domain.presidentRuntime.runtime.runtime.world;
+  if (world.nextSeasonIndex != checkpoint.nextSeasonIndex) {
+    throw StateError(
+      'Prepared squad checkpoint source has inconsistent season cursors.',
+    );
+  }
+  return _preparedSquadFromPlayers(
+    clubs: world.baseClubs,
+    players: world.nextSeasonPlayers,
+    controlledClubId: checkpoint.controlledClubId,
+    seasonIndex: checkpoint.nextSeasonIndex,
+  );
+}
+
+PlayerPresidentPreparedSquadSnapshot _preparedSquadFromPlayers({
+  required Iterable<Club> clubs,
+  required Iterable<Player> players,
+  required String controlledClubId,
+  required int seasonIndex,
+}) {
+  _singlePreparedWhere(
+    clubs,
+    (club) => club.id == controlledClubId,
+    'prepared squad controlled club',
+  );
+
+  final selected = players
+      .where((player) => player.clubId == controlledClubId)
+      .map(
+        (player) => PlayerPresidentPreparedSquadPlayer(
+          playerId: player.id,
+          name: player.name,
+          position: player.position,
+          age: player.age,
+          ability: player.ability,
+          potential: player.potential,
+          isAcademyGraduate: player.isAcademyGraduate,
+        ),
+      )
+      .toList(growable: false);
+
+  if (selected.isEmpty) {
+    throw StateError(
+      'Prepared squad requires at least one controlled-club player.',
+    );
+  }
+
+  return PlayerPresidentPreparedSquadSnapshot(
+    controlledClubId: controlledClubId,
+    seasonIndex: seasonIndex,
+    players: selected,
   );
 }
 
