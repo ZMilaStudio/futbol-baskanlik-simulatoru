@@ -8,13 +8,6 @@ Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmas
 
 **Yeni sohbet açıldığında kullanıcı yeni geliştirme promptu vermeden HİÇBİR ŞEY YAPMA.**
 
-Özellikle:
-- M94 seçme
-- gap scan başlatma
-- branch/PR açma
-- kod yazma
-- CI başlatma
-
 Kaynak önceliği:
 
 **Live GitHub > güncel repo docs > central technical-development compass > eski sohbet bilgisi.**
@@ -24,150 +17,144 @@ Kaynak önceliği:
 Repo:
 `ZMilaStudio/futbol-baskanlik-simulatoru`
 
-# **M0–M93 — CLOSED / MERGED / PASS**
+# **M0–M94 — CLOSED / MERGED / PASS**
 
 Son kapanan milestone:
-**M93 — Career End / Presidency Loss I**
 
-PR #96:
-- **MERGED / CLOSED**
-- squash merge
+**M94 — Prepared Squad Overview I**
+
+PR #97:
+**MERGED / CLOSED**
 
 Approved exact PR HEAD:
-`9cf2e7db524da01686a9070a212d36c27e26980d`
+`70cf564fd0ec18e3d72b96c5a50e31beeb316db4`
 
-Executable squash merge SHA:
-`56c8367445e76c648dae4215548681bbfbe31c2c`
+Executable merge SHA:
+`69821f3b488fabb8c1e7b4b4c939e2fc1ec713c5`
 
-Actual-main Core:
-- #618 / `35569882609` / attempt 1 / **SUCCESS**
-- 452 tests PASS
-- M0–M88 canonical all SUCCESS
-- 84 canonical Run M steps
-- skipped 0
-- failed 0
-- cancelled 0
+Approved PR tree = squash merge tree:
+`e3c6232cda1f3d92ad9dea9e4c4c4973eb31f209`
+
+Core actual-main:
+- Core Simulation Tests #627
+- run ID `35636482572`
+- attempt 1
+- **SUCCESS**
+- normal test SUCCESS
+- canonical M0–M88 SUCCESS
+- skipped 0 / failed 0 / cancelled 0
 - artifacts 0
 
-Actual-main Flutter:
-- #50 / `35569882525` / **SUCCESS**
-- 67 tests PASS
-- Analyze SUCCESS / No issues found
-- APK SUCCESS
+Flutter actual-main:
+- M89 Flutter App #56
+- run ID `35636482563`
+- attempt 1
+- **SUCCESS**
+- Analyze SUCCESS
+- Flutter tests SUCCESS
+- debug APK SUCCESS
 - emulator SUCCESS
 - `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
+- artifacts 0
 
-## 2. M93 semantic
+Executable authority SHA:
+`69821f3b488fabb8c1e7b4b4c939e2fc1ec713c5`
 
-Career-end authority:
-`completed.result.checkpoint.tenureControl`
+## 2. M94 essentials
 
-Authority type:
-`PlayerPresidentTenureControlState`
+M94 = **Prepared Squad Overview I**.
 
-Career ended iff:
-`tenureControl.status == lost`
+Product semantic:
+- read-only season-opening prepared playing-squad observation,
+- başkan gözlemidir; technical-director gameplay değildir.
 
-M92 prepared dashboard, `successorPresidentId`, Flutter local flag ve manager/sponsor/election inference authority değildir.
+Authority:
+- public projection: `PlayerPresidentPreparedSquadSnapshot`
+- player value: `PlayerPresidentPreparedSquadPlayer`
+- application seam: `PlayerPresidentInteractiveDecisionApplicationSession.preparedSquad`
+- membership: `player.clubId == controlledClubId`
 
-Public seam:
-`PlayerPresidentInteractiveDecisionApplicationSession.completedTenureControl`
+Loan semantics:
+- loaned-in → **IN**
+- loaned-out → **OUT**
+- free agent → **OUT**
+- contract ownership squad membership authority değildir.
 
-Semantik:
-`_session.completed?.result.checkpoint.tenureControl`
+New-game authority:
+`WorldOpeningState.players`
 
-Pending/non-completed → null.
-Completed → authoritative final tenure state.
+Checkpoint authority:
+`WorldCheckpoint.nextSeasonPlayers`
 
-`continuePlayerCareerToNextSeason()`:
-- Completed only
-- active → authoritative completed checkpoint üzerinden yeni application session
-- lost → fail-closed
+Prepared squad:
+- derived-only,
+- non-persisted,
+- application session kurulurken derive edilir,
+- Pending/Resolution boyunca same snapshot,
+- M88 saveBack aynı snapshot semantic'ini korur,
+- first new-game save/rebound aynı semantic/signature üretir,
+- next season fresh snapshot üretir,
+- Completed ve M93 Lost Completed durumlarında `Kadroyu Gör` CTA hidden.
 
-Generic core/application resume/load LOST checkpoint için çalışmaya devam eder.
+Flutter:
+- M92 prepared dashboard altında `Kadroyu Gör`,
+- ayrı lightweight `PresidentPreparedSquadScreen`,
+- normal `Navigator.push / MaterialPageRoute`,
+- raw playerId gösterilmez,
+- positions: Kaleci / Defans / Orta Saha / Forvet,
+- ability/potential raw double kalır, UI yalnız `.round()` gösterir,
+- deterministic presentation sorting: GK → DEF → MID → FWD → ability DESC → name ASC → playerId ASC.
 
-Lost:
-- permanent player-presidency control loss
-- simulation stopped değildir
-- player Pending oluşmayabilir
-- AI simulation direct Completed'a ilerleyebilir
+Mobile acceptance:
+- 320px PASS
+- text scale 2.0 PASS
+- long-name PASS
+- academy badge PASS
+- 28-row real scroll PASS
 
-## 3. Flutter
-
-Active Completed:
-- M91 President Season Report
-- next-season CTA
-
-Lost Completed:
-- M91 President Season Report
-- `PresidentCareerEndPanel`
-- next-season CTA yok
-
-`lostAtCompletedSeason` completed-season ordinal'dır.
-`4 → "4. sezon sonunda."`
-İkinci +1 conversion yoktur.
-
-Successor adı/raw ID gösterilmez.
-
-Ana Menü:
-`Navigator.popUntil(... route.isFirst)`
-
-## 4. Save / reopen
-
-- Lost Completed save edilebilir.
-- Save button kapanmaz.
-- Reopen aynı authoritative lost tenure state'i üretir.
-- M75 deterministic restore korunur.
-- M87/M88 unchanged.
-- persisted career-end presentation flag yok.
-
-## 5. M92 / M93 ayrımı
-
-M92:
-season-opening immutable prepared observation.
-
-M93:
-completed-boundary career-end authority.
-
-M92 opening `playerControlActive == true` iken aynı sezon final Completed'ta `tenureControl.status == lost` olabilir.
-
-Bu contradiction değildir.
-
-## 6. Persistence / authority
-
+Persistence:
 > **M65 = sole persisted game-state authority**
 
-M93:
-- yeni M65 field yok
-- saveVersion/codec/checksum unchanged
-- M74/M75/M80 unchanged
-- M77–M88 routing/schema unchanged
-- cache/sidecar/save family yok
+M94:
+- M65 field eklemedi,
+- M74/M75/M80 değiştirmedi,
+- M77–M88 schema/routing değiştirmedi,
+- saveVersion/codec/checksum/migration değiştirmedi,
+- persisted squad/cache/presentation flag oluşturmadı.
 
-FBS:
-- FBS-01 — **NOT TRIGGERED**
+Technical compass:
+- FBS-01 — **AUDIT TAMAMLANDI / A — KEEP CURRENT SAVE ARCHITECTURE**
 - FBS-02 — **NOT TRIGGERED**
 - FBS-03 — **NOT TRIGGERED**
+- INFRA-01 — **OUT OF M94 SCOPE**
 
-## 7. Sıradaki iş
+## 3. Current status
 
-**Aktif milestone: YOK.**
+# **M94 — CLOSED / MERGED / PASS**
+# **M0–M94 — CLOSED / MERGED / PASS**
 
-M94 otomatik seçilmeyecek.
+Aktif milestone:
+**YOK**
+
+M95:
+**NOT STARTED**
 
 Yeni milestone otomatik seçilmez.
 
-Kullanıcı yeni geliştirme istediğinde:
-1. live `main` doğrulanır
-2. güncel repo docs okunur
-3. central technical-development compass kontrol edilir
-4. fresh live-main gap scan yapılır
-5. en küçük natural authority-safe gap belirlenir
+## 4. Next work rule
 
-Eski sohbetten M94 tahmin edilmez.
+Kullanıcı yeni geliştirme istediğinde:
+
+1. live `main` doğrula
+2. güncel repo docs oku
+3. central technical-development compass kontrol et
+4. fresh live-main gap scan yap
+5. en küçük natural authority-safe gap'i belirle
+
+Eski sohbetten M95 tahmin edilmez.
 
 Kullanıcı yeni prompt vermeden:
-- M94 seçme
+- M95 seçme
 - gap scan başlatma
 - branch/PR açma
 - kod yazma
