@@ -5,6 +5,7 @@ import '../manager/manager_career_season.dart';
 import '../promise/promise_season_snapshot.dart';
 import '../world/league_tier.dart';
 import '../world/world_career_season.dart';
+import 'player_president_completed_season_league_table_snapshot.dart';
 import 'player_president_interactive_decision_session.dart';
 
 /// Read-only application projection for exactly one completed interactive season.
@@ -29,6 +30,7 @@ class PlayerPresidentCompletedSeasonReport {
     required this.manager,
     required this.managerSeason,
     required this.promise,
+    required this.leagueTable,
   });
 
   factory PlayerPresidentCompletedSeasonReport.fromCompleted(
@@ -208,6 +210,46 @@ class PlayerPresidentCompletedSeasonReport {
       }
     }
 
+    PlayerPresidentCompletedSeasonLeagueTableSnapshot? leagueTable;
+    try {
+      final candidate =
+          PlayerPresidentCompletedSeasonLeagueTableSnapshot.fromSeasonReport(
+        controlledClubId: controlledClubId,
+        completedLeague: league,
+        report: seasonReport,
+      );
+      final controlledRows = candidate.rows
+          .where((row) => row.clubId == controlledClubId)
+          .toList(growable: false);
+      if (candidate.seasonIndex != seasonIndex ||
+          candidate.controlledClubId != controlledClubId ||
+          candidate.leagueTier != league.tier ||
+          candidate.championClubId != seasonReport.championClubId ||
+          controlledRows.length != 1) {
+        throw StateError(
+          'Completed-season league table diverges from M91 authority.',
+        );
+      }
+      final controlledRow = controlledRows.single;
+      if (controlledRow.position != rowIndex + 1 ||
+          controlledRow.clubId != controlledClubId ||
+          controlledRow.played != standing.played ||
+          controlledRow.wins != standing.wins ||
+          controlledRow.draws != standing.draws ||
+          controlledRow.losses != standing.losses ||
+          controlledRow.goalsFor != standing.goalsFor ||
+          controlledRow.goalsAgainst != standing.goalsAgainst ||
+          controlledRow.goalDifference != standing.goalDifference ||
+          controlledRow.points != standing.points) {
+        throw StateError(
+          'Completed-season league table controlled row diverges from M91.',
+        );
+      }
+      leagueTable = candidate;
+    } on StateError {
+      leagueTable = null;
+    }
+
     return PlayerPresidentCompletedSeasonReport._(
       seasonIndex: seasonIndex,
       controlledClubId: controlledClubId,
@@ -220,6 +262,7 @@ class PlayerPresidentCompletedSeasonReport {
       manager: manager,
       managerSeason: managerSeason,
       promise: promise,
+      leagueTable: leagueTable,
     );
   }
 
@@ -247,6 +290,10 @@ class PlayerPresidentCompletedSeasonReport {
   ///
   /// No synthetic "no promise" result is created.
   final PromiseSeasonSnapshot? promise;
+
+  /// Optional M96 read-only table projection. Existing M91 authority failures
+  /// still fail the report; only M96-specific integrity failures yield null.
+  final PlayerPresidentCompletedSeasonLeagueTableSnapshot? leagueTable;
 }
 
 T _singleWhere<T>(
