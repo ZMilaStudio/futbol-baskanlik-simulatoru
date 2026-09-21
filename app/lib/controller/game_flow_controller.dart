@@ -5,6 +5,7 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_catalog.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_file_save_slot_service.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_control_gate.dart';
 
 import '../persistence/slot_id_generator.dart';
 
@@ -43,6 +44,8 @@ class GameFlowController extends ChangeNotifier {
   PlayerPresidentInteractiveDecisionApplicationSession? get session => _session;
   PlayerPresidentPreparedSeasonDashboardSnapshot? get preparedSeasonDashboard =>
       _session?.preparedSeasonDashboard;
+  PlayerPresidentTenureControlState? get completedTenureControl =>
+      _session?.completedTenureControl;
   PlayerPresidentInteractiveSessionStep? get currentStep => _currentStep;
   PlayerPresidentInteractiveDecisionResolution? get currentResolution =>
       _currentResolution;
@@ -233,6 +236,19 @@ class GameFlowController extends ChangeNotifier {
       return false;
     }
 
+    final tenureControl = currentSession.completedTenureControl;
+    if (tenureControl == null) {
+      _errorMessage = 'Tamamlanan sezonun başkanlık durumu okunamadı.';
+      notifyListeners();
+      return false;
+    }
+    if (tenureControl.lost) {
+      _errorMessage =
+          'Başkanlık görevin sona erdi. Bu kariyerde sonraki sezona geçilemez.';
+      notifyListeners();
+      return false;
+    }
+
     _loading = true;
     _errorMessage = null;
     _persistenceError = null;
@@ -250,10 +266,7 @@ class GameFlowController extends ChangeNotifier {
       }
 
       final nextSession =
-          PlayerPresidentInteractiveDecisionApplicationSession.resume(
-        checkpoint: checkpoint,
-        resumeConfig: currentSession.resumeConfig,
-      );
+          currentSession.continuePlayerCareerToNextSeason();
       final nextStep = nextSession.advance();
 
       _clearResolutionFeedback();

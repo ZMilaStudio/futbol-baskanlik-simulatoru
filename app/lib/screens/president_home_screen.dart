@@ -5,6 +5,7 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_mixed_
 import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 
+import '../career/president_career_end_panel.dart';
 import '../composition/app_composition.dart';
 import '../controller/game_flow_controller.dart';
 import '../dashboard/president_prepared_season_dashboard_panel.dart';
@@ -122,6 +123,11 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
           final showPreparedDashboard = preparedDashboard != null &&
               (resolution != null ||
                   step is PlayerPresidentInteractiveDecisionPending);
+          final completedTenureControl =
+              step is PlayerPresidentInteractiveSessionCompleted
+                  ? _controller.completedTenureControl
+                  : null;
+          final careerEnded = completedTenureControl?.lost ?? false;
           final busy = _controller.loading || _controller.persistenceBusy;
 
           return Center(
@@ -203,18 +209,34 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                                   ? null
                                   : _controller.continueAfterResolution,
                             )
-                          else if (step != null)
+                          else if (step != null) ...[
                             PresidentSessionStateView(
                               step: step,
                               submitting: busy,
                               clubNameForId: _clubNameForId,
                               onSubmit: _controller.submitChoice,
+                              canContinueToNextSeason:
+                                  completedTenureControl?.active ?? true,
                               onContinueToNextSeason: busy
                                   ? null
                                   : () {
                                       _controller.continueToNextSeason();
                                     },
-                            )
+                            ),
+                            if (careerEnded) ...[
+                              const SizedBox(height: 20),
+                              const Divider(),
+                              const SizedBox(height: 20),
+                              PresidentCareerEndPanel(
+                                tenureControl: completedTenureControl!,
+                                onReturnToMainMenu: () {
+                                  Navigator.of(context).popUntil(
+                                    (route) => route.isFirst,
+                                  );
+                                },
+                              ),
+                            ],
+                          ]
                           else if (errorMessage == null)
                             const Text(
                               'Oyun oturumu hazırlanıyor.',
@@ -241,6 +263,7 @@ class PresidentSessionStateView extends StatelessWidget {
     this.submitting = false,
     this.onSubmit,
     this.onContinueToNextSeason,
+    this.canContinueToNextSeason = true,
     this.clubNameForId,
   });
 
@@ -248,6 +271,7 @@ class PresidentSessionStateView extends StatelessWidget {
   final bool submitting;
   final ValueChanged<Object>? onSubmit;
   final VoidCallback? onContinueToNextSeason;
+  final bool canContinueToNextSeason;
   final ClubDisplayNameResolver? clubNameForId;
 
   @override
@@ -298,6 +322,7 @@ class PresidentSessionStateView extends StatelessWidget {
         report: report,
         clubNameForId: resolver,
         onContinueToNextSeason: onContinueToNextSeason,
+        canContinueToNextSeason: canContinueToNextSeason,
         busy: submitting,
         decisionCount: completed.decisionCount,
       );

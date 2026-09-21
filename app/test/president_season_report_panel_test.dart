@@ -177,6 +177,54 @@ void main() {
     expect(continued, isTrue);
   });
 
+  testWidgets('career-ended report omits next-season action', (tester) async {
+    final completed = completedSeason();
+    final report = PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: PresidentSeasonReportPanel(
+              report: report,
+              clubNameForId: clubNameForId,
+              onContinueToNextSeason: () {},
+              canContinueToNextSeason: false,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
+  });
+
+  testWidgets('busy active report keeps next-season action disabled',
+      (tester) async {
+    final completed = completedSeason();
+    final report = PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: PresidentSeasonReportPanel(
+              report: report,
+              clubNameForId: clubNameForId,
+              onContinueToNextSeason: () {},
+              busy: true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final finder = find.byKey(const Key('continue-next-season-button'));
+    expect(finder, findsOneWidget);
+    expect(tester.widget<FilledButton>(finder).onPressed, isNull);
+  });
+
   testWidgets('nullable promise section shows no fake promise result',
       (tester) async {
     await tester.pumpWidget(
