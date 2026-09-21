@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 21 Eylül 2026
+Son güncelleme: 22 Eylül 2026
 
 ## 1. Proje kimliği
 
@@ -40,57 +40,64 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-# **M0–M94 CLOSED / MERGED / PASS**
+# **M0–M95 — CLOSED / MERGED / PASS**
 
 Son kapanan milestone:
 
-# M94 — Prepared Squad Overview I
+# M95 — Prepared Season Fixtures I
 
 PR:
-**#97 — MERGED / CLOSED**
+**#98 — MERGED / CLOSED**
 
 Approved exact PR HEAD:
-`70cf564fd0ec18e3d72b96c5a50e31beeb316db4`
+`a50a5b13f9580f5f51ee1b88a8134036dc406e06`
 
 Executable squash merge SHA:
-`69821f3b488fabb8c1e7b4b4c939e2fc1ec713c5`
+`1faa49169746f78e6c2dc4b9da5a9fddaba04884`
 
-Actual-main Core:
-- Core Simulation Tests #627
-- run ID `35636482572`
-- attempt 1
+Actual-main Core proof:
+- Core Simulation Tests #633
+- run ID `35652917756`
+- successful attempt 6
 - **SUCCESS**
-- normal test job SUCCESS
-- canonical SUCCESS
-- M0–M88 SUCCESS
-- skipped 0 / failed 0 / cancelled 0
+- normal `test` SUCCESS
+- canonical M0–M88 ALL SUCCESS
+- 84 physical Run-M steps; M19–M24 tek birleşik canonical step
+- failed 0 / cancelled 0 / skipped 0
 - artifacts 0
 
-Actual-main Flutter:
-- M89 Flutter App #56
-- run ID `35636482563`
+Actual-main Flutter proof:
+- M89 Flutter App #61
+- run ID `35652917456`
 - attempt 1
 - **SUCCESS**
 - Analyze SUCCESS
-- Flutter tests SUCCESS
+- 91 Flutter tests PASS
 - Android debug APK SUCCESS
 - emulator launch SUCCESS
 - `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
 - artifacts 0
 
-Her iki actual-main run exact executable merge SHA üzerinde:
-`69821f3b488fabb8c1e7b4b4c939e2fc1ec713c5`
+Executable authority SHA:
+`1faa49169746f78e6c2dc4b9da5a9fddaba04884`
 
-# **M94 — CLOSED / MERGED / PASS**
-# **M0–M94 — CLOSED / MERGED / PASS**
+# **M95 — CLOSED / MERGED / PASS**
+# **M0–M95 — CLOSED / MERGED / PASS**
 
 Aktif milestone:
 **YOK**
 
-M95:
+M96:
 **NOT STARTED**
 
-Yeni milestone otomatik seçilmez. Kullanıcı yeni geliştirme istemeden M95 seçilmez; gap scan, branch/PR, kod veya CI başlatılmaz.
+Yeni milestone otomatik seçilmez. Kullanıcı açıkça yeni çalışma istediğinde:
+1. live `main` doğrula,
+2. current repo docs oku,
+3. central technical-development compass kontrol et,
+4. fresh live-main gap scan yap,
+5. sonra yeni milestone adayını değerlendir.
+
+Eski sohbetten M96 uydurulmaz.
 
 ## M94 kapanış sonucu
 
@@ -217,8 +224,7 @@ Gösterilen alanlar:
 Raw `playerId` UI'da gösterilmez.
 
 Position labels:
-- Kaleci
-- Defans
+- Kaleci- Defans
 - Orta Saha
 - Forvet
 
@@ -438,7 +444,6 @@ App recreation testleri:
 - answered decision count parity,
 - Pending kind/key/contextSignature parity,
 - submit → saveBack → reopen parity.
-
 Flutter save bytes, JSON codec veya namespace routing authority taşımaz.
 
 ## 10. M89 Aşama 6 — Completed → Checkpoint Handoff + Next Season
@@ -658,7 +663,6 @@ Successful submit:
 - next Pending/Completed queue'da tutulur
 - `Devam Et` yalnız queued authoritative step'i reveal eder
 - yeniden submit/advance/replay/simulation yapmaz
-
 `DecisionResolutionPanel` dokuz public consequence subtype'ını presentation-only render eder.
 Flutter gameplay sonucu/formülü yeniden hesaplamaz.
 
@@ -877,8 +881,7 @@ Public application seam:
 `PlayerPresidentInteractiveDecisionApplicationSession.preparedSeasonDashboard`
 
 Snapshot:
-- non-authoritative,
-- non-persisted,
+- non-authoritative,- non-persisted,
 - non-serialized,
 - gameplay decision authority değildir,
 - application/UI observation'dır.
@@ -1098,7 +1101,6 @@ Public read-only seam:
 Semantik:
 
 `_session.completed?.result.checkpoint.tenureControl`
-
 Pending/non-completed → `null`
 
 Completed → authoritative final tenure-control state.
@@ -1244,4 +1246,217 @@ Kullanıcı yeni prompt vermeden:
 - branch/PR açma
 - kod yazma
 - CI başlatma
+
+## M95 kapanış sonucu
+
+# M95 — Prepared Season Fixtures I
+
+M95 implementation PR #98 ile squash merge edildi ve actual-main executable proof tamamlandı.
+
+### Product semantic
+
+Prepared Season Fixtures semantic:
+
+> Bu application session’ın başladığı, oynanmak üzere olan sezonun hazırlanmış lig fikstürü.
+
+M95 yalnız **read-only president observation**'dır.
+
+Public types:
+- `PlayerPresidentPreparedSeasonFixturesSnapshot`
+- `PlayerPresidentPreparedSeasonFixture`
+
+Public application seam:
+- `PlayerPresidentInteractiveDecisionApplicationSession.preparedSeasonFixtures`
+
+M95 live score, standings, tarih/saat authority, tactics, match-day control, prediction veya fixture editing/rescheduling değildir.
+
+### Fixture authority
+
+Canonical fixture pairing authority:
+
+`FixtureGenerator.generateDoubleRoundRobin(...)`
+
+Critical ordering invariant:
+
+`league.clubIds`
+→ canonical clubs by ID
+→ ordered club list
+→ existing `FixtureGenerator`
+→ controlled-club fixture subset
+
+`league.clubIds` sırası aynen korunur. M95 yeni bir scheduling algorithm sahibi değildir.
+
+### New-game source
+
+New-game M95 source:
+
+existing materialized `WorldOpeningState`
+→ controlled club’ın prepared league’i
+→ ordered `league.clubIds`
+→ existing `FixtureGenerator`
+
+M92 Prepared Season Dashboard, M94 Prepared Squad ve M95 Prepared Season Fixtures aynı prepared-opening semantic ailesindedir.
+
+### Checkpoint source
+
+Checkpoint M95 source:
+
+nested M65 `WorldCheckpoint.nextSeasonLeagues`
+
+Season:
+`checkpoint.nextSeasonIndex`
+
+Promotion/relegation sonrası next-season membership kullanılır. Previous completed league authority olarak kullanılmaz.
+
+### Fixture contract
+
+Current canonical 16-team league:
+- 30 controlled-club fixture
+- 15 home
+- 15 away
+- rounds 1..30
+
+Production authority generic kalır:
+
+`controlled fixtures = 2 * (league size - 1)`
+
+Hard-coded 30 scheduling authority yoktur.
+
+UI:
+- `Fikstür`
+- `Fikstürü Gör`
+- `N. Hafta`
+- `Ev`
+- `Deplasman`
+
+UI'da live score, standings, dates, match times, tactics, match-day control, prediction veya fixture editing yoktur.
+
+### Flutter
+
+M92 prepared context altında sibling actions:
+- `Kadroyu Gör`
+- `Fikstürü Gör`
+
+Fixture screen:
+`PresidentPreparedSeasonFixturesScreen`
+
+Prepared visibility:
+- Pending → visible
+- Resolution → visible
+- Completed → hidden
+- M93 Lost Completed → hidden
+
+Mobile/accessibility proof:
+- real 30-row scroll PASS
+- 320px PASS
+- `TextScaler.linear(2.0)` PASS
+- long names PASS
+- raw fixture/opponent IDs visible değil
+
+### Persistence / authority
+
+> **M65 = sole persisted game-state authority**
+
+M95 persistence impact:
+**NONE**
+
+Değişmeyen authority/contracts:
+- M65 schema
+- M74
+- M75
+- M80
+- M77–M88
+- saveVersion
+- codecs
+- checksum
+- migration
+- save metadata
+
+Prepared fixtures:
+**derived-only / runtime-only / non-persisted**.
+
+### Validation highlights
+
+M95 acceptance proof:
+- exact `SeasonEngine` tuple parity PASS
+- `league.clubIds` order-sensitivity proof PASS
+- M80 bootstrap/transcript independence PASS
+- M65 codec observation parity PASS
+- M75 restore parity PASS
+- same real player-president checkpoint promotion/relegation proof PASS
+- Pending/Resolution same snapshot PASS
+- first-save rebound semantic parity PASS
+- M88 saveBack PASS
+- next-season fresh snapshot PASS
+- M91/M92/M93/M94 regressions PASS
+
+### Merge + actual-main executable proof
+
+Approved exact PR HEAD:
+`a50a5b13f9580f5f51ee1b88a8134036dc406e06`
+
+Executable squash merge SHA:
+`1faa49169746f78e6c2dc4b9da5a9fddaba04884`
+
+Core actual-main:
+- Core Simulation Tests #633
+- run ID `35652917756`
+- successful attempt 6
+- SUCCESS
+- normal `test` SUCCESS
+- canonical M0–M88 ALL SUCCESS
+- 84 physical Run-M steps because M19–M24 is one combined canonical step
+- failed Run-M 0
+- cancelled Run-M 0
+- skipped Run-M 0
+- artifacts 0
+
+Canonical timing history:
+- attempts 1–5 yalnız timing-only cancellation yaşadı
+- gerçek assertion/exception/deterministic contract failure yoktu
+- source patch yapılmadı
+- attempt 6 aynı exact executable SHA üzerinde full canonical SUCCESS oldu
+
+Flutter actual-main:
+- M89 Flutter App #61
+- run ID `35652917456`
+- attempt 1
+- SUCCESS
+- Analyze SUCCESS
+- 91 tests PASS
+- debug APK SUCCESS
+- emulator SUCCESS
+- marker: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
+- artifacts 0
+
+Executable authority:
+`1faa49169746f78e6c2dc4b9da5a9fddaba04884`
+
+### Technical compass
+
+M95 kapanışında:
+- FBS-01 — **AUDIT TAMAMLANDI / A — KEEP CURRENT SAVE ARCHITECTURE**
+- FBS-02 — **NOT TRIGGERED**
+- FBS-03 — **NOT TRIGGERED**
+- INFRA-01 — **OUT OF M95 SCOPE**
+
+### Final current state
+
+# **M95 — CLOSED / MERGED / PASS**
+# **M0–M95 — CLOSED / MERGED / PASS**
+
+Aktif milestone:
+**YOK**
+
+M96:
+**NOT STARTED**
+
+Sonraki çalışma yalnız kullanıcı açıkça istediğinde:
+1. live `main` doğrula,
+2. current docs oku,
+3. technical compass kontrol et,
+4. fresh live-main gap scan yap,
+5. sonra yeni milestone adayını değerlendir.
+
+Eski sohbetten M96 uydurulmaz. Kullanıcı yeni prompt vermeden branch/PR, kod, CI veya yeni feature başlatılmaz.
 
