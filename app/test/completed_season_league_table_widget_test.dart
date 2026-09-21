@@ -61,7 +61,6 @@ void main() {
     final snapshot = report.leagueTable!;
     final controlledName = canonicalName(snapshot.controlledClubId);
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -104,6 +103,7 @@ void main() {
       expect(find.text(canonicalName(row.clubId)), findsWidgets);
     }
     expect(tester.takeException(), isNull);
+    semantics.dispose();
   });
 
   testWidgets(
@@ -131,7 +131,6 @@ void main() {
     }
 
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -164,20 +163,24 @@ void main() {
     expect(tester.getRect(farRight).left, greaterThan(320));
 
     await tester.drag(
-      find.byKey(const Key('completed-season-table-vertical-scroll')),
-      const Offset(0, -4000),
-    );
-    await tester.pumpAndSettle();
-    expect(tester.getRect(lastPosition).top, lessThan(480));
-
-    await tester.drag(
       find.byKey(const Key('completed-season-table-horizontal-scroll')),
       const Offset(-4000, 0),
     );
     await tester.pumpAndSettle();
     expect(tester.getRect(farRight).left, lessThan(320));
 
-    expect(find.byKey(const Key('completed-season-table-header-points')), findsOneWidget);
+    await tester.drag(
+      find.byKey(const Key('completed-season-table-vertical-scroll')),
+      const Offset(0, -4000),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getRect(lastPosition).top, lessThan(480));
+
+    expect(
+      find.byKey(const Key('completed-season-table-header-points')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
+    semantics.dispose();
   });
 }
