@@ -298,6 +298,18 @@ void main() {
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
     expect(find.byKey(const Key('prepared-season-dashboard')), findsNothing);
     expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
+    expect(
+      find.byKey(const Key('prepared-season-fixtures-button')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('prepared-season-fixtures-button')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('prepared-season-fixtures-button')),
+      findsNothing,
+    );
 
     final saveFinder = find.byKey(const Key('save-game-button'));
     expect(saveFinder, findsOneWidget);
