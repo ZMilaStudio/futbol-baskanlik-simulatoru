@@ -2,6 +2,7 @@ import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
+import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_manager_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_media_statement_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_prepared_squad_snapshot.dart';
@@ -9,6 +10,7 @@ import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
+import 'package:futbol_baskanlik_m0/src/world/world_opening_state_initializer.dart';
 import 'package:test/test.dart';
 
 Object _choiceFor(PlayerPresidentInteractiveDecisionRequest request) {
@@ -22,7 +24,7 @@ Object _choiceFor(PlayerPresidentInteractiveDecisionRequest request) {
       final context = request.contextAs<PlayerCrisisDecisionContext>();
       return PlayerCrisisActionChoice(action: context.aiDecision.action);
     case PlayerPresidentInteractiveDecisionKind.managerReview:
-      return PlayerManagerReviewChoice.keep;
+      return PlayerManagerReviewChoice.replace;
     case PlayerPresidentInteractiveDecisionKind.managerReplacement:
       final context = request.contextAs<PlayerManagerReplacementContext>();
       return PlayerManagerReplacementChoice(

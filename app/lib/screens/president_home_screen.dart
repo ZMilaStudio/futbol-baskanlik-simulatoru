@@ -214,8 +214,8 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                                           MaterialPageRoute<void>(
                                             builder: (_) =>
                                                 PresidentPreparedSquadScreen(
-                                              snapshot: preparedSquad!,
-                                              clubName: club!.name,
+                                              snapshot: preparedSquad,
+                                              clubName: club.name,
                                             ),
                                           ),
                                         );
