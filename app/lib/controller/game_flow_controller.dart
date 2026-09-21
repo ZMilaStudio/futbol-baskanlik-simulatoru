@@ -44,6 +44,8 @@ class GameFlowController extends ChangeNotifier {
   PlayerPresidentInteractiveDecisionApplicationSession? get session => _session;
   PlayerPresidentPreparedSeasonDashboardSnapshot? get preparedSeasonDashboard =>
       _session?.preparedSeasonDashboard;
+  PlayerPresidentPreparedSquadSnapshot? get preparedSquad =>
+      _session?.preparedSquad;
   PlayerPresidentTenureControlState? get completedTenureControl =>
       _session?.completedTenureControl;
   PlayerPresidentInteractiveSessionStep? get currentStep => _currentStep;

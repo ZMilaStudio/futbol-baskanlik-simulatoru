@@ -12,6 +12,7 @@ import '../dashboard/president_prepared_season_dashboard_panel.dart';
 import '../decisions/decision_panel.dart';
 import '../decisions/decision_resolution_panel.dart';
 import '../reports/president_season_report_panel.dart';
+import 'president_prepared_squad_screen.dart';
 
 class PresidentHomeScreen extends StatefulWidget {
   const PresidentHomeScreen({
@@ -120,7 +121,12 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
           final errorMessage = _controller.errorMessage;
           final club = _controller.selectedClub;
           final preparedDashboard = _controller.preparedSeasonDashboard;
+          final preparedSquad = _controller.preparedSquad;
           final showPreparedDashboard = preparedDashboard != null &&
+              (resolution != null ||
+                  step is PlayerPresidentInteractiveDecisionPending);
+          final showPreparedSquad = preparedSquad != null &&
+              club != null &&
               (resolution != null ||
                   step is PlayerPresidentInteractiveDecisionPending);
           final completedTenureControl =
@@ -197,6 +203,27 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                             PresidentPreparedSeasonDashboardPanel(
                               snapshot: preparedDashboard,
                             ),
+                            if (showPreparedSquad) ...[
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                key: const Key('prepared-squad-button'),
+                                onPressed: busy
+                                    ? null
+                                    : () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) =>
+                                                PresidentPreparedSquadScreen(
+                                              snapshot: preparedSquad,
+                                              clubName: club.name,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                icon: const Icon(Icons.groups_outlined),
+                                label: const Text('Kadroyu Gör'),
+                              ),
+                            ],
                             const SizedBox(height: 20),
                             const Divider(),
                             const SizedBox(height: 20),

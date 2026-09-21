@@ -297,6 +297,7 @@ void main() {
     expect(find.textContaining('president_'), findsNothing);
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
     expect(find.byKey(const Key('prepared-season-dashboard')), findsNothing);
+    expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
 
     final saveFinder = find.byKey(const Key('save-game-button'));
     expect(saveFinder, findsOneWidget);
@@ -304,6 +305,7 @@ void main() {
     await tester.tap(saveFinder);
     await tester.pump();
     expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
+    expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
 
     await tester.ensureVisible(
       find.byKey(const Key('career-end-main-menu-button')),
@@ -321,6 +323,7 @@ void main() {
     expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
     expect(find.text('4. sezon sonunda.'), findsOneWidget);
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
+    expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
 
     await tester.ensureVisible(
       find.byKey(const Key('career-end-main-menu-button')),
