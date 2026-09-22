@@ -167,11 +167,11 @@ void main() {
       );
       expect(
         projected.goalsFor,
-        isHome ? sourceResult!.homeGoals : sourceResult!.awayGoals,
+        isHome ? sourceResult.homeGoals : sourceResult.awayGoals,
       );
       expect(
         projected.goalsAgainst,
-        isHome ? sourceResult!.awayGoals : sourceResult!.homeGoals,
+        isHome ? sourceResult.awayGoals : sourceResult.homeGoals,
       );
     }
 
