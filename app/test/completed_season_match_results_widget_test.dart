@@ -143,10 +143,17 @@ void main() {
 
     final list =
         find.byKey(const Key('completed-season-match-results-list'));
-    for (var i = 0; i < 30 && lastRow.evaluate().isEmpty; i++) {
-      await tester.drag(list, const Offset(0, -350));
-      await tester.pumpAndSettle();
-    }
+    final scrollable = find.descendant(
+      of: list,
+      matching: find.byType(Scrollable),
+    );
+    expect(scrollable, findsOneWidget);
+    await tester.scrollUntilVisible(
+      lastRow,
+      800,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
 
     expect(lastRow, findsOneWidget);
     expect(tester.getRect(lastRow).top, lessThan(480));
