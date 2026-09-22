@@ -72,6 +72,17 @@ void main() {
           .map((row) => row.clubId)
           .toList(growable: false),
     );
+    expect(actual.matchResults, isNotNull);
+    expect(expected.matchResults, isNotNull);
+    expect(actual.matchResults!.signature, expected.matchResults!.signature);
+    expect(
+      actual.matchResults!.matches
+          .map((match) => match.fixtureId)
+          .toList(growable: false),
+      expected.matchResults!.matches
+          .map((match) => match.fixtureId)
+          .toList(growable: false),
+    );
   }
 
   test(

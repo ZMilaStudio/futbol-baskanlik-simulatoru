@@ -157,6 +157,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
 
+    final matchResultsButton =
+        find.byKey(const Key('completed-season-match-results-button'));
+    expect(matchResultsButton, findsOneWidget);
+    await tester.ensureVisible(matchResultsButton);
+    await tester.tap(matchResultsButton);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('completed-season-match-results-screen')),
+      findsOneWidget,
+    );
+    expect(find.text('Maç Sonuçları'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
 
     final continueButton =
@@ -278,10 +293,10 @@ void main() {
       lostSession.advance(),
       isA<PlayerPresidentInteractiveSessionCompleted>(),
     );
-    final lostTableSignature =
-        PlayerPresidentCompletedSeasonReport.fromCompleted(lostSession.completed!)
-            .leagueTable!
-            .signature;
+    final lostReport =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(lostSession.completed!);
+    final lostTableSignature = lostReport.leagueTable!.signature;
+    final lostMatchResultsSignature = lostReport.matchResults!.signature;
 
     const slotId = 'career_m93_lost_widget';
     final source = composition.saveSlots.save(
@@ -324,6 +339,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
+
+    final lostMatchButton =
+        find.byKey(const Key('completed-season-match-results-button'));
+    expect(lostMatchButton, findsOneWidget);
+    await tester.ensureVisible(lostMatchButton);
+    await tester.tap(lostMatchButton);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('completed-season-match-results-screen')),
+      findsOneWidget,
+    );
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
+    expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
     expect(find.byKey(const Key('prepared-season-dashboard')), findsNothing);
     expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
     expect(
@@ -341,6 +371,10 @@ void main() {
       find.byKey(const Key('completed-season-league-table-button')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const Key('completed-season-match-results-button')),
+      findsOneWidget,
+    );
     final savedSummary = composition.saveSlots.list().single;
     final savedBinding =
         PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
@@ -349,12 +383,10 @@ void main() {
     )!;
     final savedCompleted =
         savedBinding.session.advance() as PlayerPresidentInteractiveSessionCompleted;
-    expect(
-      PlayerPresidentCompletedSeasonReport.fromCompleted(savedCompleted)
-          .leagueTable!
-          .signature,
-      lostTableSignature,
-    );
+    final savedReport =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(savedCompleted);
+    expect(savedReport.leagueTable!.signature, lostTableSignature);
+    expect(savedReport.matchResults!.signature, lostMatchResultsSignature);
     expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
     expect(
       find.byKey(const Key('prepared-season-fixtures-button')),
@@ -378,6 +410,10 @@ void main() {
     expect(find.text('4. sezon sonunda.'), findsOneWidget);
     expect(
       find.byKey(const Key('completed-season-league-table-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('completed-season-match-results-button')),
       findsOneWidget,
     );
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);

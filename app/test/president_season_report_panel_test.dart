@@ -65,6 +65,7 @@ void main() {
     final finance = report.finance;
     var continued = false;
     var openedLeagueTable = false;
+    var openedMatchResults = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -75,6 +76,9 @@ void main() {
               clubNameForId: clubNameForId,
               onOpenLeagueTable: () {
                 openedLeagueTable = true;
+              },
+              onOpenMatchResults: () {
+                openedMatchResults = true;
               },
               onContinueToNextSeason: () {
                 continued = true;
@@ -182,10 +186,27 @@ void main() {
       tester.getTopLeft(tableButton).dy,
       lessThan(tester.getTopLeft(find.byKey(const Key('season-report-finance'))).dy),
     );
+    final matchButton =
+        find.byKey(const Key('completed-season-match-results-button'));
+    expect(matchButton, findsOneWidget);
+    expect(
+      tester.getTopLeft(tableButton).dy,
+      lessThan(tester.getTopLeft(matchButton).dy),
+    );
+    expect(
+      tester.getTopLeft(matchButton).dy,
+      lessThan(tester.getTopLeft(find.byKey(const Key('season-report-finance'))).dy),
+    );
+
     await tester.ensureVisible(tableButton);
     await tester.tap(tableButton);
     await tester.pump();
     expect(openedLeagueTable, isTrue);
+
+    await tester.ensureVisible(matchButton);
+    await tester.tap(matchButton);
+    await tester.pump();
+    expect(openedMatchResults, isTrue);
 
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
 
@@ -209,6 +230,7 @@ void main() {
               report: report,
               clubNameForId: clubNameForId,
               onOpenLeagueTable: () {},
+              onOpenMatchResults: () {},
               onContinueToNextSeason: () {},
               canContinueToNextSeason: false,
             ),
@@ -220,6 +242,10 @@ void main() {
     expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
     expect(
       find.byKey(const Key('completed-season-league-table-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('completed-season-match-results-button')),
       findsOneWidget,
     );
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
@@ -238,6 +264,7 @@ void main() {
               report: report,
               clubNameForId: clubNameForId,
               onOpenLeagueTable: () {},
+              onOpenMatchResults: () {},
               onContinueToNextSeason: () {},
               busy: true,
             ),
@@ -253,6 +280,10 @@ void main() {
         find.byKey(const Key('completed-season-league-table-button'));
     expect(tableFinder, findsOneWidget);
     expect(tester.widget<OutlinedButton>(tableFinder).onPressed, isNull);
+    final matchFinder =
+        find.byKey(const Key('completed-season-match-results-button'));
+    expect(matchFinder, findsOneWidget);
+    expect(tester.widget<OutlinedButton>(matchFinder).onPressed, isNull);
   });
 
   testWidgets('M96-only malformed table preserves M91 and hides table action',
@@ -282,6 +313,7 @@ void main() {
 
     final report = PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
     expect(report.leagueTable, isNull);
+    expect(report.matchResults, isNotNull);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -291,6 +323,7 @@ void main() {
               report: report,
               clubNameForId: clubNameForId,
               onOpenLeagueTable: null,
+              onOpenMatchResults: () {},
               onContinueToNextSeason: () {},
             ),
           ),
@@ -302,6 +335,77 @@ void main() {
     expect(find.byKey(const Key('season-report-title')), findsOneWidget);
     expect(
       find.byKey(const Key('completed-season-league-table-button')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('completed-season-match-results-button')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
+  });
+
+  testWidgets('M97-only malformed fixture preserves M91 and M96',
+      (tester) async {
+    final completed = completedSeason();
+    final boundary = completed.result.boundaries.single;
+    final worldSeason = boundary
+        .source
+        .source
+        .source
+        .sponsor
+        .report
+        .sourceReport
+        .advancedTransferReport
+        .worldReport
+        .seasons
+        .single;
+    final controlledClubId = completed.result.checkpoint.controlledClubId;
+    final league = worldSeason.leaguesBeforeSeason
+        .singleWhere((item) => item.clubIds.contains(controlledClubId));
+    final seasonReport = worldSeason.leagueResults
+        .singleWhere((item) => item.tier == league.tier)
+        .report;
+    final fixtureIndex = seasonReport.fixtures.indexWhere(
+      (fixture) =>
+          fixture.homeClubId == controlledClubId ||
+          fixture.awayClubId == controlledClubId,
+    );
+    final original = seasonReport.fixtures[fixtureIndex];
+    seasonReport.fixtures[fixtureIndex] = Fixture(
+      id: original.id,
+      seasonIndex: original.seasonIndex,
+      round: original.round,
+      homeClubId: original.homeClubId,
+      awayClubId: original.awayClubId,
+    );
+
+    final report = PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+    expect(report.leagueTable, isNotNull);
+    expect(report.matchResults, isNull);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: PresidentSeasonReportPanel(
+              report: report,
+              clubNameForId: clubNameForId,
+              onOpenLeagueTable: () {},
+              onOpenMatchResults: null,
+              onContinueToNextSeason: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    expect(
+      find.byKey(const Key('completed-season-league-table-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('completed-season-match-results-button')),
       findsNothing,
     );
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
