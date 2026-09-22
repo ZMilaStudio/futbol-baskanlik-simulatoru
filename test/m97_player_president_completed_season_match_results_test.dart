@@ -156,7 +156,9 @@ void main() {
       final source = sourceControlled[index];
       final projected = results.matches[index];
       final sourceResult = source.result;
-      expect(sourceResult, isNotNull);
+      if (sourceResult == null) {
+        fail('Authoritative selected fixture result unexpectedly null.');
+      }
       final isHome = source.homeClubId == controlledClubId;
       expect(projected.fixtureId, source.id);
       expect(projected.round, source.round);
