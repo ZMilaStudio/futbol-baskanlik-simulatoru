@@ -6,6 +6,7 @@ import '../promise/promise_season_snapshot.dart';
 import '../world/league_tier.dart';
 import '../world/world_career_season.dart';
 import 'player_president_completed_season_league_table_snapshot.dart';
+import 'player_president_completed_season_match_results_snapshot.dart';
 import 'player_president_interactive_decision_session.dart';
 
 /// Read-only application projection for exactly one completed interactive season.
@@ -31,6 +32,7 @@ class PlayerPresidentCompletedSeasonReport {
     required this.managerSeason,
     required this.promise,
     required this.leagueTable,
+    required this.matchResults,
   });
 
   factory PlayerPresidentCompletedSeasonReport.fromCompleted(
@@ -250,6 +252,26 @@ class PlayerPresidentCompletedSeasonReport {
       leagueTable = null;
     }
 
+    PlayerPresidentCompletedSeasonMatchResultsSnapshot? matchResults;
+    try {
+      final candidate =
+          PlayerPresidentCompletedSeasonMatchResultsSnapshot.fromSeasonReport(
+        controlledClubId: controlledClubId,
+        completedLeague: league,
+        report: seasonReport,
+      );
+      if (candidate.seasonIndex != seasonIndex ||
+          candidate.controlledClubId != controlledClubId ||
+          candidate.leagueTier != league.tier) {
+        throw StateError(
+          'Completed-season match results diverge from M91 authority.',
+        );
+      }
+      matchResults = candidate;
+    } on StateError {
+      matchResults = null;
+    }
+
     return PlayerPresidentCompletedSeasonReport._(
       seasonIndex: seasonIndex,
       controlledClubId: controlledClubId,
@@ -263,6 +285,7 @@ class PlayerPresidentCompletedSeasonReport {
       managerSeason: managerSeason,
       promise: promise,
       leagueTable: leagueTable,
+      matchResults: matchResults,
     );
   }
 
@@ -294,6 +317,11 @@ class PlayerPresidentCompletedSeasonReport {
   /// Optional M96 read-only table projection. Existing M91 authority failures
   /// still fail the report; only M96-specific integrity failures yield null.
   final PlayerPresidentCompletedSeasonLeagueTableSnapshot? leagueTable;
+
+  /// Optional M97 read-only match-results projection. Existing M91 authority
+  /// failures still fail the report; only M97-specific integrity failures
+  /// yield null. This projection is derived-only and never persisted.
+  final PlayerPresidentCompletedSeasonMatchResultsSnapshot? matchResults;
 }
 
 T _singleWhere<T>(
