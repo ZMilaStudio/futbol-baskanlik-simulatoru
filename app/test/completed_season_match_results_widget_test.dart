@@ -85,7 +85,14 @@ void main() {
     );
     expect(find.text('${first.round}. Hafta'), findsOneWidget);
     expect(find.text(canonicalName(first.opponentClubId)), findsOneWidget);
-    expect(find.text('${first.goalsFor} - ${first.goalsAgainst}'), findsOneWidget);
+    expect(
+      tester.widget<Text>(
+        find.byKey(
+          const ValueKey('completed-season-match-result-score-1'),
+        ),
+      ).data,
+      '${first.goalsFor} - ${first.goalsAgainst}',
+    );
 
     for (final match in snapshot.matches) {
       expect(find.text(match.fixtureId), findsNothing);
@@ -134,13 +141,12 @@ void main() {
         find.byKey(const ValueKey('completed-season-match-result-row-30'));
     expect(lastRow, findsNothing);
 
-    await tester.scrollUntilVisible(
-      lastRow,
-      500,
-      scrollable:
-          find.byKey(const Key('completed-season-match-results-list')),
-    );
-    await tester.pumpAndSettle();
+    final list =
+        find.byKey(const Key('completed-season-match-results-list'));
+    for (var i = 0; i < 30 && lastRow.evaluate().isEmpty; i++) {
+      await tester.drag(list, const Offset(0, -350));
+      await tester.pumpAndSettle();
+    }
 
     expect(lastRow, findsOneWidget);
     expect(tester.getRect(lastRow).top, lessThan(480));
