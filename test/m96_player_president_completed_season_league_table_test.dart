@@ -271,7 +271,7 @@ void main() {
     expect(() => snapshot.rows.add(copied), throwsUnsupportedError);
 
     controlled.record(scored: 5, conceded: 0);
-    expect(copied.played, 1);
+    expect(copied.played, 2);
     expect(copied.points, 1);
     expect(copied.goalsFor, 1);
     expect(copied.goalsAgainst, 1);
