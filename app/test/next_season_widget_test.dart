@@ -145,6 +145,18 @@ void main() {
     );
     expect(find.byKey(const Key('completed-season-count')), findsNothing);
     expect(find.byKey(const Key('next-season-index')), findsNothing);
+    final tableButton =
+        find.byKey(const Key('completed-season-league-table-button'));
+    expect(tableButton, findsOneWidget);
+    await tester.ensureVisible(tableButton);
+    await tester.tap(tableButton);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('completed-season-league-table-screen')), findsOneWidget);
+    expect(find.text('Puan Durumu'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
 
     final continueButton =
@@ -266,6 +278,10 @@ void main() {
       lostSession.advance(),
       isA<PlayerPresidentInteractiveSessionCompleted>(),
     );
+    final lostTableSignature =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(lostSession.completed!)
+            .leagueTable!
+            .signature;
 
     const slotId = 'career_m93_lost_widget';
     final source = composition.saveSlots.save(
@@ -295,6 +311,18 @@ void main() {
     );
     expect(find.text('4. sezon sonunda.'), findsOneWidget);
     expect(find.textContaining('president_'), findsNothing);
+    final lostTableButton =
+        find.byKey(const Key('completed-season-league-table-button'));
+    expect(lostTableButton, findsOneWidget);
+    expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
+    await tester.ensureVisible(lostTableButton);
+    await tester.tap(lostTableButton);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('completed-season-league-table-screen')), findsOneWidget);
+    expect(find.text('Puan Durumu'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
     expect(find.byKey(const Key('prepared-season-dashboard')), findsNothing);
     expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
@@ -309,6 +337,24 @@ void main() {
     await tester.tap(saveFinder);
     await tester.pump();
     expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
+    expect(
+      find.byKey(const Key('completed-season-league-table-button')),
+      findsOneWidget,
+    );
+    final savedSummary = composition.saveSlots.list().single;
+    final savedBinding =
+        PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+      service: composition.saveSlots,
+      summary: savedSummary,
+    )!;
+    final savedCompleted =
+        savedBinding.session.advance() as PlayerPresidentInteractiveSessionCompleted;
+    expect(
+      PlayerPresidentCompletedSeasonReport.fromCompleted(savedCompleted)
+          .leagueTable!
+          .signature,
+      lostTableSignature,
+    );
     expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
     expect(
       find.byKey(const Key('prepared-season-fixtures-button')),
@@ -330,6 +376,10 @@ void main() {
 
     expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
     expect(find.text('4. sezon sonunda.'), findsOneWidget);
+    expect(
+      find.byKey(const Key('completed-season-league-table-button')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
     expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
     expect(

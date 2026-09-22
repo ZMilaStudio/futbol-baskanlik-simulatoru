@@ -64,6 +64,7 @@ void main() {
     final standing = report.standing;
     final finance = report.finance;
     var continued = false;
+    var openedLeagueTable = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -72,6 +73,9 @@ void main() {
             child: PresidentSeasonReportPanel(
               report: report,
               clubNameForId: clubNameForId,
+              onOpenLeagueTable: () {
+                openedLeagueTable = true;
+              },
               onContinueToNextSeason: () {
                 continued = true;
               },
@@ -167,6 +171,22 @@ void main() {
       find.text('Bu sezon ${completed.decisionCount} başkanlık kararı verdin.'),
       findsOneWidget,
     );
+    final tableButton =
+        find.byKey(const Key('completed-season-league-table-button'));
+    expect(tableButton, findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byKey(const Key('season-report-champion'))).dy,
+      lessThan(tester.getTopLeft(tableButton).dy),
+    );
+    expect(
+      tester.getTopLeft(tableButton).dy,
+      lessThan(tester.getTopLeft(find.byKey(const Key('season-report-finance'))).dy),
+    );
+    await tester.ensureVisible(tableButton);
+    await tester.tap(tableButton);
+    await tester.pump();
+    expect(openedLeagueTable, isTrue);
+
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
 
     final continueButton =
@@ -188,6 +208,7 @@ void main() {
             child: PresidentSeasonReportPanel(
               report: report,
               clubNameForId: clubNameForId,
+              onOpenLeagueTable: () {},
               onContinueToNextSeason: () {},
               canContinueToNextSeason: false,
             ),
@@ -197,6 +218,10 @@ void main() {
     );
 
     expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    expect(
+      find.byKey(const Key('completed-season-league-table-button')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
   });
 
@@ -212,6 +237,7 @@ void main() {
             child: PresidentSeasonReportPanel(
               report: report,
               clubNameForId: clubNameForId,
+              onOpenLeagueTable: () {},
               onContinueToNextSeason: () {},
               busy: true,
             ),
@@ -223,6 +249,62 @@ void main() {
     final finder = find.byKey(const Key('continue-next-season-button'));
     expect(finder, findsOneWidget);
     expect(tester.widget<FilledButton>(finder).onPressed, isNull);
+    final tableFinder =
+        find.byKey(const Key('completed-season-league-table-button'));
+    expect(tableFinder, findsOneWidget);
+    expect(tester.widget<OutlinedButton>(tableFinder).onPressed, isNull);
+  });
+
+  testWidgets('M96-only malformed table preserves M91 and hides table action',
+      (tester) async {
+    final completed = completedSeason();
+    final boundary = completed.result.boundaries.single;
+    final worldSeason = boundary
+        .source
+        .source
+        .source
+        .sponsor
+        .report
+        .sourceReport
+        .advancedTransferReport
+        .worldReport
+        .seasons
+        .single;
+    final controlledClubId = completed.result.checkpoint.controlledClubId;
+    final league = worldSeason.leaguesBeforeSeason
+        .singleWhere((item) => item.clubIds.contains(controlledClubId));
+    final seasonReport = worldSeason.leagueResults
+        .singleWhere((item) => item.tier == league.tier)
+        .report;
+    final duplicate = seasonReport.table
+        .firstWhere((row) => row.clubId != controlledClubId);
+    seasonReport.table.add(StandingRow(clubId: duplicate.clubId));
+
+    final report = PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+    expect(report.leagueTable, isNull);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: PresidentSeasonReportPanel(
+              report: report,
+              clubNameForId: clubNameForId,
+              onOpenLeagueTable: null,
+              onContinueToNextSeason: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    expect(find.byKey(const Key('season-report-title')), findsOneWidget);
+    expect(
+      find.byKey(const Key('completed-season-league-table-button')),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
   });
 
   testWidgets('nullable promise section shows no fake promise result',
