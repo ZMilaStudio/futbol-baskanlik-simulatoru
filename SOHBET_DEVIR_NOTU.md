@@ -9,246 +9,123 @@ Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmas
 **Yeni sohbet açıldığında kullanıcı yeni geliştirme promptu vermeden HİÇBİR ŞEY YAPMA.**
 
 Kaynak önceliği:
-
 **Live GitHub > güncel repo docs > central technical-development compass > eski sohbet bilgisi.**
 
 ## 1. Güncel proje durumu
 
-Repo:
-`ZMilaStudio/futbol-baskanlik-simulatoru`
+Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
 
-# **M0–M96 — CLOSED / MERGED / PASS**
+# **M0–M97 — CLOSED / MERGED / PASS**
 
-Son kapanan milestone:
-**M96 — Completed Season League Table I**
+Last closed:
+**M97 — Completed Season Match Results I**
 
-PR #99:
-**MERGED / CLOSED**
+PR #100: **MERGED / CLOSED**
 
 Approved exact PR HEAD:
-`d5d90ba9c0ce7389ff66a213d979b8315cadd4ef`
+`77492d34f12142bb23969b4969e397b3edd26606`
 
 Executable squash merge SHA:
-`ae1d1a4d66076b276cc375e1cec5ea1f24039872`
+`f8082a3d4e628a57744333e5ac977b010769ed8d`
+
+Executable authority:
+`f8082a3d4e628a57744333e5ac977b010769ed8d`
 
 Core actual-main:
-- Core Simulation Tests #641
-- run ID `35755010035`
-- attempt 1
-- **SUCCESS**
-- normal test SUCCESS
-- 495 tests PASS
+- #648 / run `35822393141` / successful attempt 6 / SUCCESS
+- 501 tests PASS
 - canonical M0–M88 ALL SUCCESS
-- 84 physical Run-M steps; M19–M24 combined
-- failed 0 / cancelled 0 / skipped 0
+- final M88 marker PASS
 - artifacts 0
 
+Core attempts 1–5 timing-only cancellation; real failure/source patch/workflow mutation yok. Attempt 6 full SUCCESS.
+
 Flutter actual-main:
-- M89 Flutter App #68
-- run ID `35755010083`
-- successful attempt 2
-- **SUCCESS**
+- #74 / run `35822393137` / successful attempt 3 / SUCCESS
 - Analyze SUCCESS
-- 94 tests PASS
-- debug APK SUCCESS
+- 98 tests PASS
+- APK SUCCESS
 - emulator SUCCESS
 - `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
 - artifacts 0
 
-Flutter attempt 1 aynı exact merge SHA üzerinde Analyze + 94 tests + APK PASS sonrası emulator/ADB infrastructure-only `Broken pipe (32)` / exit `224` ile düştü. Source failure, source patch veya workflow mutation yoktu. Attempt 2 aynı SHA üzerinde full SUCCESS oldu.
+Flutter retry history:
+- attempt 1 Analyze/tests/APK PASS; emulator/ADB `Broken pipe (32)`
+- attempt 2 Analyze/tests/APK PASS; emulator/ADB exit `224`
+- attempt 3 full SUCCESS
+- source/workflow mutation yok.
 
-Executable authority SHA:
-`ae1d1a4d66076b276cc375e1cec5ea1f24039872`
-
-## 2. M96 essentials
-
-M96 = **Completed Season League Table I**.
+## 2. M97 essentials
 
 Semantic:
+> Tamamlanan sezonun authoritative maç sonuçları.
 
-> Tamamlanan sezonun authoritative final lig puan durumu.
-
-Feature read-only completed-season president observation'dır.
+Feature: read-only completed-season president observation.
 
 Authority:
 `PlayerPresidentInteractiveSessionCompleted`
 → existing M91 completed-season traversal
 → authoritative `WorldCareerSeason`
 → `worldSeason.leaguesBeforeSeason`
-→ controlled club completed league
+→ controlled club completed `WorldLeague`
 → `worldSeason.leagueResults`
 → same completed `LeagueTier`
 → `LeagueSeasonSnapshot.report`
-→ `SeasonReport.table`.
+→ `SeasonReport.fixtures`.
 
-Critical invariant:
-`SeasonReport.table` order authoritative'dir.
+Contracts:
+- source-order immutable projection
+- no sorting/re-ranking/recalculation/simulation
+- M91 owns selected authority
+- M97 exact seam `PlayerPresidentCompletedSeasonReport.matchResults`
+- `PlayerPresidentCompletedSeasonMatchResultsSnapshot?`
+- `matchResults` nullable fail-closed sibling of M96 `leagueTable`
+- 30 current canonical controlled matches; generic `2 * (leagueSize - 1)`, not hard-code.
 
-M96:
-- sort yapmaz,
-- ranking comparator kopyalamaz,
-- standings/table recalculation yapmaz,
-- points authority oluşturmaz.
-
-Public types:
-- `PlayerPresidentCompletedSeasonLeagueTableSnapshot`
-- `PlayerPresidentCompletedSeasonLeagueTableRow`
-
-M91 additive seam:
-- `PlayerPresidentCompletedSeasonReport.leagueTable`
-- `PlayerPresidentCompletedSeasonLeagueTableSnapshot?`
-
-`PlayerPresidentCompletedSeasonReport.fromCompleted(...)`
-tek completed-season deep traversal owner olarak kalır.
-M96 ikinci bağımsız `fromCompleted(...)` traversal eklemez.
-
-Rows immutable value-copy'dir:
-- mutable `StandingRow` referansı tutulmaz,
-- `List.unmodifiable`,
-- position = source table index + 1,
-- no re-ranking.
-
-M96-specific integrity failure:
-- `leagueTable = null`
-- M91 report usable kalır
-- Puan Durumu CTA hidden
-- synthetic/repaired table yok.
-
-## 3. Promotion/relegation boundary
-
-M96 completed-season membership/tier authority:
-`worldSeason.leaguesBeforeSeason`.
-
-Table authority değildir:
-- `checkpoint.nextSeasonLeagues`
-- `worldSeason.leaguesAfterTransition`
-
-Real movement test:
-- M96 tier = `movement.from`
-- next/after-transition tier = `movement.to`
-- PASS.
-
-Bu sınır M95'ten bilinçli olarak farklıdır:
-- M95 = next-season prepared semantics
-- M96 = completed-season final-result semantics.
-
-## 4. Flutter / lifecycle
-
-M91 report CTA:
-**Puan Durumunu Gör**
-
-Placement:
-`Sportif Sonuç → Puan Durumunu Gör → Finansal Özet`
-
-Screen:
-`PresidentCompletedSeasonLeagueTableScreen`
-
-Title:
-**Puan Durumu**
-
-Columns:
-`# / Takım / O / G / B / M / AG / YG / AV / P`
-
-Own club:
-- authoritative position'ında kalır,
-- reorder edilmez,
-- person icon + bold canonical club name,
-- semantics `Senin Kulübün: <club name>`.
-
-Club display authority:
-`PresidentHomeScreen._clubNameForId(...)`
-→ `composition.world.clubs`
-→ exactly-one lookup.
-
-Raw club IDs görünmez.
-
-Active Completed:
-- M91 visible
-- M96 CTA visible
-- Sonraki Sezona Geç visible
-
-Lost Completed:
-- M91 visible
-- M96 CTA visible
-- M93 Career End visible
-- Sonraki Sezona Geç absent
-
-M96 read-only navigation career continuation authority oluşturmaz.
-
-Acceptance:
-- real 16-row table PASS
-- vertical real scroll PASS
-- horizontal real scroll PASS
-- 320px PASS
-- TextScale 2.0 PASS
-- long names PASS
+Flutter:
+- `Maç Sonuçlarını Gör`
+- `PresidentCompletedSeasonMatchResultsScreen`
+- canonical opponent names
 - raw IDs hidden
-- controlled-club semantics PASS
+- Active + Lost Completed availability
+- M93 continuation semantics preserved.
 
-## 5. Persistence / authority
+Persistence:
+- derived-only / non-persisted
+- persisted matchResults NONE
+- schema/saveVersion/codec/migration/sidecar yok
+- **M65 sole persisted game-state authority**.
 
-> **M65 = sole persisted game-state authority**
+## 3. Technical compass
 
-M96 league table:
-- derived-only
-- runtime-only
-- non-persisted
-
-Persistence impact:
-**NONE**
-
-Unchanged:
-- M65
-- M74
-- M75
-- M80
-- M77–M88
-- saveVersion
-- codecs
-- checksum
-- migrations
-- save metadata
-
-Save/reopen proof:
-- fresh Completed parity PASS
-- bound saveBack parity PASS
-- checkpoint-origin Completed parity PASS
-- Lost Completed parity PASS
-
-Runtime-only ordered signature yalnız observation/test parity içindir.
-
-## 6. Technical compass
-
-- FBS-01 — **AUDIT TAMAMLANDI / A — KEEP CURRENT SAVE ARCHITECTURE**
+- FBS-01 — **AUDIT TAMAMLANDI / A — KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED**
 - FBS-02 — **NOT TRIGGERED**
 - FBS-03 — **NOT TRIGGERED**
-- INFRA-01 — **AUDIT COMPLETE / activation requires separate user approval / OUT OF M96 PRODUCT SCOPE**
+- INFRA-01 — **AUDIT COMPLETE / activation requires separate user approval / OUT OF M97 PRODUCT SCOPE**
 
-## 7. Current status
+## 4. Current status
 
-# **M96 — CLOSED / MERGED / PASS**
-# **M0–M96 — CLOSED / MERGED / PASS**
+# **M97 — CLOSED / MERGED / PASS**
+# **M0–M97 — CLOSED / MERGED / PASS**
 
 Aktif milestone:
 **YOK**
 
-M97:
+M98:
 **NOT STARTED**
 
-## 8. Next work rule
+## 5. Next work rule
 
 Kullanıcı yeni geliştirme istediğinde:
 1. live `main` doğrula
 2. current repo docs oku
 3. central technical-development compass kontrol et
 4. fresh live-main gap scan yap
-5. yeni milestone adayını değerlendir
+5. milestone adayını değerlendir
 6. product/authority contract'ını implementation öncesi kilitle
 
-M97'yi bu devir notundan uydurma.
-
-Kullanıcı yeni prompt vermeden:
-- M97 seçme
+Kullanıcı yeni geliştirme istemeden:
+- M98 seçme
 - gap scan başlatma
 - branch/PR açma
 - kod yazma
@@ -257,5 +134,3 @@ Kullanıcı yeni prompt vermeden:
 - yeni feature başlatma
 
 # DUR
-
-**Kullanıcı yeni prompt vermeden hiçbir işlem yapma.**

@@ -40,61 +40,68 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-# **M0–M96 — CLOSED / MERGED / PASS**
+# **M0–M97 — CLOSED / MERGED / PASS**
 
 Son kapanan milestone:
-
-# M96 — Completed Season League Table I
+# M97 — Completed Season Match Results I
 
 PR:
-**#99 — MERGED / CLOSED**
+**#100 — MERGED / CLOSED**
 
 Approved exact PR HEAD:
-`d5d90ba9c0ce7389ff66a213d979b8315cadd4ef`
+`77492d34f12142bb23969b4969e397b3edd26606`
 
 Executable squash merge SHA:
-`ae1d1a4d66076b276cc375e1cec5ea1f24039872`
-
-Actual-main Core proof:
-- Core Simulation Tests #641
-- run ID `35755010035`
-- attempt 1
-- **SUCCESS**
-- normal `test` SUCCESS
-- 495 tests PASS
-- canonical M0–M88 ALL SUCCESS
-- 84 physical Run-M steps; M19–M24 tek birleşik canonical step
-- failed 0 / cancelled 0 / skipped 0
-- artifacts 0
-
-Actual-main Flutter proof:
-- M89 Flutter App #68
-- run ID `35755010083`
-- successful attempt 2
-- **SUCCESS**
-- Analyze SUCCESS
-- 94 Flutter tests PASS
-- Android debug APK SUCCESS
-- emulator SUCCESS
-- launch marker SUCCESS
-- `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
-- artifacts 0
-
-Flutter actual-main attempt history:
-- attempt 1 aynı exact merge SHA üzerinde Analyze + 94 tests + APK PASS sonrası emulator/ADB altyapısında `Broken pipe (32)` / exit `224` ile düştü; source failure, source patch veya workflow mutation yoktu,
-- attempt 2 aynı exact merge SHA üzerinde Analyze + 94 tests + APK + emulator + launch marker ile tam SUCCESS oldu,
-- executable Flutter authority attempt 2 final SUCCESS'tır.
+`f8082a3d4e628a57744333e5ac977b010769ed8d`
 
 Executable authority SHA:
-`ae1d1a4d66076b276cc375e1cec5ea1f24039872`
+`f8082a3d4e628a57744333e5ac977b010769ed8d`
 
-# **M96 — CLOSED / MERGED / PASS**
-# **M0–M96 — CLOSED / MERGED / PASS**
+Actual-main Core proof:
+- Core Simulation Tests #648
+- run ID `35822393141`
+- successful attempt 6
+- SUCCESS
+- Analyze SUCCESS
+- normal tests: 501 PASS
+- canonical M0–M88 ALL SUCCESS
+- final marker `M88_PLAYER_PRESIDENT_INTERACTIVE_DECISION_MIXED_FILE_SAVE_SLOT_BINDING_PASS`
+- artifacts 0
+
+Core actual-main retry history:
+- attempt 1: last PASS M76 → M77 timing-cancel
+- attempt 2: last PASS M75 → M76 timing-cancel
+- attempt 3: last PASS M76 → M77 timing-cancel
+- attempt 4: last PASS M76 → M77 timing-cancel
+- attempt 5: last PASS M75 → M76 timing-cancel
+- attempt 6: M88 PASS → FULL SUCCESS
+- attempts 1–5 real failure NO; assertion/exception/source failure yok; source patch/workflow mutation yok; aynı executable SHA.
+
+Actual-main Flutter proof:
+- M89 Flutter App #74
+- run ID `35822393137`
+- successful attempt 3
+- SUCCESS
+- Analyze: `No issues found!`
+- 98 Flutter tests PASS
+- debug APK SUCCESS
+- emulator SUCCESS
+- launch marker `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
+- artifacts 0
+
+Flutter actual-main retry history:
+- attempt 1: Analyze/tests/APK PASS; emulator/ADB `Broken pipe (32)`
+- attempt 2: Analyze/tests/APK PASS; emulator/ADB exit `224`
+- attempt 3: FULL SUCCESS
+- source/workflow mutation yok; aynı executable SHA.
+
+# **M97 — CLOSED / MERGED / PASS**
+# **M0–M97 — CLOSED / MERGED / PASS**
 
 Aktif milestone:
 **YOK**
 
-M97:
+M98:
 **NOT STARTED**
 
 Yeni milestone otomatik seçilmez. Kullanıcı açıkça yeni çalışma istediğinde:
@@ -102,10 +109,208 @@ Yeni milestone otomatik seçilmez. Kullanıcı açıkça yeni çalışma istedi�
 2. current repo docs oku,
 3. central technical-development compass kontrol et,
 4. fresh live-main gap scan yap,
-5. yeni milestone adayını değerlendir,
+5. milestone adayını değerlendir,
 6. product/authority contract'ını implementation öncesi kilitle.
 
-Eski sohbetten M97 uydurulmaz.
+## M97 kapanış sonucu
+
+# M97 — Completed Season Match Results I
+
+M97 implementation PR #100 ile squash merge edildi ve actual-main executable proof tamamlandı.
+
+### Product semantic
+
+> Tamamlanan sezonun authoritative maç sonuçları.
+
+Feature classification: **read-only completed-season president observation**.
+
+M97 değildir:
+- live match center
+- match simulation
+- tactical control
+- line-up control
+- replay engine
+- fixture generation
+- standings calculation
+- result recalculation
+- persistence authority
+
+### Authority
+
+Exact authority chain:
+`PlayerPresidentInteractiveSessionCompleted`
+→ existing M91 completed-season traversal
+→ authoritative `WorldCareerSeason`
+→ `worldSeason.leaguesBeforeSeason`
+→ controlled club completed `WorldLeague`
+→ `worldSeason.leagueResults`
+→ same completed `LeagueTier`
+→ `LeagueSeasonSnapshot.report`
+→ `SeasonReport.fixtures`.
+
+Critical invariant:
+`SeasonReport.fixtures` source order M97 observation için authoritative'dir.
+
+M97 sort/regenerate/re-rank/standings recalculation/result simulation yapmaz.
+
+### M91 ownership
+
+`PlayerPresidentCompletedSeasonReport.fromCompleted(...)` single completed-season deep authority traversal owner olarak kalır.
+M97 ikinci independent `fromCompleted(...)` traversal eklemez.
+M97 M91'in zaten seçtiği `controlledClubId`, completed `WorldLeague` ve `SeasonReport` değerlerini tüketir.
+
+### M96 + M97 sibling fail-closed contract
+
+M96 seam: `PlayerPresidentCompletedSeasonReport.leagueTable` → `PlayerPresidentCompletedSeasonLeagueTableSnapshot?`.
+M97 exact seam: `PlayerPresidentCompletedSeasonReport.matchResults` → `PlayerPresidentCompletedSeasonMatchResultsSnapshot?`.
+
+`leagueTable` ve `matchResults` independent nullable fail-closed sibling projection'lardır.
+M97-specific integrity failure `matchResults = null` yapar ve otherwise-valid M91 report'u korur.
+M96 leagueTable bağımsız kalır; bir sibling failure diğerini fabricate/mutate etmez.
+Existing M91 authority failure whole report'u fail etmeye devam eder.
+
+### Public types / immutable rows
+
+Public types:
+- `PlayerPresidentCompletedSeasonMatchResultsSnapshot`
+- `PlayerPresidentCompletedSeasonMatchResult`
+
+Snapshot fields:
+- seasonIndex
+- controlledClubId
+- leagueTier
+- matches
+- derived leagueName
+- runtime-only ordered signature
+
+Row fields:
+- fixtureId
+- round
+- opponentClubId
+- isHome
+- goalsFor
+- goalsAgainst
+
+Rows immutable value-copy'dir; source Fixture/MatchResult referansı tutulmaz. `matches` `List.unmodifiable` kullanır.
+
+### Order / result contract
+
+M97 `SeasonReport.fixtures` listesini source order'da iterates eder; yalnız controlled club fixture'ları project edilir.
+Home: `goalsFor = homeGoals`, `goalsAgainst = awayGoals`.
+Away: `goalsFor = awayGoals`, `goalsAgainst = homeGoals`.
+Score recalculation yoktur.
+Flutter yalnız presentation olarak `Galibiyet / Beraberlik / Mağlubiyet` derive eder.
+
+Current canonical evidence:
+- league size 16
+- controlled completed-season matches 30
+- generic production expectation `2 * (leagueSize - 1)`
+
+`30` hard-coded production rule değildir; current canonical evidence'dir.
+
+### Completed-season boundary
+
+M97 membership authority `worldSeason.leaguesBeforeSeason`.
+M97 result authority `SeasonReport.fixtures`.
+Authority değildir: `checkpoint.nextSeasonLeagues`, `worldSeason.leaguesAfterTransition`.
+
+Semantics distinct:
+- M95 = prepared next-season fixtures
+- M96 = completed-season final league table
+- M97 = completed-season played-match results
+
+### Flutter / club-name authority
+
+CTA: **Maç Sonuçlarını Gör**
+Key: `completed-season-match-results-button`
+Placement: M96 `Puan Durumunu Gör` sonrasında, `Finansal Özet` öncesinde.
+Screen: `PresidentCompletedSeasonMatchResultsScreen`
+AppBar: **Maç Sonuçları**
+Header: `Sezon <n> • <leagueName>`
+
+Rows show:
+- `<round>. Hafta`
+- canonical opponent club name
+- controlled-club-perspective score
+- Ev / Deplasman
+- Galibiyet / Beraberlik / Mağlubiyet
+
+Canonical display names existing PresidentHomeScreen club-name resolver / `composition.world.clubs` exact-one lookup üzerinden çözülür.
+Projection identity olarak opponentClubId taşır; raw IDs gösterilmez; UI-local club-name authority yoktur.
+
+### Lifecycle / M93 guard
+
+Active Completed:
+- M91 report visible
+- M96 CTA valid olduğunda visible
+- M97 CTA valid olduğunda visible
+- Sonraki Sezona Geç visible
+
+Lost Completed:
+- M91 report visible
+- M96 CTA valid olduğunda visible
+- M97 CTA valid olduğunda visible
+- M93 Career End visible
+- Sonraki Sezona Geç absent
+
+M97 read-only navigation career continuation authority oluşturmaz; M93 semantics korunur.
+
+Mobile/accessibility evidence:
+- real 30-match list PASS
+- real vertical scroll PASS
+- 320px PASS
+- TextScale 2.0 PASS
+- long club names PASS
+- canonical club names PASS
+- raw IDs hidden
+- no overflow
+
+M97 vertical list'tir; horizontal-scroll behavior claim edilmez.
+
+### Save / reopen / persistence
+
+M97 authoritative Completed state'ten yeniden derive edilir.
+Persisted matchResults payload: **NONE**.
+Runtime signature yalnız observation/test parity içindir.
+Relevant save/reopen regression coverage PASS.
+
+> **M65 remains sole persisted game-state authority.**
+
+M97 persistence impact: **NONE**.
+
+No changes to M65, M74, M75, M80, M77–M88, saveVersion, codecs, checksum, migrations, save metadata.
+No persisted matchResults, cache, sidecar veya UI viewed-state persistence.
+
+### CI history
+
+Pre-merge exact-head:
+- Core Simulation Tests #647 / run `35795112657` / exact SHA `77492d34f12142bb23969b4969e397b3edd26606` / SUCCESS
+- M89 Flutter App #73 / run `35795112726` / exact SHA `77492d34f12142bb23969b4969e397b3edd26606` / SUCCESS
+
+Actual-main:
+- Core Simulation Tests #648 / run `35822393141` / successful attempt 6 / exact SHA `f8082a3d4e628a57744333e5ac977b010769ed8d` / SUCCESS
+- M89 Flutter App #74 / run `35822393137` / successful attempt 3 / exact SHA `f8082a3d4e628a57744333e5ac977b010769ed8d` / SUCCESS
+
+Core attempts 1–5 timing-only canonical cancellation; no real failure/source patch/workflow mutation.
+Flutter attempts 1–2 emulator/ADB infrastructure failure after Analyze/tests/APK PASS; attempt 3 full SUCCESS.
+
+### Technical compass
+
+- FBS-01 — **AUDIT TAMAMLANDI / A — KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED**
+- FBS-02 — **NOT TRIGGERED**
+- FBS-03 — **NOT TRIGGERED**
+- INFRA-01 — **AUDIT COMPLETE / activation requires separate user approval / OUT OF M97 PRODUCT SCOPE**
+
+### Current state after M97 closure
+
+# **M97 — CLOSED / MERGED / PASS**
+# **M0–M97 — CLOSED / MERGED / PASS**
+
+Aktif milestone:
+**YOK**
+
+M98:
+**NOT STARTED**
 
 ## M96 kapanış sonucu
 
@@ -364,7 +569,9 @@ M96 kapanışında:
 - FBS-03 — **NOT TRIGGERED**
 - INFRA-01 — **AUDIT COMPLETE / activation requires separate user approval / OUT OF M96 PRODUCT SCOPE**
 
-### Final current state
+### M96 kapanış anındaki tarihsel state
+
+Bu bölüm yalnız M96 kapanış anını belgeleyen tarihsel snapshot'tır; güncel authority üstteki CANLI DURUM bölümüdür.
 
 # **M96 — CLOSED / MERGED / PASS**
 # **M0–M96 — CLOSED / MERGED / PASS**
@@ -587,7 +794,9 @@ Actual-main Flutter:
 Executable authority SHA:
 `69821f3b488fabb8c1e7b4b4c939e2fc1ec713c5`
 
-Final current state:
+M94 kapanış anındaki tarihsel state:
+
+Bu bölüm yalnız M94 kapanış anını belgeleyen tarihsel snapshot'tır; güncel authority üstteki CANLI DURUM bölümüdür.
 
 # **M94 — CLOSED / MERGED / PASS**
 # **M0–M94 — CLOSED / MERGED / PASS**
