@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
 
+import 'financial_health_label.dart';
+
 typedef ClubDisplayNameResolver = String Function(String clubId);
 
 class PresidentSeasonReportPanel extends StatelessWidget {
@@ -11,6 +13,7 @@ class PresidentSeasonReportPanel extends StatelessWidget {
     required ClubDisplayNameResolver clubNameForId,
     required this.onOpenLeagueTable,
     required this.onOpenMatchResults,
+    required this.onOpenFinanceStatement,
     required this.onContinueToNextSeason,
     this.canContinueToNextSeason = true,
     this.busy = false,
@@ -23,6 +26,7 @@ class PresidentSeasonReportPanel extends StatelessWidget {
   final String championClubName;
   final VoidCallback? onOpenLeagueTable;
   final VoidCallback? onOpenMatchResults;
+  final VoidCallback? onOpenFinanceStatement;
   final VoidCallback? onContinueToNextSeason;
   final bool canContinueToNextSeason;
   final bool busy;
@@ -151,7 +155,17 @@ class PresidentSeasonReportPanel extends StatelessWidget {
             ),
             _ReportLine(
               key: const Key('season-report-financial-health'),
-              text: 'Finansal durum: ${_financialHealthLabel(finance.health)}',
+              text: 'Finansal durum: ${financialHealthLabel(finance.health)}',
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                key: const Key('completed-season-finance-statement-button'),
+                onPressed: busy ? null : onOpenFinanceStatement,
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('Finansal Dökümü Gör'),
+              ),
             ),
           ],
         ),
@@ -279,14 +293,6 @@ class _ReportLine extends StatelessWidget {
 }
 
 String _signed(int value) => value > 0 ? '+$value' : '$value';
-
-String _financialHealthLabel(FinancialHealth health) => switch (health) {
-      FinancialHealth.veryStrong => 'Çok güçlü',
-      FinancialHealth.solid => 'Sağlam',
-      FinancialHealth.balanced => 'Dengeli',
-      FinancialHealth.tight => 'Sıkışık',
-      FinancialHealth.debtCrisis => 'Borç krizi',
-    };
 
 String _promiseStatusLabel(PromiseStatus status) => switch (status) {
       PromiseStatus.fulfilled => 'Gerçekleşti',

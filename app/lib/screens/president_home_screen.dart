@@ -14,6 +14,7 @@ import '../decisions/decision_resolution_panel.dart';
 import '../reports/president_season_report_panel.dart';
 import 'president_completed_season_league_table_screen.dart';
 import 'president_completed_season_match_results_screen.dart';
+import 'president_completed_season_finance_statement_screen.dart';
 import 'president_prepared_season_fixtures_screen.dart';
 import 'president_prepared_squad_screen.dart';
 
@@ -416,6 +417,17 @@ class PresidentSessionStateView extends StatelessWidget {
                   ),
                 );
               },
+        onOpenFinanceStatement: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => PresidentCompletedSeasonFinanceStatementScreen(
+                finance: report.finance,
+                seasonIndex: report.seasonIndex,
+                leagueName: report.leagueName,
+              ),
+            ),
+          );
+        },
         onContinueToNextSeason: onContinueToNextSeason,
         canContinueToNextSeason: canContinueToNextSeason,
         busy: submitting,
