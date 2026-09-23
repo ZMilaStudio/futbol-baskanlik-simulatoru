@@ -76,17 +76,25 @@ void main() {
     expect(find.text('Sezon Finansları'), findsOneWidget);
     expect(find.text('Sezon 3 • Birinci Lig'), findsOneWidget);
 
+    final list =
+        find.byKey(const Key('completed-season-finance-statement-list'));
+    final scrollable = find.descendant(
+      of: list,
+      matching: find.byType(Scrollable),
+    );
+    expect(scrollable, findsOneWidget);
+
+    Future<void> reveal(String key) async {
+      await tester.scrollUntilVisible(
+        find.byKey(Key(key)),
+        500,
+        scrollable: scrollable,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await reveal('completed-season-finance-opening-section');
     expect(find.text('Açılış Durumu'), findsOneWidget);
-    expect(find.text('Operasyonel Gelirler'), findsOneWidget);
-    expect(find.text('Faaliyet ve Faiz Giderleri'), findsOneWidget);
-
-    final cashFlowSection =
-        find.byKey(const Key('completed-season-finance-cash-flow-section'));
-    final revenueSection =
-        find.byKey(const Key('completed-season-finance-revenue-section'));
-    expect(cashFlowSection, findsOneWidget);
-    expect(revenueSection, findsOneWidget);
-
     expectFact(
       tester,
       'completed-season-finance-opening-cash',
@@ -99,6 +107,9 @@ void main() {
       'Sezon başı borç',
       finance.openingDebt.toString(),
     );
+
+    await reveal('completed-season-finance-revenue-section');
+    expect(find.text('Operasyonel Gelirler'), findsOneWidget);
     expectFact(
       tester,
       'completed-season-finance-central-revenue',
@@ -129,6 +140,18 @@ void main() {
       'Toplam operasyonel gelir',
       finance.totalRevenue.toString(),
     );
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const Key('completed-season-finance-revenue-section'),
+        ),
+        matching: find.text('Transfer taksit girişi'),
+      ),
+      findsNothing,
+    );
+
+    await reveal('completed-season-finance-expense-section');
+    expect(find.text('Faaliyet ve Faiz Giderleri'), findsOneWidget);
     expectFact(
       tester,
       'completed-season-finance-wage-expense',
@@ -159,6 +182,9 @@ void main() {
       'Faaliyet sonucu (faiz dahil)',
       finance.operatingResult.toString(),
     );
+
+    await reveal('completed-season-finance-cash-flow-section');
+    expect(find.text('Finansman / Nakit Hareketleri'), findsOneWidget);
     expectFact(
       tester,
       'completed-season-finance-transfer-installment-income',
@@ -183,22 +209,17 @@ void main() {
       'Acil borçlanma',
       finance.emergencyBorrowing.toString(),
     );
-
-    final list =
-        find.byKey(const Key('completed-season-finance-statement-list'));
-    final scrollable = find.descendant(
-      of: list,
-      matching: find.byType(Scrollable),
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const Key('completed-season-finance-cash-flow-section'),
+        ),
+        matching: find.text('Transfer taksit girişi'),
+      ),
+      findsOneWidget,
     );
-    expect(scrollable, findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('completed-season-finance-closing-section')),
-      500,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
 
-    expect(find.text('Finansman / Nakit Hareketleri'), findsOneWidget);
+    await reveal('completed-season-finance-closing-section');
     expect(find.text('Kapanış Durumu'), findsOneWidget);
     expectFact(
       tester,
@@ -217,21 +238,6 @@ void main() {
       'completed-season-finance-health',
       'Finansal durum',
       financialHealthLabel(finance.health),
-    );
-
-    expect(
-      find.descendant(
-        of: revenueSection,
-        matching: find.text('Transfer taksit girişi'),
-      ),
-      findsNothing,
-    );
-    expect(
-      find.descendant(
-        of: cashFlowSection,
-        matching: find.text('Transfer taksit girişi'),
-      ),
-      findsOneWidget,
     );
 
     expect(find.text(finance.clubId), findsNothing);
@@ -275,12 +281,29 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final scrollable = find.descendant(
+      of: find.byKey(
+        const Key('completed-season-finance-statement-list'),
+      ),
+      matching: find.byType(Scrollable),
+    );
+    expect(scrollable, findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(
+        const Key('completed-season-finance-operating-result'),
+      ),
+      500,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
     expectFact(
       tester,
       'completed-season-finance-operating-result',
       'Faaliyet sonucu (faiz dahil)',
       finance.operatingResult.toString(),
     );
+
     for (final key in [
       'completed-season-finance-transfer-installment-income',
       'completed-season-finance-transfer-installment-expense',
@@ -290,13 +313,9 @@ void main() {
       await tester.scrollUntilVisible(
         find.byKey(Key(key)),
         400,
-        scrollable: find.descendant(
-          of: find.byKey(
-            const Key('completed-season-finance-statement-list'),
-          ),
-          matching: find.byType(Scrollable),
-        ),
+        scrollable: scrollable,
       );
+      await tester.pumpAndSettle();
       expect(
         find.descendant(
           of: find.byKey(Key(key)),
