@@ -13,6 +13,7 @@ import '../decisions/decision_panel.dart';
 import '../decisions/decision_resolution_panel.dart';
 import '../reports/president_season_report_panel.dart';
 import 'president_completed_season_league_table_screen.dart';
+import 'president_completed_season_match_results_screen.dart';
 import 'president_prepared_season_fixtures_screen.dart';
 import 'president_prepared_squad_screen.dart';
 
@@ -386,6 +387,7 @@ class PresidentSessionStateView extends StatelessWidget {
       final report =
           PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
       final leagueTable = report.leagueTable;
+      final matchResults = report.matchResults;
       return PresidentSeasonReportPanel(
         report: report,
         clubNameForId: resolver,
@@ -396,6 +398,19 @@ class PresidentSessionStateView extends StatelessWidget {
                   MaterialPageRoute<void>(
                     builder: (_) => PresidentCompletedSeasonLeagueTableScreen(
                       snapshot: leagueTable,
+                      clubNameForId: resolver,
+                    ),
+                  ),
+                );
+              },
+        onOpenMatchResults: matchResults == null
+            ? null
+            : () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        PresidentCompletedSeasonMatchResultsScreen(
+                      snapshot: matchResults,
                       clubNameForId: resolver,
                     ),
                   ),
