@@ -172,6 +172,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
 
+    final financeStatementButton =
+        find.byKey(const Key('completed-season-finance-statement-button'));
+    expect(financeStatementButton, findsOneWidget);
+    await tester.ensureVisible(financeStatementButton);
+    await tester.tap(financeStatementButton);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('completed-season-finance-statement-screen')),
+      findsOneWidget,
+    );
+    expect(find.text('Sezon Finansları'), findsOneWidget);
+    expect(
+      find.text('Sezon ${report.seasonIndex + 1} • ${report.leagueName}'),
+      findsOneWidget,
+    );
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('president-season-report-panel')), findsOneWidget);
+    expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
+
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
 
     final continueButton =
@@ -354,6 +374,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
+
+    final lostFinanceButton =
+        find.byKey(const Key('completed-season-finance-statement-button'));
+    expect(lostFinanceButton, findsOneWidget);
+    await tester.ensureVisible(lostFinanceButton);
+    await tester.tap(lostFinanceButton);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('completed-season-finance-statement-screen')),
+      findsOneWidget,
+    );
+    expect(find.text('Sezon Finansları'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('president-career-end-panel')), findsOneWidget);
+    expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
     expect(find.byKey(const Key('prepared-season-dashboard')), findsNothing);
     expect(find.byKey(const Key('prepared-squad-button')), findsNothing);
     expect(
@@ -414,6 +450,10 @@ void main() {
     );
     expect(
       find.byKey(const Key('completed-season-match-results-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('completed-season-finance-statement-button')),
       findsOneWidget,
     );
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);

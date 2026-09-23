@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_baskanlik_app/composition/app_composition.dart';
 import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
+import 'package:futbol_baskanlik_app/reports/financial_health_label.dart';
 import 'package:futbol_baskanlik_app/reports/president_season_report_panel.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
@@ -66,6 +67,7 @@ void main() {
     var continued = false;
     var openedLeagueTable = false;
     var openedMatchResults = false;
+    var openedFinanceStatement = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -79,6 +81,9 @@ void main() {
               },
               onOpenMatchResults: () {
                 openedMatchResults = true;
+              },
+              onOpenFinanceStatement: () {
+                openedFinanceStatement = true;
               },
               onContinueToNextSeason: () {
                 continued = true;
@@ -149,9 +154,22 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Finansal durum: ${_financialHealthLabel(finance.health)}'),
+      find.text('Finansal durum: ${financialHealthLabel(finance.health)}'),
       findsOneWidget,
     );
+    final financeButton =
+        find.byKey(const Key('completed-season-finance-statement-button'));
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('season-report-finance')),
+        matching: financeButton,
+      ),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(financeButton);
+    await tester.tap(financeButton);
+    await tester.pump();
+    expect(openedFinanceStatement, isTrue);
 
     expect(find.text(report.manager.name), findsOneWidget);
     expect(
@@ -231,6 +249,7 @@ void main() {
               clubNameForId: clubNameForId,
               onOpenLeagueTable: () {},
               onOpenMatchResults: () {},
+              onOpenFinanceStatement: () {},
               onContinueToNextSeason: () {},
               canContinueToNextSeason: false,
             ),
@@ -246,6 +265,10 @@ void main() {
     );
     expect(
       find.byKey(const Key('completed-season-match-results-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('completed-season-finance-statement-button')),
       findsOneWidget,
     );
     expect(find.byKey(const Key('continue-next-season-button')), findsNothing);
@@ -265,6 +288,7 @@ void main() {
               clubNameForId: clubNameForId,
               onOpenLeagueTable: () {},
               onOpenMatchResults: () {},
+              onOpenFinanceStatement: () {},
               onContinueToNextSeason: () {},
               busy: true,
             ),
@@ -284,6 +308,10 @@ void main() {
         find.byKey(const Key('completed-season-match-results-button'));
     expect(matchFinder, findsOneWidget);
     expect(tester.widget<OutlinedButton>(matchFinder).onPressed, isNull);
+    final financeFinder =
+        find.byKey(const Key('completed-season-finance-statement-button'));
+    expect(financeFinder, findsOneWidget);
+    expect(tester.widget<OutlinedButton>(financeFinder).onPressed, isNull);
   });
 
   testWidgets('M96-only malformed table preserves M91 and hides table action',
@@ -324,6 +352,7 @@ void main() {
               clubNameForId: clubNameForId,
               onOpenLeagueTable: null,
               onOpenMatchResults: () {},
+              onOpenFinanceStatement: () {},
               onContinueToNextSeason: () {},
             ),
           ),
@@ -392,6 +421,7 @@ void main() {
               clubNameForId: clubNameForId,
               onOpenLeagueTable: () {},
               onOpenMatchResults: null,
+              onOpenFinanceStatement: () {},
               onContinueToNextSeason: () {},
             ),
           ),
@@ -428,14 +458,6 @@ void main() {
     expect(find.byKey(const Key('season-report-promise')), findsOneWidget);
   });
 }
-
-String _financialHealthLabel(FinancialHealth health) => switch (health) {
-      FinancialHealth.veryStrong => 'Çok güçlü',
-      FinancialHealth.solid => 'Sağlam',
-      FinancialHealth.balanced => 'Dengeli',
-      FinancialHealth.tight => 'Sıkışık',
-      FinancialHealth.debtCrisis => 'Borç krizi',
-    };
 
 String _promiseStatusLabel(PromiseStatus status) => switch (status) {
       PromiseStatus.fulfilled => 'Gerçekleşti',
