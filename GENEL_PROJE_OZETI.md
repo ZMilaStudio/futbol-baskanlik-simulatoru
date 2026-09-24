@@ -40,54 +40,55 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-# **M0–M98 — CLOSED / MERGED / PASS**
+# **M0–M99 — CLOSED / MERGED / PASS**
 
 Son kapanan milestone:
-# M98 — Completed Season Finance Statement I
+# M99 — Sponsor Offer Terms I
 
 PR:
-**#101 — MERGED / CLOSED**
+**#102 — MERGED / CLOSED**
 
 Approved exact PR HEAD:
-`aea64fb232e374089c79babdf4c2c6b77c2899c0`
+`c068538687a71716ff5af1af896a2253be2f4a6d`
 
-Executable squash merge SHA:
-`29a6cab58e4da45de3cdad342b521204ebb27851`
+Executable merge SHA:
+`aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
 
 Executable authority SHA:
-`29a6cab58e4da45de3cdad342b521204ebb27851`
+`aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
 
 Actual-main Core proof:
-- Core Simulation Tests #652
-- run ID `35931227265`
-- attempt 1
+- Core Simulation Tests #656
+- run ID `36051807362`
+- successful attempt 2
 - SUCCESS
 - Analyze SUCCESS
 - normal tests: 501 PASS
 - canonical M0–M88 ALL SUCCESS
-- final M88 step SUCCESS
 - artifacts 0
-- retry gerekmedi
+- attempt 1 timing-only cancellation: M0–M74 SUCCESS → M75 CANCELLED → M76–M88 SKIPPED
+- attempt 2: M0–M88 ALL SUCCESS
+- assertion/source failure yok
+- source/workflow mutation yok
 
 Actual-main Flutter proof:
-- M89 Flutter App #77
-- run ID `35931227290`
-- attempt 1
+- M89 Flutter App #79
+- run ID `36051807407`
 - SUCCESS
 - Analyze SUCCESS
-- 101 Flutter tests PASS
+- 103 Flutter tests PASS
 - debug APK SUCCESS
 - emulator SUCCESS
 - launch marker `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
 - artifacts 0
 
-# **M98 — CLOSED / MERGED / PASS**
-# **M0–M98 — CLOSED / MERGED / PASS**
+# **M99 — CLOSED / MERGED / PASS**
+# **M0–M99 — CLOSED / MERGED / PASS**
 
 Aktif milestone:
 **YOK**
 
-M99:
+M100:
 **NOT STARTED**
 
 Yeni milestone otomatik seçilmez. Kullanıcı açıkça yeni çalışma istediğinde:
@@ -97,6 +98,199 @@ Yeni milestone otomatik seçilmez. Kullanıcı açıkça yeni çalışma istedi�
 4. fresh live-main gap scan yap,
 5. milestone adayını değerlendir,
 6. product/authority contract'ını implementation öncesi kilitle.
+
+## M99 kapanış sonucu
+
+# M99 — Sponsor Offer Terms I
+
+M99 implementation PR #102 ile MERGE COMMIT yöntemiyle birleştirildi ve actual-main executable proof tamamlandı.
+
+### Product semantic
+
+> Sponsor seçimi sırasında authoritative sponsor teklif şartlarını anlaşılır şekilde göstermek.
+
+Feature classification: **presentation-only enhancement of the existing authoritative sponsor decision**.
+
+M99 yeni sponsor domain authority oluşturmaz.
+
+Existing authoritative source:
+`context.offers`.
+
+Critical contracts:
+- authoritative source order korunur,
+- sorting yoktur,
+- exact `offer.id` selection korunur,
+- AI recommendation/ranking/highlight yoktur.
+
+### Visible sponsor offer terms
+
+Her authoritative sponsor offer için:
+- Sponsor adı
+- Yıllık garanti
+- Performans bonusu
+- Maksimum yıllık gelir
+- Sözleşme süresi
+- Bonus hedefi
+
+Bonus target Turkish presentation:
+- `topHalf` → İlk 8
+- `topSix` → İlk 6
+- `topFour` → İlk 4
+- `champion` → Şampiyonluk
+
+Money presentation:
+- existing `Money.toString()` reuse edilir.
+
+Maximum annual revenue:
+- existing domain `offer.maxAnnualRevenue` getter doğrudan kullanılır,
+- Flutter-side duplicated arithmetic yoktur.
+
+### UI / decision contracts
+
+Korunan davranış:
+- existing `OutlinedButton`
+- whole offer selectable
+- exact `offer.id` submit
+- outer key `sponsor-offer-${offer.id}`
+- existing intro copy unchanged
+- sponsor-specific disabled behavior preserved
+- all other offers selectable
+- AI choice hidden
+- raw enum hidden
+- raw offer ID hidden
+- raw `clubId` hidden
+- no recommendation
+- no ranking
+- no highlight
+
+### Test / responsive coverage
+
+M99 acceptance coverage:
+- exact offer terms
+- localized bonus targets
+- source-order preservation
+- exact selection identity
+- all-offer selectability
+- sponsor-specific disabled state
+- raw enum hiding
+- raw ID hiding
+- long sponsor name
+- 320px width
+- TextScale 2.0
+- large Money values
+- champion mapping
+- no horizontal overflow / layout safety
+
+### Source scope
+
+Production:
+- `app/lib/decisions/renderers/sponsor_decision_renderer.dart`
+
+Tests:
+- `app/test/decision_renderers_test.dart`
+
+Total:
+- 1 production
+- 1 test
+- 2 exact
+
+Unchanged:
+- Core production
+- DecisionPanel
+- GameFlowController
+- application session
+- persistence
+- saveVersion
+- workflows
+
+### Persistence
+
+> **M65 remains sole persisted game-state authority.**
+
+M99 persistence impact: **NONE**.
+
+No change to:
+- M65
+- M74
+- M75
+- M80
+- M77–M88
+- saveVersion
+- codecs
+- checksum
+- migrations
+- save metadata
+- save namespaces
+
+### Validation authority
+
+Implementation environment'ta local Dart/Flutter CLI mevcut değildi.
+
+PR #102 current authority'sine göre exact-head GitHub CI authoritative validation gate olarak kullanıldı.
+
+Pre-merge exact-head:
+- Core Simulation Tests #655 / run `36034707258`
+- exact SHA `c068538687a71716ff5af1af896a2253be2f4a6d`
+- SUCCESS
+- M89 Flutter App #78 / run `36034707284`
+- same exact SHA
+- SUCCESS
+
+### Merge + actual-main executable proof
+
+Approved exact PR HEAD:
+`c068538687a71716ff5af1af896a2253be2f4a6d`
+
+Merge method:
+**MERGE COMMIT**
+
+Executable merge SHA:
+`aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
+
+Actual-main Core:
+- Core Simulation Tests #656 / run `36051807362`
+- exact SHA `aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
+- successful attempt 2
+- SUCCESS
+- Analyze SUCCESS
+- 501 tests PASS
+- canonical M0–M88 ALL SUCCESS
+- artifacts 0
+
+Core retry history:
+- attempt 1: M0–M74 SUCCESS → M75 timing-cancel → M76–M88 SKIPPED
+- attempt 2: M0–M88 ALL SUCCESS
+- assertion/source failure NONE
+- source/workflow mutation NONE
+
+Actual-main Flutter:
+- M89 Flutter App #79 / run `36051807407`
+- exact SHA `aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
+- SUCCESS
+- Analyze: No issues found
+- 103 tests PASS
+- debug APK SUCCESS
+- emulator SUCCESS
+- launch marker `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
+- artifacts 0
+
+### Technical compass
+
+- FBS-01 — **AUDIT TAMAMLANDI / A — KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED**
+- FBS-02 — **NOT TRIGGERED**
+- FBS-03 — **NOT TRIGGERED**
+- INFRA-01 — **AUDIT COMPLETE / activation requires separate user approval / OUT OF M99 PRODUCT SCOPE**
+
+### Current state after M99 closure
+
+# **M99 — CLOSED / MERGED / PASS**
+# **M0–M99 — CLOSED / MERGED / PASS**
+
+Aktif milestone:
+**YOK**
+
+M100:
+**NOT STARTED**
 
 ## M98 kapanış sonucu
 

@@ -15,146 +15,130 @@ Kaynak önceliği:
 
 Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
 
-# **M0–M98 — CLOSED / MERGED / PASS**
+# **M0–M99 — CLOSED / MERGED / PASS**
 
 Last closed:
-**M98 — Completed Season Finance Statement I**
+**M99 — Sponsor Offer Terms I**
 
-PR #101: **MERGED / CLOSED**
+PR #102: **MERGED / CLOSED**
 
 Approved exact PR HEAD:
-`aea64fb232e374089c79babdf4c2c6b77c2899c0`
+`c068538687a71716ff5af1af896a2253be2f4a6d`
 
-Executable squash merge SHA:
-`29a6cab58e4da45de3cdad342b521204ebb27851`
+Executable merge SHA:
+`aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
 
 Executable authority:
-`29a6cab58e4da45de3cdad342b521204ebb27851`
+`aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
 
 Core actual-main:
-- #652 / run `35931227265` / attempt 1 / SUCCESS
+- #656 / run `36051807362` / successful attempt 2 / SUCCESS
+- Analyze SUCCESS
 - 501 tests PASS
 - canonical M0–M88 ALL SUCCESS
-- final M88 step PASS
+- attempt 1 timing-only cancellation at M75; no source/assertion failure
+- attempt 2 full SUCCESS
 - artifacts 0
 
 Flutter actual-main:
-- #77 / run `35931227290` / attempt 1 / SUCCESS
+- #79 / run `36051807407` / SUCCESS
 - Analyze SUCCESS
-- 101 tests PASS
+- 103 tests PASS
 - APK SUCCESS
 - emulator SUCCESS
 - `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
 - artifacts 0
 
-## 2. M98 essentials
+## 2. M99 essentials
 
 Semantic:
-> Tamamlanan sezonun authoritative finansal dökümü.
+> Sponsor seçimi sırasında authoritative sponsor teklif şartlarını anlaşılır şekilde göstermek.
 
-Feature: **read-only completed-season president observation**.
+Feature:
+**presentation-only enhancement of the existing authoritative sponsor decision**.
 
 Authority:
-`PlayerPresidentInteractiveSessionCompleted`
-→ `PlayerPresidentCompletedSeasonReport.fromCompleted(...)`
-→ existing M91 finance selection
-→ authoritative `ClubFinanceSeason`
-→ `report.finance`.
+- source: `context.offers`
+- source order preserved
+- no sorting
+- exact `offer.id` submit preserved
+- no new sponsor domain authority
 
-Architecture:
-- **A — DIRECT EXISTING M91 FINANCE SEAM**
-- direct `report.finance`
-- no second completed-season traversal
-- no new core finance DTO
-- no new finance snapshot authority
-- core production impact ZERO
+Visible terms:
+- Sponsor adı
+- Yıllık garanti
+- Performans bonusu
+- Maksimum yıllık gelir
+- Sözleşme süresi
+- Bonus hedefi
 
-Five sections:
-- Açılış Durumu
-- Operasyonel Gelirler
-- Faaliyet ve Faiz Giderleri
-- Finansman / Nakit Hareketleri
-- Kapanış Durumu
+Target localization:
+- `topHalf` → İlk 8
+- `topSix` → İlk 6
+- `topFour` → İlk 4
+- `champion` → Şampiyonluk
 
-Finance semantics:
-- `totalRevenue = centralRevenue + sponsorRevenue + matchdayRevenue + prizeRevenue`
-- transfer installment income operational revenue değildir
-- emergency borrowing revenue değildir
-- `profitAndLossExpenses = wageExpense + operatingExpense + interestExpense`
-- principal repayment P&L expense değildir
-- transfer installment expense P&L expenses içine dahil değildir
-- `operatingResult = totalRevenue - profitAndLossExpenses`
-
-Accounting-safe labels:
-- Toplam operasyonel gelir
-- Toplam faaliyet ve faiz gideri
-- Faaliyet sonucu (faiz dahil)
-
-Flutter:
-- CTA: **Finansal Dökümü Gör**
-- key: `completed-season-finance-statement-button`
-- existing Finansal Özet içinde
-- screen: `PresidentCompletedSeasonFinanceStatementScreen`
-- AppBar: **Sezon Finansları**
-- inputs: `report.finance`, `report.seasonIndex`, `report.leagueName`
-- raw internal IDs hidden
+Presentation contracts:
+- existing `OutlinedButton`
+- whole offer selectable
+- key `sponsor-offer-${offer.id}`
 - `Money.toString()` reused
-- shared `financialHealthLabel(...)`
+- `offer.maxAnnualRevenue` direct existing getter
+- no duplicated Flutter arithmetic
+- AI choice hidden
+- raw enum / offer ID / clubId hidden
+- no recommendation/ranking/highlight
 
-Lifecycle:
-- Active Completed: M91 + M96 + M97 + M98 + Sonraki Sezona Geç
-- Lost Completed: M91 + M96 + M97 + M98 + M93 Career End
-- Lost Completed: Sonraki Sezona Geç absent
-- M93 guard preserved
-
-Accessibility:
-- real vertical ListView PASS
+Acceptance:
+- source-order proof PASS
+- exact selection identity PASS
+- all-offer selectability PASS
+- disabled sponsor behavior PASS
+- long sponsor name PASS
 - 320px PASS
 - TextScale 2.0 PASS
 - large Money PASS
-- negative operating result PASS
-- zero financing rows visible PASS
-- no overflow/clipping PASS
+- champion mapping PASS
+- no horizontal overflow PASS
+
+Implementation scope:
+- `app/lib/decisions/renderers/sponsor_decision_renderer.dart`
+- `app/test/decision_renderers_test.dart`
+- 2 exact files
+- core production 0
+- controller/session 0
+- persistence 0
+- workflow 0
+- saveVersion 0
 
 Persistence:
 - **NONE**
 - **M65 sole persisted game-state authority**
-- no saveVersion/codec/checksum/migration/namespace/save metadata change
-- no persisted financeStatement/history/viewed/cache/sidecar/new save family
-
-Implementation scope:
-- 4 production files
-- 3 test files
-- 7 exact
-- core production 0
-- persistence 0
-- workflow 0
 
 Pre-merge CI:
-- Core #651 / run `35912289990` / successful attempt 17 / exact HEAD `aea64fb232e374089c79babdf4c2c6b77c2899c0` / SUCCESS
-- Flutter #76 / run `35912290042` / attempt 1 / same exact HEAD / SUCCESS
-- Core attempts 1–16 timing/cancellation only; no source/workflow/timeout mutation
+- Core #655 / run `36034707258` / exact HEAD `c068538687a71716ff5af1af896a2253be2f4a6d` / SUCCESS
+- Flutter #78 / run `36034707284` / same exact HEAD / SUCCESS
 
 Actual-main:
-- Core #652 / run `35931227265` / attempt 1 / exact executable SHA `29a6cab58e4da45de3cdad342b521204ebb27851` / SUCCESS
-- Flutter #77 / run `35931227290` / attempt 1 / same exact executable SHA / SUCCESS
+- Core #656 / run `36051807362` / successful attempt 2 / exact executable SHA `aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5` / SUCCESS
+- Flutter #79 / run `36051807407` / same exact executable SHA / SUCCESS
 
 ## 3. Technical compass
 
 - FBS-01 — **AUDIT TAMAMLANDI / A — KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED**
 - FBS-02 — **NOT TRIGGERED**
 - FBS-03 — **NOT TRIGGERED**
-- INFRA-01 — **AUDIT COMPLETE / activation requires separate user approval / OUT OF M98 PRODUCT SCOPE**
+- INFRA-01 — **AUDIT COMPLETE / activation requires separate user approval / OUT OF M99 PRODUCT SCOPE**
 
 ## 4. Current status
 
-# **M98 — CLOSED / MERGED / PASS**
-# **M0–M98 — CLOSED / MERGED / PASS**
+# **M99 — CLOSED / MERGED / PASS**
+# **M0–M99 — CLOSED / MERGED / PASS**
 
 Aktif milestone:
 **YOK**
 
-M99:
+M100:
 **NOT STARTED**
 
 ## 5. Next work rule
@@ -168,7 +152,7 @@ Kullanıcı yeni geliştirme istediğinde:
 6. product/authority contract'ını implementation öncesi kilitle
 
 Kullanıcı yeni geliştirme istemeden:
-- M99 seçme
+- M100 seçme
 - gap scan başlatma
 - branch/PR açma
 - kod yazma
