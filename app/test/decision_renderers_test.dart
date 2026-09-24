@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
+import 'package:futbol_baskanlik_app/decisions/renderers/sponsor_decision_renderer.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
@@ -75,10 +76,74 @@ void main() {
     );
   });
 
-  testWidgets('sponsor renderer uses an authoritative offer', (tester) async {
+  testWidgets('sponsor renderer shows authoritative terms in source order',
+      (tester) async {
     final pending =
         pendingByKind[PlayerPresidentInteractiveDecisionKind.sponsor]!;
     final context = pending.request.contextAs<PlayerSponsorDecisionContext>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: DecisionPanel(
+              pending: pending,
+              submitting: false,
+              onSubmit: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final renderer = find.byKey(const Key('sponsor-decision-renderer'));
+    final buttons = find.descendant(
+      of: renderer,
+      matching: find.byType(OutlinedButton),
+    );
+    final actualKeys = tester
+        .widgetList<OutlinedButton>(buttons)
+        .map((button) => button.key)
+        .toList(growable: false);
+    final expectedKeys = context.offers
+        .map((offer) => Key('sponsor-offer-${offer.id}'))
+        .toList(growable: false);
+    expect(actualKeys, expectedKeys);
+
+    for (final offer in context.offers) {
+      final targetLabel = switch (offer.bonusTarget) {
+        SponsorBonusTarget.topHalf => 'İlk 8',
+        SponsorBonusTarget.topSix => 'İlk 6',
+        SponsorBonusTarget.topFour => 'İlk 4',
+        SponsorBonusTarget.champion => 'Şampiyonluk',
+      };
+      final button = tester.widget<OutlinedButton>(
+        find.byKey(Key('sponsor-offer-${offer.id}')),
+      );
+      expect(button.onPressed, isNotNull);
+      expect(find.text(offer.sponsorName), findsWidgets);
+      expect(
+        find.text('Yıllık garanti: ${offer.annualGuaranteed}'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Performans bonusu: ${offer.performanceBonus}'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Maksimum yıllık gelir: ${offer.maxAnnualRevenue}'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Sözleşme süresi: ${offer.termSeasons} sezon'),
+        findsOneWidget,
+      );
+      expect(find.text('Bonus hedefi: $targetLabel'), findsOneWidget);
+      expect(find.text(offer.bonusTarget.name), findsNothing);
+      expect(find.text(offer.id), findsNothing);
+      expect(find.text(offer.clubId), findsNothing);
+    }
+
     final choice = await pumpAndChoose(
       tester,
       kind: PlayerPresidentInteractiveDecisionKind.sponsor,
@@ -88,6 +153,139 @@ void main() {
     expect(
       (choice as PlayerSponsorOfferChoice).offerId,
       context.offers.first.id,
+    );
+  });
+
+  testWidgets('sponsor submitting state disables every authoritative offer',
+      (tester) async {
+    final pending =
+        pendingByKind[PlayerPresidentInteractiveDecisionKind.sponsor]!;
+    final context = pending.request.contextAs<PlayerSponsorDecisionContext>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DecisionPanel(
+            pending: pending,
+            submitting: true,
+            onSubmit: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    for (final offer in context.offers) {
+      final button = tester.widget<OutlinedButton>(
+        find.byKey(Key('sponsor-offer-${offer.id}')),
+      );
+      expect(button.onPressed, isNull);
+    }
+  });
+
+  testWidgets(
+      'sponsor terms wrap at 320px and TextScale 2 with champion target',
+      (tester) async {
+    final canonical = pendingByKind[PlayerPresidentInteractiveDecisionKind.sponsor]!
+        .request
+        .contextAs<PlayerSponsorDecisionContext>();
+    final offers = [
+      SponsorOffer(
+        id: 'm99-edge-stable',
+        sponsorName: 'Nova Enerji',
+        clubId: canonical.clubId,
+        annualGuaranteed: const Money.fromUnits(125000000),
+        performanceBonus: const Money.fromUnits(15000000),
+        termSeasons: 3,
+        bonusTarget: SponsorBonusTarget.topHalf,
+      ),
+      SponsorOffer(
+        id: 'm99-edge-balanced',
+        sponsorName: 'Mira Teknoloji',
+        clubId: canonical.clubId,
+        annualGuaranteed: const Money.fromUnits(250000000),
+        performanceBonus: const Money.fromUnits(50000000),
+        termSeasons: 2,
+        bonusTarget: SponsorBonusTarget.topSix,
+      ),
+      SponsorOffer(
+        id: 'm99-edge-champion',
+        sponsorName:
+            'Anadolu Uluslararası Sürdürülebilir Enerji ve Teknoloji '
+            'Yatırımları Grubu',
+        clubId: canonical.clubId,
+        annualGuaranteed: const Money.fromUnits(987654321),
+        performanceBonus: const Money.fromUnits(123456789),
+        termSeasons: 1,
+        bonusTarget: SponsorBonusTarget.champion,
+      ),
+    ];
+    final context = PlayerSponsorDecisionContext(
+      seasonIndex: canonical.seasonIndex,
+      clubId: canonical.clubId,
+      presidentId: canonical.presidentId,
+      managementProfile: canonical.managementProfile,
+      leaguePosition: canonical.leaguePosition,
+      fanTrust: canonical.fanTrust,
+      mediaCredibility: canonical.mediaCredibility,
+      offers: offers,
+      aiChoice: offers.first,
+    );
+
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(2.0)),
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: SponsorDecisionRenderer(
+                context: context,
+                onSubmit: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final longName = offers.last.sponsorName;
+    final lastTerm = 'Bonus hedefi: Şampiyonluk';
+    expect(find.text(longName), findsOneWidget);
+    expect(find.text('champion'), findsNothing);
+    expect(find.text(offers.last.id), findsNothing);
+    expect(find.text(offers.last.clubId), findsNothing);
+    expect(
+      find.text('Yıllık garanti: ${offers.last.annualGuaranteed}'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Performans bonusu: ${offers.last.performanceBonus}'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Maksimum yıllık gelir: ${offers.last.maxAnnualRevenue}'),
+      findsOneWidget,
+    );
+    expect(find.text(lastTerm), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is SingleChildScrollView &&
+            widget.scrollDirection == Axis.horizontal,
+      ),
+      findsNothing,
+    );
+
+    await tester.ensureVisible(find.text(lastTerm));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(
+      find.byKey(Key('sponsor-offer-${offers.last.id}')),
+      findsOneWidget,
     );
   });
 
