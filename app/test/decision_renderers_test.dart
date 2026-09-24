@@ -380,25 +380,38 @@ void main() {
 
         expect(button.onPressed, isNotNull);
         expect(
-          find.text(_crisisActionLabelForTest(decision.action)),
-          findsOneWidget,
-        );
-        expect(
-          find.text(
-            'Nakit etkisi: ${_signedMoneyForTest(effect.cashDelta)}',
+          find.descendant(
+            of: buttonFinder,
+            matching: find.text(_crisisActionLabelForTest(decision.action)),
           ),
           findsOneWidget,
         );
         expect(
-          find.text(
-            'Taraftar etkisi: ${_signedIntForTest(effect.fanTrustDelta)}',
+          find.descendant(
+            of: buttonFinder,
+            matching: find.text(
+              'Nakit etkisi: ${_signedMoneyForTest(effect.cashDelta)}',
+            ),
           ),
           findsOneWidget,
         );
         expect(
-          find.text(
-            'Medya etkisi: '
-            '${_signedIntForTest(effect.mediaCredibilityDelta)}',
+          find.descendant(
+            of: buttonFinder,
+            matching: find.text(
+              'Taraftar etkisi: '
+              '${_signedIntForTest(effect.fanTrustDelta)}',
+            ),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: buttonFinder,
+            matching: find.text(
+              'Medya etkisi: '
+              '${_signedIntForTest(effect.mediaCredibilityDelta)}',
+            ),
           ),
           findsOneWidget,
         );
