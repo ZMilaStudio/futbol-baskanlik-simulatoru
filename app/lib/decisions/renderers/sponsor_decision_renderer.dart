@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart'
+    show SponsorBonusTarget;
 import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
 
 class SponsorDecisionRenderer extends StatelessWidget {
@@ -13,6 +15,7 @@ class SponsorDecisionRenderer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       key: const Key('sponsor-decision-renderer'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -30,9 +33,28 @@ class SponsorDecisionRenderer extends StatelessWidget {
                 : () => onSubmit!(PlayerSponsorOfferChoice(offerId: offer.id)),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                '${offer.sponsorName} • ${offer.termSeasons} sezon • '
-                '${offer.bonusTarget.name}',
+              child: SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      offer.sponsorName,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text('Yıllık garanti: ${offer.annualGuaranteed}'),
+                    Text('Performans bonusu: ${offer.performanceBonus}'),
+                    Text('Maksimum yıllık gelir: ${offer.maxAnnualRevenue}'),
+                    Text('Sözleşme süresi: ${offer.termSeasons} sezon'),
+                    Text(
+                      'Bonus hedefi: '
+                      '${_sponsorBonusTargetLabel(offer.bonusTarget)}',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -42,3 +64,10 @@ class SponsorDecisionRenderer extends StatelessWidget {
     );
   }
 }
+
+String _sponsorBonusTargetLabel(SponsorBonusTarget target) => switch (target) {
+      SponsorBonusTarget.topHalf => 'İlk 8',
+      SponsorBonusTarget.topSix => 'İlk 6',
+      SponsorBonusTarget.topFour => 'İlk 4',
+      SponsorBonusTarget.champion => 'Şampiyonluk',
+    };
