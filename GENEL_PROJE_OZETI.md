@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 24 Eylül 2026
+Son güncelleme: 25 Eylül 2026
 
 ## 1. Proje kimliği
 
@@ -40,64 +40,129 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-# **M0–M99 — CLOSED / MERGED / PASS**
+# **M0–M100 — CLOSED / MERGED / PASS**
 
 Son kapanan milestone:
-# M99 — Sponsor Offer Terms I
+# M100 — Crisis Decision Terms I
 
-PR:
-**#102 — MERGED / CLOSED**
+Product PR: **#103 — CLOSED / MERGED**
 
 Approved exact PR HEAD:
-`c068538687a71716ff5af1af896a2253be2f4a6d`
+`9defbfef7418253ad96c3df130a81808902e3b5f`
 
-Executable merge SHA:
-`aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
-
-Executable authority SHA:
-`aaafa10cae59a3f5e39d68a415a9f27c0b6cbac5`
+Executable MERGE COMMIT SHA / actual-main executable authority:
+`be9af5ba5318fff137f1b0f6256f027652f872e5`
 
 Actual-main Core proof:
-- Core Simulation Tests #656
-- run ID `36051807362`
-- successful attempt 2
-- SUCCESS
-- Analyze SUCCESS
-- normal tests: 501 PASS
-- canonical M0–M88 ALL SUCCESS
-- artifacts 0
-- attempt 1 timing-only cancellation: M0–M74 SUCCESS → M75 CANCELLED → M76–M88 SKIPPED
-- attempt 2: M0–M88 ALL SUCCESS
-- assertion/source failure yok
-- source/workflow mutation yok
+- Core Simulation Tests #663 / run `36170999407` / attempt 1 — SUCCESS
+- exact SHA `be9af5ba5318fff137f1b0f6256f027652f872e5`
+- Analyze SUCCESS; normal tests SUCCESS; canonical M0–M88 ALL SUCCESS (84/84 physical steps)
+- failed / skipped canonical steps: 0
 
 Actual-main Flutter proof:
-- M89 Flutter App #79
-- run ID `36051807407`
-- SUCCESS
-- Analyze SUCCESS
-- 103 Flutter tests PASS
-- debug APK SUCCESS
-- emulator SUCCESS
-- launch marker `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
-- artifacts 0
+- M89 Flutter App #83 / run `36170999215` / attempt 1 — SUCCESS
+- exact SHA `be9af5ba5318fff137f1b0f6256f027652f872e5`
+- Analyze SUCCESS; Flutter tests SUCCESS; debug APK SUCCESS; Android emulator SUCCESS; job overall SUCCESS
+- real execution output marker VERIFIED: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
 
-# **M99 — CLOSED / MERGED / PASS**
-# **M0–M99 — CLOSED / MERGED / PASS**
+CI timeout remediation: PR #104 — MERGED; canonical timeout 10 minutes, normal test timeout 7 minutes.
+Persistence impact: **NONE**; M65 remains sole persisted game-state authority.
+
+# **M100 — CLOSED / MERGED / PASS**
+# **M0–M100 — CLOSED / MERGED / PASS**
 
 Aktif milestone:
 **YOK**
 
-M100:
+M101:
 **NOT STARTED**
 
-Yeni milestone otomatik seçilmez. Kullanıcı açıkça yeni çalışma istediğinde:
-1. live `main` doğrula,
-2. current repo docs oku,
-3. central technical-development compass kontrol et,
-4. fresh live-main gap scan yap,
-5. milestone adayını değerlendir,
-6. product/authority contract'ını implementation öncesi kilitle.
+Yeni milestone otomatik seçilmez. Kullanıcı açıkça yeni geliştirme istediğinde live `main`, güncel repo docs ve central technical-development compass kontrol edilir; fresh gap scan ve product/authority contract yeni onaya tabi tutulur.
+
+## M100 kapanış sonucu
+
+# M100 — Crisis Decision Terms I
+
+### Product semantic / authority
+
+> Kriz kararı verilmeden önce, mevcut authoritative kriz seçeneklerinin kesin mali, taraftar ve medya etkilerini oyuncuya anlaşılır biçimde göstermek.
+
+Feature: **presentation-only enhancement of the existing authoritative crisis decision**.
+
+- Authoritative options and order: `context.availableDecisions` (`CrisisDecision`).
+- Authoritative per-option terms: `decision.effect` (`cashDelta`, `fanTrustDelta`, `mediaCredibilityDelta`).
+- Nine options across three crisis families: `liquiditySqueeze`, `supporterUnrest`, `mediaBacklash`.
+- Existing Turkish crisis type / action labels and existing `OutlinedButton` preserved.
+- Exact key: `crisis-action-${decision.action.name}`; exact submit: `PlayerCrisisActionChoice(action: decision.action)`.
+- Direct source order, every option's selectability and disabled `onSubmit == null` behavior preserved.
+- Signed cash display reuses `Money.toString()`; signed int display shows positive `+`, negative `-`, zero `0`.
+- These are **canonical option effects**, not predicted resulting state. No Flutter-side clamp, simulation or duplicate business calculation.
+- No AI recommendation, ranking, sorting, highlighting or raw enum exposure.
+
+### Implementation scope / acceptance
+
+Exact product PR #103 changed files (2):
+- `app/lib/decisions/renderers/crisis_decision_renderer.dart`
+- `app/test/decision_renderers_test.dart`
+
+Acceptance proof includes:
+- All three crisis families / nine canonical actions and source-order parity.
+- Exact localized labels and canonical cash/fan/media terms per action.
+- Per-option scoped assertions where distinct decisions legitimately share an effect label.
+- Exact action submit identity, all-option selectability and disabled-state behavior.
+- Signed positive/negative/zero coverage, no raw enum and no recommendation.
+- Responsive width 320, `TextScaler.linear(2.0)`, large effects, last terms reachable and no horizontal overflow.
+
+Product source and test blobs unchanged through main sync and merge. Core production, controller/session, persistence and product workflow untouched by PR #103.
+
+### CI remediation — separate scope
+
+PR #104 — `CI — Extend canonical simulation timeout` — MERGED.
+- Approved CI branch HEAD `28c2df8ebfaf0d1787ebd822deba2b3ac449a314`.
+- CI remediation merge SHA `118e1be8af15f49f727eb6a1e68a61924d366823`.
+- Exact CI changed file: `.github/workflows/m0-tests.yml`.
+- `jobs.canonical.timeout-minutes`: **7 → 10**; `jobs.test.timeout-minutes`: **7 unchanged**.
+- No canonical M0–M88 step/order, concurrency, triggers, permissions or runner changes.
+- Product PR #103 was synced by MERGE COMMIT, so workflow remediation is inherited from base `main`, not a PR #103 diff file.
+- Earlier cancelled M100 canonical attempts were timing-only; no source/assertion failure was observed.
+
+### Merge / exact-head validation / actual-main proof
+
+Approved exact PR #103 HEAD: `9defbfef7418253ad96c3df130a81808902e3b5f`.
+Merge method: **MERGE COMMIT** (owner-approved, no squash/rebase).
+Executable merge SHA: `be9af5ba5318fff137f1b0f6256f027652f872e5`.
+Merge parent 1: `118e1be8af15f49f727eb6a1e68a61924d366823`.
+Merge parent 2: `9defbfef7418253ad96c3df130a81808902e3b5f`.
+
+Pre-merge exact-head CI:
+- Core Simulation Tests #662 / run `36168981755` — SUCCESS; normal tests and canonical M0–M88 ALL SUCCESS.
+- M89 Flutter App #82 / run `36168981556` — SUCCESS; Analyze / Flutter tests / APK / emulator SUCCESS.
+
+Post-merge actual-main Core:
+- #663 / run `36170999407`, attempt 1, exact executable SHA, SUCCESS.
+- Analyze SUCCESS; normal tests SUCCESS; 84/84 canonical physical steps SUCCESS (M0–M88; M19–M24 combined).
+- Skipped / failed canonical steps: 0.
+
+Post-merge actual-main Flutter:
+- #83 / run `36170999215`, attempt 1, exact executable SHA, SUCCESS.
+- Analyze SUCCESS; Flutter tests SUCCESS; debug APK SUCCESS; emulator SUCCESS; job overall SUCCESS.
+- Actual execution log contains `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app` after the launch / process-presence check, not merely in workflow script text.
+
+### Persistence / technical compass
+
+> **M65 remains sole persisted game-state authority.**
+
+M100 persistence impact: **NONE**.
+No saveVersion, codec, checksum, migration, save metadata or M74/M75/M77–M88/M80 authority change.
+FBS-01: keep current save architecture / unchanged. FBS-02 and FBS-03: not triggered. INFRA-01: outside product scope; separate owner authorization required.
+
+### Final closure state
+
+# **M100 — CLOSED / MERGED / PASS**
+# **M0–M100 — CLOSED / MERGED / PASS**
+
+Aktif milestone: **YOK**.
+M101: **NOT STARTED**.
 
 ## M99 kapanış sonucu
 

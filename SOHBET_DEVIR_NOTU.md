@@ -1,5 +1,91 @@
 # Futbol Başkanlık Simülatörü — SOHBET DEVİR NOTU
 
+Son güncelleme: 25 Eylül 2026
+
+Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmasıdır.
+
+# EN ÖNEMLİ KURAL
+
+**Yeni sohbet açıldığında kullanıcı yeni geliştirme promptu vermeden HİÇBİR ŞEY YAPMA.**
+
+Kaynak önceliği: **Live GitHub > güncel repo docs > central technical-development compass > eski sohbet bilgisi.**
+
+## 1. Güncel proje durumu
+
+Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
+
+# **M100 — CLOSED / MERGED / PASS**
+# **M0–M100 — CLOSED / MERGED / PASS**
+
+Last closed: **M100 — Crisis Decision Terms I**.
+PR #103: **CLOSED / MERGED**.
+Approved exact PR HEAD: `9defbfef7418253ad96c3df130a81808902e3b5f`.
+Executable merge SHA: `be9af5ba5318fff137f1b0f6256f027652f872e5`.
+Executable authority = product merge SHA; this doc-closure commit does not change executable product content.
+
+Actual-main Core: **Core Simulation Tests #663**, run `36170999407`, attempt 1, exact executable SHA, SUCCESS.
+- Analyze SUCCESS; normal tests SUCCESS; canonical M0–M88 ALL SUCCESS (84/84 physical steps).
+
+Actual-main Flutter: **M89 Flutter App #83**, run `36170999215`, attempt 1, exact executable SHA, SUCCESS.
+- Analyze SUCCESS; Flutter tests SUCCESS; debug APK SUCCESS; Android emulator SUCCESS; job overall SUCCESS.
+- Real execution marker VERIFIED: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`.
+
+CI timeout remediation: PR #104 — MERGED, merge SHA `118e1be8af15f49f727eb6a1e68a61924d366823`.
+- `test.timeout-minutes: 7`; `canonical.timeout-minutes: 10`.
+
+Aktif milestone: **YOK**.
+M101: **NOT STARTED**.
+
+## 2. M100 essentials
+
+Semantic: show the existing authoritative crisis option's exact cash, fan-trust and media-credibility effects before the player makes the crisis decision.
+Feature: **presentation-only**; no new crisis authority.
+
+Authority and contracts:
+- Source: `context.availableDecisions` in original order; effect source: `decision.effect`.
+- Three crisis families / nine actions.
+- `cashDelta`, `fanTrustDelta`, `mediaCredibilityDelta` shown as signed effects.
+- `Money.toString()` reused; positive values prefixed `+`, zero `0`.
+- Exact outer key `crisis-action-${decision.action.name}` and `PlayerCrisisActionChoice(action: decision.action)` preserved.
+- Canonical option effect, not post-decision forecast; no Flutter-side clamp/simulation.
+- Turkish labels; all options selectable; submit-null disables options.
+- No sorting, recommendation/ranking/highlight, raw enum or new business authority.
+
+Acceptance: nine options in source order, exact localized labels and effect text, per-option assertions for repeated labels, exact submit identity, positive/negative/zero, disabled state, 320px, TextScale 2.0, large effects and last terms reachable.
+
+Product PR #103 exact two files:
+- `app/lib/decisions/renderers/crisis_decision_renderer.dart`
+- `app/test/decision_renderers_test.dart`
+
+Pre-merge exact-head Core #662 (`36168981755`) and Flutter #82 (`36168981556`) SUCCESS.
+Post-merge actual-main Core #663 (`36170999407`) and Flutter #83 (`36170999215`) SUCCESS.
+
+Persistence impact: **NONE**. **M65 sole persisted game-state authority**.
+Core/controller/session/saveVersion/codecs/checksum/migrations unchanged.
+
+## 3. Technical compass / next-work rule
+
+- FBS-01 — KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED.
+- FBS-02 — NOT TRIGGERED.
+- FBS-03 — NOT TRIGGERED.
+- INFRA-01 — OUT OF M100 PRODUCT SCOPE; separate owner approval required.
+
+Yeni milestone otomatik seçilmez. Kullanıcı yeni geliştirme istediğinde:
+1. live `main` doğrula
+2. current repo docs oku
+3. central technical-development compass kontrol et
+4. fresh live-main gap scan yap
+5. milestone adayını değerlendir
+6. implementation öncesi product/authority contract'ını kilitle
+
+Kullanıcı istemeden M101 seçme; gap scan, branch/PR, kod, CI, technical compass activation veya yeni feature başlatma.
+
+## 4. Historical M99 handoff snapshot — 24 Eylül 2026 (NOT CURRENT)
+
+Aşağıdaki M99 devri tarihsel kayıt olarak korunmuştur. Buradaki `M100 NOT STARTED` ifadesi yalnız M99 kapanış anına aittir; güncel durum üstteki M100 kapanışıdır.
+
+# Futbol Başkanlık Simülatörü — SOHBET DEVİR NOTU
+
 Son güncelleme: 24 Eylül 2026
 
 Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmasıdır.
@@ -161,3 +247,4 @@ Kullanıcı yeni geliştirme istemeden:
 - yeni feature başlatma
 
 # DUR
+
