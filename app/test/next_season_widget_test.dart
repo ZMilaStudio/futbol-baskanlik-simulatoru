@@ -331,6 +331,9 @@ void main() {
     await tester.pumpWidget(FutbolBaskanlikApp(composition: composition));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(
+      find.byKey(const Key('load-game-button')),
+    );
     await tester.tap(find.byKey(const Key('load-game-button')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Devam Et'));
@@ -437,6 +440,9 @@ void main() {
     expect(find.byKey(const Key('new-game-button')), findsOneWidget);
     expect(find.byKey(const Key('load-game-button')), findsOneWidget);
 
+    await tester.ensureVisible(
+      find.byKey(const Key('load-game-button')),
+    );
     await tester.tap(find.byKey(const Key('load-game-button')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Devam Et'));

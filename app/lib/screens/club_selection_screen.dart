@@ -37,51 +37,48 @@ class ClubSelectionScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Kulüp Seçimi'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Başkanlık kariyerine başlayacağın kulübü seç. '
-                  'Kulüplerin başlangıç ligini inceleyebilirsin.',
-                  style: Theme.of(context).textTheme.titleMedium,
+      body: ListView.separated(
+        key: const Key('club-list'),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+        itemCount: clubs.length + 1,
+        separatorBuilder: (_, index) =>
+            SizedBox(height: index == 0 ? 0 : 6),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(8, 18, 8, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Başkanlık kariyerine başlayacağın kulübü seç. '
+                    'Kulüplerin başlangıç ligini inceleyebilirsin.',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 6),
+                  Text('${clubs.length} kulüp'),
+                ],
+              ),
+            );
+          }
+
+          final selectedClub = clubs[index - 1];
+          final league = initialLeagueForClub(selectedClub, leagues);
+          return ClubSelectionTile(
+            club: selectedClub,
+            league: league,
+            onSelected: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => PresidentHomeScreen(
+                    composition: composition,
+                    club: selectedClub,
+                  ),
                 ),
-                const SizedBox(height: 6),
-                Text('${clubs.length} kulüp'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.separated(
-              key: const Key('club-list'),
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
-              itemCount: clubs.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 6),
-              itemBuilder: (context, index) {
-                final selectedClub = clubs[index];
-                final league = initialLeagueForClub(selectedClub, leagues);
-                return ClubSelectionTile(
-                  club: selectedClub,
-                  league: league,
-                  onSelected: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => PresidentHomeScreen(
-                          composition: composition,
-                          club: selectedClub,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+              );
+            },
+          );
+        },
       ),
     );
   }

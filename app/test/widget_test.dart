@@ -344,7 +344,10 @@ void main() {
       await tester.scrollUntilVisible(
         card,
         350,
-        scrollable: find.byKey(const Key('club-list')),
+        scrollable: find.descendant(
+          of: find.byKey(const Key('club-list')),
+          matching: find.byType(Scrollable),
+        ),
       );
       expect(
         find.descendant(
@@ -395,7 +398,7 @@ void main() {
     expect(starts, 0);
   });
 
-  testWidgets('320px TextScale 2 keeps opening actions scroll-reachable',
+  testWidgets('320px TextScale 2 keeps canonical club list scroll-reachable',
       (tester) async {
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
@@ -418,6 +421,14 @@ void main() {
     final firstCard = find.byKey(
       Key('club-${composition.world.clubs.first.id}'),
     );
+    await tester.scrollUntilVisible(
+      firstCard,
+      300,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('club-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     expect(firstCard, findsOneWidget);
     expect(
       find.descendant(
@@ -432,7 +443,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(Key('club-${lastClub.id}')),
       300,
-      scrollable: find.byKey(const Key('club-list')),
+      scrollable: find.descendant(
+          of: find.byKey(const Key('club-list')),
+          matching: find.byType(Scrollable),
+        ),
     );
     expect(find.byKey(Key('club-${lastClub.id}')), findsOneWidget);
     expect(tester.takeException(), isNull);
