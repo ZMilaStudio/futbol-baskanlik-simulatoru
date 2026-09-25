@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — SOHBET DEVİR NOTU
 
-Son güncelleme: 25 Eylül 2026
+Son güncelleme: 26 Eylül 2026
 
 Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmasıdır.
 
@@ -11,6 +11,50 @@ Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmas
 Kaynak önceliği: **Live GitHub > güncel repo docs > central technical-development compass > eski sohbet bilgisi.**
 
 ## 1. Güncel proje durumu
+
+Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
+
+# **M101 — CLOSED / MERGED / PASS**
+# **M0–M101 — CLOSED / MERGED / PASS**
+
+Last closed: **M101 — First Career Orientation I**. PR #105 CLOSED / MERGED / Draft=false.
+Approved product HEAD: `0599d0c2e2e71643e002ba56fc834afb91f97611`.
+Executable product merge authority: `76c785296aa70b754d90a28c130930293a7d3e1d`.
+MERGE COMMIT with explicit M101 owner approval; parent 1 `f319b9ef40a85645c467a6c97e057a420e7cc152`, parent 2 `0599d0c2e2e71643e002ba56fc834afb91f97611`. General merge governance unchanged.
+
+Actual-main Core #668 / run `36196662322` / attempt 1 — SUCCESS; normal tests SUCCESS; canonical M0–M88 84/84 physical SUCCESS; failed/skipped 0.
+Actual-main Flutter #87 / run `36196662312` / attempt 1 — SUCCESS; Analyze, Flutter tests, debug APK, Android emulator and overall job SUCCESS.
+Real execution marker VERIFIED: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`. Android `am start -W` timeout/UNKNOWN was followed by a successful PID check: this is **launch-smoke**, not an end-to-end interactive gameplay test.
+
+This docs-only closure moves `main` but does not modify executable product authority `76c785296aa70b754d90a28c130930293a7d3e1d`.
+
+Persistence impact: **NONE**. M65 sole persisted game-state authority; M73/M76 Pending/submit, M87/M88 save/load and replay parity unchanged.
+
+Aktif milestone: **YOK**. M102 not selected or started.
+
+## 2. M101 essentials
+
+Product identity: **Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.**
+Opening: president role and decision → result → season cycle explained; existing New Game and Load Save routes preserved.
+Club selection: canonical 48 clubs in original order; initial league from `world.leagues / clubIds` exact-one membership, missing/ambiguous membership fails closed.
+President Home: current Pending kind and sequence exactly once before prepared **season-start**, not live-state snapshot; no next Pending during Resolution; Completed/next-season/career-end unchanged.
+Six-file PR scope: `app/lib/screens/opening_screen.dart`, `app/lib/screens/club_selection_screen.dart`, `app/lib/screens/president_home_screen.dart`, `app/test/widget_test.dart`, `app/test/prepared_season_dashboard_widget_test.dart`, `app/test/next_season_widget_test.dart`.
+Acceptance: 320px/TextScale 2.0, long names, lazy scroll, no overflow, exact choice/club identity, fail-closed, save/load/rebind and next-season/lost-career regression. No new gameplay, AI advice, tutorial-progress state or persisted schema.
+
+## 3. Technical compass / next-work rule
+
+- FBS-01 — KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED.
+- FBS-02 — NOT TRIGGERED.
+- FBS-03 — NOT TRIGGERED.
+- INFRA-01 — separate owner approval required; no activation.
+
+**Without a new user request, do nothing.** Do not select M102, open a gap scan, branch, PR, CI or implementation. On a new authorized request: verify live `main`, read current repo docs and central compass, examine fresh product/authority evidence, and lock a product/authority contract with explicit owner approval before implementation.
+
+## 4. Historical M100 handoff snapshot — 25 Eylül 2026 (NOT CURRENT)
+
+The M100 closure facts below are historical. Old last-closed and next-work notes describe the M100 checkpoint, not current M101 authority.
+
+### 4.1 M100 kapanış anındaki durum
 
 Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
 
@@ -34,9 +78,9 @@ CI timeout remediation: PR #104 — MERGED, merge SHA `118e1be8af15f49f727eb6a1e
 - `test.timeout-minutes: 7`; `canonical.timeout-minutes: 10`.
 
 Aktif milestone: **YOK**.
-M101: **NOT STARTED**.
+M101 o tarihte henüz açılmamıştı; güncel M101 CLOSED durumu yukarıdadır.
 
-## 2. M100 essentials
+### 4.2 M100 essentials
 
 Semantic: show the existing authoritative crisis option's exact cash, fan-trust and media-credibility effects before the player makes the crisis decision.
 Feature: **presentation-only**; no new crisis authority.
@@ -63,7 +107,7 @@ Post-merge actual-main Core #663 (`36170999407`) and Flutter #83 (`36170999215`)
 Persistence impact: **NONE**. **M65 sole persisted game-state authority**.
 Core/controller/session/saveVersion/codecs/checksum/migrations unchanged.
 
-## 3. Technical compass / next-work rule
+### 4.3 M100 technical compass / historical next-work rule
 
 - FBS-01 — KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED.
 - FBS-02 — NOT TRIGGERED.
@@ -78,9 +122,9 @@ Yeni milestone otomatik seçilmez. Kullanıcı yeni geliştirme istediğinde:
 5. milestone adayını değerlendir
 6. implementation öncesi product/authority contract'ını kilitle
 
-Kullanıcı istemeden M101 seçme; gap scan, branch/PR, kod, CI, technical compass activation veya yeni feature başlatma.
+Bu M100 tarihsel devir kuralıdır; güncel sonraki çalışma kuralı yukarıda.
 
-## 4. Historical M99 handoff snapshot — 24 Eylül 2026 (NOT CURRENT)
+## 5. Historical M99 handoff snapshot — 24 Eylül 2026 (NOT CURRENT)
 
 Aşağıdaki M99 devri tarihsel kayıt olarak korunmuştur. Buradaki `M100 NOT STARTED` ifadesi yalnız M99 kapanış anına aittir; güncel durum üstteki M100 kapanışıdır.
 

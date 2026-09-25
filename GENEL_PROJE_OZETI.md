@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 25 Eylül 2026
+Son güncelleme: 26 Eylül 2026
 
 ## 1. Proje kimliği
 
@@ -40,46 +40,98 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-# **M0–M100 — CLOSED / MERGED / PASS**
+# **M0–M101 — CLOSED / MERGED / PASS**
 
-Son kapanan milestone:
-# M100 — Crisis Decision Terms I
+Son kapanan milestone: **M101 — First Career Orientation I**.
+Product PR: **#105 — CLOSED / MERGED / Draft=false**.
+Approved exact product HEAD: `0599d0c2e2e71643e002ba56fc834afb91f97611`.
 
-Product PR: **#103 — CLOSED / MERGED**
+Executable MERGE COMMIT SHA / actual-main product authority:
+`76c785296aa70b754d90a28c130930293a7d3e1d`
 
-Approved exact PR HEAD:
-`9defbfef7418253ad96c3df130a81808902e3b5f`
+M101 merge method: **MERGE COMMIT**, explicit owner approval; no squash/rebase. This is a milestone-specific record, not a silent general merge-policy change.
+Parent 1 (previous main): `f319b9ef40a85645c467a6c97e057a420e7cc152`.
+Parent 2 (approved PR HEAD): `0599d0c2e2e71643e002ba56fc834afb91f97611`.
 
-Executable MERGE COMMIT SHA / actual-main executable authority:
-`be9af5ba5318fff137f1b0f6256f027652f872e5`
+Actual-main Core Simulation Tests #668 / run `36196662322` / attempt 1:
+- exact executable SHA `76c785296aa70b754d90a28c130930293a7d3e1d`; completed **SUCCESS**.
+- Analyze SUCCESS, normal tests SUCCESS, canonical M0–M88 **84/84 physical steps SUCCESS**; failed/skipped canonical 0/0.
 
-Actual-main Core proof:
-- Core Simulation Tests #663 / run `36170999407` / attempt 1 — SUCCESS
-- exact SHA `be9af5ba5318fff137f1b0f6256f027652f872e5`
-- Analyze SUCCESS; normal tests SUCCESS; canonical M0–M88 ALL SUCCESS (84/84 physical steps)
-- failed / skipped canonical steps: 0
+Actual-main M89 Flutter App #87 / run `36196662312` / attempt 1:
+- same exact executable SHA; completed **SUCCESS**.
+- Analyze, Flutter tests, debug APK, Android emulator and job overall SUCCESS.
+- Actual execution marker VERIFIED after PID check: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`.
+- `am start -W` showed timeout / LaunchState UNKNOWN; subsequent `adb shell pidof` succeeded. This is Android **launch-smoke**, not end-to-end interactive gameplay proof.
 
-Actual-main Flutter proof:
-- M89 Flutter App #83 / run `36170999215` / attempt 1 — SUCCESS
-- exact SHA `be9af5ba5318fff137f1b0f6256f027652f872e5`
-- Analyze SUCCESS; Flutter tests SUCCESS; debug APK SUCCESS; Android emulator SUCCESS; job overall SUCCESS
-- real execution output marker VERIFIED: `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app`
+Persistence impact: **NONE**. M65 sole persisted game-state authority; M73/M76 Pending/submit identity, M87/M88 save/load identity and deterministic replay parity unchanged.
 
-CI timeout remediation: PR #104 — MERGED; canonical timeout 10 minutes, normal test timeout 7 minutes.
-Persistence impact: **NONE**; M65 remains sole persisted game-state authority.
+# **M101 — CLOSED / MERGED / PASS**
+# **M0–M101 — CLOSED / MERGED / PASS**
 
-# **M100 — CLOSED / MERGED / PASS**
-# **M0–M100 — CLOSED / MERGED / PASS**
+Aktif milestone: **YOK**. M102 has not been selected; do not start or define a new milestone automatically.
 
-Aktif milestone:
-**YOK**
+On a new authorized request: verify live `main`, current repo docs and central technical-development compass; use a fresh product/authority contract and obtain explicit owner approval before implementation.
 
-M101:
-**NOT STARTED**
+## M101 kapanış sonucu
 
-Yeni milestone otomatik seçilmez. Kullanıcı açıkça yeni geliştirme istediğinde live `main`, güncel repo docs ve central technical-development compass kontrol edilir; fresh gap scan ve product/authority contract yeni onaya tabi tutulur.
+# M101 — First Career Orientation I
 
-## M100 kapanış sonucu
+### Product semantic and identity
+
+> İlk kez oynayan kişiye başkanlık rolünü, kulüp seçimini ve ilk gerçek karar döngüsünü mevcut authoritative verilerle anlaşılır biçimde sunmak.
+
+**Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.** No tactics management, new simulation, tutorial route/progress state, task engine, AI advice or guaranteed decision count.
+
+### Exact implementation scope
+
+PR #105 changed **only six files**:
+- `app/lib/screens/opening_screen.dart`
+- `app/lib/screens/club_selection_screen.dart`
+- `app/lib/screens/president_home_screen.dart`
+- `app/test/widget_test.dart`
+- `app/test/prepared_season_dashboard_widget_test.dart`
+- `app/test/next_season_widget_test.dart`
+
+Opening: existing slogan and New Game/Load Save navigation preserved; short Turkish role and decision → applied result → season-cycle explanations added.
+
+Club selection: canonical 48 clubs and `composition.world.clubs` source order preserved. Initial league is a read-only `world.leagues / WorldLeague.clubIds` **exact-one membership**; missing/ambiguous membership is fail-closed, with no fabricated league, rating, strength interpretation or initial budget. Explanation and lazy rows share one scrollable list.
+
+President Home: actual `currentStep` Pending `request.kind` and `request.sequence` identify the decision exactly once above the prepared snapshot. `preparedSeasonDashboard` is clearly a **season-start observation**, not live state. Squad/fixtures and decision choices remain accessible. Resolution never leaks the next Pending; Completed report, next-season and career-loss behavior are preserved.
+
+### Responsive and regression acceptance
+
+Tests cover both opening CTA routes, 48 canonical club/league mapping and order, invalid-membership fail-closed behavior, exact club startup, real Pending identity and sequence, nonduplicate heading, season-start semantics, Pending/Resolution/Completed boundaries, save/load/rebind, next-season and lost-career parity, 320px / TextScale 2.0, long club/league names, lazy scroll reachability and no layout overflow.
+
+The three M101 PR commits preserve the implementation and minimum Flutter test-repair history; the final approved product HEAD is `0599d0c2e2e71643e002ba56fc834afb91f97611`.
+
+### Merge and actual-main proof
+
+Approved PR HEAD: `0599d0c2e2e71643e002ba56fc834afb91f97611`.
+MERGE COMMIT (explicit M101 owner approval): `76c785296aa70b754d90a28c130930293a7d3e1d`.
+Parent 1: `f319b9ef40a85645c467a6c97e057a420e7cc152`.
+Parent 2: `0599d0c2e2e71643e002ba56fc834afb91f97611`.
+PR #105 CLOSED / MERGED / Draft=false; source branch retained. No squash/rebase.
+
+Post-merge Core #668 / run `36196662322`, attempt 1, exact executable SHA: SUCCESS; normal tests SUCCESS; canonical M0–M88 84/84 physical SUCCESS, failed/skipped 0.
+Post-merge Flutter #87 / run `36196662312`, attempt 1, same SHA: SUCCESS; Analyze, Flutter tests, debug APK, emulator and overall job SUCCESS; real execution marker VERIFIED.
+Emulator log caveat: `am start -W` timeout / UNKNOWN followed by successful PID check. The verified gate is **launch-smoke only**, not an interactive end-to-end first-career test.
+
+### Persistence / technical compass
+
+Persistence impact: **NONE**. No core simulation, M65 game-state, M73/M76 decisions, M87/M88 save/load, save schema, migration, workflow or GitHub settings change.
+- FBS-01: **KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED**.
+- FBS-02: **NOT TRIGGERED**.
+- FBS-03: **NOT TRIGGERED**.
+- INFRA-01: separate owner approval required; not activated.
+
+### Final closure state
+
+# **M101 — CLOSED / MERGED / PASS**
+# **M0–M101 — CLOSED / MERGED / PASS**
+
+Aktif milestone: **YOK**. M102 not selected; no automatic gap scan, branch/PR, CI or implementation.
+
+## M100 kapanış sonucu — tarihsel kayıt (güncel durum M101)
 
 # M100 — Crisis Decision Terms I
 
@@ -162,7 +214,7 @@ FBS-01: keep current save architecture / unchanged. FBS-02 and FBS-03: not trigg
 # **M0–M100 — CLOSED / MERGED / PASS**
 
 Aktif milestone: **YOK**.
-M101: **NOT STARTED**.
+M100 kapanış anındaki sonraki milestone notu tarihseldir; güncel M101 kapanışı yukarıdadır.
 
 ## M99 kapanış sonucu
 
