@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
+import 'package:futbol_baskanlik_app/decisions/renderers/crisis_decision_renderer.dart';
 import 'package:futbol_baskanlik_app/decisions/renderers/sponsor_decision_renderer.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
@@ -304,6 +305,262 @@ void main() {
     expect((choice as PlayerCrisisActionChoice).action, action);
   });
 
+  testWidgets(
+      'crisis renderer shows authoritative effects for all crisis families in source order',
+      (tester) async {
+    final pending =
+        pendingByKind[PlayerPresidentInteractiveDecisionKind.crisis]!;
+    final canonical =
+        pending.request.contextAs<PlayerCrisisDecisionContext>();
+    const engine = CrisisDecisionEngine();
+
+    var totalActions = 0;
+    var hasPositiveMoney = false;
+    var hasNegativeMoney = false;
+    var hasZeroMoney = false;
+    var hasPositiveInt = false;
+    var hasNegativeInt = false;
+    var hasZeroInt = false;
+
+    for (final type in CrisisType.values) {
+      final scenario = CrisisScenario(type: type, severity: 55);
+      final decisions = engine.availableDecisions(scenario);
+      final context = PlayerCrisisDecisionContext(
+        crisis: canonical.crisis,
+        scenario: scenario,
+        availableDecisions: decisions,
+        aiDecision: decisions.last,
+      );
+
+      Object? captured;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: CrisisDecisionRenderer(
+                context: context,
+                onSubmit: (choice) => captured = choice,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final renderer = find.byKey(const Key('crisis-decision-renderer'));
+      final buttons = find.descendant(
+        of: renderer,
+        matching: find.byType(OutlinedButton),
+      );
+      final actualKeys = tester
+          .widgetList<OutlinedButton>(buttons)
+          .map((button) => button.key)
+          .toList(growable: false);
+      final expectedKeys = decisions
+          .map((decision) => Key('crisis-action-${decision.action.name}'))
+          .toList(growable: false);
+      expect(actualKeys, expectedKeys);
+
+      expect(
+        find.text(
+          '${_crisisTypeLabelForTest(type)} • Şiddet: ${scenario.severity}',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(type.name), findsNothing);
+      expect(find.text('AI seçimi'), findsNothing);
+      expect(find.text('Önerilen seçenek'), findsNothing);
+      expect(find.text('En iyi seçenek'), findsNothing);
+
+      for (final decision in decisions) {
+        totalActions++;
+        final effect = decision.effect;
+        final buttonFinder =
+            find.byKey(Key('crisis-action-${decision.action.name}'));
+        final button = tester.widget<OutlinedButton>(buttonFinder);
+
+        expect(button.onPressed, isNotNull);
+        expect(
+          find.descendant(
+            of: buttonFinder,
+            matching: find.text(_crisisActionLabelForTest(decision.action)),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: buttonFinder,
+            matching: find.text(
+              'Nakit etkisi: ${_signedMoneyForTest(effect.cashDelta)}',
+            ),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: buttonFinder,
+            matching: find.text(
+              'Taraftar etkisi: '
+              '${_signedIntForTest(effect.fanTrustDelta)}',
+            ),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: buttonFinder,
+            matching: find.text(
+              'Medya etkisi: '
+              '${_signedIntForTest(effect.mediaCredibilityDelta)}',
+            ),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text(decision.action.name), findsNothing);
+
+        if (effect.cashDelta > Money.zero) {
+          hasPositiveMoney = true;
+        } else if (effect.cashDelta < Money.zero) {
+          hasNegativeMoney = true;
+        } else {
+          hasZeroMoney = true;
+        }
+        for (final value in [
+          effect.fanTrustDelta,
+          effect.mediaCredibilityDelta,
+        ]) {
+          if (value > 0) {
+            hasPositiveInt = true;
+          } else if (value < 0) {
+            hasNegativeInt = true;
+          } else {
+            hasZeroInt = true;
+          }
+        }
+
+        captured = null;
+        await tester.ensureVisible(buttonFinder);
+        await tester.tap(buttonFinder);
+        await tester.pump();
+        expect(captured, isA<PlayerCrisisActionChoice>());
+        expect(
+          (captured as PlayerCrisisActionChoice).action,
+          decision.action,
+        );
+      }
+    }
+
+    expect(totalActions, 9);
+    expect(hasPositiveMoney, isTrue);
+    expect(hasNegativeMoney, isTrue);
+    expect(hasZeroMoney, isTrue);
+    expect(hasPositiveInt, isTrue);
+    expect(hasNegativeInt, isTrue);
+    expect(hasZeroInt, isTrue);
+  });
+
+  testWidgets('crisis submitting state disables every authoritative option',
+      (tester) async {
+    final pending =
+        pendingByKind[PlayerPresidentInteractiveDecisionKind.crisis]!;
+    final context = pending.request.contextAs<PlayerCrisisDecisionContext>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DecisionPanel(
+            pending: pending,
+            submitting: true,
+            onSubmit: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    for (final decision in context.availableDecisions) {
+      final button = tester.widget<OutlinedButton>(
+        find.byKey(Key('crisis-action-${decision.action.name}')),
+      );
+      expect(button.onPressed, isNull);
+    }
+  });
+
+  testWidgets('crisis terms wrap at 320px and TextScale 2', (tester) async {
+    final pending =
+        pendingByKind[PlayerPresidentInteractiveDecisionKind.crisis]!;
+    final canonical =
+        pending.request.contextAs<PlayerCrisisDecisionContext>();
+    const edgeDecision = CrisisDecision(
+      action: CrisisAction.measuredMediaResponse,
+      effect: CrisisEffect(
+        cashDelta: Money.fromUnits(-987654321),
+        fanTrustDelta: -123456,
+        mediaCredibilityDelta: 123456789,
+      ),
+    );
+    final context = PlayerCrisisDecisionContext(
+      crisis: canonical.crisis,
+      scenario: const CrisisScenario(
+        type: CrisisType.mediaBacklash,
+        severity: 99,
+      ),
+      availableDecisions: const [edgeDecision],
+      aiDecision: edgeDecision,
+    );
+
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    Object? captured;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(2.0)),
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: CrisisDecisionRenderer(
+                context: context,
+                onSubmit: (choice) => captured = choice,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    const lastEffect = 'Medya etkisi: +123456789';
+    expect(find.text('Nakit etkisi: -987.65M'), findsOneWidget);
+    expect(find.text('Taraftar etkisi: -123456'), findsOneWidget);
+    expect(find.text(lastEffect), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is SingleChildScrollView &&
+            widget.scrollDirection == Axis.horizontal,
+      ),
+      findsNothing,
+    );
+
+    await tester.ensureVisible(find.text(lastEffect));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    final buttonFinder = find.byKey(
+      const Key('crisis-action-measuredMediaResponse'),
+    );
+    final button = tester.widget<OutlinedButton>(buttonFinder);
+    expect(button.onPressed, isNotNull);
+    await tester.ensureVisible(buttonFinder);
+    await tester.tap(buttonFinder);
+    await tester.pump();
+    expect(captured, isA<PlayerCrisisActionChoice>());
+    expect(
+      (captured as PlayerCrisisActionChoice).action,
+      CrisisAction.measuredMediaResponse,
+    );
+  });
+
   testWidgets('manager review renderer emits replace through the public enum',
       (tester) async {
     final choice = await pumpAndChoose(
@@ -423,3 +680,27 @@ void main() {
     expect(submit.onPressed, isNull);
   });
 }
+
+String _crisisTypeLabelForTest(CrisisType type) => switch (type) {
+      CrisisType.liquiditySqueeze => 'Likidite krizi',
+      CrisisType.supporterUnrest => 'Taraftar huzursuzluğu',
+      CrisisType.mediaBacklash => 'Medya krizi',
+    };
+
+String _crisisActionLabelForTest(CrisisAction action) => switch (action) {
+      CrisisAction.austerityPlan => 'Tasarruf planı',
+      CrisisAction.bridgeSpending => 'Geçiş harcaması',
+      CrisisAction.balancedRecovery => 'Dengeli toparlanma',
+      CrisisAction.ambitionReset => 'Hedefleri yeniden belirle',
+      CrisisAction.listeningTour => 'Taraftarı dinle',
+      CrisisAction.supporterReassurance => 'Taraftara güven ver',
+      CrisisAction.transparentBriefing => 'Şeffaf bilgilendirme',
+      CrisisAction.confrontNarrative => 'Anlatıya karşı çık',
+      CrisisAction.measuredMediaResponse => 'Ölçülü medya yanıtı',
+    };
+
+String _signedMoneyForTest(Money money) =>
+    money > Money.zero ? '+${money.toString()}' : money.toString();
+
+String _signedIntForTest(int value) => value > 0 ? '+$value' : '$value';
+

@@ -31,7 +31,31 @@ class CrisisDecisionRenderer extends StatelessWidget {
                 : () => onSubmit!(
                       PlayerCrisisActionChoice(action: decision.action),
                     ),
-            child: Text(_actionLabel(decision.action)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_actionLabel(decision.action)),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Nakit etkisi: '
+                      '${_signedMoney(decision.effect.cashDelta)}',
+                    ),
+                    Text(
+                      'Taraftar etkisi: '
+                      '${_signedInt(decision.effect.fanTrustDelta)}',
+                    ),
+                    Text(
+                      'Medya etkisi: '
+                      '${_signedInt(decision.effect.mediaCredibilityDelta)}',
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 8),
         ],
@@ -39,6 +63,11 @@ class CrisisDecisionRenderer extends StatelessWidget {
     );
   }
 }
+
+String _signedMoney(Money money) =>
+    money > Money.zero ? '+${money.toString()}' : money.toString();
+
+String _signedInt(int value) => value > 0 ? '+$value' : '$value';
 
 String _typeLabel(CrisisType type) => switch (type) {
       CrisisType.liquiditySqueeze => 'Likidite krizi',
