@@ -440,11 +440,31 @@ void main() {
     expect(find.byKey(const Key('new-game-button')), findsOneWidget);
     expect(find.byKey(const Key('load-game-button')), findsOneWidget);
 
-    await tester.ensureVisible(
-      find.byKey(const Key('load-game-button')),
-    );
-    await tester.tap(find.byKey(const Key('load-game-button')));
+    final loadButton = find.byKey(const Key('load-game-button'));
+    // The save feedback belongs to the app's ScaffoldMessenger and can
+    // persist across the return to Opening, covering the lower CTA.
+    ScaffoldMessenger.of(tester.element(loadButton)).removeCurrentSnackBar();
     await tester.pumpAndSettle();
+    expect(find.byType(SnackBar), findsNothing);
+
+    await tester.ensureVisible(loadButton);
+    await tester.pumpAndSettle();
+    expect(tester.widget<OutlinedButton>(loadButton).onPressed, isNotNull);
+    final hitResult = tester.hitTestOnBinding(tester.getCenter(loadButton));
+    final buttonRenderObject = tester.renderObject(loadButton);
+    expect(
+      hitResult.path.any(
+        (entry) => isRenderObjectAncestorOfTarget(
+          buttonRenderObject,
+          entry.target,
+        ),
+      ),
+      isTrue,
+      reason: 'Kayıt Yükle must receive pointer events after save feedback.',
+    );
+    await tester.tap(loadButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Kayıtlar'), findsOneWidget);
     await tester.tap(find.text('Devam Et'));
     await tester.pumpAndSettle();
 
