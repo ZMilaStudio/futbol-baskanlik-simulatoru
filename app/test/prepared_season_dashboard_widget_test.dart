@@ -84,6 +84,40 @@ void main() {
     final snapshot = expectedOpening();
     await pumpNewGame(tester);
 
+    final session = PlayerPresidentInteractiveDecisionApplicationSession.start(
+      clubs: composition.world.clubs,
+      leagues: composition.world.leagues,
+      config: composition.simulationConfig,
+      controlledClubId: composition.world.clubs.first.id,
+      seasonCount: 1,
+      electionInterval: 4,
+      hasFutureSeasonAfterReport: true,
+    );
+    final pending =
+        session.advance() as PlayerPresidentInteractiveDecisionPending;
+    expect(find.byKey(const Key('session-lifecycle-state')), findsOneWidget);
+    expect(find.byKey(const Key('decision-kind-label')), findsOneWidget);
+    expect(
+      valueFor(tester, 'decision-kind-label'),
+      decisionKindLabel(pending.request.kind),
+    );
+    expect(
+      valueFor(tester, 'current-decision-sequence'),
+      'Karar #${pending.request.sequence}',
+    );
+    expect(
+      find.byKey(const Key('pending-orientation-guidance')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('season-start-orientation')),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Sezon ${snapshot.seasonIndex + 1} • ${snapshot.league.name}'),
+      findsOneWidget,
+    );
+
     expect(find.byKey(const Key('prepared-season-dashboard')), findsOneWidget);
     expect(find.byKey(const Key('prepared-season-title')), findsOneWidget);
     expect(valueFor(tester, 'prepared-season-title'), 'Sezona Hazırlık');
@@ -155,6 +189,13 @@ void main() {
     expect(find.byKey(const Key('prepared-season-dashboard')), findsOneWidget);
     expect(find.byType(DecisionPanel), findsNothing);
     expect(find.byType(DecisionResolutionPanel), findsOneWidget);
+    expect(find.byKey(const Key('decision-kind-label')), findsNothing);
+    expect(find.byKey(const Key('current-decision-sequence')), findsNothing);
+    expect(
+      find.byKey(const Key('pending-orientation-guidance')),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('season-start-orientation')), findsOneWidget);
     for (final entry in before.entries) {
       expect(valueFor(tester, entry.key), entry.value);
     }
@@ -210,6 +251,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('prepared-season-dashboard')), findsNothing);
+    expect(find.byKey(const Key('pending-orientation-guidance')), findsNothing);
+    expect(find.byKey(const Key('season-start-orientation')), findsNothing);
     expect(find.byType(PresidentSeasonReportPanel), findsOneWidget);
     expect(find.byKey(const Key('season-report-title')), findsOneWidget);
     expect(find.byKey(const Key('continue-next-season-button')), findsOneWidget);
@@ -223,6 +266,8 @@ void main() {
     expect(find.byType(PresidentSeasonReportPanel), findsNothing);
     expect(find.byKey(const Key('prepared-season-dashboard')), findsOneWidget);
     expect(find.byType(DecisionPanel), findsOneWidget);
+    expect(find.byKey(const Key('decision-kind-label')), findsOneWidget);
+    expect(find.byKey(const Key('pending-orientation-guidance')), findsOneWidget);
     expect(
       valueFor(tester, 'prepared-season-league'),
       'Sezon ${expectedNext.seasonIndex + 1} • ${expectedNext.league.name}',
@@ -260,6 +305,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('prepared-season-dashboard')), findsOneWidget);
+    expect(find.byKey(const Key('pending-orientation-guidance')), findsOneWidget);
     expect(bootstrapBinding.session.preparedSeasonDashboard.signature,
         bootstrapSignature);
 
@@ -294,6 +340,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('prepared-season-dashboard')), findsOneWidget);
+    expect(find.byKey(const Key('pending-orientation-guidance')), findsOneWidget);
     expect(
       valueFor(tester, 'prepared-season-league'),
       'Sezon ${checkpointSnapshot.seasonIndex + 1} • '
@@ -402,4 +449,50 @@ void main() {
     expect(valueFor(tester, 'prepared-season-player-control'), 'Kaybedildi');
     expect(valueFor(tester, 'prepared-season-manager'), longManager.name);
   });
+  testWidgets('320px TextScale 2 reaches dashboard and actual decision options',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(2.0),
+          ),
+          child: child!,
+        ),
+        home: PresidentHomeScreen(
+          composition: composition,
+          club: composition.world.clubs.first,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('decision-kind-label')), findsOneWidget);
+    expect(find.byKey(const Key('season-start-orientation')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('prepared-squad-button')));
+    await tester.ensureVisible(
+      find.byKey(const Key('prepared-season-fixtures-button')),
+    );
+    final action = find
+        .descendant(
+          of: find.byType(DecisionPanel),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is ButtonStyleButton && widget.onPressed != null,
+          ),
+        )
+        .first;
+    await tester.ensureVisible(action);
+    expect(tester.takeException(), isNull);
+    await tester.tap(action);
+    await tester.pump();
+    expect(find.byType(DecisionResolutionPanel), findsOneWidget);
+    expect(find.byKey(const Key('pending-orientation-guidance')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
 }
