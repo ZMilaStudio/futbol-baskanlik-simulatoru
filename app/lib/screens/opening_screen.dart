@@ -46,7 +46,25 @@ class OpeningScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Kulübünün başkanı olarak karşına çıkan yönetim kararlarıyla '
+                    'kulübünün geleceğine yön verirsin. Maç taktiğini değil, '
+                    'kulübü yönetirsin.',
+                    key: const Key('opening-role-description'),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Kararı incele, seçimini yap ve uygulanan sonucu gör. '
+                    'Kararlar tamamlandığında sezon raporunu inceleyebilirsin. '
+                    'Başkanlığın sürüyorsa sonraki sezona geçebilirsin.',
+                    key: const Key('opening-career-flow-description'),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 24),
                   FilledButton.icon(
                     key: const Key('new-game-button'),
                     onPressed: () {

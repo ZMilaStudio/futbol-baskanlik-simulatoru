@@ -208,7 +208,41 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                             ),
                             const SizedBox(height: 12),
                           ],
+                          if (step is PlayerPresidentInteractiveDecisionPending) ...[
+                            const Text(
+                              'Karar bekleniyor',
+                              key: Key('session-lifecycle-state'),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              decisionKindLabel(step.request.kind),
+                              key: const Key('decision-kind-label'),
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Karar #${step.request.sequence}',
+                              key: const Key('current-decision-sequence'),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Seçenekleri incele ve kararını ver. '
+                              'Uygulanan sonucu bir sonraki ekranda göreceksin.',
+                              key: Key('pending-orientation-guidance'),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                          ],
                           if (showPreparedDashboard) ...[
+                            const Text(
+                              'Bu bilgiler kulübünün sezon başındaki durumunu gösterir.',
+                              key: Key('season-start-orientation'),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
                             PresidentPreparedSeasonDashboardPanel(
                               snapshot: preparedDashboard,
                             ),
@@ -284,6 +318,7 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                               submitting: busy,
                               clubNameForId: _clubNameForId,
                               onSubmit: _controller.submitChoice,
+                              showPendingHeading: false,
                               canContinueToNextSeason:
                                   completedTenureControl?.active ?? true,
                               onContinueToNextSeason: busy
@@ -330,6 +365,7 @@ class PresidentSessionStateView extends StatelessWidget {
     super.key,
     required this.step,
     this.submitting = false,
+    this.showPendingHeading = true,
     this.onSubmit,
     this.onContinueToNextSeason,
     this.canContinueToNextSeason = true,
@@ -338,6 +374,7 @@ class PresidentSessionStateView extends StatelessWidget {
 
   final PlayerPresidentInteractiveSessionStep step;
   final bool submitting;
+  final bool showPendingHeading;
   final ValueChanged<Object>? onSubmit;
   final VoidCallback? onContinueToNextSeason;
   final bool canContinueToNextSeason;
@@ -351,24 +388,26 @@ class PresidentSessionStateView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Karar bekleniyor',
-            key: Key('session-lifecycle-state'),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            decisionKindLabel(current.request.kind),
-            key: const Key('decision-kind-label'),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Karar #${current.request.sequence}',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
+          if (showPendingHeading) ...[
+            const Text(
+              'Karar bekleniyor',
+              key: Key('session-lifecycle-state'),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              decisionKindLabel(current.request.kind),
+              key: const Key('decision-kind-label'),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Karar #${current.request.sequence}',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+          ],
           DecisionPanel(
             pending: current,
             submitting: submitting,

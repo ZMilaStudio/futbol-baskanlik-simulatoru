@@ -7,7 +7,9 @@ import 'package:futbol_baskanlik_app/controller/game_flow_controller.dart';
 import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
 import 'package:futbol_baskanlik_app/decisions/decision_resolution_panel.dart';
 import 'package:futbol_baskanlik_app/main.dart';
+import 'package:futbol_baskanlik_app/screens/club_selection_screen.dart';
 import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
+import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_unified_decision_gateway_runtime.dart';
 
@@ -61,6 +63,22 @@ void main() {
     await pumpApp(tester);
 
     expect(find.text('Futbol Başkanlık Simülatörü'), findsOneWidget);
+    expect(
+      find.text(
+        'Kulübünün başkanı olarak karşına çıkan yönetim kararlarıyla '
+        'kulübünün geleceğine yön verirsin. Maç taktiğini değil, '
+        'kulübü yönetirsin.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Kararı incele, seçimini yap ve uygulanan sonucu gör. '
+        'Kararlar tamamlandığında sezon raporunu inceleyebilirsin. '
+        'Başkanlığın sürüyorsa sonraki sezona geçebilirsin.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Yeni Oyun'), findsOneWidget);
     expect(find.text('Kayıt Yükle'), findsOneWidget);
 
@@ -95,7 +113,25 @@ void main() {
 
     final clubs = composition.world.clubs;
     expect(clubs, hasLength(48));
+    for (final club in clubs) {
+      final expected = composition.world.leagues.singleWhere(
+        (league) => league.clubIds.contains(club.id),
+      );
+      expect(
+        initialLeagueForClub(club, composition.world.leagues),
+        same(expected),
+      );
+    }
     expect(find.text(clubs.first.name), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(Key('club-${clubs.first.id}')),
+        matching: find.text(
+          'Başlangıç ligi: ${composition.world.leagues.first.name}',
+        ),
+      ),
+      findsOneWidget,
+    );
 
     await tester.scrollUntilVisible(
       find.text(clubs.last.name),
@@ -295,4 +331,203 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Yeni Oyun'), findsOneWidget);
   });
+  testWidgets('club selection subtitles follow all three canonical leagues',
+      (tester) async {
+    await pumpApp(tester);
+    await openClubSelection(tester);
+
+    final clubs = composition.world.clubs;
+    for (final index in [0, 16, 32, 47]) {
+      final club = clubs[index];
+      final league = initialLeagueForClub(club, composition.world.leagues)!;
+      final card = find.byKey(Key('club-${club.id}'));
+      await tester.scrollUntilVisible(
+        card,
+        350,
+        scrollable: find.descendant(
+          of: find.byKey(const Key('club-list')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.text('Başlangıç ligi: ${league.name}'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.widget<InkWell>(
+        find.descendant(of: card, matching: find.byType(InkWell)),
+      ).onTap, isNotNull);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('missing or duplicate league membership disables selection',
+      (tester) async {
+    final club = composition.world.clubs.first;
+    final league = WorldLeague(
+      tier: LeagueTier.first,
+      clubIds: [club.id],
+    );
+    expect(initialLeagueForClub(club, []), isNull);
+    expect(initialLeagueForClub(club, [league, league]), isNull);
+    expect(
+      initialLeagueForClub(
+        club,
+        [WorldLeague(tier: LeagueTier.first, clubIds: [club.id, club.id])],
+      ),
+      isNull,
+    );
+
+    var starts = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ClubSelectionTile(
+            club: club,
+            league: initialLeagueForClub(club, [league, league]),
+            onSelected: () => starts++,
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Lig bilgisi doğrulanamadı.'), findsOneWidget);
+    expect(tester.widget<InkWell>(find.byType(InkWell)).onTap, isNull);
+    await tester.tap(find.text(club.name), warnIfMissed: false);
+    expect(starts, 0);
+  });
+
+  testWidgets('320px TextScale 2 keeps canonical club list scroll-reachable',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(2.0),
+          ),
+          child: child!,
+        ),
+        home: ClubSelectionScreen(composition: composition),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final firstCard = find.byKey(
+      Key('club-${composition.world.clubs.first.id}'),
+    );
+    await tester.scrollUntilVisible(
+      firstCard,
+      300,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('club-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(firstCard, findsOneWidget);
+    expect(
+      find.descendant(
+        of: firstCard,
+        matching: find.text(
+          'Başlangıç ligi: ${composition.world.leagues.first.name}',
+        ),
+      ),
+      findsOneWidget,
+    );
+    final lastClub = composition.world.clubs.last;
+    await tester.scrollUntilVisible(
+      find.byKey(Key('club-${lastClub.id}')),
+      300,
+      scrollable: find.descendant(
+          of: find.byKey(const Key('club-list')),
+          matching: find.byType(Scrollable),
+        ),
+    );
+    expect(find.byKey(Key('club-${lastClub.id}')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('long club name and canonical league wrap at TextScale 2',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    const club = Club(
+      id: 'long_name_fixture',
+      name: 'Çok Uzun İsimli Kurgusal Kulüp Spor ve Kültür '
+          'Dayanışma Başkanlık Derneği',
+      strength: 50,
+    );
+    final league = WorldLeague(
+      tier: LeagueTier.third,
+      clubIds: [club.id],
+    );
+    var selected = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(2.0),
+          ),
+          child: child!,
+        ),
+        home: Scaffold(
+          body: ListView(
+            children: [
+              ClubSelectionTile(
+                club: club,
+                league: initialLeagueForClub(club, [league]),
+                onSelected: () => selected = true,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(club.name), findsOneWidget);
+    expect(find.text('Başlangıç ligi: Ufuk Ligi'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const Key('club-long_name_fixture')));
+    expect(selected, isTrue);
+  });
+
+  testWidgets('320px TextScale 2 keeps both opening CTAs accessible',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(2.0),
+          ),
+          child: child!,
+        ),
+        home: FutbolBaskanlikApp(composition: composition),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('opening-role-description')), findsOneWidget);
+    expect(
+      find.byKey(const Key('opening-career-flow-description')),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(find.byKey(const Key('new-game-button')));
+    await tester.ensureVisible(find.byKey(const Key('load-game-button')));
+    expect(tester.takeException(), isNull);
+  });
+
 }
