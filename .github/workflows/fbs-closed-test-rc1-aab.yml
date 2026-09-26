@@ -1,0 +1,131 @@
+name: FBS Closed Test RC1 AAB
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type FBS_CLOSED_TEST_RC1 to generate a signed Play upload AAB'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fbs-closed-test-rc1
+  cancel-in-progress: false
+
+jobs:
+  build-signed-aab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Confirm release and checkout exact SHA
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$CONFIRMATION" = "FBS_CLOSED_TEST_RC1"
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Lock product source and first test identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --quiet 76c785296aa70b754d90a28c130930293a7d3e1d -- lib test tool app/lib app/test
+          test "$(sed -nE 's/^version:[[:space:]]*([^[:space:]]+).*$/\1/p' app/pubspec.yaml)" = "0.1.0+1"
+          grep -Fq 'applicationId = "com.zmilastudio.futbol_baskanlik_app"' app/android/app/build.gradle.kts
+          grep -Fxq '        targetSdk = 36' app/android/app/build.gradle.kts
+          mkdir -p reports dist
+          printf '%s\n' "$GITHUB_SHA" > reports/SOURCE_SHA.txt
+          printf '%s\n' '0.1.0+1' > reports/VERSION.txt
+          printf '%s\n' 'com.zmilastudio.futbol_baskanlik_app' > reports/APPLICATION_ID.txt
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Analyze and test unchanged Flutter product
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      - name: Restore upload key from GitHub Actions secrets
+        working-directory: app
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.FBS_ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FBS_ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.FBS_ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.FBS_ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+          chmod 600 android/key.properties android/app/upload-keystore.jks
+          test -s android/key.properties
+          test -s android/app/upload-keystore.jks
+
+      - name: Build Play upload AAB
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build appbundle --release
+          AAB=build/app/outputs/bundle/release/app-release.aab
+          test -s "$AAB"
+          cp "$AAB" ../dist/FBS-0.1.0-1-closed-test-rc1.aab
+          # AAB manifest is protobuf encoded. Retain the Gradle-merged release
+          # manifest as build evidence rather than reading the source manifest.
+          MERGED_MANIFEST="$(find build/app/intermediates -type f -name AndroidManifest.xml -path '*/merged_manifest*/release/*' -print -quit)"
+          test -n "$MERGED_MANIFEST"
+          cp "$MERGED_MANIFEST" ../reports/RELEASE_MERGED_MANIFEST.xml
+          grep -Fq 'android:targetSdkVersion="36"' ../reports/RELEASE_MERGED_MANIFEST.xml
+          grep -Fq 'package="com.zmilastudio.futbol_baskanlik_app"' ../reports/RELEASE_MERGED_MANIFEST.xml
+
+      - name: Verify AAB archive and upload signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB=dist/FBS-0.1.0-1-closed-test-rc1.aab
+          unzip -t "$AAB" > reports/ARCHIVE_VERIFICATION.txt
+          jarsigner -verify "$AAB" > reports/SIGNATURE_VERIFICATION.txt
+          grep -Fq 'jar verified.' reports/SIGNATURE_VERIFICATION.txt
+          keytool -printcert -jarfile "$AAB" > reports/UPLOAD_CERTIFICATE.txt
+          unzip -Z1 "$AAB" > reports/AAB_ENTRIES.txt
+          ! grep -Eiq '(^|/)(key\.properties|.*\.(jks|keystore|p12))$' reports/AAB_ENTRIES.txt
+          sha256sum "$AAB" > reports/AAB_SHA256.txt
+
+      - name: Upload signed AAB and non-secret evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: FBS-0.1.0-1-closed-test-rc1
+          path: |
+            dist/*.aab
+            reports/
+          if-no-files-found: error
+          retention-days: 14

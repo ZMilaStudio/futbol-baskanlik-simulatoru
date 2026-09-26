@@ -57,6 +57,36 @@ jobs:
         working-directory: app
         run: flutter build apk --debug
 
+      - name: Verify built debug APK identity and record SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/app/outputs/flutter-apk/app-debug.apk
+          test -s "$APK"
+          mkdir -p dist reports
+          cp "$APK" dist/FBS-M101-debug.apk
+          printf '%s\n' "$GITHUB_SHA" > reports/APK_SOURCE_SHA.txt
+          sha256sum dist/FBS-M101-debug.apk > reports/APK_SHA256.txt
+          AAPT="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)"
+          test -n "$AAPT"
+          "$AAPT" dump badging dist/FBS-M101-debug.apk > reports/APK_BADGING.txt
+          grep -Fq "package: name='com.zmilastudio.futbol_baskanlik_app' versionCode='1' versionName='0.1.0'" reports/APK_BADGING.txt
+          grep -Fxq "targetSdkVersion:'36'" reports/APK_BADGING.txt
+          cat reports/APK_SOURCE_SHA.txt reports/APK_SHA256.txt
+          echo "FBS_DEBUG_APK_IDENTITY_VERIFIED package=com.zmilastudio.futbol_baskanlik_app versionCode=1 targetSdk=36"
+
+      - name: Upload installable debug APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: FBS-M101-debug-apk-${{ github.sha }}
+          path: |
+            dist/FBS-M101-debug.apk
+            reports/APK_SOURCE_SHA.txt
+            reports/APK_SHA256.txt
+            reports/APK_BADGING.txt
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Launch debug APK on Android emulator
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
