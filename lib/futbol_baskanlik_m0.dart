@@ -158,6 +158,7 @@ export 'src/save/sponsor_runtime_save_codec.dart';
 export 'src/save/world_save_codec.dart';
 export 'src/season/season_engine.dart';
 export 'src/season/season_report.dart';
+export 'src/season/weekly_world_commit_session.dart';
 export 'src/season/weekly_world_fixture_result_core.dart';
 export 'src/season/season_validator.dart';
 export 'src/sponsor/sponsor_system.dart';
