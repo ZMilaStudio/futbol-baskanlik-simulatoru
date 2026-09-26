@@ -40,6 +40,7 @@ jobs:
           git diff --quiet 76c785296aa70b754d90a28c130930293a7d3e1d -- lib test tool app/lib app/test
           test "$(sed -nE 's/^version:[[:space:]]*([^[:space:]]+).*$/\1/p' app/pubspec.yaml)" = "0.1.0+1"
           grep -Fq 'applicationId = "com.zmilastudio.futbol_baskanlik_app"' app/android/app/build.gradle.kts
+          grep -Fxq '        targetSdk = 36' app/android/app/build.gradle.kts
           mkdir -p reports dist
           printf '%s\n' "$GITHUB_SHA" > reports/SOURCE_SHA.txt
           printf '%s\n' '0.1.0+1' > reports/VERSION.txt
@@ -98,6 +99,13 @@ jobs:
           AAB=build/app/outputs/bundle/release/app-release.aab
           test -s "$AAB"
           cp "$AAB" ../dist/FBS-0.1.0-1-closed-test-rc1.aab
+          # AAB manifest is protobuf encoded. Retain the Gradle-merged release
+          # manifest as build evidence rather than reading the source manifest.
+          MERGED_MANIFEST="$(find build/app/intermediates -type f -name AndroidManifest.xml -path '*/merged_manifest*/release/*' -print -quit)"
+          test -n "$MERGED_MANIFEST"
+          cp "$MERGED_MANIFEST" ../reports/RELEASE_MERGED_MANIFEST.xml
+          grep -Fq 'android:targetSdkVersion="36"' ../reports/RELEASE_MERGED_MANIFEST.xml
+          grep -Fq 'package="com.zmilastudio.futbol_baskanlik_app"' ../reports/RELEASE_MERGED_MANIFEST.xml
 
       - name: Verify AAB archive and upload signature
         shell: bash

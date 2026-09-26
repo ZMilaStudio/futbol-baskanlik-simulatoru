@@ -36,7 +36,7 @@ android {
     defaultConfig {
         applicationId = "com.zmilastudio.futbol_baskanlik_app"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
