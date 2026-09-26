@@ -57,20 +57,6 @@ jobs:
         working-directory: app
         run: flutter build apk --debug
 
-      - name: Launch debug APK on Android emulator
-        uses: ReactiveCircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          arch: x86_64
-          profile: pixel_6
-          disable-animations: true
-          script: |
-            adb install -r app/build/app/outputs/flutter-apk/app-debug.apk
-            adb shell am start -W -n com.zmilastudio.futbol_baskanlik_app/.MainActivity
-            sleep 5
-            test -n "$(adb shell pidof com.zmilastudio.futbol_baskanlik_app | tr -d '\r')"
-            echo "M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app"
-
       - name: Verify built debug APK identity and record SHA-256
         shell: bash
         run: |
@@ -100,3 +86,17 @@ jobs:
             reports/APK_BADGING.txt
           if-no-files-found: error
           retention-days: 14
+
+      - name: Launch debug APK on Android emulator
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install -r app/build/app/outputs/flutter-apk/app-debug.apk
+            adb shell am start -W -n com.zmilastudio.futbol_baskanlik_app/.MainActivity
+            sleep 5
+            test -n "$(adb shell pidof com.zmilastudio.futbol_baskanlik_app | tr -d '\r')"
+            echo "M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app"
