@@ -8,6 +8,7 @@ import 'package:futbol_baskanlik_m0/player_president_interactive_decision_new_ga
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_persistence_bundle.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_transcript_snapshot.dart';
 import 'package:futbol_baskanlik_m0/player_president_unified_decision_gateway_runtime.dart';
+import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:test/test.dart';
 
 void _emit(String label, String encoded) {
