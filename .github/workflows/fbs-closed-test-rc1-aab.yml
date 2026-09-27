@@ -38,7 +38,32 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          git diff --quiet 76c785296aa70b754d90a28c130930293a7d3e1d -- lib test tool app/lib app/test
+          # Keep the canonical engine and the successful RC1 signing baseline
+          # unchanged except for this exact, approved policy-link/icon delta.
+          git diff --quiet 76c785296aa70b754d90a28c130930293a7d3e1d -- lib test tool
+          git diff --quiet f659088761a1ddb41cca5ab35b602a2296a4ee1b -- app \
+            ':(exclude)app/lib/screens/opening_screen.dart' \
+            ':(exclude)app/pubspec.yaml' \
+            ':(exclude)app/pubspec.lock' \
+            ':(exclude)app/test/widget_test.dart' \
+            ':(exclude)app/android/app/src/main/AndroidManifest.xml' \
+            ':(exclude)app/android/app/src/main/res/mipmap-mdpi/ic_launcher.png' \
+            ':(exclude)app/android/app/src/main/res/mipmap-hdpi/ic_launcher.png' \
+            ':(exclude)app/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png' \
+            ':(exclude)app/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png' \
+            ':(exclude)app/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png'
+          cat <<'EOF' | sha256sum --check --strict
+          8c6d0970f4c8ef17b1d847bc4e9c1feb66012f100efdebf331f6c1fabc5d15b5  app/lib/screens/opening_screen.dart
+          b96771a98a3b10a67361df25eaf51fc23e5916871b1832472c48e889743db907  app/pubspec.yaml
+          b90e48b53770c96dd4ccb25b257fda27d840ba7614af09d6e738c72e21b1c24e  app/pubspec.lock
+          fc0ca949aca3c79f3cdd6db7876a6b4a1b64dd745fddf9242fbd1b3733f31df1  app/test/widget_test.dart
+          c97d6802e7a10353f5536f768e5f3ab099530e6f35737e7f5cab831a4ccd9fc9  app/android/app/src/main/AndroidManifest.xml
+          bde502f29703a08ca7d705eabefd1738b01ad5892be1cc5693f5529ff6f5cd91  app/android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          f85e6baf8ef01b3a7304a658712d46b5ce1ff2ffdf577cdd3ccb7bfcf8e78dd5  app/android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          8598a7034be422577211b1e878a60f649bfe1d0bdeaed655d48de8abece67288  app/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          c0bda9db0ae44cf36aab27ae1a022aacbc982e94795cbb28798ee8a71c5311f5  app/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          0542335d3a15b507b01cedd00b34f650604cb8509a6acfa71cc6ae453a393537  app/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          EOF
           test "$(sed -nE 's/^version:[[:space:]]*([^[:space:]]+).*$/\1/p' app/pubspec.yaml)" = "0.1.0+1"
           grep -Fq 'applicationId = "com.zmilastudio.futbol_baskanlik_app"' app/android/app/build.gradle.kts
           grep -Fxq '        targetSdk = 36' app/android/app/build.gradle.kts

@@ -8,6 +8,7 @@ import 'package:futbol_baskanlik_app/decisions/decision_panel.dart';
 import 'package:futbol_baskanlik_app/decisions/decision_resolution_panel.dart';
 import 'package:futbol_baskanlik_app/main.dart';
 import 'package:futbol_baskanlik_app/screens/club_selection_screen.dart';
+import 'package:futbol_baskanlik_app/screens/opening_screen.dart';
 import 'package:futbol_baskanlik_app/screens/president_home_screen.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
@@ -81,11 +82,39 @@ void main() {
     );
     expect(find.text('Yeni Oyun'), findsOneWidget);
     expect(find.text('Kayıt Yükle'), findsOneWidget);
+    expect(find.byKey(const Key('privacy-policy-link')), findsOneWidget);
 
     final loadButton = tester.widget<OutlinedButton>(
       find.widgetWithText(OutlinedButton, 'Kayıt Yükle'),
     );
     expect(loadButton.onPressed, isNotNull);
+  });
+
+  testWidgets('Gizlilik Politikası opens the published external policy URL',
+      (tester) async {
+    Uri? launchedUri;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OpeningScreen(
+          composition: composition,
+          privacyPolicyLauncher: (uri) async {
+            launchedUri = uri;
+            return true;
+          },
+        ),
+      ),
+    );
+
+    await tester.ensureVisible(find.byKey(const Key('privacy-policy-link')));
+    await tester.tap(find.byKey(const Key('privacy-policy-link')));
+    await tester.pump();
+
+    expect(
+      launchedUri,
+      Uri.parse(
+        'https://zmilastudio.com/futbol-baskanlik-simulatoru/privacy/',
+      ),
+    );
   });
 
   testWidgets('Kayıt Yükle opens the real mixed save list', (tester) async {

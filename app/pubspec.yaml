@@ -12,6 +12,7 @@ dependencies:
   futbol_baskanlik_m0:
     path: ..
   path_provider: ^2.1.5
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
