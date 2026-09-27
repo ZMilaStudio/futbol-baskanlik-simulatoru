@@ -1,16 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../composition/app_composition.dart';
 import 'club_selection_screen.dart';
 import 'save_list_screen.dart';
 
+final _privacyPolicyUri = Uri.parse(
+  'https://zmilastudio.com/futbol-baskanlik-simulatoru/privacy/',
+);
+
+typedef PrivacyPolicyLauncher = Future<bool> Function(Uri uri);
+
 class OpeningScreen extends StatelessWidget {
   const OpeningScreen({
     super.key,
     required this.composition,
+    this.privacyPolicyLauncher = _launchPrivacyPolicy,
   });
 
   final AppComposition composition;
+  final PrivacyPolicyLauncher privacyPolicyLauncher;
+
+  static Future<bool> _launchPrivacyPolicy(Uri uri) => launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+  Future<void> _openPrivacyPolicy(BuildContext context) async {
+    final opened = await privacyPolicyLauncher(_privacyPolicyUri);
+    if (opened || !context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Gizlilik Politikası bağlantısı açılamadı.'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +126,13 @@ class OpeningScreen extends StatelessWidget {
                       padding: EdgeInsets.symmetric(vertical: 14),
                       child: Text('Kayıt Yükle'),
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton.icon(
+                    key: const Key('privacy-policy-link'),
+                    onPressed: () => _openPrivacyPolicy(context),
+                    icon: const Icon(Icons.privacy_tip_outlined),
+                    label: const Text('Gizlilik Politikası'),
                   ),
                 ],
               ),
