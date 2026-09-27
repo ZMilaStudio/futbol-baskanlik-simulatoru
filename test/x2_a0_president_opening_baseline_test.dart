@@ -59,6 +59,39 @@ Map<String, Object?> _row(String clubId) {
   };
 }
 
+/// Final X2-A0 gate: the collection-only mode must never be re-enabled.
+Map<String, Object?> _loadFrozenBaseline({String path = _fixturePath}) {
+  final fixture = File(path);
+  if (!fixture.existsSync()) {
+    throw StateError('X2-A0 frozen baseline fixture is missing: $path');
+  }
+
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(fixture.readAsStringSync());
+  } on FormatException catch (error) {
+    throw StateError(
+      'X2-A0 frozen baseline fixture is invalid JSON ($path): $error',
+    );
+  }
+  if (decoded is! Map) {
+    throw StateError('X2-A0 frozen baseline fixture must be a JSON object: $path');
+  }
+  return Map<String, Object?>.from(decoded);
+}
+
+void _verifyFrozenBaseline(
+  Map<String, Object?> evidence, {
+  String path = _fixturePath,
+}) {
+  final frozen = _loadFrozenBaseline(path: path);
+  expect(
+    evidence,
+    equals(frozen),
+    reason: 'Frozen extraction-before-production baseline changed.',
+  );
+}
+
 void main() {
   final world = const FictionalWorldFactory().build();
   final clubIds = world.leagues
@@ -128,14 +161,64 @@ void main() {
       print('X2A0_SAMPLE=${jsonEncode(rows.singleWhere((row) => row['clubId'] == sample))}');
     }
 
-    final fixture = File(_fixturePath);
-    if (fixture.existsSync()) {
-      final frozen = jsonDecode(fixture.readAsStringSync());
-      expect(evidence, equals(frozen),
-          reason: 'Frozen extraction-before-production baseline changed.');
-      print('X2A0_FROZEN_BASELINE_VERIFICATION=PASS');
-    } else {
-      print('X2A0_FROZEN_BASELINE_VERIFICATION=NOT_YET_FROZEN');
+    _verifyFrozenBaseline(evidence);
+    print('X2A0_FROZEN_BASELINE_VERIFICATION=PASS');
+  });
+
+  test('X2-A0 frozen baseline fails closed for missing, malformed, and drifted evidence', () {
+    final frozen = _loadFrozenBaseline();
+    expect(frozen['rows'], hasLength(48));
+    final temporary = Directory.systemTemp.createTempSync('x2a0-fail-closed-');
+    try {
+      final missingPath = '${temporary.path}/missing.json';
+      expect(
+        () => _verifyFrozenBaseline(frozen, path: missingPath),
+        throwsStateError,
+        reason: 'Missing fixture must reject the real verification entrypoint.',
+      );
+
+      final malformed = File('${temporary.path}/malformed.json')
+        ..writeAsStringSync('{broken json');
+      expect(
+        () => _verifyFrozenBaseline(frozen, path: malformed.path),
+        throwsStateError,
+      );
+      malformed.writeAsStringSync('[]');
+      expect(
+        () => _verifyFrozenBaseline(frozen, path: malformed.path),
+        throwsStateError,
+      );
+
+      Map<String, Object?> independentCopy() =>
+          Map<String, Object?>.from(jsonDecode(jsonEncode(frozen)) as Map);
+
+      final changedRow = independentCopy();
+      ((changedRow['rows'] as List).first as Map)['presidentName'] =
+          'X2A0_ROW_TAMPER';
+      expect(
+        () => _verifyFrozenBaseline(changedRow),
+        throwsA(isA<TestFailure>()),
+      );
+
+      final changedHeader = independentCopy();
+      changedHeader['sourceMainSha'] = 'X2A0_HEADER_TAMPER';
+      expect(
+        () => _verifyFrozenBaseline(changedHeader),
+        throwsA(isA<TestFailure>()),
+      );
+
+      final changedOrder = independentCopy();
+      final ordered = changedOrder['orderedClubIds'] as List;
+      final first = ordered[0];
+      ordered[0] = ordered[1];
+      ordered[1] = first;
+      expect(
+        () => _verifyFrozenBaseline(changedOrder),
+        throwsA(isA<TestFailure>()),
+      );
+      print('X2A0_FAIL_CLOSED_NEGATIVE_CASES=PASS');
+    } finally {
+      temporary.deleteSync(recursive: true);
     }
   });
 
