@@ -1,4 +1,5 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/src/world/world_opening_state_initializer.dart';
 import 'package:test/test.dart';
 
 void main() {
