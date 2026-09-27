@@ -53,11 +53,11 @@ jobs:
             ':(exclude)app/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png' \
             ':(exclude)app/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png'
           cat <<'EOF' | sha256sum --check --strict
-          8c6d0970f4c8ef17b1d847bc4e9c1feb66012f100efdebf331f6c1fabc5d15b5  app/lib/screens/opening_screen.dart
-          b96771a98a3b10a67361df25eaf51fc23e5916871b1832472c48e889743db907  app/pubspec.yaml
+          1f461581617a6797e5c15af6f2a39a15cfbbec30812dc7f4fb9f0a936537fb1b  app/lib/screens/opening_screen.dart
+          46b1fad9bddef2576403e0712b5d3a93c16626f7d3646a5814d5a1139fc26371  app/pubspec.yaml
           b90e48b53770c96dd4ccb25b257fda27d840ba7614af09d6e738c72e21b1c24e  app/pubspec.lock
-          fc0ca949aca3c79f3cdd6db7876a6b4a1b64dd745fddf9242fbd1b3733f31df1  app/test/widget_test.dart
-          c97d6802e7a10353f5536f768e5f3ab099530e6f35737e7f5cab831a4ccd9fc9  app/android/app/src/main/AndroidManifest.xml
+          dc4b28de9cc294501536ae2cac70942c6cd8e251ab246c2827fd1cea283cbcd8  app/test/widget_test.dart
+          61b32d47208bf3300fa94dbebf34699eb60338b99cef95160972ff1103d1126c  app/android/app/src/main/AndroidManifest.xml
           bde502f29703a08ca7d705eabefd1738b01ad5892be1cc5693f5529ff6f5cd91  app/android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           f85e6baf8ef01b3a7304a658712d46b5ce1ff2ffdf577cdd3ccb7bfcf8e78dd5  app/android/app/src/main/res/mipmap-hdpi/ic_launcher.png
           8598a7034be422577211b1e878a60f649bfe1d0bdeaed655d48de8abece67288  app/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
