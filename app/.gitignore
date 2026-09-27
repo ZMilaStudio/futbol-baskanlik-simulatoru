@@ -9,3 +9,9 @@ android/local.properties
 android/app/debug/
 android/app/profile/
 android/app/release/
+
+# Release signing material: keep private and outside Git history.
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+android/app/*.p12
