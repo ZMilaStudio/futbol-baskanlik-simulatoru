@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+
 import '../core/money.dart';
 import '../core/seeded_rng.dart';
 import '../core/stable_hash.dart';
@@ -6,6 +10,7 @@ import '../finance/wage_model.dart';
 import '../league/club.dart';
 import '../player/player.dart';
 import '../player/player_position.dart';
+import '../save/save_checksum.dart';
 import '../transfer/transfer_deal.dart';
 import '../world/league_tier.dart';
 import '../world/world_league.dart';
@@ -301,35 +306,19 @@ class PlayerContractController implements WorldRosterHooks {
     if (seasonIndex != initialSeasonIndex) {
       throw StateError('Contract initialization season mismatch.');
     }
-    final tierByClub = _tierByClub(leagues);
-    final ordered = List<Player>.of(players)..sort((a, b) => a.id.compareTo(b.id));
-    for (final player in ordered) {
-      final tier = tierByClub[player.clubId];
-      if (tier == null) {
-        throw StateError('Missing initial league tier for ${player.clubId}.');
-      }
-      final rng = _rng(seasonIndex, player.id, 'initial-contract');
-      final term = _initialTerm(player, rng);
-      final wage = _expectedWage(player, tier, rng);
-      _contracts[player.id] = PlayerContract(
-        playerId: player.id,
-        clubId: player.clubId,
-        startSeasonIndex: seasonIndex,
-        endSeasonIndex: seasonIndex + term,
-        annualWage: wage,
-      );
-      _events.add(
-        ContractEvent(
-          seasonIndex: seasonIndex,
-          playerId: player.id,
-          type: ContractEventType.initial,
-          fromClubId: null,
-          toClubId: player.clubId,
-          annualWage: wage,
-          endSeasonIndex: seasonIndex + term,
-        ),
-      );
+    // Keep the legacy lazy boundary: install state only when annual wages are
+    // first requested. The pure X1 generator owns the shared initial rules.
+    final opening = InitialContractOpeningGenerator(wageModel: wageModel).generate(
+      careerSeed: careerSeed,
+      simulationVersion: simulationVersion,
+      seasonIndex: seasonIndex,
+      players: players,
+      leagues: leagues,
+    );
+    for (final contract in opening.activeContracts) {
+      _contracts[contract.playerId] = contract;
     }
+    _events.addAll(opening.initialEvents);
     _initialized = true;
   }
 
@@ -418,12 +407,6 @@ class PlayerContractController implements WorldRosterHooks {
     }
   }
 
-  int _initialTerm(Player player, SeededRng rng) {
-    if (player.age <= 21) return 3 + (rng.nextDouble() * 3).floor();
-    if (player.age >= 31) return 1 + (rng.nextDouble() * 3).floor();
-    return 2 + (rng.nextDouble() * 4).floor();
-  }
-
   int _renewalTerm(Player player, SeededRng rng) {
     if (player.age >= 32) return 1 + (rng.nextDouble() * 2).floor();
     if (player.age <= 23) return 3 + (rng.nextDouble() * 3).floor();
@@ -435,34 +418,25 @@ class PlayerContractController implements WorldRosterHooks {
     LeagueTier tier,
     SeededRng rng, {
     int premiumBps = 10000,
-  }) {
-    final market = wageModel.annualWage(player);
-    final randomBps = 9300 + (rng.nextDouble() * 1500).floor();
-    return market
-        .scaleBasisPoints(tier.costScaleBps)
-        .scaleBasisPoints(randomBps)
-        .scaleBasisPoints(premiumBps)
-        .max(const Money.fromUnits(60000));
-  }
+  }) =>
+      _ContractGenerationRules.expectedWage(
+        wageModel: wageModel,
+        player: player,
+        tier: tier,
+        rng: rng,
+        premiumBps: premiumBps,
+      );
 
-  Map<String, LeagueTier> _tierByClub(List<WorldLeague> leagues) {
-    final result = <String, LeagueTier>{};
-    for (final league in leagues) {
-      for (final clubId in league.clubIds) {
-        result[clubId] = league.tier;
-      }
-    }
-    return result;
-  }
+  Map<String, LeagueTier> _tierByClub(List<WorldLeague> leagues) =>
+      _ContractGenerationRules.tierByClub(leagues);
 
-  SeededRng _rng(int seasonIndex, String playerId, String purpose) => SeededRng(
-        StableHash.combine32([
-          careerSeed,
-          simulationVersion,
-          seasonIndex,
-          StableHash.string32(playerId),
-          StableHash.string32(purpose),
-        ]),
+  SeededRng _rng(int seasonIndex, String playerId, String purpose) =>
+      _ContractGenerationRules.rng(
+        careerSeed: careerSeed,
+        simulationVersion: simulationVersion,
+        seasonIndex: seasonIndex,
+        playerId: playerId,
+        purpose: purpose,
       );
 
   double _freeAgentScore(Player player) {
@@ -490,4 +464,223 @@ class PlayerContractController implements WorldRosterHooks {
     }
     return selected!;
   }
+}
+
+
+/// Immutable in-memory result of the existing initial-contract rules.
+/// It is neither an M65 checkpoint nor a persisted game-state authority.
+class InitialContractOpeningState {
+  InitialContractOpeningState({
+    required this.careerSeed,
+    required this.simulationVersion,
+    required this.seasonIndex,
+    required this.sourceDigest,
+    required this.sourcePlayerCount,
+    required this.sourceLeagueCount,
+    required Iterable<PlayerContract> activeContracts,
+    required Iterable<ContractEvent> initialEvents,
+  })  : activeContracts = List.unmodifiable(activeContracts),
+        initialEvents = List.unmodifiable(initialEvents);
+
+  final int careerSeed;
+  final int simulationVersion;
+  final int seasonIndex;
+  final String sourceDigest;
+  final int sourcePlayerCount;
+  final int sourceLeagueCount;
+  final List<PlayerContract> activeContracts;
+  final List<ContractEvent> initialEvents;
+
+  /// Compare against independently supplied inputs. A hash is a content
+  /// identity, not source authentication, a monotonic revision or disk CAS.
+  bool matchesSource({
+    required int careerSeed,
+    required int simulationVersion,
+    required int seasonIndex,
+    required List<Player> players,
+    required List<WorldLeague> leagues,
+  }) =>
+      this.careerSeed == careerSeed &&
+      this.simulationVersion == simulationVersion &&
+      this.seasonIndex == seasonIndex &&
+      sourcePlayerCount == players.length &&
+      sourceLeagueCount == leagues.length &&
+      sourceDigest ==
+          InitialContractOpeningGenerator.sourceDigestFor(
+            careerSeed: careerSeed,
+            simulationVersion: simulationVersion,
+            seasonIndex: seasonIndex,
+            players: players,
+            leagues: leagues,
+          );
+}
+
+/// Pure X1 opening seam. The legacy lazy controller delegates its first
+/// initialization to this exact generator; there is no parallel rule path.
+class InitialContractOpeningGenerator {
+  const InitialContractOpeningGenerator({
+    this.wageModel = const WageModel(),
+  });
+
+  final WageModel wageModel;
+
+  InitialContractOpeningState generate({
+    required int careerSeed,
+    required int simulationVersion,
+    required int seasonIndex,
+    required List<Player> players,
+    required List<WorldLeague> leagues,
+  }) {
+    final sourcePlayers = List<Player>.of(players);
+    final sourceLeagues = List<WorldLeague>.of(leagues);
+    final tierByClub = _ContractGenerationRules.tierByClub(sourceLeagues);
+    final ordered = List<Player>.of(sourcePlayers)
+      ..sort((a, b) => a.id.compareTo(b.id));
+    final contractsById = <String, PlayerContract>{};
+    final events = <ContractEvent>[];
+
+    for (final player in ordered) {
+      final tier = tierByClub[player.clubId];
+      if (tier == null) {
+        throw StateError('Missing initial league tier for ${player.clubId}.');
+      }
+      final rng = _ContractGenerationRules.rng(
+        careerSeed: careerSeed,
+        simulationVersion: simulationVersion,
+        seasonIndex: seasonIndex,
+        playerId: player.id,
+        purpose: 'initial-contract',
+      );
+      final term = _ContractGenerationRules.initialTerm(player, rng);
+      final wage = _ContractGenerationRules.expectedWage(
+        wageModel: wageModel,
+        player: player,
+        tier: tier,
+        rng: rng,
+      );
+      contractsById[player.id] = PlayerContract(
+        playerId: player.id,
+        clubId: player.clubId,
+        startSeasonIndex: seasonIndex,
+        endSeasonIndex: seasonIndex + term,
+        annualWage: wage,
+      );
+      events.add(ContractEvent(
+        seasonIndex: seasonIndex,
+        playerId: player.id,
+        type: ContractEventType.initial,
+        fromClubId: null,
+        toClubId: player.clubId,
+        annualWage: wage,
+        endSeasonIndex: seasonIndex + term,
+      ));
+    }
+
+    final contracts = contractsById.values.toList()
+      ..sort((a, b) => a.playerId.compareTo(b.playerId));
+    return InitialContractOpeningState(
+      careerSeed: careerSeed,
+      simulationVersion: simulationVersion,
+      seasonIndex: seasonIndex,
+      sourceDigest: sourceDigestFor(
+        careerSeed: careerSeed,
+        simulationVersion: simulationVersion,
+        seasonIndex: seasonIndex,
+        players: sourcePlayers,
+        leagues: sourceLeagues,
+      ),
+      sourcePlayerCount: sourcePlayers.length,
+      sourceLeagueCount: sourceLeagues.length,
+      activeContracts: contracts,
+      initialEvents: events,
+    );
+  }
+
+  static String sourceDigestFor({
+    required int careerSeed,
+    required int simulationVersion,
+    required int seasonIndex,
+    required List<Player> players,
+    required List<WorldLeague> leagues,
+  }) {
+    final canonical = SaveChecksum.canonicalJson({
+      'careerSeed': careerSeed,
+      'simulationVersion': simulationVersion,
+      'seasonIndex': seasonIndex,
+      'players': [
+        for (final player in players)
+          {
+            'id': player.id,
+            'name': player.name,
+            'clubId': player.clubId,
+            'position': player.position.name,
+            'age': player.age,
+            'ability': player.ability,
+            'potential': player.potential,
+            'retirementAge': player.retirementAge,
+            'isAcademyGraduate': player.isAcademyGraduate,
+          },
+      ],
+      'leagues': [
+        for (final league in leagues)
+          {'tier': league.tier.name, 'clubIds': league.clubIds},
+      ],
+    });
+    return sha256
+        .convert(utf8.encode('FBS-X1/initial-contract-source/v1|$canonical'))
+        .toString();
+  }
+}
+
+/// One rule kernel, shared by initial and later legacy contract operations.
+/// RNG draw order, term, wage rounding and last-tier-wins mapping are unchanged.
+class _ContractGenerationRules {
+  const _ContractGenerationRules._();
+
+  static int initialTerm(Player player, SeededRng rng) {
+    if (player.age <= 21) return 3 + (rng.nextDouble() * 3).floor();
+    if (player.age >= 31) return 1 + (rng.nextDouble() * 3).floor();
+    return 2 + (rng.nextDouble() * 4).floor();
+  }
+
+  static Money expectedWage({
+    required WageModel wageModel,
+    required Player player,
+    required LeagueTier tier,
+    required SeededRng rng,
+    int premiumBps = 10000,
+  }) {
+    final market = wageModel.annualWage(player);
+    final randomBps = 9300 + (rng.nextDouble() * 1500).floor();
+    return market
+        .scaleBasisPoints(tier.costScaleBps)
+        .scaleBasisPoints(randomBps)
+        .scaleBasisPoints(premiumBps)
+        .max(const Money.fromUnits(60000));
+  }
+
+  static Map<String, LeagueTier> tierByClub(List<WorldLeague> leagues) {
+    final result = <String, LeagueTier>{};
+    for (final league in leagues) {
+      for (final clubId in league.clubIds) {
+        result[clubId] = league.tier;
+      }
+    }
+    return result;
+  }
+
+  static SeededRng rng({
+    required int careerSeed,
+    required int simulationVersion,
+    required int seasonIndex,
+    required String playerId,
+    required String purpose,
+  }) =>
+      SeededRng(StableHash.combine32([
+        careerSeed,
+        simulationVersion,
+        seasonIndex,
+        StableHash.string32(playerId),
+        StableHash.string32(purpose),
+      ]));
 }
