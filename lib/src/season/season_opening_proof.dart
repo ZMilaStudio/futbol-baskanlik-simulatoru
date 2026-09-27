@@ -8,7 +8,6 @@ import '../finance/club_finance_state.dart';
 import '../league/club.dart';
 import '../player/player.dart';
 import '../player_president/player_president_interactive_decision_application_session.dart';
-import '../player_president/player_president_interactive_decision_new_game_bootstrap_snapshot.dart';
 import '../save/save_checksum.dart';
 import '../world/league_tier.dart';
 import '../world/world_league.dart';
@@ -215,6 +214,26 @@ class SeasonOpeningProof {
     if (originSourceDigest != fresh.originSourceDigest ||
         _canonicalIdentity != fresh._canonicalIdentity) {
       throw StateError('Opening does not match the supplied career authority.');
+    }
+  }
+
+  /// Diagnostic check of independently observed opening data. This does not
+  /// authenticate the observed data: first verify the original M79/M65 source
+  /// with verifyNewGame/verifyCompletedM65. Used to detect later projection
+  /// drift without giving the projection game-state authority.
+  void assertOpeningProjectionMatches(WorldOpeningState observed) {
+    _validateOpening(observed, seasonIndex, controlledClubId, config);
+    final observedState = {
+      'seasonIndex': seasonIndex,
+      'controlledClubId': controlledClubId,
+      'config': _config(config),
+      'orderedWorld': _orderedWorld(observed),
+      'players': _players(observed.players),
+      'finance': _finance(observed.financeStates),
+    };
+    if (_digest('opening-career-state', observedState) !=
+        openingCareerStateDigest) {
+      throw StateError('Observed opening differs from authoritative source.');
     }
   }
 
