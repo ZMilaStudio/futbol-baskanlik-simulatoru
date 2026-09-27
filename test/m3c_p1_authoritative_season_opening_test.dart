@@ -1,5 +1,5 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
-import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
+import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
@@ -385,11 +385,11 @@ void main() {
     expect(pendingProof.originKind, SeasonOpeningOriginKind.newGame);
 
     // Submit a real, valid M73/M79 answer and confirm M74/M80 captured it.
-    expect(first.request.kind,
-        PlayerPresidentInteractiveDecisionKind.facilityInvestment);
+    expect(first.request.kind, PlayerPresidentInteractiveDecisionKind.sponsor);
+    final context = first.request.contextAs<PlayerSponsorDecisionContext>();
     app.submit(
       request: first.request,
-      choice: PlayerFacilityInvestmentChoice.hold,
+      choice: PlayerSponsorOfferChoice(offerId: context.aiChoice.id),
     );
     expect(app.answeredDecisionCount, 1);
     final transcript = app.newGameBootstrapSnapshot.transcript;
