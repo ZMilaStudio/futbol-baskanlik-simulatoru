@@ -1,4 +1,5 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
+import 'package:futbol_baskanlik_m0/player_president_facility_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
@@ -373,16 +374,34 @@ void main() {
     final app = newGame();
     final first = app.advance() as PlayerPresidentInteractiveDecisionPending;
     expect(first.request.key, isNotEmpty);
-    // The existing pending decision alone is not accepted; P1 remains valid.
-    startProof(application: app);
+    expect(app.answeredDecisionCount, 0);
+    expect(app.newGameBootstrapSnapshot.transcript.decisionCount, 0);
+
+    // A pending request alone is not an accepted answer: P1 is still valid.
+    final pendingProof = startProof(
+      application: app,
+      expectedRules: SeasonOpeningProof.rulesetId,
+    );
+    expect(pendingProof.originKind, SeasonOpeningOriginKind.newGame);
+
+    // Submit a real, valid M73/M79 answer and confirm M74/M80 captured it.
+    expect(first.request.kind,
+        PlayerPresidentInteractiveDecisionKind.facilityInvestment);
+    app.submit(
+      request: first.request,
+      choice: PlayerFacilityInvestmentChoice.hold,
+    );
+    expect(app.answeredDecisionCount, 1);
+    final transcript = app.newGameBootstrapSnapshot.transcript;
+    expect(transcript.decisionCount, 1);
+    expect(transcript.entries, isNotEmpty);
+    expect(transcript.entries.single.requestKey, first.request.key);
+
+    // The ruleset is correct; rejection must be caused by the accepted answer.
     expect(
-      () => SeasonOpeningProof.fromNewGame(
+      () => startProof(
         application: app,
-        sourceClubs: world.clubs,
-        sourceLeagues: world.leagues,
-        expectedSeasonIndex: 0,
-        expectedControlledClubId: controlledClubId,
-        expectedRulesetId: 'different-rules',
+        expectedRules: SeasonOpeningProof.rulesetId,
       ),
       throwsStateError,
     );
