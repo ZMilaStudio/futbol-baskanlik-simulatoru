@@ -2,6 +2,7 @@ import '../core/simulation_config.dart';
 import '../crisis/crisis_decision_core.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../election/player_president_tenure_control_gate.dart';
+import '../election/president_opening_state_initializer.dart';
 import '../election/president_tenure.dart';
 import '../fan/fan_state.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
@@ -503,21 +504,14 @@ PlayerPresidentPreparedSeasonDashboardSnapshot _preparedDashboardForNewGame({
     (state) => state.clubId == controlledClubId,
     'controlled-club opening finance',
   );
-  final fan = FanState.initial(controlledClubId);
-
-  final president = const PresidentProfileGenerator().generateInitial(
+  // M79 remains a single controlled-club projection, never a world checkpoint.
+  final presidentOpening = const PresidentOpeningStateInitializer().prepareClub(
     clubId: controlledClub.id,
-    careerSeed: config.careerSeed,
-    simulationVersion: config.simulationVersion,
-  );
-  final tenure = PresidentTenureState.initial(
-    clubId: controlledClub.id,
-    president: president,
-    startedSeasonIndex: config.seasonIndex,
+    config: config,
   );
   final playerControl = PlayerPresidentTenureControlState.initial(
     controlledClubId: controlledClub.id,
-    playerPresidentId: president.id,
+    playerPresidentId: presidentOpening.president.id,
   );
 
   final squadClubs = const TeamStrengthCalculator().deriveClubs(
@@ -577,8 +571,8 @@ PlayerPresidentPreparedSeasonDashboardSnapshot _preparedDashboardForNewGame({
     seasonIndex: config.seasonIndex,
     league: preparedLeague,
     finance: finance,
-    fanOverallTrust: fan.overallTrust,
-    presidentTenure: tenure,
+    fanOverallTrust: presidentOpening.fan.overallTrust,
+    presidentTenure: presidentOpening.tenure,
     playerControl: playerControl,
     manager: manager,
     managerAssignment: managerAssignment,
