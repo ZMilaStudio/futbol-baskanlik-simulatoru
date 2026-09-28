@@ -126,24 +126,33 @@ class PlayerPresidentPreseasonPromiseBoundary {
     final capture = _CaptureProvider(choice);
     final promises = <PresidentPromise>[];
     for (final item in contexts) {
-      final generator = item.context.clubId == context.controlledClubId
+      final controlled = item.context.clubId == context.controlledClubId;
+      final generator = controlled
           ? PlayerPresidentPromiseGenerator(
               controlledClubId: context.controlledClubId,
               decisionProvider: capture,
             )
           : const PromiseGenerator();
-      promises.add(
-        generator.generate(
-          context: item.context,
-          careerSeed: proof.seasonOpening.config.careerSeed,
-          simulationVersion: proof.seasonOpening.config.simulationVersion,
-        ),
+      final candidate = generator.generate(
+        context: item.context,
+        careerSeed: proof.seasonOpening.config.careerSeed,
+        simulationVersion: proof.seasonOpening.config.simulationVersion,
       );
+      if (!controlled && candidate.signature != item.aiPromise.signature) {
+        throw StateError('AI promise candidate parity failed.');
+      }
+      promises.add(candidate);
     }
     final consequence = capture.consequence;
     if (consequence == null ||
+        capture.applicationCount != 1 ||
+        consequence.context.signature != context.signature ||
         consequence.promise.type != choice ||
         consequence.promise.clubId != context.controlledClubId ||
+        consequence.promise.signature !=
+            promises
+                .singleWhere((item) => item.clubId == context.controlledClubId)
+                .signature ||
         promises.length != 48 ||
         promises.map((p) => p.clubId).toSet().length != 48) {
       throw StateError('Preseason candidate publication validation failed.');
@@ -172,9 +181,14 @@ class PlayerPresidentPreseasonPromisePending {
   });
   final PlayerPresidentPreseasonPromiseBoundary boundary;
   final PlayerPromiseDecisionContext context;
+  String get phase => 'preseasonPromise';
   int get sequence => 1;
+  String get kind => 'promise';
+  String get sourceIdentity => boundary.proof.seasonOpening.originSourceDigest;
+  String get clubId => context.controlledClubId;
+  String get contextSignature => context.signature;
   String get requestKey =>
-      'preseason-promise/v1:${boundary.proof.seasonOpening.originSourceDigest}:1:promise:${context.controlledClubId}:${context.signature}';
+      'preseason-promise/v1:$sourceIdentity:$sequence:$kind:$clubId:$contextSignature';
 }
 
 class PlayerPresidentPreseasonPromiseApplied {
@@ -202,6 +216,7 @@ class _CaptureProvider extends PlayerPromiseDecisionProvider {
   _CaptureProvider(this.choice);
   final PresidentPromiseType choice;
   PlayerPresidentPromiseConsequence? consequence;
+  int applicationCount = 0;
   @override
   PresidentPromiseType choosePromise(PlayerPromiseDecisionContext context) =>
       choice;
@@ -210,6 +225,7 @@ class _CaptureProvider extends PlayerPromiseDecisionProvider {
     PlayerPromiseDecisionContext context,
     PresidentPromise promise,
   ) {
+    applicationCount += 1;
     consequence = PlayerPresidentPromiseConsequence(
       context: context,
       promise: promise,

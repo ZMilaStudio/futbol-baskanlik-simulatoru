@@ -26,6 +26,13 @@ void main() {
     );
     final pending = boundary.pending!;
     expect(boundary.phase, PlayerPresidentPreseasonPromisePhase.pending);
+    expect(pending.phase, 'preseasonPromise');
+    expect(pending.sequence, 1);
+    expect(pending.kind, 'promise');
+    expect(pending.clubId, 't1_01');
+    expect(pending.contextSignature, pending.context.signature);
+    expect(pending.sourceIdentity,
+        boundary.proof.seasonOpening.originSourceDigest);
     expect(pending.requestKey, startsWith('preseason-promise/v1:'));
     expect(session.canPersist, isFalse);
     expect(session.canPersistBootstrap, isFalse);
@@ -141,5 +148,20 @@ void main() {
       boundary.pending!.context.context.clubId,
       boundary.proof.presidentOpening.controlledClubId,
     );
+  });
+
+  test('P2-A1b2 does not reserve M79 when source proof rejects the world', () {
+    final session = app();
+
+    expect(
+      () => PlayerPresidentPreseasonPromiseBoundary.start(
+        application: session,
+        sourceClubs: world.clubs.sublist(1),
+        sourceLeagues: world.leagues,
+      ),
+      throwsA(isA<SaveLoadException>()),
+    );
+    expect(session.canPersistBootstrap, isTrue);
+    expect(session.canPersist, isFalse);
   });
 }
