@@ -3,6 +3,7 @@ import '../league/club.dart';
 import '../world/world_league.dart';
 import 'president_election.dart';
 import 'president_election_career_engine.dart';
+import 'president_opening_state_initializer.dart';
 import 'president_tenure.dart';
 import 'president_tenure_career_report.dart';
 
@@ -41,15 +42,13 @@ class PresidentTenureCareerEngine {
     final initialStates = <PresidentTenureState>[];
     for (final clubId in clubIds) {
       initialStates.add(
-        PresidentTenureState.initial(
+        PresidentOpeningStateInitializer(
+          presidentGenerator: profileGenerator,
+        ).prepareClub(
           clubId: clubId,
-          president: profileGenerator.generateInitial(
-            clubId: clubId,
-            careerSeed: config.careerSeed,
-            simulationVersion: config.simulationVersion,
-          ),
+          config: config,
           startedSeasonIndex: firstSeasonIndex,
-        ),
+        ).tenure,
       );
     }
     final states = {
