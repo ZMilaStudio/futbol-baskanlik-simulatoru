@@ -7,6 +7,7 @@ import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../crisis/president_facility_investment_runtime_integration.dart';
 import '../election/player_president_tenure_control_gate.dart';
 import '../election/president_management_profile.dart';
+import '../election/president_opening_state_initializer.dart';
 import '../election/president_tenure.dart';
 import '../fan/fan_state.dart';
 import '../finance/basic_economy_engine.dart';
@@ -398,27 +399,18 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     required SimulationConfig config,
     required String controlledClubId,
   }) {
-    const presidentGenerator = PresidentProfileGenerator();
-    const managementGenerator = PresidentManagementProfileGenerator();
+    const opening = PresidentOpeningStateInitializer();
     final profiles = <String, PresidentManagementProfile>{};
     final fans = <String, FanState>{};
     final stadiums = <String, int>{};
     String? playerPresidentId;
     for (final club in clubs) {
-      final president = presidentGenerator.generateInitial(
-        clubId: club.id,
-        careerSeed: config.careerSeed,
-        simulationVersion: config.simulationVersion,
-      );
-      profiles[club.id] = managementGenerator.generate(
-        president: president,
-        careerSeed: config.careerSeed,
-        simulationVersion: config.simulationVersion,
-      );
-      fans[club.id] = FanState.initial(club.id);
+      final state = opening.prepareClub(clubId: club.id, config: config);
+      profiles[club.id] = state.managementProfile;
+      fans[club.id] = state.fan;
       stadiums[club.id] = 0;
       if (club.id == controlledClubId) {
-        playerPresidentId = president.id;
+        playerPresidentId = state.president.id;
       }
     }
     return _PricingRuntimeContext(
