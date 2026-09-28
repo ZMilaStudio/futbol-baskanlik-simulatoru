@@ -3,8 +3,6 @@ import '../crisis/crisis_decision_core.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../election/player_president_tenure_control_gate.dart';
 import '../election/president_opening_state_initializer.dart';
-import '../election/president_tenure.dart';
-import '../fan/fan_state.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
 import '../league/fixture_generator.dart';
