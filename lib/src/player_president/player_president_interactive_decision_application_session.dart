@@ -340,6 +340,19 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   final PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
       bootstrapCodec;
   final PlayerPresidentInteractiveDecisionTranscriptSession _session;
+  bool _preseasonPromiseReserved = false;
+
+  void reservePreseasonPromisePhase() {
+    if (!isNewGame ||
+        _preseasonPromiseReserved ||
+        _session.answeredDecisionCount != 0 ||
+        _session.completed != null) {
+      throw StateError(
+        'Preseason promise phase requires one pristine new game.',
+      );
+    }
+    _preseasonPromiseReserved = true;
+  }
 
   bool get isNewGame =>
       origin == PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame;
@@ -352,13 +365,14 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentPreparedSeasonFixturesSnapshot get preparedSeasonFixtures =>
       _preparedSeasonFixtures;
 
-  bool get canPersist => _checkpoint != null;
+  bool get canPersist => _checkpoint != null && !_preseasonPromiseReserved;
 
   bool get canPersistBootstrap =>
       isNewGame &&
       _newGameConfig != null &&
       _newGameControlledClubId != null &&
-      _newGameWorldFingerprint != null;
+      _newGameWorldFingerprint != null &&
+      !_preseasonPromiseReserved;
 
   PlayerPresidentTicketPricingRuntimeCheckpoint? get checkpointOrNull =>
       _checkpoint;
@@ -389,7 +403,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     final controlledClubId = _newGameControlledClubId;
     final worldFingerprint = _newGameWorldFingerprint;
     final electionInterval = newGameElectionInterval;
-    if (!isNewGame ||
+    if (_preseasonPromiseReserved ||
+        !isNewGame ||
         config == null ||
         controlledClubId == null ||
         worldFingerprint == null ||
@@ -430,6 +445,11 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
 
   PlayerPresidentInteractiveDecisionApplicationSession
       continuePlayerCareerToNextSeason() {
+    if (_preseasonPromiseReserved) {
+      throw StateError(
+        'Preseason promise phase cannot continue through the legacy career path.',
+      );
+    }
     final completed = _session.completed;
     if (completed == null) {
       throw StateError(
@@ -449,7 +469,13 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     );
   }
 
-  PlayerPresidentInteractiveSessionStep advance() => _session.advance();
+  PlayerPresidentInteractiveSessionStep advance() {
+    if (_preseasonPromiseReserved)
+      throw StateError(
+        'Legacy annual decisions are reserved by preseason promise phase.',
+      );
+    return _session.advance();
+  }
 
   PlayerPresidentInteractiveSessionStep submit({
     required PlayerPresidentInteractiveDecisionRequest request,
@@ -461,7 +487,11 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required PlayerPresidentInteractiveDecisionRequest request,
     required Object choice,
   }) =>
-      _session.submitWithResolution(request: request, choice: choice);
+      _preseasonPromiseReserved
+          ? throw StateError(
+              'Legacy annual decisions are reserved by preseason promise phase.',
+            )
+          : _session.submitWithResolution(request: request, choice: choice);
 }
 
 
