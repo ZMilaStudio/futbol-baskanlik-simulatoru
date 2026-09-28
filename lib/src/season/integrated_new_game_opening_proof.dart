@@ -101,14 +101,24 @@ class IntegratedNewGameOpeningProof {
   }
 
   /// Rebuilds every observation from a separately supplied M79/M80 source.
-  /// Source digests are content identities only; this method is the authority
-  /// check and never treats a proof's own values as authentication.
+  /// P1 validates its complete private canonical identity and M1 fixture plan
+  /// against that independent source; selected exposed digests are NOT enough.
+  /// Content digests are not authentication, monotonic revisions or CAS keys.
   void verifyNewGame({
     required PlayerPresidentInteractiveDecisionApplicationSession application,
     required List<Club> sourceClubs,
     required List<WorldLeague> sourceLeagues,
     String expectedRulesetId = SeasonOpeningProof.rulesetId,
   }) {
+    // Keep the existing P1 authority gate, including its private canonical
+    // identity and ordered fixture-plan comparison, rather than reducing it
+    // to selected visible digest fields.
+    seasonOpening.verifyNewGame(
+      application: application,
+      sourceClubs: sourceClubs,
+      sourceLeagues: sourceLeagues,
+      expectedRulesetId: expectedRulesetId,
+    );
     final fresh = IntegratedNewGameOpeningProof.fromNewGame(
       application: application,
       sourceClubs: sourceClubs,
@@ -122,12 +132,43 @@ class IntegratedNewGameOpeningProof {
             fresh.seasonOpening.originSourceDigest ||
         seasonOpening.openingCareerStateDigest !=
             fresh.seasonOpening.openingCareerStateDigest ||
-        initialContracts.sourceDigest != fresh.initialContracts.sourceDigest ||
         presidentDomainMemory.signature !=
             fresh.presidentDomainMemory.signature) {
       throw StateError(
         'Integrated opening differs from supplied M79 authority.',
       );
+    }
+
+    // X1 source identity alone does not verify the generated contracts or
+    // events. Compare independently regenerated ordered outputs as well as
+    // source metadata and per-player contract/event coverage.
+    final x1 = initialContracts;
+    final independentX1 = fresh.initialContracts;
+    if (x1.careerSeed != independentX1.careerSeed ||
+        x1.simulationVersion != independentX1.simulationVersion ||
+        x1.seasonIndex != independentX1.seasonIndex ||
+        x1.sourceDigest != independentX1.sourceDigest ||
+        x1.sourcePlayerCount != independentX1.sourcePlayerCount ||
+        x1.sourceLeagueCount != independentX1.sourceLeagueCount ||
+        x1.activeContracts.length != independentX1.activeContracts.length ||
+        x1.initialEvents.length != independentX1.initialEvents.length) {
+      throw StateError('X1 opening source or output count mismatch.');
+    }
+    for (var i = 0; i < x1.activeContracts.length; i++) {
+      final original = x1.activeContracts[i];
+      final independent = independentX1.activeContracts[i];
+      if (original.playerId != independent.playerId ||
+          original.signature != independent.signature) {
+        throw StateError('X1 ordered initial contract mismatch at $i.');
+      }
+    }
+    for (var i = 0; i < x1.initialEvents.length; i++) {
+      final original = x1.initialEvents[i];
+      final independent = independentX1.initialEvents[i];
+      if (original.playerId != independent.playerId ||
+          original.signature != independent.signature) {
+        throw StateError('X1 ordered initial event mismatch at $i.');
+      }
     }
   }
 

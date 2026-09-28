@@ -5,6 +5,7 @@ import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_application_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 import 'package:futbol_baskanlik_m0/player_president_sponsor_control.dart';
+import 'package:futbol_baskanlik_m0/src/world/world_opening_state_initializer.dart';
 import 'package:test/test.dart';
 
 const _config = SimulationConfig(careerSeed: 20260903);
@@ -175,4 +176,263 @@ void main() {
       print('X2C_PRISTINE_BOUNDARY=PASS');
     },
   );
+
+  test('X2-C ordered X1 source, contract and event output parity with real lazy controller', () {
+    final integrated = proof();
+    final independentWorld = const WorldOpeningStateInitializer().prepare(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: _config,
+    );
+    final independentlyGenerated = const InitialContractOpeningGenerator().generate(
+      careerSeed: _config.careerSeed,
+      simulationVersion: _config.simulationVersion,
+      seasonIndex: _config.seasonIndex,
+      players: independentWorld.players,
+      leagues: independentWorld.leagues,
+    );
+    final actual = integrated.initialContracts;
+    expect(actual.sourceDigest, independentlyGenerated.sourceDigest);
+    expect(actual.careerSeed, independentlyGenerated.careerSeed);
+    expect(actual.simulationVersion, independentlyGenerated.simulationVersion);
+    expect(actual.seasonIndex, independentlyGenerated.seasonIndex);
+    expect(actual.sourcePlayerCount, independentlyGenerated.sourcePlayerCount);
+    expect(actual.sourceLeagueCount, independentlyGenerated.sourceLeagueCount);
+    expect(actual.sourcePlayerCount, independentWorld.players.length);
+    expect(actual.sourceLeagueCount, independentWorld.leagues.length);
+    expect(
+      actual.activeContracts.map((contract) => contract.signature).toList(),
+      independentlyGenerated.activeContracts.map((contract) => contract.signature).toList(),
+    );
+    expect(
+      actual.initialEvents.map((event) => event.signature).toList(),
+      independentlyGenerated.initialEvents.map((event) => event.signature).toList(),
+    );
+
+    final playerIds = independentWorld.players.map((player) => player.id).toSet();
+    final contractIds = actual.activeContracts.map((contract) => contract.playerId).toSet();
+    final eventIds = actual.initialEvents.map((event) => event.playerId).toSet();
+    expect(contractIds.length, playerIds.length);
+    expect(eventIds.length, playerIds.length);
+    expect(contractIds, playerIds);
+    expect(eventIds, playerIds);
+
+    final lazy = PlayerContractController(
+      careerSeed: _config.careerSeed,
+      simulationVersion: _config.simulationVersion,
+      initialSeasonIndex: _config.seasonIndex,
+    );
+    expect(lazy.activeContracts, isEmpty);
+    expect(lazy.events, isEmpty);
+    lazy.annualWagesByClub(
+      seasonIndex: _config.seasonIndex,
+      players: independentWorld.players,
+      clubs: independentWorld.baseClubs,
+      leagues: independentWorld.leagues,
+      financeStates: independentWorld.financeStates,
+    );
+    expect(
+      lazy.activeContracts.map((contract) => contract.signature).toList(),
+      actual.activeContracts.map((contract) => contract.signature).toList(),
+    );
+    expect(
+      lazy.events.map((event) => event.signature).toList(),
+      actual.initialEvents.map((event) => event.signature).toList(),
+    );
+    integrated.verifyNewGame(
+      application: application(),
+      sourceClubs: world.clubs,
+      sourceLeagues: world.leagues,
+    );
+    print('X2C_X1_ORDERED_CONTRACT_EVENT_LEGACY_PARITY=PASS');
+  });
+
+  test('X2-C full P1 independent M79/M80 source and fixture-plan verification', () {
+    final integrated = proof();
+    final app = application();
+    final independentP1 = SeasonOpeningProof.fromNewGame(
+      application: app,
+      sourceClubs: world.clubs,
+      sourceLeagues: world.leagues,
+      expectedSeasonIndex: 0,
+      expectedControlledClubId: controlledClubId,
+    );
+    integrated.seasonOpening.verifyNewGame(
+      application: app,
+      sourceClubs: world.clubs,
+      sourceLeagues: world.leagues,
+    );
+    integrated.verifyNewGame(
+      application: app,
+      sourceClubs: world.clubs,
+      sourceLeagues: world.leagues,
+    );
+    expect(integrated.seasonOpening.fixturePlanFingerprint,
+        independentP1.fixturePlanFingerprint);
+    expect(integrated.seasonOpening.fixtureSnapshot.fixtures.length, 720);
+    expect(integrated.seasonOpening.fixtureSnapshot.completedMatchCount, 0);
+    expect(
+      () => integrated.verifyNewGame(
+        application: app,
+        sourceClubs: world.clubs,
+        sourceLeagues: world.leagues,
+        expectedRulesetId: 'invalid-ruleset',
+      ),
+      throwsStateError,
+    );
+    print('X2C_FULL_P1_CANONICAL_FIXTURE_SOURCE_VERIFICATION=PASS');
+  });
+
+  test('X2-C rejects independently changed version, election and world inputs', () {
+    final reference = proof();
+    final differentVersion = application(
+      config: const SimulationConfig(careerSeed: 20260903, simulationVersion: 2),
+    );
+    expect(
+      () => reference.verifyNewGame(
+        application: differentVersion,
+        sourceClubs: world.clubs,
+        sourceLeagues: world.leagues,
+      ),
+      throwsStateError,
+    );
+    expect(
+      () => reference.verifyNewGame(
+        application: application(electionInterval: 5),
+        sourceClubs: world.clubs,
+        sourceLeagues: world.leagues,
+      ),
+      throwsStateError,
+    );
+
+    final changedClubs = List<Club>.of(world.clubs);
+    changedClubs[0] = changedClubs[0].copyWith(
+      strength: changedClubs[0].strength + 0.25,
+    );
+    // The supplied world must independently match the actual application's
+    // M80 fingerprint, even before P1's full canonical-identity comparison.
+    expect(
+      () => reference.verifyNewGame(
+        application: application(),
+        sourceClubs: changedClubs,
+        sourceLeagues: world.leagues,
+      ),
+      throwsA(isA<SaveLoadException>()),
+    );
+    expect(
+      () => reference.verifyNewGame(
+        application: application(clubs: changedClubs),
+        sourceClubs: world.clubs,
+        sourceLeagues: world.leagues,
+      ),
+      throwsA(isA<SaveLoadException>()),
+    );
+    expect(
+      () => reference.verifyNewGame(
+        application: application(clubs: changedClubs),
+        sourceClubs: changedClubs,
+        sourceLeagues: world.leagues,
+      ),
+      throwsStateError,
+    );
+
+    final reversedLeagues = world.leagues.reversed.toList();
+    expect(
+      () => reference.verifyNewGame(
+        application: application(),
+        sourceClubs: world.clubs,
+        sourceLeagues: reversedLeagues,
+      ),
+      throwsA(isA<SaveLoadException>()),
+    );
+    expect(
+      () => reference.verifyNewGame(
+        application: application(leagues: reversedLeagues),
+        sourceClubs: world.clubs,
+        sourceLeagues: world.leagues,
+      ),
+      throwsA(isA<SaveLoadException>()),
+    );
+    print('X2C_CHANGED_VERSION_ELECTION_WORLD_FAIL_CLOSED=PASS');
+  });
+
+  test('X2-C detects independently observed player and finance projection drift', () {
+    final integrated = proof();
+    final independent = const WorldOpeningStateInitializer().prepare(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: _config,
+    );
+    integrated.seasonOpening.assertOpeningProjectionMatches(independent);
+    final players = List<Player>.of(independent.players);
+    players[0] = players[0].copyWith(ability: players[0].ability + 0.25);
+    expect(
+      () => integrated.seasonOpening.assertOpeningProjectionMatches(
+        WorldOpeningState(
+          baseClubs: independent.baseClubs,
+          leagues: independent.leagues,
+          players: players,
+          financeStates: independent.financeStates,
+        ),
+      ),
+      throwsStateError,
+    );
+    final finance = List<ClubFinanceState>.of(independent.financeStates);
+    finance[0] = ClubFinanceState(
+      clubId: finance[0].clubId,
+      cash: Money.fromMinorUnits(finance[0].cash.minorUnits + 1),
+      debt: finance[0].debt,
+    );
+    expect(
+      () => integrated.seasonOpening.assertOpeningProjectionMatches(
+        WorldOpeningState(
+          baseClubs: independent.baseClubs,
+          leagues: independent.leagues,
+          players: independent.players,
+          financeStates: finance,
+        ),
+      ),
+      throwsStateError,
+    );
+    // The public X2-C verifier accepts M79 plus clubs/leagues, not an
+    // arbitrary injected player/finance DTO. P1 has this diagnostic gate.
+    print('X2C_INDEPENDENT_PLAYER_FINANCE_PROJECTION_DRIFT=PASS');
+  });
+
+  test('X2-C rejects missing/duplicate clubs, wrong control/season and raw window', () {
+    final reference = proof();
+    final missing = List<Club>.of(world.clubs)..removeLast();
+    final duplicate = List<Club>.of(world.clubs);
+    duplicate[duplicate.length - 1] = duplicate.first;
+    expect(() => proof(clubs: missing), throwsA(isA<SaveLoadException>()));
+    expect(() => proof(clubs: duplicate), throwsA(isA<SaveLoadException>()));
+    expect(
+      () => reference.verifyNewGame(
+        application: application(),
+        sourceClubs: missing,
+        sourceLeagues: world.leagues,
+      ),
+      throwsA(isA<SaveLoadException>()),
+    );
+    expect(
+      () => reference.verifyNewGame(
+        application: application(),
+        sourceClubs: duplicate,
+        sourceLeagues: world.leagues,
+      ),
+      throwsA(isA<SaveLoadException>()),
+    );
+    expect(
+      () => reference.verifyNewGame(
+        application: application(controlled: 't1_02'),
+        sourceClubs: world.clubs,
+        sourceLeagues: world.leagues,
+      ),
+      throwsStateError,
+    );
+    expect(() => proof(expectedClub: 't1_02'), throwsStateError);
+    expect(() => proof(expectedSeason: 1), throwsStateError);
+    expect(() => proof(rawHistorySeasons: -1), throwsArgumentError);
+    print('X2C_MISSING_DUPLICATE_CONTROL_SEASON_WINDOW_FAIL_CLOSED=PASS');
+  });
 }
