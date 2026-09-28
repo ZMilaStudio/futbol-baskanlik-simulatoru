@@ -1,7 +1,6 @@
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
 import 'package:futbol_baskanlik_m0/src/promise/promise_opening_context_builder.dart';
-import 'package:futbol_baskanlik_m0/src/world/world_career_season.dart';
 import 'package:futbol_baskanlik_m0/src/world/world_opening_state_initializer.dart';
 import 'package:test/test.dart';
 
