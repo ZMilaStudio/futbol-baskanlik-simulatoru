@@ -371,28 +371,53 @@ class PlayerPresidentInteractiveDecisionSession {
   final PresidentMatchdayTicketPricingPolicy _ticketAiPolicy;
   final int _candidateLimit;
 
-  final List<_RecordedInteractiveDecision> _answers = [];
-  PlayerPresidentInteractiveDecisionRequest? _pending;
-  PlayerPresidentInteractiveSessionCompleted? _completed;
+  // One authoritative pointer. Detached replay never modifies this state.
+  _InteractiveSessionState _state = const _InteractiveSessionState(
+    answers: <_RecordedInteractiveDecision>[],
+  );
 
-  int get answeredDecisionCount => _answers.length;
-  PlayerPresidentInteractiveDecisionRequest? get pendingDecision => _pending;
-  PlayerPresidentInteractiveSessionCompleted? get completed => _completed;
+  int get answeredDecisionCount => _state.answers.length;
+  PlayerPresidentInteractiveDecisionRequest? get pendingDecision => _state.pending;
+  PlayerPresidentInteractiveSessionCompleted? get completed => _state.completed;
 
-  PlayerPresidentInteractiveSessionStep advance() => _advanceInternal().step;
-
-  _InteractiveAdvanceResult _advanceInternal({int? captureSequence}) {
-    final completed = _completed;
-    if (completed != null) return _InteractiveAdvanceResult(step: completed);
-    final pending = _pending;
+  PlayerPresidentInteractiveSessionStep advance() {
+    final current = _state;
+    final completed = current.completed;
+    if (completed != null) return completed;
+    final pending = current.pending;
     if (pending != null) {
-      return _InteractiveAdvanceResult(
-        step: PlayerPresidentInteractiveDecisionPending(pending),
-      );
+      return PlayerPresidentInteractiveDecisionPending(pending);
     }
 
+    final candidate = _replay(current.answers);
+    _publish(candidate, current.answers);
+    return candidate.step;
+  }
+
+  // All fallible work, including result construction, precedes publication.
+  void _publish(
+    _InteractiveAdvanceResult candidate,
+    List<_RecordedInteractiveDecision> answers,
+  ) {
+    final step = candidate.step;
+    final next = _InteractiveSessionState(
+      answers: List.unmodifiable(answers),
+      pending: step is PlayerPresidentInteractiveDecisionPending
+          ? step.request
+          : null,
+      completed: step is PlayerPresidentInteractiveSessionCompleted
+          ? step
+          : null,
+    );
+    _state = next;
+  }
+
+  _InteractiveAdvanceResult _replay(
+    List<_RecordedInteractiveDecision> candidateAnswers, {
+    int? captureSequence,
+  }) {
     final gateway = _InteractiveReplayGateway(
-      _answers,
+      candidateAnswers,
       captureSequence: captureSequence,
     );
     final engine = PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine(
@@ -422,7 +447,7 @@ class PlayerPresidentInteractiveDecisionSession {
           hasFutureSeasonAfterReport: _hasFutureSeasonAfterReport,
         );
       }
-      if (gateway.consumedDecisionCount != _answers.length) {
+      if (gateway.consumedDecisionCount != candidateAnswers.length) {
         throw StateError(
           'Interactive decision replay completed before consuming the full '
           'answer transcript.',
@@ -430,20 +455,18 @@ class PlayerPresidentInteractiveDecisionSession {
       }
       final next = PlayerPresidentInteractiveSessionCompleted(
         result: result,
-        decisionCount: _answers.length,
+        decisionCount: candidateAnswers.length,
       );
-      _completed = next;
       return _InteractiveAdvanceResult(
         step: next,
         consequence: gateway.capturedConsequence,
       );
     } on _PendingInteractiveDecision catch (signal) {
-      if (gateway.consumedDecisionCount != _answers.length) {
+      if (gateway.consumedDecisionCount != candidateAnswers.length) {
         throw StateError(
           'Interactive decision replay diverged before the pending request.',
         );
       }
-      _pending = signal.request;
       return _InteractiveAdvanceResult(
         step: PlayerPresidentInteractiveDecisionPending(signal.request),
         consequence: gateway.capturedConsequence,
@@ -461,10 +484,11 @@ class PlayerPresidentInteractiveDecisionSession {
     required PlayerPresidentInteractiveDecisionRequest request,
     required Object choice,
   }) {
-    if (_completed != null) {
+    final current = _state;
+    if (current.completed != null) {
       throw StateError('Interactive session is already completed.');
     }
-    final pending = _pending;
+    final pending = current.pending;
     if (pending == null) {
       throw StateError('advance() must expose a pending decision first.');
     }
@@ -476,15 +500,17 @@ class PlayerPresidentInteractiveDecisionSession {
     }
 
     _validateChoice(request, choice);
-    _answers.add(
+    final candidateAnswers = List<_RecordedInteractiveDecision>.unmodifiable([
+      ...current.answers,
       _RecordedInteractiveDecision(
         requestKey: request.key,
         choice: choice,
       ),
+    ]);
+    final advanced = _replay(
+      candidateAnswers,
+      captureSequence: request.sequence,
     );
-    _pending = null;
-
-    final advanced = _advanceInternal(captureSequence: request.sequence);
     final consequence = advanced.consequence;
     if (consequence == null) {
       throw StateError(
@@ -500,7 +526,7 @@ class PlayerPresidentInteractiveDecisionSession {
       );
     }
 
-    return PlayerPresidentInteractiveDecisionSubmissionResult(
+    final submission = PlayerPresidentInteractiveDecisionSubmissionResult(
       resolution: PlayerPresidentInteractiveDecisionResolution(
         requestKey: request.key,
         kind: request.kind,
@@ -509,6 +535,11 @@ class PlayerPresidentInteractiveDecisionSession {
       ),
       nextStep: advanced.step,
     );
+
+    // The only publication point. Failure above preserves answer, Pending,
+    // Completed and the exact Pending request object for a subsequent retry.
+    _publish(advanced, candidateAnswers);
+    return submission;
   }
 
   static void _validateChoice(
@@ -643,6 +674,18 @@ class _InteractiveAdvanceResult {
   });
   final PlayerPresidentInteractiveSessionStep step;
   final PlayerPresidentInteractiveDecisionConsequence? consequence;
+}
+
+class _InteractiveSessionState {
+  const _InteractiveSessionState({
+    required this.answers,
+    this.pending,
+    this.completed,
+  });
+
+  final List<_RecordedInteractiveDecision> answers;
+  final PlayerPresidentInteractiveDecisionRequest? pending;
+  final PlayerPresidentInteractiveSessionCompleted? completed;
 }
 
 class _RecordedInteractiveDecision {
