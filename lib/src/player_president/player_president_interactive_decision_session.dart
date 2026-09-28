@@ -13,11 +13,19 @@ import '../media/media_statement.dart';
 import '../media/player_president_media_statement_control.dart';
 import '../promise/player_president_promise_control.dart';
 import '../promise/president_promise.dart';
+import '../promise/promise_generator.dart';
+import '../promise/promise_opening_context_builder.dart';
+import '../player/team_strength_calculator.dart';
+import '../season/integrated_new_game_opening_proof.dart';
 import '../sponsor/player_president_sponsor_control.dart';
 import '../sponsor/sponsor_system.dart';
 import '../transfer/player_president_transfer_strategy_control.dart';
 import '../world/world_league.dart';
+import '../world/world_opening_state_initializer.dart';
+import 'player_president_interactive_decision_application_session.dart';
 import 'player_president_unified_decision_gateway_runtime.dart';
+
+part 'player_president_preseason_promise_boundary.dart';
 
 enum PlayerPresidentInteractiveDecisionKind {
   facilityInvestment,
@@ -38,6 +46,7 @@ class PlayerPresidentInteractiveDecisionRequest {
     required this.clubId,
     required this.contextSignature,
     required this.context,
+    this.keyNamespace,
   });
 
   final int sequence;
@@ -45,8 +54,13 @@ class PlayerPresidentInteractiveDecisionRequest {
   final String clubId;
   final String contextSignature;
   final Object context;
+  // Null is the untouched legacy yearly identity; preseason uses its own key.
+  final String? keyNamespace;
 
-  String get key => '$sequence:${kind.name}:$clubId:$contextSignature';
+  String get phase => keyNamespace == null ? 'annual' : 'preseasonPromise';
+  String get key => keyNamespace == null
+      ? '$sequence:${kind.name}:$clubId:$contextSignature'
+      : '$keyNamespace:$sequence:${kind.name}:$clubId:$contextSignature';
 
   T contextAs<T>() {
     final value = context;
@@ -511,20 +525,10 @@ class PlayerPresidentInteractiveDecisionSession {
       candidateAnswers,
       captureSequence: request.sequence,
     );
-    final consequence = advanced.consequence;
-    if (consequence == null) {
-      throw StateError(
-        'Accepted ${request.kind.name} decision did not emit an authoritative '
-        'runtime consequence.',
-      );
-    }
-    if (consequence.kind != request.kind ||
-        consequence.controlledClubId != request.clubId) {
-      throw StateError(
-        'Captured consequence does not match submitted decision '
-        '${request.key}.',
-      );
-    }
+    final consequence = _requireAuthoritativeConsequence(
+      request,
+      advanced.consequence,
+    );
 
     final submission = PlayerPresidentInteractiveDecisionSubmissionResult(
       resolution: PlayerPresidentInteractiveDecisionResolution(
@@ -667,6 +671,26 @@ class PlayerPresidentInteractiveDecisionSession {
   }
 }
 
+// Shared fail-closed M73 consequence gate for annual and preseason replay.
+PlayerPresidentInteractiveDecisionConsequence _requireAuthoritativeConsequence(
+  PlayerPresidentInteractiveDecisionRequest request,
+  PlayerPresidentInteractiveDecisionConsequence? consequence,
+) {
+  if (consequence == null) {
+    throw StateError(
+      'Accepted ${request.kind.name} decision did not emit an authoritative '
+      'runtime consequence.',
+    );
+  }
+  if (consequence.kind != request.kind ||
+      consequence.controlledClubId != request.clubId) {
+    throw StateError(
+      'Captured consequence does not match submitted decision ${request.key}.',
+    );
+  }
+  return consequence;
+}
+
 class _InteractiveAdvanceResult {
   const _InteractiveAdvanceResult({
     required this.step,
@@ -708,9 +732,11 @@ class _InteractiveReplayGateway extends PlayerPresidentDecisionGateway {
   _InteractiveReplayGateway(
     this.answers, {
     this.captureSequence,
+    this.keyNamespace,
   });
 
   final List<_RecordedInteractiveDecision> answers;
+  final String? keyNamespace;
   final int? captureSequence;
   int _cursor = 0;
   PlayerPresidentInteractiveDecisionRequest? _lastResolvedRequest;
@@ -730,6 +756,7 @@ class _InteractiveReplayGateway extends PlayerPresidentDecisionGateway {
       clubId: clubId,
       contextSignature: contextSignature,
       context: context,
+      keyNamespace: keyNamespace,
     );
     if (_cursor == answers.length) {
       throw _PendingInteractiveDecision(request);

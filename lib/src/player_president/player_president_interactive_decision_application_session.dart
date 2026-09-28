@@ -10,6 +10,7 @@ import '../manager/manager_opening_state_initializer.dart';
 import '../player/player.dart';
 import '../player/team_strength_calculator.dart';
 import '../sponsor/sponsor_system.dart';
+import '../season/integrated_new_game_opening_proof.dart';
 import '../world/world_league.dart';
 import '../world/world_opening_state_initializer.dart';
 import 'player_president_interactive_decision_new_game_bootstrap_snapshot.dart';
@@ -342,15 +343,33 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   final PlayerPresidentInteractiveDecisionTranscriptSession _session;
   bool _preseasonPromiseReserved = false;
 
-  void reservePreseasonPromisePhase() {
+  /// Proof-bound opt-in: never reserve from an unverified or exposed annual
+  /// Pending. The public method independently rechecks the live M79 source.
+  void reservePreseasonPromisePhase({
+    required IntegratedNewGameOpeningProof proof,
+    required List<Club> sourceClubs,
+    required List<WorldLeague> sourceLeagues,
+  }) {
     if (!isNewGame ||
         _preseasonPromiseReserved ||
+        _checkpoint != null ||
+        _session.pendingDecision != null ||
         _session.answeredDecisionCount != 0 ||
         _session.completed != null) {
       throw StateError(
-        'Preseason promise phase requires one pristine new game.',
+        'Preseason promise phase requires one untouched M79 source.',
       );
     }
+    proof.verifyNewGame(
+      application: this,
+      sourceClubs: sourceClubs,
+      sourceLeagues: sourceLeagues,
+    );
+    if (proof.seasonIndex != 0 ||
+        proof.controlledClubId != _newGameControlledClubId) {
+      throw StateError('Preseason reservation requires the exact new-game source.');
+    }
+    // The sole reservation publication; proof failure above leaves M79 usable.
     _preseasonPromiseReserved = true;
   }
 
@@ -378,6 +397,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       _checkpoint;
 
   PlayerPresidentTicketPricingRuntimeCheckpoint get checkpoint {
+    if (_preseasonPromiseReserved) {
+      throw StateError('Preseason phase cannot expose a legacy checkpoint.');
+    }
     final checkpoint = _checkpoint;
     if (checkpoint == null) {
       throw StateError(
@@ -428,6 +450,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       bootstrapCodec.encode(newGameBootstrapSnapshot);
 
   PlayerPresidentInteractiveDecisionPersistenceBundle get persistenceBundle {
+    if (_preseasonPromiseReserved) {
+      throw StateError('Preseason phase cannot persist an M75 bundle.');
+    }
     final checkpoint = _checkpoint;
     if (checkpoint == null) {
       throw StateError(
@@ -470,10 +495,11 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   }
 
   PlayerPresidentInteractiveSessionStep advance() {
-    if (_preseasonPromiseReserved)
+    if (_preseasonPromiseReserved) {
       throw StateError(
         'Legacy annual decisions are reserved by preseason promise phase.',
       );
+    }
     return _session.advance();
   }
 
