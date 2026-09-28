@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../core/money.dart';
 import '../core/simulation_config.dart';
 import '../election/president_management_profile.dart';
+import '../election/president_opening_state_initializer.dart';
 import '../election/president_reputation_career_report.dart';
 import '../election/president_tenure.dart';
 import '../fan/fan_state.dart';
@@ -257,19 +258,15 @@ class SponsorRuntimeCareerEngine {
     final initialProfiles = <String, PresidentManagementProfile>{};
     final initialFan = <String, FanState>{};
     final initialMedia = <String, MediaState>{};
+    final opening = PresidentOpeningStateInitializer(
+      presidentGenerator: presidentGenerator,
+      managementGenerator: managementProfileGenerator,
+    );
     for (final club in clubs) {
-      final president = presidentGenerator.generateInitial(
-        clubId: club.id,
-        careerSeed: config.careerSeed,
-        simulationVersion: config.simulationVersion,
-      );
-      initialProfiles[club.id] = managementProfileGenerator.generate(
-        president: president,
-        careerSeed: config.careerSeed,
-        simulationVersion: config.simulationVersion,
-      );
-      initialFan[club.id] = FanState.initial(club.id);
-      initialMedia[club.id] = MediaState(clubId: club.id, credibility: 65);
+      final state = opening.prepareClub(clubId: club.id, config: config);
+      initialProfiles[club.id] = state.managementProfile;
+      initialFan[club.id] = state.fan;
+      initialMedia[club.id] = state.media;
     }
 
     final firstCoordinator = _SponsorSeasonEconomyEngine(
