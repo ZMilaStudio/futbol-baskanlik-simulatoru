@@ -1,13 +1,14 @@
 import '../core/simulation_config.dart';
+import '../finance/club_finance_state.dart';
 import '../league/club.dart';
 import '../transfer/advanced_transfer_career_report.dart';
 import '../transfer/advanced_transfer_world_career_engine.dart';
 import '../world/world_career_hooks.dart';
-import '../world/world_career_season.dart';
 import '../world/world_league.dart';
 import 'promise_career_report.dart';
 import 'promise_context.dart';
 import 'promise_generator.dart';
+import 'promise_opening_context_builder.dart';
 import 'promise_resolver.dart';
 import 'promise_season_snapshot.dart';
 
@@ -49,12 +50,25 @@ class PromiseCareerEngine {
     final snapshots = <PromiseSeasonSnapshot>[];
 
     for (final season in advancedReport.worldReport.seasons) {
-      final expectedPositions = _expectedPositions(season);
-      final clubIds = season.clubs.map((club) => club.id).toList()..sort();
+      final contexts = const PromiseOpeningContextBuilder().build(
+        seasonIndex: season.seasonIndex,
+        effectiveClubs: season.clubs,
+        leagues: season.leaguesBeforeSeason,
+        openingFinanceStates: [
+          for (final finance in season.finances)
+            ClubFinanceState(
+              clubId: finance.clubId,
+              cash: finance.openingCash,
+              debt: finance.openingDebt,
+            ),
+        ],
+      );
 
-      for (final clubId in clubIds) {
+      // The builder retains the legacy club-ID ascending snapshot order.
+      for (final context in contexts) {
+        final clubId = context.clubId;
         final league = season.leaguesBeforeSeason.firstWhere(
-          (item) => item.clubIds.contains(clubId),
+          (item) => item.tier == context.tier,
         );
         final leagueResult = season.leagueResults.firstWhere(
           (item) => item.tier == league.tier,
@@ -78,15 +92,6 @@ class PromiseCareerEngine {
           break;
         }
 
-        final context = PresidentPromiseContext(
-          clubId: clubId,
-          seasonIndex: season.seasonIndex,
-          tier: league.tier,
-          leagueSize: league.clubIds.length,
-          expectedPosition: expectedPositions[clubId]!,
-          openingCash: finance.openingCash,
-          openingDebt: finance.openingDebt,
-        );
         final promise = generator.generate(
           context: context,
           careerSeed: config.careerSeed,
@@ -122,21 +127,4 @@ class PromiseCareerEngine {
     );
   }
 
-  Map<String, int> _expectedPositions(WorldCareerSeason season) {
-    final positions = <String, int>{};
-    final clubById = {for (final club in season.clubs) club.id: club};
-
-    for (final league in season.leaguesBeforeSeason) {
-      final ranked = league.clubIds.map((id) => clubById[id]!).toList()
-        ..sort((a, b) {
-          final strength = b.strength.compareTo(a.strength);
-          return strength != 0 ? strength : a.id.compareTo(b.id);
-        });
-      for (var index = 0; index < ranked.length; index++) {
-        positions[ranked[index].id] = index + 1;
-      }
-    }
-
-    return positions;
-  }
 }
