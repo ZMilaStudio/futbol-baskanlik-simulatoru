@@ -13,6 +13,7 @@ import '../world/world_league.dart';
 import 'president_election.dart';
 import 'president_election_engine.dart';
 import 'president_election_snapshot.dart';
+import 'president_opening_state_initializer.dart';
 import 'president_reputation_career_report.dart';
 import 'president_reputation_handover.dart';
 import 'president_tenure.dart';
@@ -75,15 +76,13 @@ class PresidentReputationCareerEngine {
         .toSet()
         .toList()
       ..sort();
-    final tenure = <PresidentTenureState>[
+    final initial = [
       for (final clubId in clubIds)
-        PresidentTenureState.initial(
+        PresidentOpeningStateInitializer(
+          presidentGenerator: profileGenerator,
+        ).prepareClub(
           clubId: clubId,
-          president: profileGenerator.generateInitial(
-            clubId: clubId,
-            careerSeed: config.careerSeed,
-            simulationVersion: config.simulationVersion,
-          ),
+          config: config,
           startedSeasonIndex: firstSeasonIndex,
         ),
     ];
@@ -93,12 +92,9 @@ class PresidentReputationCareerEngine {
       electionInterval: electionInterval,
       completedElectionTerms: 0,
       seasonsIntoCurrentTerm: 0,
-      initialTenureStates: tenure,
-      initialFanStates: [for (final clubId in clubIds) FanState.initial(clubId)],
-      initialMediaStates: [
-        for (final clubId in clubIds)
-          MediaState(clubId: clubId, credibility: 65),
-      ],
+      initialTenureStates: [for (final item in initial) item.tenure],
+      initialFanStates: [for (final item in initial) item.fan],
+      initialMediaStates: [for (final item in initial) item.media],
       priorTermPromiseScores: const {},
       hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
     );
