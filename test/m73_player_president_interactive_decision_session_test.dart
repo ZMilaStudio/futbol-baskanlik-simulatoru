@@ -27,6 +27,24 @@ class _AlwaysBalancedPolicy extends PresidentMatchdayTicketPricingPolicy {
       const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
 }
 
+// Existing production dependency seam: failures are raised by the real
+// replay composition, without substituting a fake decision or consequence.
+class _ToggleFailureTicketPolicy extends PresidentMatchdayTicketPricingPolicy {
+  bool failOnChoose = false;
+
+  @override
+  MatchdayTicketPricingChoice choose({
+    required PresidentManagementProfile profile,
+    required int fanTrust,
+    required StadiumAttendanceProfile base,
+  }) {
+    if (failOnChoose) {
+      throw StateError('Injected production-policy replay failure.');
+    }
+    return const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
+  }
+}
+
 class _PolicyGateway extends PlayerPresidentDecisionGateway {
   @override
   PlayerFacilityInvestmentChoice chooseFacilityInvestment(
@@ -348,7 +366,10 @@ void main() {
         .clubId;
   });
 
-  PlayerPresidentInteractiveDecisionSession newSession() =>
+  PlayerPresidentInteractiveDecisionSession newSession({
+    PresidentMatchdayTicketPricingPolicy ticketPolicy =
+        const _AlwaysBalancedPolicy(),
+  }) =>
       PlayerPresidentInteractiveDecisionSession.start(
         clubs: world.clubs,
         leagues: world.leagues,
@@ -357,7 +378,7 @@ void main() {
         seasonCount: 1,
         hasFutureSeasonAfterReport: true,
         aiCrisisEngine: forcedAi,
-        ticketAiPolicy: const _AlwaysBalancedPolicy(),
+        ticketAiPolicy: ticketPolicy,
       );
 
   test('M73 pauses on one unanswered request without committing progress', () {
@@ -438,6 +459,153 @@ void main() {
     );
     expect(session.pendingDecision!.key, first.request.key);
     expect(session.answeredDecisionCount, 0);
+  });
+
+  test('P2-A1b1 replay exception preserves exact Pending and answer count', () {
+    final policy = _ToggleFailureTicketPolicy();
+    final session = newSession(ticketPolicy: policy);
+    final pending =
+        (session.advance() as PlayerPresidentInteractiveDecisionPending)
+            .request;
+    final choice = _choiceFor(pending);
+    policy.failOnChoose = true;
+
+    expect(
+      () => session.submitWithResolution(request: pending, choice: choice),
+      throwsA(isA<StateError>().having(
+        (error) => error.message,
+        'message',
+        'Injected production-policy replay failure.',
+      )),
+    );
+    expect(session.answeredDecisionCount, 0);
+    expect(session.pendingDecision, same(pending));
+    expect(session.completed, isNull);
+    expect(
+      (session.advance() as PlayerPresidentInteractiveDecisionPending).request,
+      same(pending),
+    );
+
+    policy.failOnChoose = false;
+    final accepted =
+        session.submitWithResolution(request: pending, choice: choice);
+    expect(accepted.resolution.requestKey, pending.key);
+    expect(accepted.resolution.consequence.kind, pending.kind);
+    expect(accepted.resolution.consequence.controlledClubId, pending.clubId);
+    expect(session.answeredDecisionCount, 1);
+    expect(session.pendingDecision, isNot(same(pending)));
+    expect(
+      () => session.submitWithResolution(request: pending, choice: choice),
+      throwsStateError,
+    );
+    expect(session.answeredDecisionCount, 1);
+    expect(session.completed, isNull);
+  });
+
+  test('P2-A1b1 failed replay after an accepted answer preserves next Pending',
+      () {
+    final policy = _ToggleFailureTicketPolicy();
+    final session = newSession(ticketPolicy: policy);
+    final first =
+        (session.advance() as PlayerPresidentInteractiveDecisionPending)
+            .request;
+    final firstChoice = _choiceFor(first);
+    final submitted =
+        session.submitWithResolution(request: first, choice: firstChoice);
+    final next = (submitted.nextStep
+            as PlayerPresidentInteractiveDecisionPending)
+        .request;
+    final nextChoice = _choiceFor(next);
+    expect(session.answeredDecisionCount, 1);
+
+    policy.failOnChoose = true;
+    expect(
+      () => session.submitWithResolution(request: next, choice: nextChoice),
+      throwsStateError,
+    );
+    expect(session.answeredDecisionCount, 1);
+    expect(session.pendingDecision, same(next));
+    expect(session.completed, isNull);
+    policy.failOnChoose = false;
+    final retry =
+        session.submitWithResolution(request: next, choice: nextChoice);
+    expect(retry.resolution.requestKey, next.key);
+    expect(session.answeredDecisionCount, 2);
+    expect(retry.resolution.consequence.kind, next.kind);
+  });
+
+  test('P2-A1b1 failure and retry complete with unbroken M72 parity', () {
+    final referenceKeys = <String>[];
+    final reference = _drive(newSession(), keys: referenceKeys);
+    final policy = _ToggleFailureTicketPolicy();
+    final session = newSession(ticketPolicy: policy);
+    final keys = <String>[];
+    PlayerPresidentInteractiveSessionStep step = session.advance();
+    var failures = 0;
+    while (step is PlayerPresidentInteractiveDecisionPending) {
+      final pending = step.request;
+      keys.add(pending.key);
+      final choice = _choiceFor(pending);
+      if (failures == 0 || failures == 1 && session.answeredDecisionCount > 0) {
+        policy.failOnChoose = true;
+        expect(
+          () => session.submitWithResolution(request: pending, choice: choice),
+          throwsStateError,
+        );
+        expect(session.pendingDecision, same(pending));
+        expect(session.answeredDecisionCount, keys.length - 1);
+        expect(session.completed, isNull);
+        policy.failOnChoose = false;
+        failures++;
+      }
+      step = session.submitWithResolution(
+        request: pending,
+        choice: choice,
+      ).nextStep;
+    }
+    expect(failures, 2);
+    final result = step as PlayerPresidentInteractiveSessionCompleted;
+    expect(keys, orderedEquals(referenceKeys));
+    expect(result.decisionCount, keys.length);
+    expect(codec.encode(result.result.checkpoint),
+        codec.encode(reference.result.checkpoint));
+    expect(result.result.boundaries.map((item) => item.signature).toList(),
+        reference.result.boundaries.map((item) => item.signature).toList());
+  });
+
+  test('P2-A1b1 M74 records only successful M73 replay', () {
+    final policy = _ToggleFailureTicketPolicy();
+    final transcript = PlayerPresidentInteractiveDecisionTranscriptSession(
+      newSession(ticketPolicy: policy),
+    );
+    final pending =
+        (transcript.advance() as PlayerPresidentInteractiveDecisionPending)
+            .request;
+    final choice = _choiceFor(pending);
+    final originalBytes = transcript.encodeSnapshot();
+    policy.failOnChoose = true;
+    expect(
+      () => transcript.submitWithResolution(request: pending, choice: choice),
+      throwsStateError,
+    );
+    expect(transcript.answeredDecisionCount, 0);
+    expect(transcript.encodeSnapshot(), originalBytes);
+    expect(transcript.pendingDecision, same(pending));
+    expect(transcript.completed, isNull);
+
+    policy.failOnChoose = false;
+    final accepted = transcript.submitWithResolution(
+      request: pending,
+      choice: choice,
+    );
+    expect(accepted.resolution.requestKey, pending.key);
+    expect(transcript.answeredDecisionCount, 1);
+    expect(transcript.snapshot.entries.single.requestKey, pending.key);
+    expect(
+      () => transcript.submitWithResolution(request: pending, choice: choice),
+      throwsStateError,
+    );
+    expect(transcript.answeredDecisionCount, 1);
   });
 
   test('M90 stage 1 additive submit returns accepted resolution and next step',
