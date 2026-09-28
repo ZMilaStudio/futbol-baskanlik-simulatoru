@@ -31,6 +31,7 @@ export 'src/election/president_management_career_engine.dart';
 export 'src/election/president_management_career_report.dart';
 export 'src/election/president_management_career_validator.dart';
 export 'src/election/president_management_profile.dart';
+export 'src/election/president_domain_memory_opening_initializer.dart';
 export 'src/election/president_opening_state_initializer.dart';
 export 'src/election/president_manager_election_feedback_engine.dart';
 export 'src/election/president_manager_election_feedback_report.dart';
