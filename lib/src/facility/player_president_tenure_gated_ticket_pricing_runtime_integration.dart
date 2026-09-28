@@ -8,7 +8,6 @@ import '../crisis/president_facility_investment_runtime_integration.dart';
 import '../election/player_president_tenure_control_gate.dart';
 import '../election/president_management_profile.dart';
 import '../election/president_opening_state_initializer.dart';
-import '../election/president_tenure.dart';
 import '../fan/fan_state.dart';
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
