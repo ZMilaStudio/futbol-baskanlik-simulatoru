@@ -45,6 +45,28 @@ class _ToggleFailureTicketPolicy extends PresidentMatchdayTicketPricingPolicy {
   }
 }
 
+// Real M55 composition calls applyTo *after* the M73 replay gateway consumes
+// the recorded choice. The superclass validation remains unchanged.
+class _FailOnApplyTransferChoice extends PlayerTransferStrategyChoice {
+  _FailOnApplyTransferChoice(PresidentManagementProfile ai)
+      : super(
+          financialDiscipline: ai.financialDiscipline,
+          transferAmbition: ai.transferAmbition,
+          riskAppetite: ai.riskAppetite,
+          youthOrientation: ai.youthOrientation,
+        );
+
+  bool failOnApply = true;
+
+  @override
+  PresidentManagementProfile applyTo(PresidentManagementProfile aiProfile) {
+    if (failOnApply) {
+      throw StateError('Injected post-consumption transfer replay failure.');
+    }
+    return super.applyTo(aiProfile);
+  }
+}
+
 class _PolicyGateway extends PlayerPresidentDecisionGateway {
   @override
   PlayerFacilityInvestmentChoice chooseFacilityInvestment(
@@ -461,24 +483,34 @@ void main() {
     expect(session.answeredDecisionCount, 0);
   });
 
-  test('P2-A1b1 replay exception preserves exact Pending and answer count', () {
-    final policy = _ToggleFailureTicketPolicy();
-    final session = newSession(ticketPolicy: policy);
+  test('P2-A1b1 exception AFTER answer consumption leaves exact state intact',
+      () {
+    final session = newSession();
+    PlayerPresidentInteractiveSessionStep step = session.advance();
+    var guard = 0;
+    while (step is PlayerPresidentInteractiveDecisionPending &&
+        step.request.kind !=
+            PlayerPresidentInteractiveDecisionKind.transferStrategy) {
+      if (++guard > 100) fail('Transfer strategy Pending not found.');
+      step = session.submitWithResolution(
+        request: step.request,
+        choice: _choiceFor(step.request),
+      ).nextStep;
+    }
     final pending =
-        (session.advance() as PlayerPresidentInteractiveDecisionPending)
-            .request;
-    final choice = _choiceFor(pending);
-    policy.failOnChoose = true;
-
+        (step as PlayerPresidentInteractiveDecisionPending).request;
+    final context = pending.contextAs<PlayerTransferStrategyDecisionContext>();
+    final choice = _FailOnApplyTransferChoice(context.aiProfile);
+    final before = session.answeredDecisionCount;
     expect(
       () => session.submitWithResolution(request: pending, choice: choice),
       throwsA(isA<StateError>().having(
         (error) => error.message,
         'message',
-        'Injected production-policy replay failure.',
+        'Injected post-consumption transfer replay failure.',
       )),
     );
-    expect(session.answeredDecisionCount, 0);
+    expect(session.answeredDecisionCount, before);
     expect(session.pendingDecision, same(pending));
     expect(session.completed, isNull);
     expect(
@@ -486,52 +518,54 @@ void main() {
       same(pending),
     );
 
-    policy.failOnChoose = false;
+    choice.failOnApply = false;
     final accepted =
         session.submitWithResolution(request: pending, choice: choice);
     expect(accepted.resolution.requestKey, pending.key);
     expect(accepted.resolution.consequence.kind, pending.kind);
     expect(accepted.resolution.consequence.controlledClubId, pending.clubId);
-    expect(session.answeredDecisionCount, 1);
-    expect(session.pendingDecision, isNot(same(pending)));
+    expect(session.answeredDecisionCount, before + 1);
     expect(
       () => session.submitWithResolution(request: pending, choice: choice),
       throwsStateError,
     );
-    expect(session.answeredDecisionCount, 1);
-    expect(session.completed, isNull);
+    expect(session.answeredDecisionCount, before + 1);
   });
 
-  test('P2-A1b1 failed replay after an accepted answer preserves next Pending',
+  test('P2-A1b1 production-policy replay exception preserves later Pending',
       () {
     final policy = _ToggleFailureTicketPolicy();
     final session = newSession(ticketPolicy: policy);
-    final first =
-        (session.advance() as PlayerPresidentInteractiveDecisionPending)
-            .request;
-    final firstChoice = _choiceFor(first);
-    final submitted =
-        session.submitWithResolution(request: first, choice: firstChoice);
-    final next = (submitted.nextStep
-            as PlayerPresidentInteractiveDecisionPending)
-        .request;
-    final nextChoice = _choiceFor(next);
-    expect(session.answeredDecisionCount, 1);
-
+    PlayerPresidentInteractiveSessionStep step = session.advance();
+    var guard = 0;
+    while (step is PlayerPresidentInteractiveDecisionPending &&
+        step.request.kind !=
+            PlayerPresidentInteractiveDecisionKind.ticketPricing) {
+      if (++guard > 100) fail('Ticket pricing Pending not found.');
+      step = session.submitWithResolution(
+        request: step.request,
+        choice: _choiceFor(step.request),
+      ).nextStep;
+    }
+    final pending =
+        (step as PlayerPresidentInteractiveDecisionPending).request;
+    final before = session.answeredDecisionCount;
+    final choice = _choiceFor(pending);
     policy.failOnChoose = true;
     expect(
-      () => session.submitWithResolution(request: next, choice: nextChoice),
+      () => session.submitWithResolution(request: pending, choice: choice),
       throwsStateError,
     );
-    expect(session.answeredDecisionCount, 1);
-    expect(session.pendingDecision, same(next));
+    expect(session.answeredDecisionCount, before);
+    expect(session.pendingDecision, same(pending));
     expect(session.completed, isNull);
+
     policy.failOnChoose = false;
-    final retry =
-        session.submitWithResolution(request: next, choice: nextChoice);
-    expect(retry.resolution.requestKey, next.key);
-    expect(session.answeredDecisionCount, 2);
-    expect(retry.resolution.consequence.kind, next.kind);
+    final accepted =
+        session.submitWithResolution(request: pending, choice: choice);
+    expect(accepted.resolution.requestKey, pending.key);
+    expect(accepted.resolution.consequence.kind, pending.kind);
+    expect(session.answeredDecisionCount, before + 1);
   });
 
   test('P2-A1b1 failure and retry complete with unbroken M72 parity', () {
@@ -541,12 +575,28 @@ void main() {
     final session = newSession(ticketPolicy: policy);
     final keys = <String>[];
     PlayerPresidentInteractiveSessionStep step = session.advance();
-    var failures = 0;
+    final failedKinds = <PlayerPresidentInteractiveDecisionKind>{};
     while (step is PlayerPresidentInteractiveDecisionPending) {
       final pending = step.request;
       keys.add(pending.key);
-      final choice = _choiceFor(pending);
-      if (failures == 0 || failures == 1 && session.answeredDecisionCount > 0) {
+      Object choice = _choiceFor(pending);
+      if (pending.kind ==
+          PlayerPresidentInteractiveDecisionKind.transferStrategy) {
+        final transfer = _FailOnApplyTransferChoice(
+          pending.contextAs<PlayerTransferStrategyDecisionContext>().aiProfile,
+        );
+        choice = transfer;
+        expect(
+          () => session.submitWithResolution(request: pending, choice: choice),
+          throwsStateError,
+        );
+        expect(session.pendingDecision, same(pending));
+        expect(session.answeredDecisionCount, keys.length - 1);
+        expect(session.completed, isNull);
+        transfer.failOnApply = false;
+        failedKinds.add(pending.kind);
+      } else if (pending.kind ==
+          PlayerPresidentInteractiveDecisionKind.ticketPricing) {
         policy.failOnChoose = true;
         expect(
           () => session.submitWithResolution(request: pending, choice: choice),
@@ -556,14 +606,17 @@ void main() {
         expect(session.answeredDecisionCount, keys.length - 1);
         expect(session.completed, isNull);
         policy.failOnChoose = false;
-        failures++;
+        failedKinds.add(pending.kind);
       }
       step = session.submitWithResolution(
         request: pending,
         choice: choice,
       ).nextStep;
     }
-    expect(failures, 2);
+    expect(failedKinds, {
+      PlayerPresidentInteractiveDecisionKind.transferStrategy,
+      PlayerPresidentInteractiveDecisionKind.ticketPricing,
+    });
     final result = step as PlayerPresidentInteractiveSessionCompleted;
     expect(keys, orderedEquals(referenceKeys));
     expect(result.decisionCount, keys.length);
@@ -574,38 +627,49 @@ void main() {
   });
 
   test('P2-A1b1 M74 records only successful M73 replay', () {
-    final policy = _ToggleFailureTicketPolicy();
     final transcript = PlayerPresidentInteractiveDecisionTranscriptSession(
-      newSession(ticketPolicy: policy),
+      newSession(),
     );
+    PlayerPresidentInteractiveSessionStep step = transcript.advance();
+    var guard = 0;
+    while (step is PlayerPresidentInteractiveDecisionPending &&
+        step.request.kind !=
+            PlayerPresidentInteractiveDecisionKind.transferStrategy) {
+      if (++guard > 100) fail('Transfer strategy Pending not found.');
+      step = transcript.submitWithResolution(
+        request: step.request,
+        choice: _choiceFor(step.request),
+      ).nextStep;
+    }
     final pending =
-        (transcript.advance() as PlayerPresidentInteractiveDecisionPending)
-            .request;
-    final choice = _choiceFor(pending);
+        (step as PlayerPresidentInteractiveDecisionPending).request;
+    final choice = _FailOnApplyTransferChoice(
+      pending.contextAs<PlayerTransferStrategyDecisionContext>().aiProfile,
+    );
     final originalBytes = transcript.encodeSnapshot();
-    policy.failOnChoose = true;
+    final before = transcript.answeredDecisionCount;
     expect(
       () => transcript.submitWithResolution(request: pending, choice: choice),
       throwsStateError,
     );
-    expect(transcript.answeredDecisionCount, 0);
+    expect(transcript.answeredDecisionCount, before);
     expect(transcript.encodeSnapshot(), originalBytes);
     expect(transcript.pendingDecision, same(pending));
     expect(transcript.completed, isNull);
 
-    policy.failOnChoose = false;
+    choice.failOnApply = false;
     final accepted = transcript.submitWithResolution(
       request: pending,
       choice: choice,
     );
     expect(accepted.resolution.requestKey, pending.key);
-    expect(transcript.answeredDecisionCount, 1);
-    expect(transcript.snapshot.entries.single.requestKey, pending.key);
+    expect(transcript.answeredDecisionCount, before + 1);
+    expect(transcript.snapshot.entries.last.requestKey, pending.key);
     expect(
       () => transcript.submitWithResolution(request: pending, choice: choice),
       throwsStateError,
     );
-    expect(transcript.answeredDecisionCount, 1);
+    expect(transcript.answeredDecisionCount, before + 1);
   });
 
   test('M90 stage 1 additive submit returns accepted resolution and next step',
