@@ -123,6 +123,9 @@ class PlayerPresidentPreseasonPromiseBoundary {
         request: request,
       ),
     );
+    // The complete Pending belongs to a still-local candidate. Application
+    // ownership is published only by the proof-bound claim below.
+    boundary._state = next;
 
     // This public reservation method independently verifies the supplied
     // proof against the same pristine M79 source before changing any flag.
@@ -132,7 +135,6 @@ class PlayerPresidentPreseasonPromiseBoundary {
       sourceClubs: sourceClubs,
       sourceLeagues: sourceLeagues,
     );
-    boundary._state = next;
     return boundary;
   }
 
