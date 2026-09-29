@@ -196,10 +196,19 @@ void main() {
     expect(w0.nextRound, 1);
     expect(w0.completedMatchCount, 0);
     expect(w0.fixtureSnapshot.fixtures.every((f) => !f.isPlayed), isTrue);
-    expect(() => session.advancePreseasonWeek(
-      expectedState: state, expectedRound: 4,
-    ), throwsStateError);
     expect(state.nextRound, 4);
+    final w4 = session.advancePreseasonWeek(
+      expectedState: state, expectedRound: 4,
+    );
+    expect(w4.nextRound, 5);
+    expect(w4.completedMatchCount, 96);
+    expect(w4.applied, same(applied));
+    expect(w4.activePromises, same(applied.activePromises));
+    expect(session.preseasonWeeklyState, same(w4));
+    expect(state.nextRound, 4);
+    expect(state.completedMatchCount, 72);
+    expect(state.fixtureSnapshot.fixtures.where((f) => f.round > 3)
+        .every((f) => !f.isPlayed), isTrue);
   });
 
   test('foreign state, wrong source, stale/duplicate and wrong round fail closed', () {

@@ -445,9 +445,14 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
         !identical(previous, expectedState) ||
         !identical(previous.boundary, boundary) ||
         !identical(previous.applied, boundary.applied) ||
+        boundary.phase != PlayerPresidentPreseasonPromisePhase.applied ||
+        previous.sourceIdentity !=
+            boundary.proof.seasonOpening.originSourceDigest ||
+        previous.fixtureSnapshot.totalRounds != 30 ||
+        previous.fixtureSnapshot.isComplete ||
         expectedRound != previous.fixtureSnapshot.nextRound ||
         expectedRound < 1 ||
-        expectedRound > 3) {
+        expectedRound > previous.fixtureSnapshot.totalRounds) {
       throw StateError('Stale, foreign or unsupported weekly transition.');
     }
     if (decision != null) {
