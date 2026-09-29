@@ -94,3 +94,101 @@ void main() {
     expect(session.appliedPreseasonPromises, same(applied));
     return session.openPreseasonWeeklyHandoff();
   }
+
+  test('W4-W30 commits exactly one real world round and preserves accepted promise', () {
+    final session = app();
+    final w0 = open(session);
+    final boundary = w0.boundary;
+    final applied = w0.applied;
+    final openingFinance = boundary.opening.financeStates
+        .map((entry) => entry.signature).toList();
+    final plan = List<WeeklyWorldFixture>.of(w0.fixtureSnapshot.fixtures);
+    final firstWeek = <WeeklyWorldFixture>[];
+    final checkpoints = <int, List<int>>{
+      3: [4, 72, 24],
+      4: [5, 96, 32],
+      15: [16, 360, 120],
+      29: [30, 696, 232],
+      30: [31, 720, 240],
+    };
+    var state = w0;
+    expect(plan.length, 720);
+    expect(plan.map((entry) => entry.globalKey).toSet().length, 720);
+    expect(plan.every((entry) => !entry.isPlayed), isTrue);
+    for (var round = 1; round <= 30; round++) {
+      final previous = state;
+      final before = previous.fixtureSnapshot.fixtures;
+      state = session.advancePreseasonWeek(
+        expectedState: previous, expectedRound: round,
+      );
+      final after = state.fixtureSnapshot.fixtures;
+      expect(session.preseasonWeeklyState, same(state));
+      expect(state.boundary, same(boundary));
+      expect(state.applied, same(applied));
+      expect(state.activePromises, same(applied.activePromises));
+      expect(state.sourceIdentity, applied.sourceIdentity);
+      expect(state.applied.acceptedRequestKey, applied.acceptedRequestKey);
+      expect(state.applied.acceptedChoice, applied.acceptedChoice);
+      expect(state.applied.consequence, same(applied.consequence));
+      expect(state.applied.controlledClubId, applied.controlledClubId);
+      expect(state.applied.controlledPresidentId, applied.controlledPresidentId);
+      expect(state.effectiveClubs, same(w0.effectiveClubs));
+      expect(state.nextRound, round + 1);
+      expect(state.completedMatchCount, round * 24);
+      expect(state.fixtureSnapshot.isComplete, round == 30);
+      expect(after.length, 720);
+      expect(after.map((entry) => entry.globalKey).toSet().length, 720);
+      var newResults = 0;
+      for (var i = 0; i < 720; i++) {
+        final oldEntry = before[i];
+        final entry = after[i];
+        expect(entry.globalKey, plan[i].globalKey);
+        expect(entry.fixture.id, plan[i].fixture.id);
+        expect(entry.fixture.homeClubId, plan[i].fixture.homeClubId);
+        expect(entry.fixture.awayClubId, plan[i].fixture.awayClubId);
+        if (entry.round == round) {
+          expect(oldEntry.isPlayed, isFalse);
+          expect(entry.isPlayed, isTrue);
+          newResults++;
+        } else {
+          expect(entry, same(oldEntry));
+          if (entry.round > round) expect(entry.fixture.result, isNull);
+          if (entry.round < round) expect(entry.isPlayed, isTrue);
+        }
+      }
+      expect(newResults, 24);
+      expect(previous.completedMatchCount, (round - 1) * 24);
+      expect(previous.nextRound, round);
+      expect(
+        previous.fixtureSnapshot.fixtures.where(
+          (entry) => entry.round >= round,
+        ).every((entry) => !entry.isPlayed),
+        isTrue,
+      );
+      if (round == 1) {
+        firstWeek.addAll(state.fixtureSnapshot.fixturesForRound(1));
+      } else {
+        final currentFirst = state.fixtureSnapshot.fixturesForRound(1);
+        for (var i = 0; i < 24; i++) {
+          expect(currentFirst[i], same(firstWeek[i]));
+        }
+      }
+      for (final tier in LeagueTier.values) {
+        final played = after.where(
+          (entry) => entry.tier == tier && entry.isPlayed,
+        ).toList();
+        final table = state.fixtureSnapshot.tableFor(tier);
+        expect(played.length, round * 8);
+        expect(after.where((entry) => entry.tier == tier &&
+            entry.round == round && entry.isPlayed).length, 8);
+        expect(table.length, 16);
+        expect(table.every((entry) => entry.played == round), isTrue);
+        if (checkpoints.containsKey(round)) {
+          expect(played.length, checkpoints[round]![2]);
+        }
+      }
+      if (checkpoints.containsKey(round)) {
+        expect(state.nextRound, checkpoints[round]![0]);
+        expect(state.completedMatchCount, checkpoints[round]![1]);
+      }
+    }
