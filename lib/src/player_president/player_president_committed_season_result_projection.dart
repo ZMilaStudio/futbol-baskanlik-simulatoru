@@ -4,7 +4,6 @@ import '../league/standing_row.dart';
 import '../promise/president_promise.dart';
 import '../season/season_report.dart';
 import '../season/season_validator.dart';
-import '../season/weekly_world_fixture_result_core.dart';
 import '../world/league_tier.dart';
 import '../world/world_career_season.dart';
 import 'player_president_interactive_decision_session.dart';
