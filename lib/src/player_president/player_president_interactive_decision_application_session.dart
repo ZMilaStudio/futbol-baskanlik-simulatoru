@@ -21,6 +21,7 @@ import 'player_president_prepared_squad_snapshot.dart';
 import 'player_president_interactive_decision_persistence_bundle.dart';
 import 'player_president_interactive_decision_session.dart';
 import 'player_president_preseason_weekly_handoff.dart';
+import 'player_president_committed_season_result_projection.dart';
 import 'player_president_interactive_decision_transcript_snapshot.dart';
 
 enum PlayerPresidentInteractiveDecisionApplicationSessionOrigin {
@@ -346,6 +347,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   // A real boundary reference, not a reservation boolean, is the sole owner.
   PlayerPresidentPreseasonPromiseBoundary? _preseasonPromiseBoundary;
   PlayerPresidentPreseasonWeeklyState? _preseasonWeeklyState;
+  PlayerPresidentCommittedSeasonResultCandidate? _committedSeasonResultCandidate;
 
   PlayerPresidentPreseasonPromiseBoundary? get preseasonPromiseBoundary =>
       _preseasonPromiseBoundary;
@@ -353,6 +355,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       _preseasonPromiseBoundary?.applied;
   PlayerPresidentPreseasonWeeklyState? get preseasonWeeklyState =>
       _preseasonWeeklyState;
+  PlayerPresidentCommittedSeasonResultCandidate? get committedSeasonResultCandidate =>
+      _committedSeasonResultCandidate;
 
   /// The primary application-owned opening API. The legacy direct
   /// boundary.start() delegates to exactly the same proof-bound claim.
@@ -469,6 +473,58 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       throw StateError('Detached successor lost the owned promise boundary.');
     }
     _preseasonWeeklyState = candidate;
+    return candidate;
+  }
+
+  /// B1: one immutable publication after full W30 committed-result validation.
+  /// The weekly-state pointer remains authoritative and is never replaced.
+  PlayerPresidentCommittedSeasonResultCandidate projectCommittedSeason({
+    required PlayerPresidentPreseasonWeeklyState expectedState,
+  }) {
+    final boundary = _preseasonPromiseBoundary;
+    final previous = _preseasonWeeklyState;
+    final applied = boundary?.applied;
+    if (boundary == null || previous == null || applied == null ||
+        !identical(previous, expectedState) ||
+        !identical(boundary.application, this) ||
+        !identical(preseasonPromiseBoundary, boundary) ||
+        !identical(appliedPreseasonPromises, applied) ||
+        !identical(expectedState.boundary, boundary) ||
+        !identical(expectedState.applied, applied) ||
+        !identical(expectedState.activePromises, applied.activePromises) ||
+        boundary.phase != PlayerPresidentPreseasonPromisePhase.applied ||
+        expectedState.sourceIdentity !=
+            boundary.proof.seasonOpening.originSourceDigest ||
+        applied.sourceIdentity != expectedState.sourceIdentity ||
+        applied.seasonIndex != boundary.proof.seasonIndex ||
+        applied.controlledClubId != boundary.proof.controlledClubId ||
+        applied.controlledPresidentId != boundary.controlledPresidentId ||
+        expectedState.fixtureSnapshot.seasonIndex != boundary.proof.seasonIndex ||
+        expectedState.fixtureSnapshot.totalRounds != 30 ||
+        expectedState.fixtureSnapshot.nextRound != 31 ||
+        !expectedState.fixtureSnapshot.isComplete ||
+        expectedState.completedMatchCount != 720 ||
+        applied.activePromises.length != 48) {
+      throw StateError('B1 requires the exact application-owned W30 state.');
+    }
+    final published = _committedSeasonResultCandidate;
+    if (published != null) {
+      if (!identical(published.sourceState, expectedState) ||
+          !identical(published.applied, applied)) {
+        throw StateError('B1 cannot publish a second or foreign season result.');
+      }
+      return published;
+    }
+    final candidate = const PlayerPresidentCommittedSeasonResultProjection()
+        .project(state: expectedState);
+    if (!identical(candidate.sourceState, previous) ||
+        !identical(candidate.applied, applied) ||
+        candidate.leagueResults.length != 3 ||
+        !identical(_preseasonWeeklyState, previous)) {
+      throw StateError('B1 detached result candidate lost its owner.');
+    }
+    // All fallible work precedes the sole application publication.
+    _committedSeasonResultCandidate = candidate;
     return candidate;
   }
 
