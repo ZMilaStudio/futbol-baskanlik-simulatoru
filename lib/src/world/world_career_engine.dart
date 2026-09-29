@@ -19,6 +19,7 @@ import 'world_career_simulation_result.dart';
 import 'world_checkpoint.dart';
 import 'world_finance_hooks.dart';
 import 'world_league.dart';
+import 'world_league_movement_projection.dart';
 import 'world_opening_state_initializer.dart';
 import 'world_roster_hooks.dart';
 import 'world_transfer_hooks.dart';
@@ -462,96 +463,15 @@ class WorldCareerEngine {
     required List<WorldLeague> currentLeagues,
     required List<LeagueSeasonSnapshot> leagueResults,
   }) {
-    final leagueByTier = {
-      for (final league in currentLeagues) league.tier: league,
-    };
-    final reportByTier = {
-      for (final result in leagueResults) result.tier: result.report,
-    };
-    final first = leagueByTier[LeagueTier.first]!;
-    final second = leagueByTier[LeagueTier.second]!;
-    final third = leagueByTier[LeagueTier.third]!;
-    final firstReport = reportByTier[LeagueTier.first]!;
-    final secondReport = reportByTier[LeagueTier.second]!;
-    final thirdReport = reportByTier[LeagueTier.third]!;
-
-    const slots = 3;
-    final relegatedFromFirst = firstReport.table
-        .skip(firstReport.table.length - slots)
-        .map((row) => row.clubId)
-        .toList(growable: false);
-    final promotedFromSecond = secondReport.table
-        .take(slots)
-        .map((row) => row.clubId)
-        .toList(growable: false);
-    final relegatedFromSecond = secondReport.table
-        .skip(secondReport.table.length - slots)
-        .map((row) => row.clubId)
-        .toList(growable: false);
-    final promotedFromThird = thirdReport.table
-        .take(slots)
-        .map((row) => row.clubId)
-        .toList(growable: false);
-
-    final firstIds = first.clubIds.toSet()
-      ..removeAll(relegatedFromFirst)
-      ..addAll(promotedFromSecond);
-    final secondIds = second.clubIds.toSet()
-      ..removeAll(promotedFromSecond)
-      ..removeAll(relegatedFromSecond)
-      ..addAll(relegatedFromFirst)
-      ..addAll(promotedFromThird);
-    final thirdIds = third.clubIds.toSet()
-      ..removeAll(promotedFromThird)
-      ..addAll(relegatedFromSecond);
-
-    final nextLeagues = [
-      WorldLeague(
-        tier: LeagueTier.first,
-        clubIds: firstIds.toList()..sort(),
-      ),
-      WorldLeague(
-        tier: LeagueTier.second,
-        clubIds: secondIds.toList()..sort(),
-      ),
-      WorldLeague(
-        tier: LeagueTier.third,
-        clubIds: thirdIds.toList()..sort(),
-      ),
-    ];
-    final movements = <LeagueMovement>[
-      ...promotedFromSecond.map(
-        (clubId) => LeagueMovement(
-          clubId: clubId,
-          from: LeagueTier.second,
-          to: LeagueTier.first,
-        ),
-      ),
-      ...relegatedFromFirst.map(
-        (clubId) => LeagueMovement(
-          clubId: clubId,
-          from: LeagueTier.first,
-          to: LeagueTier.second,
-        ),
-      ),
-      ...promotedFromThird.map(
-        (clubId) => LeagueMovement(
-          clubId: clubId,
-          from: LeagueTier.third,
-          to: LeagueTier.second,
-        ),
-      ),
-      ...relegatedFromSecond.map(
-        (clubId) => LeagueMovement(
-          clubId: clubId,
-          from: LeagueTier.second,
-          to: LeagueTier.third,
-        ),
-      ),
-    ];
+    // One production movement rule shared by the legacy world and detached B2.
+    final result = const WorldLeagueMovementProjection().project(
+      currentLeagues: currentLeagues,
+      leagueResults: leagueResults,
+      hasNextSeason: true,
+    );
     return _LeagueTransition(
-      leagues: List.unmodifiable(nextLeagues),
-      movements: List.unmodifiable(movements),
+      leagues: result.nextLeagues,
+      movements: result.movements,
     );
   }
 
