@@ -11,6 +11,7 @@ import '../player/player.dart';
 import '../player/team_strength_calculator.dart';
 import '../sponsor/sponsor_system.dart';
 import '../season/integrated_new_game_opening_proof.dart';
+import '../season/weekly_world_fixture_result_core.dart';
 import '../world/world_league.dart';
 import '../world/world_opening_state_initializer.dart';
 import 'player_president_interactive_decision_new_game_bootstrap_snapshot.dart';
@@ -19,6 +20,7 @@ import 'player_president_prepared_season_fixtures_snapshot.dart';
 import 'player_president_prepared_squad_snapshot.dart';
 import 'player_president_interactive_decision_persistence_bundle.dart';
 import 'player_president_interactive_decision_session.dart';
+import 'player_president_preseason_weekly_handoff.dart';
 import 'player_president_interactive_decision_transcript_snapshot.dart';
 
 enum PlayerPresidentInteractiveDecisionApplicationSessionOrigin {
@@ -341,23 +343,52 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   final PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
       bootstrapCodec;
   final PlayerPresidentInteractiveDecisionTranscriptSession _session;
-  bool _preseasonPromiseReserved = false;
+  // A real boundary reference, not a reservation boolean, is the sole owner.
+  PlayerPresidentPreseasonPromiseBoundary? _preseasonPromiseBoundary;
+  PlayerPresidentPreseasonWeeklyState? _preseasonWeeklyState;
 
-  /// Proof-bound opt-in: never reserve from an unverified or exposed annual
-  /// Pending. The public method independently rechecks the live M79 source.
-  void reservePreseasonPromisePhase({
+  PlayerPresidentPreseasonPromiseBoundary? get preseasonPromiseBoundary =>
+      _preseasonPromiseBoundary;
+  PlayerPresidentPreseasonPromiseApplied? get appliedPreseasonPromises =>
+      _preseasonPromiseBoundary?.applied;
+  PlayerPresidentPreseasonWeeklyState? get preseasonWeeklyState =>
+      _preseasonWeeklyState;
+
+  /// The primary application-owned opening API. The legacy direct
+  /// boundary.start() delegates to exactly the same proof-bound claim.
+  PlayerPresidentPreseasonPromiseBoundary startPreseasonPromise({
+    required List<Club> sourceClubs,
+    required List<WorldLeague> sourceLeagues,
+  }) =>
+      PlayerPresidentPreseasonPromiseBoundary.start(
+        application: this,
+        sourceClubs: sourceClubs,
+        sourceLeagues: sourceLeagues,
+      );
+
+  /// A caller cannot reserve an application without supplying an actual,
+  /// fully prepared boundary with its private M73-constructed Pending.
+  /// Even a public direct invocation is independently source-verified.
+  void claimPreseasonPromiseBoundary({
+    required PlayerPresidentPreseasonPromiseBoundary boundary,
     required IntegratedNewGameOpeningProof proof,
     required List<Club> sourceClubs,
     required List<WorldLeague> sourceLeagues,
   }) {
     if (!isNewGame ||
-        _preseasonPromiseReserved ||
+        _preseasonPromiseBoundary != null ||
         _checkpoint != null ||
         _session.pendingDecision != null ||
         _session.answeredDecisionCount != 0 ||
-        _session.completed != null) {
+        _session.completed != null ||
+        !identical(boundary.application, this) ||
+        !identical(boundary.proof, proof) ||
+        boundary.phase != PlayerPresidentPreseasonPromisePhase.pending ||
+        boundary.applied != null ||
+        boundary.pending == null ||
+        !identical(boundary.pending!.boundary, boundary)) {
       throw StateError(
-        'Preseason promise phase requires one untouched M79 source.',
+        'Preseason claim requires one untouched M79 and its real boundary.',
       );
     }
     proof.verifyNewGame(
@@ -365,12 +396,75 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       sourceClubs: sourceClubs,
       sourceLeagues: sourceLeagues,
     );
+    proof.seasonOpening.assertOpeningProjectionMatches(boundary.opening);
     if (proof.seasonIndex != 0 ||
-        proof.controlledClubId != _newGameControlledClubId) {
-      throw StateError('Preseason reservation requires the exact new-game source.');
+        proof.controlledClubId != _newGameControlledClubId ||
+        boundary.controlledPresidentId !=
+            proof.presidentOpening.controlledPresidentId ||
+        boundary.pending!.clubId != proof.controlledClubId ||
+        boundary.pending!.sourceIdentity !=
+            proof.seasonOpening.originSourceDigest ||
+        boundary.contexts.length != 48 ||
+        boundary.contexts.map((item) => item.controlledClubId).toSet().length !=
+            48) {
+      throw StateError('Preseason boundary does not match authoritative source.');
     }
-    // The sole reservation publication; proof failure above leaves M79 usable.
-    _preseasonPromiseReserved = true;
+    // This is the only claim publication. All fallible checks precede it.
+    _preseasonPromiseBoundary = boundary;
+  }
+
+  /// W0 may open only after the exact owned M73/M56 applied consequence.
+  PlayerPresidentPreseasonWeeklyState openPreseasonWeeklyHandoff() {
+    final boundary = _preseasonPromiseBoundary;
+    if (boundary == null ||
+        boundary.applied == null ||
+        _preseasonWeeklyState != null) {
+      throw StateError('W0 requires one owned, applied preseason boundary.');
+    }
+    final candidate = PlayerPresidentPreseasonWeeklyState.opening(boundary);
+    if (!identical(candidate.boundary, boundary) ||
+        !identical(candidate.applied, boundary.applied)) {
+      throw StateError('W0 is not bound to the owned promise consequence.');
+    }
+    _preseasonWeeklyState = candidate;
+    return candidate;
+  }
+
+  /// M2 computes detached; only this application replaces the single state
+  /// after every calculation and independent validation completes.
+  PlayerPresidentPreseasonWeeklyState advancePreseasonWeek({
+    required PlayerPresidentPreseasonWeeklyState expectedState,
+    required int expectedRound,
+    Object? decision,
+    WeeklyWorldFixtureResultCore core = const WeeklyWorldFixtureResultCore(),
+  }) {
+    final boundary = _preseasonPromiseBoundary;
+    final previous = _preseasonWeeklyState;
+    if (boundary == null ||
+        previous == null ||
+        !identical(previous, expectedState) ||
+        !identical(previous.boundary, boundary) ||
+        !identical(previous.applied, boundary.applied) ||
+        expectedRound != previous.fixtureSnapshot.nextRound ||
+        expectedRound < 1 ||
+        expectedRound > 3) {
+      throw StateError('Stale, foreign or unsupported weekly transition.');
+    }
+    if (decision != null) {
+      throw UnsupportedError('Additional weekly decisions are not supported.');
+    }
+    final candidate = PlayerPresidentPreseasonWeeklyState.successor(
+      current: previous,
+      expectedRound: expectedRound,
+      core: core,
+    );
+    if (!identical(candidate.boundary, boundary) ||
+        !identical(candidate.applied, boundary.applied) ||
+        candidate.fixtureSnapshot.nextRound != expectedRound + 1) {
+      throw StateError('Detached successor lost the owned promise boundary.');
+    }
+    _preseasonWeeklyState = candidate;
+    return candidate;
   }
 
   bool get isNewGame =>
@@ -384,20 +478,20 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentPreparedSeasonFixturesSnapshot get preparedSeasonFixtures =>
       _preparedSeasonFixtures;
 
-  bool get canPersist => _checkpoint != null && !_preseasonPromiseReserved;
+  bool get canPersist => _checkpoint != null && _preseasonPromiseBoundary == null;
 
   bool get canPersistBootstrap =>
       isNewGame &&
       _newGameConfig != null &&
       _newGameControlledClubId != null &&
       _newGameWorldFingerprint != null &&
-      !_preseasonPromiseReserved;
+      _preseasonPromiseBoundary == null;
 
   PlayerPresidentTicketPricingRuntimeCheckpoint? get checkpointOrNull =>
       _checkpoint;
 
   PlayerPresidentTicketPricingRuntimeCheckpoint get checkpoint {
-    if (_preseasonPromiseReserved) {
+    if (_preseasonPromiseBoundary != null) {
       throw StateError('Preseason phase cannot expose a legacy checkpoint.');
     }
     final checkpoint = _checkpoint;
@@ -425,7 +519,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     final controlledClubId = _newGameControlledClubId;
     final worldFingerprint = _newGameWorldFingerprint;
     final electionInterval = newGameElectionInterval;
-    if (_preseasonPromiseReserved ||
+    if (_preseasonPromiseBoundary != null ||
         !isNewGame ||
         config == null ||
         controlledClubId == null ||
@@ -450,7 +544,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       bootstrapCodec.encode(newGameBootstrapSnapshot);
 
   PlayerPresidentInteractiveDecisionPersistenceBundle get persistenceBundle {
-    if (_preseasonPromiseReserved) {
+    if (_preseasonPromiseBoundary != null) {
       throw StateError('Preseason phase cannot persist an M75 bundle.');
     }
     final checkpoint = _checkpoint;
@@ -470,7 +564,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
 
   PlayerPresidentInteractiveDecisionApplicationSession
       continuePlayerCareerToNextSeason() {
-    if (_preseasonPromiseReserved) {
+    if (_preseasonPromiseBoundary != null) {
       throw StateError(
         'Preseason promise phase cannot continue through the legacy career path.',
       );
@@ -495,7 +589,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   }
 
   PlayerPresidentInteractiveSessionStep advance() {
-    if (_preseasonPromiseReserved) {
+    if (_preseasonPromiseBoundary != null) {
       throw StateError(
         'Legacy annual decisions are reserved by preseason promise phase.',
       );
@@ -513,7 +607,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required PlayerPresidentInteractiveDecisionRequest request,
     required Object choice,
   }) =>
-      _preseasonPromiseReserved
+      _preseasonPromiseBoundary != null
           ? throw StateError(
               'Legacy annual decisions are reserved by preseason promise phase.',
             )
