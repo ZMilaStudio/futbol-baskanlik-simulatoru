@@ -347,6 +347,7 @@ class PlayerPresidentAcceptedPromiseClosingProjection {
     final snapshots = <PromiseSeasonSnapshot>[];
     final resolvedIds = <String>{};
     for (final context in independentContexts) {
+      final originalContext = contextsById[context.clubId]!;
       final promise = promiseById[context.clubId]!;
       final finance = financeById[context.clubId]!;
       final movementForClub = movementById[context.clubId];
@@ -354,7 +355,7 @@ class PlayerPresidentAcceptedPromiseClosingProjection {
         clubId: promise.clubId,
         seasonIndex: promise.seasonIndex,
         leaguePosition: positions[context.clubId]!,
-        leagueSize: context.leagueSize,
+        leagueSize: originalContext.leagueSize,
         openingDebt: finance.openingDebt,
         closingDebt: finance.closingDebt,
         emergencyBorrowing: finance.emergencyBorrowing,
@@ -378,7 +379,7 @@ class PlayerPresidentAcceptedPromiseClosingProjection {
         throw StateError('B2 accepted-promise resolution mismatch.');
       }
       snapshots.add(PromiseSeasonSnapshot(
-        context: context, promise: promise,
+        context: originalContext, promise: promise,
         outcome: outcome, resolution: resolution,
       ));
     }

@@ -16,13 +16,13 @@ void main() {
   const config = SimulationConfig(careerSeed: 20260903);
   final world = const FictionalWorldFactory().build();
 
-  _Run build({required bool hasFutureSeasonAfterReport}) {
+  _Run build({required bool hasFutureSeasonAfterReport, int seasonCount = 1}) {
     final application = PlayerPresidentInteractiveDecisionApplicationSession.start(
       clubs: world.clubs,
       leagues: world.leagues,
       config: config,
       controlledClubId: 't1_01',
-      seasonCount: 1,
+      seasonCount: seasonCount,
       hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
     );
     final boundary = application.startPreseasonPromise(
@@ -47,12 +47,14 @@ void main() {
 
   late _Run future;
   late _Run terminal;
+  late _Run multiSeason;
   late WorldCareerSeason futureLegacy;
   late WorldCareerSeason terminalLegacy;
 
   setUpAll(() {
     future = build(hasFutureSeasonAfterReport: true);
     terminal = build(hasFutureSeasonAfterReport: false);
+    multiSeason = build(hasFutureSeasonAfterReport: false, seasonCount: 2);
     // Independent legacy oracles: B2 production does not invoke either world
     // engine, generate fixtures, or run a promise generator.
     futureLegacy = const AdvancedTransferWorldCareerEngine().simulate(
@@ -162,6 +164,18 @@ void main() {
     expect(future.b2.movements.length, 12);
     expect(future.b2.movements.map((m) => m.signature).toList(),
         futureLegacy.movementsAfterSeason.map((m) => m.signature).toList());
+    // Independent test oracle freezes the pre-refactor slot/order semantics.
+    final tables = {for (final result in future.b1.leagueResults)
+      result.tier: result.report.table.map((row) => row.clubId).toList()};
+    final expectedOrder = <String>[
+      ...tables[LeagueTier.second]!.take(3).map((id) => id + ':2>1'),
+      ...tables[LeagueTier.first]!.skip(13).map((id) => id + ':1>2'),
+      ...tables[LeagueTier.third]!.take(3).map((id) => id + ':3>2'),
+      ...tables[LeagueTier.second]!.skip(13).map((id) => id + ':2>3'),
+    ];
+    expect(future.b2.movements.map((m) => m.signature).toList(), expectedOrder);
+    expect(multiSeason.b2.hasNextSeason, isTrue);
+    expect(multiSeason.b2.movements.map((m) => m.signature).toList(), expectedOrder);
     for (final tier in LeagueTier.values) {
       final next = future.b2.candidateNextLeagues.singleWhere((l) => l.tier == tier);
       final legacy = futureLegacy.leaguesAfterTransition.singleWhere((l) => l.tier == tier);
@@ -201,6 +215,8 @@ void main() {
       expect(snapshot.promise, same(promise));
       expect(snapshot.resolution.promise, same(promise));
       expect(snapshot.context.clubId, promise.clubId);
+      expect(snapshot.context, same(future.w30.boundary.contexts
+          .singleWhere((item) => item.context.clubId == promise.clubId).context));
       expect(outcome.clubId, promise.clubId);
       expect(outcome.seasonIndex, promise.seasonIndex);
       expect(outcome.openingDebt, finance.openingDebt);
