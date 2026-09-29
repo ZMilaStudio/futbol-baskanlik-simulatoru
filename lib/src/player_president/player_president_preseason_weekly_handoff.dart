@@ -73,10 +73,14 @@ class PlayerPresidentPreseasonWeeklyState {
         !identical(boundary.application.appliedPreseasonPromises, current.applied) ||
         current.sourceIdentity != boundary.proof.seasonOpening.originSourceDigest ||
         current.fixtureSnapshot.seasonIndex != 0 ||
-        expectedRound < 1 || expectedRound > 3 ||
+        current.fixtureSnapshot.totalRounds != 30 ||
+        current.fixtureSnapshot.isComplete ||
+        boundary.phase != PlayerPresidentPreseasonPromisePhase.applied ||
+        expectedRound < 1 ||
+        expectedRound > current.fixtureSnapshot.totalRounds ||
         expectedRound != current.nextRound ||
         current.completedMatchCount != (expectedRound - 1) * 24) {
-      throw StateError('Stale or foreign W1-W3 predecessor.');
+      throw StateError('Stale or foreign W1-W30 predecessor.');
     }
     final candidate = core.advanceRound(
       snapshot: current.fixtureSnapshot, expectedRound: expectedRound,
@@ -95,6 +99,7 @@ class PlayerPresidentPreseasonWeeklyState {
     final byId = {for (final c in current.effectiveClubs) c.id: c};
     if (byId.length != 48 || next.seasonIndex != 0 ||
         next.totalRounds != 30 || next.nextRound != round + 1 ||
+        next.isComplete != (round == next.totalRounds) ||
         next.completedMatchCount != round * 24 ||
         next.fixtures.length != 720 ||
         next.fixturesForRound(round).length != 24 ||
