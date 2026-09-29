@@ -53,6 +53,8 @@ void main() {
       choice: pending.context.allowedTypes.first,
     );
     expect(boundary.phase, PlayerPresidentPreseasonPromisePhase.applied);
+    expect(session.preseasonPromiseBoundary, same(boundary));
+    expect(session.appliedPreseasonPromises, same(applied));
     expect(applied.activePromises, hasLength(48));
     expect(
       applied.activePromises.map((item) => item.clubId).toSet(),
@@ -172,6 +174,7 @@ void main() {
     );
     expect(session.canPersistBootstrap, isTrue);
     expect(session.canPersist, isFalse);
+    expect(session.preseasonPromiseBoundary, isNull);
     expect(session.advance(), isA<PlayerPresidentInteractiveDecisionPending>());
   });
 
@@ -205,29 +208,28 @@ void main() {
     );
   });
 
-  test('P2-A1b2 public reservation cannot bypass independently verified proof',
-      () {
+  test('P2-A1b2 public claim cannot create an orphan reservation', () {
     final session = app();
-    final proof = IntegratedNewGameOpeningProof.fromNewGame(
-      application: session,
+    final foreign = app().startPreseasonPromise(
       sourceClubs: world.clubs,
       sourceLeagues: world.leagues,
-      expectedSeasonIndex: 0,
-      expectedControlledClubId: 't1_01',
     );
     expect(
-      () => session.reservePreseasonPromisePhase(
-        proof: proof,
-        sourceClubs: world.clubs.sublist(1),
+      () => session.claimPreseasonPromiseBoundary(
+        boundary: foreign,
+        proof: foreign.proof,
+        sourceClubs: world.clubs,
         sourceLeagues: world.leagues,
       ),
-      throwsA(isA<SaveLoadException>()),
+      throwsStateError,
     );
+    expect(session.preseasonPromiseBoundary, isNull);
     expect(session.canPersistBootstrap, isTrue);
     expect(session.advance(), isA<PlayerPresidentInteractiveDecisionPending>());
     expect(
-      () => session.reservePreseasonPromisePhase(
-        proof: proof,
+      () => session.claimPreseasonPromiseBoundary(
+        boundary: foreign,
+        proof: foreign.proof,
         sourceClubs: world.clubs,
         sourceLeagues: world.leagues,
       ),
@@ -246,7 +248,8 @@ void main() {
     final annualFromOther = app().advance()
         as PlayerPresidentInteractiveDecisionPending;
     expect(
-      () => session.reservePreseasonPromisePhase(
+      () => session.claimPreseasonPromiseBoundary(
+        boundary: boundary,
         proof: boundary.proof,
         sourceClubs: world.clubs,
         sourceLeagues: world.leagues,

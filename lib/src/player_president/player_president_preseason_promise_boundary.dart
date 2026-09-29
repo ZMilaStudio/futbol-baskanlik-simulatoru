@@ -8,12 +8,14 @@ class PlayerPresidentPreseasonPromiseBoundary {
   PlayerPresidentPreseasonPromiseBoundary._({
     required this.application,
     required this.proof,
+    required this.opening,
     required Iterable<PlayerPromiseDecisionContext> contexts,
     required this.controlledPresidentId,
   }) : contexts = List.unmodifiable(contexts);
 
   final PlayerPresidentInteractiveDecisionApplicationSession application;
   final IntegratedNewGameOpeningProof proof;
+  final WorldOpeningState opening;
   final List<PlayerPromiseDecisionContext> contexts;
   final String controlledPresidentId;
 
@@ -111,6 +113,7 @@ class PlayerPresidentPreseasonPromiseBoundary {
     final boundary = PlayerPresidentPreseasonPromiseBoundary._(
       application: application,
       proof: proof,
+      opening: opening,
       contexts: contexts,
       controlledPresidentId: proof.presidentOpening.controlledPresidentId!,
     );
@@ -120,15 +123,18 @@ class PlayerPresidentPreseasonPromiseBoundary {
         request: request,
       ),
     );
+    // The complete Pending belongs to a still-local candidate. Application
+    // ownership is published only by the proof-bound claim below.
+    boundary._state = next;
 
     // This public reservation method independently verifies the supplied
     // proof against the same pristine M79 source before changing any flag.
-    application.reservePreseasonPromisePhase(
+    application.claimPreseasonPromiseBoundary(
+      boundary: boundary,
       proof: proof,
       sourceClubs: sourceClubs,
       sourceLeagues: sourceLeagues,
     );
-    boundary._state = next;
     return boundary;
   }
 
@@ -137,6 +143,9 @@ class PlayerPresidentPreseasonPromiseBoundary {
     required PresidentPromiseType choice,
     PlayerPresidentInteractiveDecisionRequest? request,
   }) {
+    if (!identical(application.preseasonPromiseBoundary, this)) {
+      throw StateError('A foreign or unowned preseason boundary cannot submit.');
+    }
     final current = _state.pending;
     final submitted = request ?? pending.request;
     if (current == null ||
