@@ -22,6 +22,7 @@ import 'player_president_interactive_decision_persistence_bundle.dart';
 import 'player_president_interactive_decision_session.dart';
 import 'player_president_preseason_weekly_handoff.dart';
 import 'player_president_committed_season_result_projection.dart';
+import 'player_president_accepted_promise_closing_projection.dart';
 import 'player_president_interactive_decision_transcript_snapshot.dart';
 
 enum PlayerPresidentInteractiveDecisionApplicationSessionOrigin {
@@ -348,6 +349,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentPreseasonPromiseBoundary? _preseasonPromiseBoundary;
   PlayerPresidentPreseasonWeeklyState? _preseasonWeeklyState;
   PlayerPresidentCommittedSeasonResultCandidate? _committedSeasonResultCandidate;
+  PlayerPresidentAcceptedPromiseClosingCandidate? _acceptedPromiseClosingCandidate;
 
   PlayerPresidentPreseasonPromiseBoundary? get preseasonPromiseBoundary =>
       _preseasonPromiseBoundary;
@@ -357,6 +359,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       _preseasonWeeklyState;
   PlayerPresidentCommittedSeasonResultCandidate? get committedSeasonResultCandidate =>
       _committedSeasonResultCandidate;
+  PlayerPresidentAcceptedPromiseClosingCandidate? get acceptedPromiseClosingCandidate =>
+      _acceptedPromiseClosingCandidate;
 
   /// The primary application-owned opening API. The legacy direct
   /// boundary.start() delegates to exactly the same proof-bound claim.
@@ -525,6 +529,66 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     }
     // All fallible work precedes the sole application publication.
     _committedSeasonResultCandidate = candidate;
+    return candidate;
+  }
+
+  /// B2: detached annual closing candidate, not a completed M65 checkpoint.
+  /// The accepted promises, committed W30 and B1 pointer remain unchanged.
+  PlayerPresidentAcceptedPromiseClosingCandidate closeAcceptedPromises({
+    required PlayerPresidentCommittedSeasonResultCandidate
+        expectedResultCandidate,
+  }) {
+    final result = _committedSeasonResultCandidate;
+    final state = _preseasonWeeklyState;
+    final boundary = _preseasonPromiseBoundary;
+    final applied = boundary?.applied;
+    if (!isNewGame ||
+        result == null || state == null || boundary == null || applied == null ||
+        !identical(expectedResultCandidate, result) ||
+        !identical(result.sourceState, state) ||
+        !identical(result.applied, applied) ||
+        !identical(result.activePromises, applied.activePromises) ||
+        !identical(state.boundary, boundary) ||
+        !identical(state.applied, applied) ||
+        !identical(boundary.application, this) ||
+        !identical(appliedPreseasonPromises, applied) ||
+        boundary.phase != PlayerPresidentPreseasonPromisePhase.applied ||
+        state.nextRound != 31 ||
+        state.completedMatchCount != 720 ||
+        !state.fixtureSnapshot.isComplete ||
+        result.leagueResults.length != 3 ||
+        applied.activePromises.length != 48 ||
+        applied.sourceIdentity != boundary.proof.seasonOpening.originSourceDigest ||
+        result.sourceIdentity != applied.sourceIdentity ||
+        result.acceptedChoice != applied.acceptedChoice ||
+        result.acceptedRequestKey != applied.acceptedRequestKey ||
+        result.controlledPresidentId != applied.controlledPresidentId ||
+        result.controlledClubId != applied.controlledClubId) {
+      throw StateError('B2 requires the exact application-owned B1 and W30.');
+    }
+    final published = _acceptedPromiseClosingCandidate;
+    if (published != null) {
+      if (!identical(published.sourceResultCandidate, result) ||
+          !identical(published.sourceState, state) ||
+          !identical(published.applied, applied)) {
+        throw StateError('B2 cannot publish a foreign closing candidate.');
+      }
+      return published;
+    }
+    final candidate = const PlayerPresidentAcceptedPromiseClosingProjection()
+        .project(source: result);
+    if (!identical(candidate.sourceResultCandidate, result) ||
+        !identical(candidate.sourceState, state) ||
+        !identical(candidate.applied, applied) ||
+        candidate.finances.length != 48 ||
+        candidate.closingFinanceStates.length != 48 ||
+        candidate.promiseSnapshots.length != 48 ||
+        !identical(_committedSeasonResultCandidate, result) ||
+        !identical(_preseasonWeeklyState, state)) {
+      throw StateError('B2 detached closing candidate lost its owner.');
+    }
+    // Sole application publication: all 3 leagues and 48 promises succeeded.
+    _acceptedPromiseClosingCandidate = candidate;
     return candidate;
   }
 
