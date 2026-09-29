@@ -132,7 +132,10 @@ void main() {
       expect(state.applied.consequence, same(applied.consequence));
       expect(state.applied.controlledClubId, applied.controlledClubId);
       expect(state.applied.controlledPresidentId, applied.controlledPresidentId);
-      expect(state.effectiveClubs, same(w0.effectiveClubs));
+      expect(state.effectiveClubs.map((club) => club.id).toList(),
+          w0.effectiveClubs.map((club) => club.id).toList());
+      expect(state.effectiveClubs.map((club) => club.strength).toList(),
+          w0.effectiveClubs.map((club) => club.strength).toList());
       expect(state.nextRound, round + 1);
       expect(state.completedMatchCount, round * 24);
       expect(state.fixtureSnapshot.isComplete, round == 30);
@@ -192,3 +195,57 @@ void main() {
         expect(state.completedMatchCount, checkpoints[round]![1]);
       }
     }
+
+    expect(w0.nextRound, 1);
+    expect(w0.completedMatchCount, 0);
+    expect(w0.fixtureSnapshot, same(boundary.proof.seasonOpening.fixtureSnapshot));
+    expect(w0.fixtureSnapshot.fixtures.every((entry) => !entry.isPlayed), isTrue);
+    expect(state.fixtureSnapshot.fixtures.every((entry) => entry.isPlayed), isTrue);
+    expect(state.fixtureSnapshot.nextRound, 31);
+    expect(state.fixtureSnapshot.isComplete, isTrue);
+    expect(state.fixtureSnapshot.fixtures.map((entry) => entry.globalKey).toSet().length, 720);
+    final byId = {for (final club in w0.effectiveClubs) club.id: club};
+    for (final league in world.leagues) {
+      final rows = state.fixtureSnapshot.tableFor(league.tier);
+      expect(rows.length, 16);
+      expect(rows.every((row) => row.played == 30), isTrue);
+      expect(
+        state.fixtureSnapshot.fixtures.where(
+          (entry) => entry.tier == league.tier && entry.isPlayed,
+        ).length,
+        240,
+      );
+      final legacy = const SeasonEngine().simulate(
+        clubs: league.clubIds.map((id) => byId[id]!).toList(),
+        config: config,
+      );
+      final weekly = state.fixtureSnapshot.fixtures
+          .where((entry) => entry.tier == league.tier).toList();
+      expect(weekly.length, legacy.fixtures.length);
+      for (var i = 0; i < weekly.length; i++) {
+        expect(weekly[i].fixture.id, legacy.fixtures[i].id);
+        final actual = weekly[i].fixture.result!;
+        final old = legacy.fixtures[i].result!;
+        expect(actual.matchSeed, old.matchSeed);
+        expect(actual.homeGoals, old.homeGoals);
+        expect(actual.awayGoals, old.awayGoals);
+        expect(actual.homeExpectedGoals, old.homeExpectedGoals);
+        expect(actual.awayExpectedGoals, old.awayExpectedGoals);
+      }
+      expect(rows.map((row) => row.toJson()).toList(),
+          legacy.table.map((row) => row.toJson()).toList());
+    }
+    expect(boundary.opening.financeStates.map((entry) => entry.signature).toList(),
+        openingFinance);
+    expect(session.completed, isNull);
+    expect(session.canPersist, isFalse);
+    expect(session.canPersistBootstrap, isFalse);
+    expect(() => session.advance(), throwsStateError);
+    expect(() => session.newGameBootstrapSnapshot, throwsStateError);
+    expect(() => session.persistenceBundle, throwsStateError);
+    expect(() => session.continuePlayerCareerToNextSeason(), throwsStateError);
+    expect(() => session.advancePreseasonWeek(
+      expectedState: state, expectedRound: 31,
+    ), throwsStateError);
+    expect(session.preseasonWeeklyState, same(state));
+  });
