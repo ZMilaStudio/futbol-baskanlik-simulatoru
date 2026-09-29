@@ -321,3 +321,50 @@ void main() {
     expect(w4.completedMatchCount, 96);
     expect(w3.fixtureSnapshot.fixtures.map(_resultIdentity).toList(), locked);
   });
+
+  test('W19 real MatchEngine exception retains exact W18 and retries once', () {
+    final session = app();
+    final w0 = open(session);
+    var state = w0;
+    for (var round = 1; round <= 18; round++) {
+      state = session.advancePreseasonWeek(
+        expectedState: state, expectedRound: round,
+      );
+    }
+    final w18 = state;
+    final locked = w18.fixtureSnapshot.fixtures.map(_resultIdentity).toList();
+    final history = w18.fixtureSnapshot.fixtures
+        .where((entry) => entry.isPlayed).toList();
+    expect(w18.completedMatchCount, 432);
+    expect(() => session.advancePreseasonWeek(
+      expectedState: w18,
+      expectedRound: 19,
+      core: const WeeklyWorldFixtureResultCore(
+        matchEngine: _FailOnWeekNineteen(),
+      ),
+    ), throwsStateError);
+    expect(session.preseasonWeeklyState, same(w18));
+    expect(w18.nextRound, 19);
+    expect(w18.fixtureSnapshot.fixtures.map(_resultIdentity).toList(), locked);
+    expect(w18.fixtureSnapshot.fixtures.where((entry) => entry.round > 18)
+        .every((entry) => !entry.isPlayed), isTrue);
+    final w19 = session.advancePreseasonWeek(
+      expectedState: w18, expectedRound: 19,
+    );
+    expect(w19.completedMatchCount, 456);
+    expect(w19.nextRound, 20);
+    expect(w19.applied, same(w18.applied));
+    expect(session.preseasonWeeklyState, same(w19));
+    final afterHistory = w19.fixtureSnapshot.fixtures
+        .where((entry) => entry.round <= 18).toList();
+    expect(afterHistory.length, history.length);
+    for (var i = 0; i < history.length; i++) {
+      expect(afterHistory[i], same(history[i]));
+    }
+    expect(w18.fixtureSnapshot.fixtures.map(_resultIdentity).toList(), locked);
+    expect(() => session.advancePreseasonWeek(
+      expectedState: w18, expectedRound: 19,
+    ), throwsStateError);
+    expect(session.preseasonWeeklyState, same(w19));
+  });
+}
