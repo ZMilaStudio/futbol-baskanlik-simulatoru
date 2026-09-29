@@ -1,5 +1,6 @@
 export 'src/player_president/player_president_interactive_decision_application_session.dart';
 export 'src/player_president/player_president_committed_season_result_projection.dart';
+export 'src/player_president/player_president_accepted_promise_closing_projection.dart';
 export 'src/player_president/player_president_prepared_season_dashboard_snapshot.dart';
 export 'src/player_president/player_president_prepared_season_fixtures_snapshot.dart';
 export 'src/player_president/player_president_prepared_squad_snapshot.dart';
