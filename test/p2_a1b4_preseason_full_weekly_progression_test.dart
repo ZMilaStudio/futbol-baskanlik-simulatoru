@@ -249,3 +249,75 @@ void main() {
     ), throwsStateError);
     expect(session.preseasonWeeklyState, same(state));
   });
+
+  test('W4 rejects foreign owner, stale or duplicate predecessor and wrong round', () {
+    final a = app();
+    final b = app(controlledClubId: 't1_02');
+    var state = open(a);
+    final foreign = open(b);
+    expect(state.sourceIdentity, isNot(foreign.sourceIdentity));
+    final w0 = state;
+    PlayerPresidentPreseasonWeeklyState? w2;
+    for (var round = 1; round <= 3; round++) {
+      state = a.advancePreseasonWeek(
+        expectedState: state, expectedRound: round,
+      );
+      if (round == 2) w2 = state;
+    }
+    final w3 = state;
+    expect(w3.nextRound, 4);
+    expect(() => a.advancePreseasonWeek(
+      expectedState: w2!, expectedRound: 4,
+    ), throwsStateError);
+    expect(() => a.advancePreseasonWeek(
+      expectedState: foreign, expectedRound: 4,
+    ), throwsStateError);
+    expect(() => a.advancePreseasonWeek(
+      expectedState: w3, expectedRound: 5,
+    ), throwsStateError);
+    expect(() => a.advancePreseasonWeek(
+      expectedState: w0, expectedRound: 4,
+    ), throwsStateError);
+    expect(a.preseasonWeeklyState, same(w3));
+    final w4 = a.advancePreseasonWeek(expectedState: w3, expectedRound: 4);
+    expect(w4.completedMatchCount, 96);
+    expect(() => a.advancePreseasonWeek(
+      expectedState: w3, expectedRound: 4,
+    ), throwsStateError);
+    expect(() => a.advancePreseasonWeek(
+      expectedState: w4, expectedRound: 4,
+    ), throwsStateError);
+    expect(a.preseasonWeeklyState, same(w4));
+  });
+
+  test('bad M2 candidate, wrong strengths and unsupported decision fail closed', () {
+    final session = app();
+    var state = open(session);
+    for (var round = 1; round <= 3; round++) {
+      state = session.advancePreseasonWeek(
+        expectedState: state, expectedRound: round,
+      );
+    }
+    final w3 = state;
+    final locked = w3.fixtureSnapshot.fixtures.map(_resultIdentity).toList();
+    expect(() => session.advancePreseasonWeek(
+      expectedState: w3, expectedRound: 4,
+      core: const _UnadvancedCandidateCore(),
+    ), throwsStateError);
+    expect(session.preseasonWeeklyState, same(w3));
+    expect(() => session.advancePreseasonWeek(
+      expectedState: w3, expectedRound: 4,
+      core: const _WrongStrengthCandidateCore(),
+    ), throwsStateError);
+    expect(session.preseasonWeeklyState, same(w3));
+    expect(() => session.advancePreseasonWeek(
+      expectedState: w3, expectedRound: 4, decision: Object(),
+    ), throwsUnsupportedError);
+    expect(session.preseasonWeeklyState, same(w3));
+    expect(w3.fixtureSnapshot.fixtures.map(_resultIdentity).toList(), locked);
+    final w4 = session.advancePreseasonWeek(
+      expectedState: w3, expectedRound: 4,
+    );
+    expect(w4.completedMatchCount, 96);
+    expect(w3.fixtureSnapshot.fixtures.map(_resultIdentity).toList(), locked);
+  });
