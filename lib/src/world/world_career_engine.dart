@@ -21,6 +21,7 @@ import 'world_finance_hooks.dart';
 import 'world_league.dart';
 import 'world_league_movement_projection.dart';
 import 'world_opening_state_initializer.dart';
+import 'world_offseason_projection.dart';
 import 'world_roster_hooks.dart';
 import 'world_transfer_hooks.dart';
 
@@ -335,78 +336,35 @@ class WorldCareerEngine {
         finances: financeResults,
       );
 
+      final offseason =
+          WorldOffseasonProjection(
+            lifecycleEngine: lifecycleEngine,
+            strengthCalculator: strengthCalculator,
+            transferMarketEngine: transferMarketEngine,
+          ).project(
+            hasNextSeason: hasNextSeason,
+            seasonIndex: seasonIndex,
+            config: config,
+            players: seasonPlayers,
+            baseClubs: baseClubs,
+            squadClubs: squadClubs,
+            closingFinanceStates: closingFinanceStates,
+            nextLeagues: leaguesAfterTransition,
+            rosterHooks: rosterHooks,
+            transferHooks: transferHooks,
+            enableTransferInstallments: enableTransferInstallments,
+          );
+      retiredAfterSeason = offseason.retired;
+      youthIntakeAfterSeason = offseason.youthIntake;
+      transfersAfterSeason = offseason.transfers;
+      cashMovementsAfterWindow = offseason.cashMovements;
+      currentPlayers = List<Player>.unmodifiable(offseason.players);
+      currentFinanceStates = List<ClubFinanceState>.unmodifiable(
+        offseason.financeStates,
+      );
+      financeStatesAfterWindow = currentFinanceStates;
       if (hasNextSeason) {
-        final lifecycle = lifecycleEngine.advance(
-          currentPlayers: seasonPlayers,
-          currentClubs: squadClubs,
-          referenceClubs: baseClubs,
-          careerSeed: config.careerSeed,
-          nextSeasonIndex: seasonIndex + 1,
-          simulationVersion: config.simulationVersion,
-        );
-        retiredAfterSeason = lifecycle.retiredPlayers;
-        youthIntakeAfterSeason = lifecycle.youthIntake;
-
-        final preparedPlayers = rosterHooks.prepareNextSeasonPlayers(
-          seasonIndex: seasonIndex,
-          nextSeasonIndex: seasonIndex + 1,
-          activePlayers: lifecycle.activePlayers,
-          retiredPlayers: lifecycle.retiredPlayers,
-          youthIntake: lifecycle.youthIntake,
-          clubs: squadClubs,
-          leaguesForNextSeason: leaguesAfterTransition,
-          financeStates: closingFinanceStates,
-        );
-        final postLifecycleClubs = strengthCalculator.deriveClubs(
-          baseClubs: baseClubs,
-          players: preparedPlayers,
-        );
-        final contractYearsRemaining =
-            rosterHooks.contractYearsRemainingForTransfer(
-          nextSeasonIndex: seasonIndex + 1,
-          players: preparedPlayers,
-        );
-        final market = transferMarketEngine.simulateWindow(
-          clubs: postLifecycleClubs,
-          players: preparedPlayers,
-          financeStates: closingFinanceStates,
-          careerSeed: config.careerSeed,
-          seasonIndex: seasonIndex,
-          simulationVersion: config.simulationVersion,
-          contractYearsRemainingByPlayer: contractYearsRemaining,
-          enableInstallments: enableTransferInstallments,
-        );
-        rosterHooks.onTransferWindowCompleted(
-          seasonIndex: seasonIndex,
-          nextSeasonIndex: seasonIndex + 1,
-          playersBeforeWindow: preparedPlayers,
-          playersAfterWindow: market.players,
-          transfers: market.deals,
-          clubs: postLifecycleClubs,
-          leaguesForNextSeason: leaguesAfterTransition,
-          financeStates: market.financeStates,
-        );
-        final postTransfer = transferHooks.afterPermanentTransfers(
-          seasonIndex: seasonIndex,
-          nextSeasonIndex: seasonIndex + 1,
-          players: market.players,
-          financeStates: market.financeStates,
-          permanentTransfers: market.deals,
-          clubs: postLifecycleClubs,
-          leaguesForNextSeason: leaguesAfterTransition,
-        );
-        currentPlayers = List<Player>.unmodifiable(postTransfer.players);
-        currentFinanceStates = List<ClubFinanceState>.unmodifiable(
-          postTransfer.financeStates,
-        );
-        financeStatesAfterWindow = currentFinanceStates;
-        cashMovementsAfterWindow = postTransfer.cashMovements;
-        transfersAfterSeason = market.deals;
-        currentLeagues = List<WorldLeague>.unmodifiable(leaguesAfterTransition);
-      } else {
-        currentFinanceStates = List<ClubFinanceState>.unmodifiable(
-          closingFinanceStates,
-        );
+        currentLeagues = offseason.nextLeagues;
       }
 
       seasons.add(
