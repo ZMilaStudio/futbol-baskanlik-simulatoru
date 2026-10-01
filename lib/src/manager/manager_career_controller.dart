@@ -17,6 +17,8 @@ import 'manager_opening_state_initializer.dart';
 import 'manager_patience_policy.dart';
 import 'manager_pool_generator.dart';
 
+part 'manager_season_authority.dart';
+
 class ManagerCareerController implements WorldCareerHooks {
   ManagerCareerController({
     required this.careerSeed,
@@ -83,6 +85,53 @@ class ManagerCareerController implements WorldCareerHooks {
   Map<String, ManagerAssignment> _assignments = const {};
   Map<String, _PendingManagerClubSeason> _pending = const {};
   final List<ManagerCareerSeason> _seasons = [];
+  List<Club>? _authorityEffectiveClubs;
+  int? _authoritySeasonIndex;
+  ManagerSeasonAuthority? _capturedAuthority;
+
+  /// Capture only the exact successful setup result, never a reconstruction.
+  ManagerSeasonAuthority captureSeasonAuthority({
+    required Object owner,
+    required Object sourceRevision,
+    required int seasonIndex,
+    required List<Club> effectiveClubs,
+  }) {
+    if (_capturedAuthority != null ||
+        _authoritySeasonIndex != seasonIndex ||
+        !identical(_authorityEffectiveClubs, effectiveClubs) ||
+        _pending.isEmpty ||
+        _pending.length != effectiveClubs.length) {
+      throw StateError(
+          'Capture requires the original uncaptured manager setup.');
+    }
+    final authority = ManagerSeasonAuthority._(
+      this,
+      owner,
+      sourceRevision,
+      seasonIndex,
+      effectiveClubs,
+    );
+    _capturedAuthority = authority;
+    return authority;
+  }
+
+  ManagerCareerController forkSeasonAuthority({
+    required ManagerSeasonAuthority authority,
+    required Object owner,
+    required Object sourceRevision,
+    required int seasonIndex,
+  }) {
+    if (!identical(_capturedAuthority, authority) ||
+        !identical(authority._source, this) ||
+        !identical(authority.owner, owner) ||
+        !identical(authority.sourceRevision, sourceRevision) ||
+        authority.seasonIndex != seasonIndex ||
+        !identical(_authorityEffectiveClubs, authority.effectiveClubs) ||
+        _pending.isEmpty) {
+      throw StateError('Foreign, stale or mismatched manager authority.');
+    }
+    return authority._fork();
+  }
 
   List<Manager> get managers => List.unmodifiable(_managers);
   List<ManagerCareerSeason> get seasons => List.unmodifiable(_seasons);
@@ -165,7 +214,11 @@ class ManagerCareerController implements WorldCareerHooks {
     }
 
     _pending = pending;
-    return List.unmodifiable(effective);
+    final List<Club> result = List.unmodifiable(effective);
+    _authoritySeasonIndex = seasonIndex;
+    _authorityEffectiveClubs = result;
+    _capturedAuthority = null;
+    return result;
   }
 
   @override
@@ -333,6 +386,9 @@ class ManagerCareerController implements WorldCareerHooks {
       ),
     );
     _pending = const {};
+    _authoritySeasonIndex = null;
+    _authorityEffectiveClubs = null;
+    _capturedAuthority = null;
   }
 
   void _initialize({
