@@ -10,7 +10,6 @@ import '../save/advanced_runtime_checkpoint.dart';
 import '../save/president_domain_memory_checkpoint.dart';
 import '../save/president_runtime_checkpoint.dart';
 import '../sponsor/sponsor_runtime_integration.dart';
-import '../world/league_tier.dart';
 import '../world/world_checkpoint.dart';
 import '../world/world_league.dart';
 import 'manager.dart';
@@ -18,6 +17,7 @@ import 'manager_assignment.dart';
 import 'manager_career_season.dart';
 import 'manager_fit_model.dart';
 import 'player_president_manager_control.dart';
+import 'player_president_manager_preparation_projection.dart';
 
 class PlayerPresidentUnifiedManagerRuntimeSeasonBoundary {
   PlayerPresidentUnifiedManagerRuntimeSeasonBoundary({
@@ -260,24 +260,15 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
       );
     }
 
-    final forcedRetirement = aiChange?.reason == ManagerChangeReason.retirement;
-    final oldManagerUsedElsewhere = advanced.manager.assignments.any(
-      (item) =>
-          item.clubId != controlledClubId && item.managerId == currentManager.id,
-    );
-    final canRetain = !forcedRetirement && !oldManagerUsedElsewhere;
-    final reviewContext = PlayerManagerReviewContext(
-      seasonIndex: season.seasonIndex,
-      clubId: controlledClubId,
-      presidentId: president.tenure.president.id,
-      currentManager: currentManager,
-      season: clubSeason,
-      aiWouldReplace: aiChange != null,
-      aiReason: aiChange?.reason,
-      aiNextManager: aiNextManager,
-      canRetain: canRetain,
-      forcedRetirement: forcedRetirement,
-    );
+    final reviewContext = PlayerManagerPreparationProjection(
+      fitModel: fitModel,
+      candidateLimit: candidateLimit,
+    ).review(
+        advanced: advanced,
+        clubId: controlledClubId,
+        presidentId: president.tenure.president.id);
+    final forcedRetirement = reviewContext.forcedRetirement;
+    final canRetain = reviewContext.canRetain;
 
     final PlayerManagerReviewChoice reviewChoice;
     final bool reviewProviderCalled;
@@ -422,96 +413,15 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
     required String clubId,
     required Manager outgoingManager,
     Manager? preferredAiManager,
-  }) {
-    final world = advanced.world;
-    final assignedElsewhere = advanced.manager.assignments
-        .where((item) => item.clubId != clubId)
-        .map((item) => item.managerId)
-        .toSet();
-    final club = world.baseClubs.firstWhere((item) => item.id == clubId);
-    final players = world.nextSeasonPlayers
-        .where((item) => item.clubId == clubId)
-        .toList(growable: false);
-    final finance = world.nextSeasonFinanceStates.firstWhere(
-      (item) => item.clubId == clubId,
-    );
-    final tier = _tierFor(world, clubId);
-    final candidates = <PlayerManagerCandidate>[];
-    for (final manager in advanced.manager.managers) {
-      if (manager.id == outgoingManager.id ||
-          assignedElsewhere.contains(manager.id) ||
-          _ageAt(manager, world) >= manager.retirementAge) {
-        continue;
-      }
-      final fit = fitModel.score(
-        manager: manager,
-        club: club,
-        players: players,
-        leagueTier: tier,
-        financeState: finance,
-      );
-      candidates.add(
-        PlayerManagerCandidate(
-          manager: manager,
-          fitScore: fit,
-          selectionScore: _selectionScore(
-            manager: manager,
-            fitScore: fit,
-            clubId: clubId,
-            tier: tier,
-            world: world,
-          ),
-        ),
-      );
-    }
-    candidates.sort((a, b) {
-      final score = b.selectionScore.compareTo(a.selectionScore);
-      return score != 0 ? score : a.manager.id.compareTo(b.manager.id);
-    });
-
-    final selected = <PlayerManagerCandidate>[];
-    if (preferredAiManager != null) {
-      final preferred = candidates.where(
-        (item) => item.manager.id == preferredAiManager.id,
-      );
-      if (preferred.isNotEmpty) selected.add(preferred.first);
-    }
-    for (final candidate in candidates) {
-      if (selected.any((item) => item.manager.id == candidate.manager.id)) {
-        continue;
-      }
-      selected.add(candidate);
-      if (selected.length >= candidateLimit) break;
-    }
-    return List.unmodifiable(selected);
-  }
-
-  double _selectionScore({
-    required Manager manager,
-    required double fitScore,
-    required String clubId,
-    required LeagueTier tier,
-    required WorldCheckpoint world,
-  }) {
-    final targetReputation = switch (tier) {
-      LeagueTier.first => 74,
-      LeagueTier.second => 62,
-      LeagueTier.third => 54,
-    };
-    final mismatch = (manager.reputation - targetReputation).abs().toDouble();
-    return fitScore * 0.55 +
-        manager.reputation * 0.25 +
-        manager.coaching * 0.20 -
-        mismatch * 0.10 +
-        _jitter(
+  }) =>
+      PlayerManagerPreparationProjection(
+        fitModel: fitModel,
+        candidateLimit: candidateLimit,
+      ).replacementCandidates(
+          advanced: advanced,
           clubId: clubId,
-          managerId: manager.id,
-          seasonIndex: world.nextSeasonIndex,
-          world: world,
-          salt: 17,
-          amplitude: 4,
-        );
-  }
+          outgoingManager: outgoingManager,
+          preferredAiManager: preferredAiManager);
 
   ManagerAssignment _newAssignment({
     required AdvancedRuntimeCheckpoint advanced,
@@ -688,14 +598,6 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
       managerChangesByReason: counts,
     );
   }
-
-  int _ageAt(Manager manager, WorldCheckpoint world) =>
-      manager.startAge + (world.nextSeasonIndex - world.config.seasonIndex);
-
-  LeagueTier _tierFor(WorldCheckpoint world, String clubId) =>
-      world.nextSeasonLeagues
-          .firstWhere((league) => league.clubIds.contains(clubId))
-          .tier;
 
   double _jitter({
     required String clubId,
