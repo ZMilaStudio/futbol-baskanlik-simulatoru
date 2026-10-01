@@ -12,6 +12,7 @@ import '../fan/fan_state.dart';
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
+import '../finance/season_finance_authority_receipt.dart';
 import '../league/club.dart';
 import '../player/player.dart';
 import '../promise/promise_media_career_engine.dart';
@@ -224,6 +225,7 @@ class PlayerPresidentTicketPricingRuntimeCareerResult {
 /// this checkpoint and refreshed after every completed season.
 class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
   const PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine({
+    this.financeRecording,
     this.playerProvider,
     this.aiPolicy = const PresidentMatchdayTicketPricingPolicy(),
     this.pricingPolicy = const MatchdayTicketPricingPolicy(),
@@ -237,6 +239,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
   });
 
   final PlayerMatchdayTicketPricingDecisionProvider? playerProvider;
+  final FullM65SeasonFinancePipeline? financeRecording;
   final PresidentMatchdayTicketPricingPolicy aiPolicy;
   final MatchdayTicketPricingPolicy pricingPolicy;
   final StadiumInvestmentPolicy stadiumPolicy;
@@ -278,6 +281,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
           ? initialContext
           : _contextFromCheckpoint(current, tenure);
       final pricingEconomy = _TicketPricingEconomyEngine(
+        financeRecording: financeRecording,
         delegate: baseWorldEngine.economyEngine,
         expectedClubIds: context.clubs.map((club) => club.id),
         stadiumLevelsByClub: context.stadiumLevelsByClub,
@@ -351,6 +355,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
       final hasFuture = offset < seasonCount - 1 || hasFutureSeasonAfterReport;
       final context = _contextFromCheckpoint(current, tenure);
       final pricingEconomy = _TicketPricingEconomyEngine(
+        financeRecording: financeRecording,
         delegate: baseWorldEngine.economyEngine,
         expectedClubIds: context.clubs.map((club) => club.id),
         stadiumLevelsByClub: context.stadiumLevelsByClub,
@@ -462,6 +467,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     );
     return PresidentFacilityInvestmentRuntimeCareerEngine(
       runtime: FacilitySponsorCrisisRuntimeCareerEngine(
+        financeRecording: financeRecording,
         sponsorSystem: sponsorSystem,
         baseWorldEngine: pricedWorld,
         crisisIntegration: crisisIntegration,
@@ -490,6 +496,7 @@ class _PricingRuntimeContext {
 
 class _TicketPricingEconomyEngine extends BasicEconomyEngine {
   _TicketPricingEconomyEngine({
+    this.financeRecording,
     required this.delegate,
     required Iterable<String> expectedClubIds,
     required this.stadiumLevelsByClub,
@@ -504,6 +511,7 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
         super(wageModel: delegate.wageModel);
 
   final BasicEconomyEngine delegate;
+  final FullM65SeasonFinancePipeline? financeRecording;
   final Set<String> expectedClubIds;
   final Map<String, int> stadiumLevelsByClub;
   final Map<String, FanState> fanStatesByClub;
@@ -612,7 +620,7 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
       pricedMultipliers[club.id] = outcome.revenueMultiplierBps;
     }
 
-    return delegate.simulateSeason(
+    final results = delegate.simulateSeason(
       clubs: clubs,
       players: players,
       seasonReport: seasonReport,
@@ -625,5 +633,17 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
       matchdayRevenueMultiplierBpsByClub: pricedMultipliers,
       sponsorRevenueByClub: sponsorRevenueByClub,
     );
+    financeRecording?.forSeason(seasonReport.seasonIndex)?.observeSettlement(
+      actualSeason: seasonReport.seasonIndex, clubs: clubs,
+      openingStates: openingStates, wages: annualWagesByClub,
+      installmentIncome: transferInstallmentIncomeByClub,
+      installmentExpense: transferInstallmentExpenseByClub,
+      sponsorRevenue: sponsorRevenueByClub,
+      incomingMultipliers: matchdayRevenueMultiplierBpsByClub,
+      finalMultipliers: pricedMultipliers, tickets: _decisions,
+      economicScaleBps: economicScaleBps, costScaleBps: costScaleBps,
+      results: results,
+    );
+    return results;
   }
 }
