@@ -12,6 +12,7 @@ import '../fan/fan_state.dart';
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
+import '../finance/season_finance_authority_receipt.dart';
 import '../league/club.dart';
 import '../media/media_state.dart';
 import '../player/player.dart';
@@ -385,6 +386,7 @@ class FacilitySponsorCrisisRuntimeCareerResult {
 /// the existing M39 decision loop and can be composed in a later milestone.
 class FacilitySponsorCrisisRuntimeCareerEngine {
   const FacilitySponsorCrisisRuntimeCareerEngine({
+    this.financeRecording,
     this.sponsorSystem = const SponsorSystemEngine(),
     this.baseWorldEngine = const WorldCareerEngine(),
     this.presidentGenerator = const PresidentProfileGenerator(),
@@ -394,6 +396,7 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
   });
 
   final SponsorSystemEngine sponsorSystem;
+  final FullM65SeasonFinancePipeline? financeRecording;
   final WorldCareerEngine baseWorldEngine;
   final PresidentProfileGenerator presidentGenerator;
   final PresidentManagementProfileGenerator managementProfileGenerator;
@@ -516,6 +519,7 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
     required Map<String, MediaState> media,
   }) {
     final coordinator = _FacilitySponsorSeasonEconomyEngine(
+      financeRecording: financeRecording,
       delegate: baseWorldEngine.economyEngine,
       sponsorSystem: sponsorSystem,
       openingSponsor: openingSponsor,
@@ -565,6 +569,7 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
       media[state.clubId] = state.mediaReputation;
     }
     final coordinator = _FacilitySponsorSeasonEconomyEngine(
+      financeRecording: financeRecording,
       delegate: baseWorldEngine.economyEngine,
       sponsorSystem: sponsorSystem,
       openingSponsor: checkpoint.runtime.sponsor,
@@ -651,6 +656,7 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
       ),
       strengthCalculator: baseWorldEngine.strengthCalculator,
       economyEngine: _FacilityEconomyEngine(
+        financeRecording: financeRecording,
         delegate: coordinator,
         stadiumFacilities: stadiums,
         fanStatesByClub: fanStatesByClub,
@@ -705,12 +711,14 @@ class _FacilityLifecycleEngine extends PlayerLifecycleEngine {
 
 class _FacilityEconomyEngine extends BasicEconomyEngine {
   _FacilityEconomyEngine({
+    this.financeRecording,
     required this.delegate,
     required this.stadiumFacilities,
     required this.fanStatesByClub,
   });
 
   final BasicEconomyEngine delegate;
+  final FullM65SeasonFinancePipeline? financeRecording;
   final Map<String, StadiumFacilityState> stadiumFacilities;
   final Map<String, FanState> fanStatesByClub;
   final StadiumInvestmentPolicy stadiumPolicy = const StadiumInvestmentPolicy();
@@ -753,6 +761,10 @@ class _FacilityEconomyEngine extends BasicEconomyEngine {
             fanTrust: fanTrust,
           )
           .revenueMultiplierBps;
+      financeRecording?.forSeason(seasonReport.seasonIndex)?.observeAttendance(FinanceAttendanceEvidence(
+        club: club, stadiumLevel: stadium.level, fanTrust: fanTrust,
+        leaguePosition: position, multiplierBps: multipliers[club.id]!,
+      ));
     }
     return delegate.simulateSeason(
       clubs: clubs,
@@ -772,6 +784,7 @@ class _FacilityEconomyEngine extends BasicEconomyEngine {
 
 class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
   _FacilitySponsorSeasonEconomyEngine({
+    this.financeRecording,
     required this.delegate,
     required this.sponsorSystem,
     required this.openingSponsor,
@@ -786,6 +799,7 @@ class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
 
   final BasicEconomyEngine delegate;
   final SponsorSystemEngine sponsorSystem;
+  final FullM65SeasonFinancePipeline? financeRecording;
   final SponsorRuntimeCheckpoint openingSponsor;
   final Set<String> expectedClubIds;
   final Map<String, PresidentManagementProfile> presidentProfilesByClub;
@@ -889,6 +903,7 @@ class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
     _activeNext.addAll(resolution.checkpoint.activeContracts);
     _revenueByClub.addAll(resolution.revenueByClub);
     _seasonRevenue += resolution.totalRevenue;
+    financeRecording?.forSeason(seasonReport.seasonIndex)?.observeSponsor(ids, resolution);
 
     return delegate.simulateSeason(
       clubs: clubs,
