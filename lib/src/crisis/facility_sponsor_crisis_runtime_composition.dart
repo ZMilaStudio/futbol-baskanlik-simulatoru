@@ -14,11 +14,13 @@ import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
 import '../finance/season_finance_authority_receipt.dart';
 import '../league/club.dart';
+import '../manager/manager_career_controller.dart';
 import '../media/media_state.dart';
 import '../player/player.dart';
 import '../player/player_lifecycle_engine.dart';
 import '../promise/promise_media_career_engine.dart';
 import '../save/advanced_runtime_career_engine.dart';
+import '../save/advanced_runtime_checkpoint.dart';
 import '../save/president_domain_career_engine.dart';
 import '../save/president_domain_resume_engine.dart';
 import '../save/save_checksum.dart';
@@ -132,8 +134,12 @@ class FacilityPortfolioRuntimeState {
 
   String get signature => [
         totalInvestmentSpent.minorUnits,
-        academyFacilities.map((state) => '${state.clubId}:${state.level}').join('|'),
-        stadiumFacilities.map((state) => '${state.clubId}:${state.level}').join('|'),
+        academyFacilities
+            .map((state) => '${state.clubId}:${state.level}')
+            .join('|'),
+        stadiumFacilities
+            .map((state) => '${state.clubId}:${state.level}')
+            .join('|'),
         trainingGroundFacilities
             .map((state) => '${state.clubId}:${state.level}')
             .join('|'),
@@ -163,7 +169,8 @@ class FacilitySponsorCrisisRuntimeCheckpoint {
     facilities.validateAgainst(worldIds);
   }
 
-  String get signature => '${runtime.signature}||facilities=${facilities.signature}';
+  String get signature =>
+      '${runtime.signature}||facilities=${facilities.signature}';
 }
 
 class FacilitySponsorCrisisRuntimeSaveCodec {
@@ -237,7 +244,8 @@ class FacilitySponsorCrisisRuntimeSaveCodec {
     final payload = envelope['payload'];
     final checksum = envelope['checksum'];
     if (checksum is! String ||
-        checksum != SaveChecksum.forPayload(saveVersion: version, payload: payload)) {
+        checksum !=
+            SaveChecksum.forPayload(saveVersion: version, payload: payload)) {
       throw const SaveLoadException(
         SaveLoadFailure.checksumMismatch,
         'Facility sponsor-crisis save checksum mismatch.',
@@ -284,7 +292,8 @@ class FacilitySponsorCrisisRuntimeSaveCodec {
           trainingGroundFacilities: training.map(
             (item) {
               final entry = _facilityEntry(item, 'Training ground');
-              return TrainingGroundFacilityState(clubId: entry.$1, level: entry.$2);
+              return TrainingGroundFacilityState(
+                  clubId: entry.$1, level: entry.$2);
             },
           ),
           totalInvestmentSpent: Money.fromMinorUnits(spent),
@@ -342,18 +351,20 @@ class FacilitySponsorCrisisRuntimeSeasonBoundary {
       throw StateError('Sponsor and crisis boundaries must share a season.');
     }
     if (checkpoint.nextSeasonIndex != sponsor.checkpoint.nextSeasonIndex) {
-      throw StateError('Combined checkpoint cursor must match sponsor boundary.');
+      throw StateError(
+          'Combined checkpoint cursor must match sponsor boundary.');
     }
-    if (checkpoint.runtime.sponsor.signature != sponsor.checkpoint.sponsor.signature) {
+    if (checkpoint.runtime.sponsor.signature !=
+        sponsor.checkpoint.sponsor.signature) {
       throw StateError('Crisis composition must not mutate sponsor state.');
     }
     if (checkpoint.runtime.domain.signature != crisis.checkpoint.signature) {
-      throw StateError('Combined checkpoint must carry crisis-adjusted domain.');
+      throw StateError(
+          'Combined checkpoint must carry crisis-adjusted domain.');
     }
   }
 
-  String get signature =>
-      'season=$seasonIndex:sponsor=${sponsor.signature}:'
+  String get signature => 'season=$seasonIndex:sponsor=${sponsor.signature}:'
       'crisis=${crisis.signature}:final=${checkpoint.signature}';
 }
 
@@ -366,7 +377,8 @@ class FacilitySponsorCrisisRuntimeCareerResult {
   final FacilitySponsorCrisisRuntimeCheckpoint checkpoint;
   final List<FacilitySponsorCrisisRuntimeSeasonBoundary> boundaries;
 
-  int get crisisCount => boundaries.fold(0, (sum, item) => sum + item.crisisCount);
+  int get crisisCount =>
+      boundaries.fold(0, (sum, item) => sum + item.crisisCount);
 
   Money get totalSponsorRevenue => boundaries.fold(
         Money.zero,
@@ -384,13 +396,74 @@ class FacilitySponsorCrisisRuntimeCareerResult {
 /// Facility levels remain continuation-critical state but are intentionally
 /// static in M47. President-driven facility investment remains the concern of
 /// the existing M39 decision loop and can be composed in a later milestone.
+final class _FacilitySeasonInputs {
+  _FacilitySeasonInputs(this.clubs, this.config, this.facilities, this.sponsor,
+      this.profiles, this.fans, this.media);
+  final List<Club> clubs;
+  final SimulationConfig config;
+  final FacilityPortfolioRuntimeState facilities;
+  final SponsorRuntimeCheckpoint sponsor;
+  final Map<String, PresidentManagementProfile> profiles;
+  final Map<String, FanState> fans;
+  final Map<String, MediaState> media;
+}
+
+final class _FacilityPreparedGraph {
+  _FacilityPreparedGraph(this.inputs, this.coordinator, this.domain);
+  final _FacilitySeasonInputs inputs;
+  final _FacilitySponsorSeasonEconomyEngine coordinator;
+  final PresidentDomainCareerEngine domain;
+}
+
+/// The original graph stays private; the advanced lease is its only executor.
+final class PreparedFacilitySponsorSeason {
+  PreparedFacilitySponsorSeason._(this._producer, this._graph, this._advanced);
+  final FacilitySponsorCrisisRuntimeCareerEngine _producer;
+  final _FacilityPreparedGraph _graph;
+  final PreparedAdvancedRuntimeSeason _advanced;
+  Object get owner => _advanced.owner;
+  Object get revision => _advanced.revision;
+  Object get provenance => _advanced.provenance;
+  Object get executionIdentity => _advanced.executionIdentity;
+  Object get managerLineage => _advanced.managerLineage;
+  Object get transferLineage => _advanced.transferLineage;
+  PreparedWorldOpening get opening => _advanced.opening;
+  ManagerSeasonAuthority? get managerAuthority => _advanced.managerAuthority;
+  PreparedRuntimeOrigin get origin => _advanced.origin;
+  PreparedExecutionState get state => _advanced.state;
+  int get openingContractCount => _advanced.openingContractCount;
+  FacilityPortfolioRuntimeState get facilities => _graph.inputs.facilities;
+  SponsorRuntimeCheckpoint get openingSponsor => _graph.inputs.sponsor;
+  Map<String, FanState> get fanStates => Map.unmodifiable(_graph.inputs.fans);
+  Map<String, MediaState> get mediaStates =>
+      Map.unmodifiable(_graph.inputs.media);
+  Map<String, PresidentManagementProfile> get managementProfiles =>
+      Map.unmodifiable(_graph.inputs.profiles);
+  int get sponsorProcessedClubCount =>
+      _graph.coordinator._processedClubIds.length;
+  Money get sponsorSeasonRevenue => _graph.coordinator._seasonRevenue;
+
+  PreparedFacilitySponsorSeason move(
+          {required Object expectedOwner,
+          required Object expectedRevision,
+          required Object expectedProvenance}) =>
+      PreparedFacilitySponsorSeason._(
+          _producer,
+          _graph,
+          _advanced.move(
+              expectedOwner: expectedOwner,
+              expectedRevision: expectedRevision,
+              expectedProvenance: expectedProvenance));
+}
+
 class FacilitySponsorCrisisRuntimeCareerEngine {
   const FacilitySponsorCrisisRuntimeCareerEngine({
     this.financeRecording,
     this.sponsorSystem = const SponsorSystemEngine(),
     this.baseWorldEngine = const WorldCareerEngine(),
     this.presidentGenerator = const PresidentProfileGenerator(),
-    this.managementProfileGenerator = const PresidentManagementProfileGenerator(),
+    this.managementProfileGenerator =
+        const PresidentManagementProfileGenerator(),
     this.crisisIntegration = const CrisisRuntimeIntegrationEngine(),
     this.sourceEngine = const PromiseMediaCareerEngine(),
   });
@@ -402,6 +475,154 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
   final PresidentManagementProfileGenerator managementProfileGenerator;
   final CrisisRuntimeIntegrationEngine crisisIntegration;
   final PromiseMediaCareerEngine sourceEngine;
+
+  PreparedFacilitySponsorSeason prepareInitial(
+      {required List<Club> clubs,
+      required List<WorldLeague> leagues,
+      required SimulationConfig config,
+      Object? owner,
+      Object? revision,
+      Object? provenance,
+      bool captureManagerAuthority = false,
+      Iterable<AcademyFacilityState>? academyFacilities,
+      Iterable<StadiumFacilityState>? stadiumFacilities,
+      Iterable<TrainingGroundFacilityState>? trainingGroundFacilities,
+      Money totalInvestmentSpent = Money.zero}) {
+    final inputs = _initialInputs(
+        clubs: clubs,
+        config: config,
+        academyFacilities: academyFacilities,
+        stadiumFacilities: stadiumFacilities,
+        trainingGroundFacilities: trainingGroundFacilities,
+        totalInvestmentSpent: totalInvestmentSpent);
+    final graph = _prepareGraph(inputs);
+    final prepared = graph.domain.runtimeEngine.prepareInitial(
+        clubs: clubs,
+        leagues: leagues,
+        config: config,
+        owner: owner,
+        revision: revision,
+        provenance: provenance,
+        captureManagerAuthority: captureManagerAuthority);
+    return PreparedFacilitySponsorSeason._(this, graph, prepared);
+  }
+
+  PreparedFacilitySponsorSeason prepareResume(
+      {required FacilitySponsorCrisisRuntimeCheckpoint checkpoint,
+      Object? owner,
+      Object? revision,
+      Object? provenance,
+      bool captureManagerAuthority = false}) {
+    final graph = _prepareGraph(_resumeInputs(checkpoint));
+    final prepared = graph.domain.runtimeEngine.prepareResume(
+        checkpoint: checkpoint.runtime.domain.presidentRuntime.runtime.runtime,
+        owner: owner,
+        revision: revision,
+        provenance: provenance,
+        captureManagerAuthority: captureManagerAuthority);
+    return PreparedFacilitySponsorSeason._(this, graph, prepared);
+  }
+
+  /// Executes the owned advanced graph, not a new domain/checkpoint simulation.
+  /// Domain-memory publication remains the existing legacy facade's job.
+  AdvancedRuntimeSimulationResult executePrepared(
+      PreparedFacilitySponsorSeason p,
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    if (!identical(p._producer, this)) {
+      throw StateError('Foreign facility/sponsor prepared producer.');
+    }
+    return p._graph.domain.runtimeEngine.executePrepared(p._advanced,
+        expectedOwner: expectedOwner,
+        expectedRevision: expectedRevision,
+        expectedProvenance: expectedProvenance);
+  }
+
+  _FacilitySeasonInputs _initialInputs(
+      {required List<Club> clubs,
+      required SimulationConfig config,
+      Iterable<AcademyFacilityState>? academyFacilities,
+      Iterable<StadiumFacilityState>? stadiumFacilities,
+      Iterable<TrainingGroundFacilityState>? trainingGroundFacilities,
+      Money totalInvestmentSpent = Money.zero}) {
+    final facilities = FacilityPortfolioRuntimeState.forClubs(
+        clubs: clubs,
+        academyFacilities: academyFacilities,
+        stadiumFacilities: stadiumFacilities,
+        trainingGroundFacilities: trainingGroundFacilities,
+        totalInvestmentSpent: totalInvestmentSpent);
+    final sponsor =
+        SponsorRuntimeCheckpoint.initial(seasonIndex: config.seasonIndex);
+    final profiles = <String, PresidentManagementProfile>{};
+    final fans = <String, FanState>{};
+    final media = <String, MediaState>{};
+    for (final club in clubs) {
+      final president = presidentGenerator.generateInitial(
+          clubId: club.id,
+          careerSeed: config.careerSeed,
+          simulationVersion: config.simulationVersion);
+      profiles[club.id] = managementProfileGenerator.generate(
+          president: president,
+          careerSeed: config.careerSeed,
+          simulationVersion: config.simulationVersion);
+      fans[club.id] = FanState.initial(club.id);
+      media[club.id] = MediaState(clubId: club.id, credibility: 65);
+    }
+    return _FacilitySeasonInputs(
+        clubs,
+        config,
+        facilities,
+        sponsor,
+        Map.unmodifiable(profiles),
+        Map.unmodifiable(fans),
+        Map.unmodifiable(media));
+  }
+
+  _FacilitySeasonInputs _resumeInputs(
+      FacilitySponsorCrisisRuntimeCheckpoint checkpoint) {
+    checkpoint.validate();
+    final domain = checkpoint.runtime.domain;
+    final world = domain.presidentRuntime.runtime.runtime.world;
+    return _FacilitySeasonInputs(
+        world.baseClubs,
+        world.config,
+        checkpoint.facilities,
+        checkpoint.runtime.sponsor,
+        Map.unmodifiable({
+          for (final s in domain.presidentRuntime.clubs)
+            s.clubId: s.managementProfile
+        }),
+        Map.unmodifiable({
+          for (final s in domain.presidentRuntime.clubs)
+            s.clubId: s.fanReputation
+        }),
+        Map.unmodifiable({
+          for (final s in domain.presidentRuntime.clubs)
+            s.clubId: s.mediaReputation
+        }));
+  }
+
+  _FacilityPreparedGraph _prepareGraph(_FacilitySeasonInputs inputs) {
+    final coordinator = _FacilitySponsorSeasonEconomyEngine(
+        financeRecording: financeRecording,
+        delegate: baseWorldEngine.economyEngine,
+        sponsorSystem: sponsorSystem,
+        openingSponsor: inputs.sponsor,
+        expectedClubIds: inputs.clubs.map((c) => c.id),
+        presidentProfilesByClub: inputs.profiles,
+        fanStatesByClub: inputs.fans,
+        mediaStatesByClub: inputs.media,
+        careerSeed: inputs.config.careerSeed,
+        simulationVersion: inputs.config.simulationVersion);
+    return _FacilityPreparedGraph(
+        inputs,
+        coordinator,
+        _domainEngine(
+            coordinator: coordinator,
+            facilities: inputs.facilities,
+            fanStatesByClub: inputs.fans));
+  }
 
   FacilitySponsorCrisisRuntimeCareerResult simulateWithCheckpoint({
     required List<Club> clubs,
@@ -421,46 +642,25 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
     if (electionInterval <= 0) {
       throw ArgumentError.value(electionInterval, 'electionInterval');
     }
-    final facilities = FacilityPortfolioRuntimeState.forClubs(
-      clubs: clubs,
-      academyFacilities: academyFacilities,
-      stadiumFacilities: stadiumFacilities,
-      trainingGroundFacilities: trainingGroundFacilities,
-      totalInvestmentSpent: totalInvestmentSpent,
-    );
-    final openingSponsor = SponsorRuntimeCheckpoint.initial(
-      seasonIndex: config.seasonIndex,
-    );
-    final profiles = <String, PresidentManagementProfile>{};
-    final fans = <String, FanState>{};
-    final media = <String, MediaState>{};
-    for (final club in clubs) {
-      final president = presidentGenerator.generateInitial(
-        clubId: club.id,
-        careerSeed: config.careerSeed,
-        simulationVersion: config.simulationVersion,
-      );
-      profiles[club.id] = managementProfileGenerator.generate(
-        president: president,
-        careerSeed: config.careerSeed,
-        simulationVersion: config.simulationVersion,
-      );
-      fans[club.id] = FanState.initial(club.id);
-      media[club.id] = MediaState(clubId: club.id, credibility: 65);
-    }
+    final inputs = _initialInputs(
+        clubs: clubs,
+        config: config,
+        academyFacilities: academyFacilities,
+        stadiumFacilities: stadiumFacilities,
+        trainingGroundFacilities: trainingGroundFacilities,
+        totalInvestmentSpent: totalInvestmentSpent);
 
     final first = _simulateInitialSeason(
       clubs: clubs,
       leagues: leagues,
       config: config,
       electionInterval: electionInterval,
-      hasFutureSeasonAfterReport:
-          seasonCount > 1 || hasFutureSeasonAfterReport,
-      facilities: facilities,
-      openingSponsor: openingSponsor,
-      profiles: profiles,
-      fans: fans,
-      media: media,
+      hasFutureSeasonAfterReport: seasonCount > 1 || hasFutureSeasonAfterReport,
+      facilities: inputs.facilities,
+      openingSponsor: inputs.sponsor,
+      profiles: inputs.profiles,
+      fans: inputs.fans,
+      media: inputs.media,
     );
     var current = first.checkpoint;
     final boundaries = <FacilitySponsorCrisisRuntimeSeasonBoundary>[first];
@@ -518,23 +718,10 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
     required Map<String, FanState> fans,
     required Map<String, MediaState> media,
   }) {
-    final coordinator = _FacilitySponsorSeasonEconomyEngine(
-      financeRecording: financeRecording,
-      delegate: baseWorldEngine.economyEngine,
-      sponsorSystem: sponsorSystem,
-      openingSponsor: openingSponsor,
-      expectedClubIds: clubs.map((club) => club.id),
-      presidentProfilesByClub: profiles,
-      fanStatesByClub: fans,
-      mediaStatesByClub: media,
-      careerSeed: config.careerSeed,
-      simulationVersion: config.simulationVersion,
-    );
-    final engine = _domainEngine(
-      coordinator: coordinator,
-      facilities: facilities,
-      fanStatesByClub: fans,
-    );
+    final graph = _prepareGraph(_FacilitySeasonInputs(
+        clubs, config, facilities, openingSponsor, profiles, fans, media));
+    final coordinator = graph.coordinator;
+    final engine = graph.domain;
     final result = engine.simulateWithCheckpoint(
       clubs: clubs,
       leagues: leagues,
@@ -556,35 +743,10 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
     required FacilitySponsorCrisisRuntimeCheckpoint checkpoint,
     required bool hasFutureSeasonAfterReport,
   }) {
-    checkpoint.validate();
+    final graph = _prepareGraph(_resumeInputs(checkpoint));
     final domain = checkpoint.runtime.domain;
-    final config = domain.presidentRuntime.runtime.runtime.world.config;
-    final clubs = domain.presidentRuntime.runtime.runtime.world.baseClubs;
-    final profiles = <String, PresidentManagementProfile>{};
-    final fans = <String, FanState>{};
-    final media = <String, MediaState>{};
-    for (final state in domain.presidentRuntime.clubs) {
-      profiles[state.clubId] = state.managementProfile;
-      fans[state.clubId] = state.fanReputation;
-      media[state.clubId] = state.mediaReputation;
-    }
-    final coordinator = _FacilitySponsorSeasonEconomyEngine(
-      financeRecording: financeRecording,
-      delegate: baseWorldEngine.economyEngine,
-      sponsorSystem: sponsorSystem,
-      openingSponsor: checkpoint.runtime.sponsor,
-      expectedClubIds: clubs.map((club) => club.id),
-      presidentProfilesByClub: profiles,
-      fanStatesByClub: fans,
-      mediaStatesByClub: media,
-      careerSeed: config.careerSeed,
-      simulationVersion: config.simulationVersion,
-    );
-    final engine = _domainEngine(
-      coordinator: coordinator,
-      facilities: checkpoint.facilities,
-      fanStatesByClub: fans,
-    );
+    final coordinator = graph.coordinator;
+    final engine = graph.domain;
     final result = engine.resume(
       checkpoint: domain,
       seasonCount: 1,
@@ -644,7 +806,8 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
       for (final state in facilities.stadiumFacilities) state.clubId: state,
     };
     final trainingGrounds = {
-      for (final state in facilities.trainingGroundFacilities) state.clubId: state,
+      for (final state in facilities.trainingGroundFacilities)
+        state.clubId: state,
     };
     final world = WorldCareerEngine(
       seasonEngine: baseWorldEngine.seasonEngine,
@@ -695,7 +858,8 @@ class _FacilityLifecycleEngine extends PlayerLifecycleEngine {
     required int nextSeasonIndex,
     required int simulationVersion,
     Map<String, AcademyFacilityState> academyFacilities = const {},
-    Map<String, TrainingGroundFacilityState> trainingGroundFacilities = const {},
+    Map<String, TrainingGroundFacilityState> trainingGroundFacilities =
+        const {},
   }) =>
       delegate.advance(
         currentPlayers: currentPlayers,
@@ -761,10 +925,15 @@ class _FacilityEconomyEngine extends BasicEconomyEngine {
             fanTrust: fanTrust,
           )
           .revenueMultiplierBps;
-      financeRecording?.forSeason(seasonReport.seasonIndex)?.observeAttendance(FinanceAttendanceEvidence(
-        club: club, stadiumLevel: stadium.level, fanTrust: fanTrust,
-        leaguePosition: position, multiplierBps: multipliers[club.id]!,
-      ));
+      financeRecording
+          ?.forSeason(seasonReport.seasonIndex)
+          ?.observeAttendance(FinanceAttendanceEvidence(
+            club: club,
+            stadiumLevel: stadium.level,
+            fanTrust: fanTrust,
+            leaguePosition: position,
+            multiplierBps: multipliers[club.id]!,
+          ));
     }
     return delegate.simulateSeason(
       clubs: clubs,
@@ -857,7 +1026,8 @@ class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
       );
     }
     if (seasonReport.seasonIndex != openingSponsor.nextSeasonIndex) {
-      throw StateError('Sponsor economy season does not match checkpoint cursor.');
+      throw StateError(
+          'Sponsor economy season does not match checkpoint cursor.');
     }
     final ids = clubs.map((club) => club.id).toSet();
     if (!expectedClubIds.containsAll(ids)) {
@@ -903,7 +1073,9 @@ class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
     _activeNext.addAll(resolution.checkpoint.activeContracts);
     _revenueByClub.addAll(resolution.revenueByClub);
     _seasonRevenue += resolution.totalRevenue;
-    financeRecording?.forSeason(seasonReport.seasonIndex)?.observeSponsor(ids, resolution);
+    financeRecording
+        ?.forSeason(seasonReport.seasonIndex)
+        ?.observeSponsor(ids, resolution);
 
     return delegate.simulateSeason(
       clubs: clubs,

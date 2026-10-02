@@ -25,6 +25,88 @@ import 'world_offseason_projection.dart';
 import 'world_roster_hooks.dart';
 import 'world_transfer_hooks.dart';
 
+enum PreparedExecutionState { prepared, moved, executing, completed, failed }
+
+/// Evidence only: it deliberately exposes neither hooks nor an execution lease.
+final class PreparedWorldOpening {
+  PreparedWorldOpening._({
+    required this.config,
+    required this.seasonIndex,
+    required this.players,
+    required this.squadClubs,
+    required this.effectiveClubs,
+    required this.financeStates,
+    required this.leagues,
+  });
+  final SimulationConfig config;
+  final int seasonIndex;
+  final List<Player> players;
+  final List<Club> squadClubs, effectiveClubs;
+  final List<ClubFinanceState> financeStates;
+  final List<WorldLeague> leagues;
+}
+
+/// A single-owner, runtime-only lease over a genuinely prepared world run.
+final class PreparedWorldExecution {
+  PreparedWorldExecution._(this._engine, this.owner, this.revision,
+      this.provenance, this._graph, this.opening, this.executionIdentity);
+  final WorldCareerEngine _engine;
+  final Object owner, revision, provenance, executionIdentity;
+  final _PreparedWorldGraph _graph;
+  final PreparedWorldOpening opening;
+  PreparedExecutionState _state = PreparedExecutionState.prepared;
+  PreparedExecutionState get state => _state;
+
+  void _check(Object expectedOwner, Object expectedRevision,
+      Object expectedProvenance) {
+    if (_state != PreparedExecutionState.prepared ||
+        !identical(owner, expectedOwner) ||
+        !identical(revision, expectedRevision) ||
+        !identical(provenance, expectedProvenance)) {
+      throw StateError('Foreign, stale or consumed prepared world lease.');
+    }
+  }
+
+  PreparedWorldExecution move(
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    _check(expectedOwner, expectedRevision, expectedProvenance);
+    final successor = PreparedWorldExecution._(_engine, owner, revision,
+        provenance, _graph, opening, executionIdentity);
+    _state = PreparedExecutionState.moved;
+    return successor;
+  }
+}
+
+final class _PreparedWorldGraph {
+  _PreparedWorldGraph(
+      this.baseClubs,
+      this.leagues,
+      this.players,
+      this.finance,
+      this.config,
+      this.completedBefore,
+      this.seasonCount,
+      this.advanceAfterFinalSeason,
+      this.hooks,
+      this.rosterHooks,
+      this.financeHooks,
+      this.transferHooks,
+      this.enableTransferInstallments);
+  final List<Club> baseClubs;
+  final List<WorldLeague> leagues;
+  final List<Player> players;
+  final List<ClubFinanceState> finance;
+  final SimulationConfig config;
+  final int completedBefore, seasonCount;
+  final bool advanceAfterFinalSeason, enableTransferInstallments;
+  final WorldCareerHooks hooks;
+  final WorldRosterHooks rosterHooks;
+  final WorldFinanceHooks financeHooks;
+  final WorldTransferHooks transferHooks;
+}
+
 class WorldCareerEngine {
   const WorldCareerEngine({
     this.seasonEngine = const SeasonEngine(),
@@ -41,6 +123,164 @@ class WorldCareerEngine {
   final TeamStrengthCalculator strengthCalculator;
   final BasicEconomyEngine economyEngine;
   final TransferMarketEngine transferMarketEngine;
+
+  PreparedWorldExecution prepareInitial({
+    required List<Club> clubs,
+    required List<WorldLeague> leagues,
+    required SimulationConfig config,
+    required Object owner,
+    required Object revision,
+    required Object provenance,
+    int seasonCount = 1,
+    bool advanceAfterFinalSeason = true,
+    WorldCareerHooks hooks = const NoopWorldCareerHooks(),
+    WorldRosterHooks rosterHooks = const NoopWorldRosterHooks(),
+    WorldFinanceHooks financeHooks = const NoopWorldFinanceHooks(),
+    WorldTransferHooks transferHooks = const NoopWorldTransferHooks(),
+    bool enableTransferInstallments = false,
+  }) {
+    _validateSeasonCount(seasonCount);
+    _validateSetup(clubs, leagues);
+    final opening = WorldOpeningStateInitializer(
+            poolGenerator: poolGenerator, economyEngine: economyEngine)
+        .prepare(clubs: clubs, leagues: leagues, config: config);
+    return _prepareRun(
+        _PreparedWorldGraph(
+            opening.baseClubs,
+            opening.leagues,
+            opening.players,
+            opening.financeStates,
+            config,
+            0,
+            seasonCount,
+            advanceAfterFinalSeason,
+            hooks,
+            rosterHooks,
+            financeHooks,
+            transferHooks,
+            enableTransferInstallments),
+        owner,
+        revision,
+        provenance);
+  }
+
+  PreparedWorldExecution prepareResume(
+      {required WorldCheckpoint checkpoint,
+      required Object owner,
+      required Object revision,
+      required Object provenance,
+      int seasonCount = 1,
+      WorldCareerHooks hooks = const NoopWorldCareerHooks(),
+      WorldRosterHooks rosterHooks = const NoopWorldRosterHooks(),
+      WorldFinanceHooks financeHooks = const NoopWorldFinanceHooks(),
+      WorldTransferHooks transferHooks = const NoopWorldTransferHooks(),
+      bool enableTransferInstallments = false}) {
+    _validateSeasonCount(seasonCount);
+    checkpoint.validate();
+    _validateSetup(checkpoint.baseClubs, checkpoint.nextSeasonLeagues);
+    return _prepareRun(
+        _PreparedWorldGraph(
+            checkpoint.baseClubs,
+            _sortedLeagues(checkpoint.nextSeasonLeagues),
+            checkpoint.nextSeasonPlayers,
+            checkpoint.nextSeasonFinanceStates,
+            checkpoint.config,
+            checkpoint.completedSeasons,
+            seasonCount,
+            true,
+            hooks,
+            rosterHooks,
+            financeHooks,
+            transferHooks,
+            enableTransferInstallments),
+        owner,
+        revision,
+        provenance);
+  }
+
+  PreparedWorldExecution _prepareRun(_PreparedWorldGraph graph, Object owner,
+      Object revision, Object provenance) {
+    final opening = _prepareSeason(
+        config: graph.config,
+        seasonIndex: graph.config.seasonIndex + graph.completedBefore,
+        baseClubs: graph.baseClubs,
+        players: graph.players,
+        finance: graph.finance,
+        leagues: graph.leagues,
+        hooks: graph.hooks);
+    return PreparedWorldExecution._(
+        this, owner, revision, provenance, graph, opening, Object());
+  }
+
+  PreparedWorldOpening _prepareSeason(
+      {required SimulationConfig config,
+      required int seasonIndex,
+      required List<Club> baseClubs,
+      required List<Player> players,
+      required List<ClubFinanceState> finance,
+      required List<WorldLeague> leagues,
+      required WorldCareerHooks hooks}) {
+    final seasonPlayers = List<Player>.unmodifiable(players);
+    final currentFinance = List<ClubFinanceState>.unmodifiable(finance);
+    final currentLeagues = List<WorldLeague>.unmodifiable(leagues);
+    final squadClubs = strengthCalculator.deriveClubs(
+        baseClubs: baseClubs, players: seasonPlayers);
+    final effectiveClubs = hooks.adjustClubsForSeason(
+        seasonIndex: seasonIndex,
+        squadClubs: squadClubs,
+        players: seasonPlayers,
+        leagues: currentLeagues,
+        financeStates: currentFinance);
+    _validateHookClubs(squadClubs, effectiveClubs);
+    return PreparedWorldOpening._(
+        config: config,
+        seasonIndex: seasonIndex,
+        players: seasonPlayers,
+        squadClubs: squadClubs,
+        effectiveClubs: effectiveClubs,
+        financeStates: currentFinance,
+        leagues: currentLeagues);
+  }
+
+  WorldCareerSimulationResult executePrepared(PreparedWorldExecution prepared,
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    prepared._check(expectedOwner, expectedRevision, expectedProvenance);
+    if (!identical(prepared._engine, this)) {
+      throw StateError('Prepared world belongs to another engine.');
+    }
+    prepared._state = PreparedExecutionState.executing;
+    try {
+      final g = prepared._graph;
+      final run = _simulateSegment(
+          baseClubs: g.baseClubs,
+          openingLeagues: g.leagues,
+          openingPlayers: g.players,
+          openingFinanceStates: g.finance,
+          config: g.config,
+          completedBefore: g.completedBefore,
+          seasonCount: g.seasonCount,
+          advanceAfterFinalSeason: g.advanceAfterFinalSeason,
+          hooks: g.hooks,
+          rosterHooks: g.rosterHooks,
+          financeHooks: g.financeHooks,
+          transferHooks: g.transferHooks,
+          enableTransferInstallments: g.enableTransferInstallments,
+          preparedOpening: prepared.opening);
+      final result = WorldCareerSimulationResult(
+          report: run.report,
+          checkpoint: _checkpointFromRun(
+              run: run,
+              config: g.config,
+              completedSeasons: g.completedBefore + g.seasonCount));
+      prepared._state = PreparedExecutionState.completed;
+      return result;
+    } catch (_) {
+      prepared._state = PreparedExecutionState.failed;
+      rethrow;
+    }
+  }
 
   /// Existing world simulation semantics are intentionally preserved.
   /// The final requested season does not prepare an offseason unless another
@@ -211,6 +451,7 @@ class WorldCareerEngine {
     WorldFinanceHooks financeHooks = const NoopWorldFinanceHooks(),
     WorldTransferHooks transferHooks = const NoopWorldTransferHooks(),
     bool enableTransferInstallments = false,
+    PreparedWorldOpening? preparedOpening,
   }) {
     var currentLeagues = List<WorldLeague>.unmodifiable(openingLeagues);
     var currentPlayers = List<Player>.unmodifiable(openingPlayers);
@@ -224,22 +465,22 @@ class WorldCareerEngine {
 
     for (var offset = 0; offset < seasonCount; offset++) {
       final seasonIndex = config.seasonIndex + completedBefore + offset;
-      final hasNextSeason =
-          offset < seasonCount - 1 || advanceAfterFinalSeason;
-      final leaguesBeforeSeason = currentLeagues;
-      final seasonPlayers = List<Player>.unmodifiable(currentPlayers);
-      final squadClubs = strengthCalculator.deriveClubs(
-        baseClubs: baseClubs,
-        players: seasonPlayers,
-      );
-      final currentClubs = hooks.adjustClubsForSeason(
-        seasonIndex: seasonIndex,
-        squadClubs: squadClubs,
-        players: seasonPlayers,
-        leagues: leaguesBeforeSeason,
-        financeStates: currentFinanceStates,
-      );
-      _validateHookClubs(squadClubs, currentClubs);
+      final hasNextSeason = offset < seasonCount - 1 || advanceAfterFinalSeason;
+      final opening = offset == 0 && preparedOpening != null
+          ? preparedOpening
+          : _prepareSeason(
+              config: config,
+              seasonIndex: seasonIndex,
+              baseClubs: baseClubs,
+              players: currentPlayers,
+              finance: currentFinanceStates,
+              leagues: currentLeagues,
+              hooks: hooks);
+      final leaguesBeforeSeason = opening.leagues;
+      final seasonPlayers = opening.players;
+      final squadClubs = opening.squadClubs;
+      final currentClubs = opening.effectiveClubs;
+      currentFinanceStates = opening.financeStates;
 
       final annualWagesByClub = rosterHooks.annualWagesByClub(
         seasonIndex: seasonIndex,
@@ -336,24 +577,23 @@ class WorldCareerEngine {
         finances: financeResults,
       );
 
-      final offseason =
-          WorldOffseasonProjection(
-            lifecycleEngine: lifecycleEngine,
-            strengthCalculator: strengthCalculator,
-            transferMarketEngine: transferMarketEngine,
-          ).project(
-            hasNextSeason: hasNextSeason,
-            seasonIndex: seasonIndex,
-            config: config,
-            players: seasonPlayers,
-            baseClubs: baseClubs,
-            squadClubs: squadClubs,
-            closingFinanceStates: closingFinanceStates,
-            nextLeagues: leaguesAfterTransition,
-            rosterHooks: rosterHooks,
-            transferHooks: transferHooks,
-            enableTransferInstallments: enableTransferInstallments,
-          );
+      final offseason = WorldOffseasonProjection(
+        lifecycleEngine: lifecycleEngine,
+        strengthCalculator: strengthCalculator,
+        transferMarketEngine: transferMarketEngine,
+      ).project(
+        hasNextSeason: hasNextSeason,
+        seasonIndex: seasonIndex,
+        config: config,
+        players: seasonPlayers,
+        baseClubs: baseClubs,
+        squadClubs: squadClubs,
+        closingFinanceStates: closingFinanceStates,
+        nextLeagues: leaguesAfterTransition,
+        rosterHooks: rosterHooks,
+        transferHooks: transferHooks,
+        enableTransferInstallments: enableTransferInstallments,
+      );
       retiredAfterSeason = offseason.retired;
       youthIntakeAfterSeason = offseason.youthIntake;
       transfersAfterSeason = offseason.transfers;
@@ -413,7 +653,8 @@ class WorldCareerEngine {
 
   void _validateSeasonCount(int seasonCount) {
     if (seasonCount <= 0) {
-      throw ArgumentError.value(seasonCount, 'seasonCount', 'Must be positive.');
+      throw ArgumentError.value(
+          seasonCount, 'seasonCount', 'Must be positive.');
     }
   }
 
@@ -481,7 +722,9 @@ class WorldCareerEngine {
       throw StateError('World career hooks must preserve unique club IDs.');
     }
     for (final club in adjustedClubs) {
-      if (!club.strength.isFinite || club.strength < 40 || club.strength > 100) {
+      if (!club.strength.isFinite ||
+          club.strength < 40 ||
+          club.strength > 100) {
         throw StateError('Hook produced invalid strength for ${club.id}.');
       }
     }
