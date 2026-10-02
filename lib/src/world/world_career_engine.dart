@@ -1,7 +1,9 @@
 import '../core/simulation_config.dart';
+import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
+import '../core/money.dart';
 import '../finance/transfer_cash_movement.dart';
 import '../league/club.dart';
 import '../player/player.dart';
@@ -9,6 +11,7 @@ import '../player/player_lifecycle_engine.dart';
 import '../player/player_pool_generator.dart';
 import '../player/team_strength_calculator.dart';
 import '../season/season_engine.dart';
+import '../season/season_report.dart';
 import '../transfer/transfer_deal.dart';
 import '../transfer/transfer_market_engine.dart';
 import 'league_tier.dart';
@@ -77,6 +80,63 @@ final class PreparedWorldExecution {
     _state = PreparedExecutionState.moved;
     return successor;
   }
+
+  WorldEconomyRecipient moveToEconomy(
+      {required FullM65RuntimeEconomyContinuationAuthority authority,
+      required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    _check(expectedOwner, expectedRevision, expectedProvenance);
+    if (!authority.ownsPreparedGraph(opening, executionIdentity)) {
+      throw StateError('Foreign economy recipient owner.');
+    }
+    final result = WorldEconomyRecipient._(
+        _engine, _graph, opening, executionIdentity, authority);
+    _state = PreparedExecutionState.moved;
+    return result;
+  }
+}
+
+/// Execution bridge only, not a source capability or authoritative result.
+/// The enclosing full-M65 authority retains this object privately.
+final class WorldEconomyRecipient {
+  WorldEconomyRecipient._(this._engine, this._graph, this.opening,
+      this.executionIdentity, this._authority);
+  final WorldCareerEngine _engine;
+  final _PreparedWorldGraph _graph;
+  final PreparedWorldOpening opening;
+  final Object executionIdentity;
+  final FullM65RuntimeEconomyContinuationAuthority _authority;
+  bool _attempted = false;
+  List<ClubFinanceSeason> executeCommittedFinance(
+      {required Object expectedExecution,
+      required CommittedSeasonSettlementCapability committed}) {
+    if (_attempted ||
+        !identical(executionIdentity, expectedExecution) ||
+        !_authority.permitsCommittedExecution(
+            committed, opening, expectedExecution)) {
+      throw StateError('Consumed or foreign economy execution bridge.');
+    }
+    _attempted = true;
+    final inputs = _engine._financeInputs(
+        opening, _graph.rosterHooks, _graph.financeHooks);
+    final rows = <ClubFinanceSeason>[];
+    for (final league in opening.leagues) {
+      rows.addAll(_engine._settleLeague(
+          opening,
+          league,
+          committed.reports.singleWhere((r) => r.tier == league.tier).report,
+          inputs));
+    }
+    rows.sort((a, b) => a.clubId.compareTo(b.clubId));
+    return List.unmodifiable(rows);
+  }
+}
+
+final class _WorldFinanceInputs {
+  _WorldFinanceInputs(this.wages, this.flows);
+  final Map<String, Money>? wages;
+  final WorldFinanceSeasonFlows flows;
 }
 
 final class _PreparedWorldGraph {
@@ -123,6 +183,46 @@ class WorldCareerEngine {
   final TeamStrengthCalculator strengthCalculator;
   final BasicEconomyEngine economyEngine;
   final TransferMarketEngine transferMarketEngine;
+
+  _WorldFinanceInputs _financeInputs(PreparedWorldOpening opening,
+      WorldRosterHooks rosterHooks, WorldFinanceHooks financeHooks) {
+    final wages = rosterHooks.annualWagesByClub(
+        seasonIndex: opening.seasonIndex,
+        players: opening.players,
+        clubs: opening.squadClubs,
+        leagues: opening.leagues,
+        financeStates: opening.financeStates);
+    final flows = financeHooks.flowsForSeason(
+        seasonIndex: opening.seasonIndex,
+        clubs: opening.squadClubs,
+        leagues: opening.leagues,
+        openingFinanceStates: opening.financeStates);
+    return _WorldFinanceInputs(wages, flows);
+  }
+
+  List<ClubFinanceSeason> _settleLeague(PreparedWorldOpening opening,
+      WorldLeague league, SeasonReport report, _WorldFinanceInputs inputs) {
+    final clubs = {for (final club in opening.effectiveClubs) club.id: club};
+    final finance = {
+      for (final state in opening.financeStates) state.clubId: state
+    };
+    final ids = league.clubIds.toSet();
+    return economyEngine.simulateSeason(
+        clubs: league.clubIds.map((id) => clubs[id]!).toList(growable: false),
+        players: opening.players
+            .where((p) => ids.contains(p.clubId))
+            .toList(growable: false),
+        seasonReport: report,
+        openingStates:
+            league.clubIds.map((id) => finance[id]!).toList(growable: false),
+        economicScaleBps: league.tier.economicScaleBps,
+        costScaleBps: league.tier.costScaleBps,
+        annualWagesByClub: inputs.wages,
+        transferInstallmentIncomeByClub:
+            inputs.flows.transferInstallmentIncomeByClub,
+        transferInstallmentExpenseByClub:
+            inputs.flows.transferInstallmentExpenseByClub);
+  }
 
   PreparedWorldExecution prepareInitial({
     required List<Club> clubs,
@@ -482,36 +582,14 @@ class WorldCareerEngine {
       final currentClubs = opening.effectiveClubs;
       currentFinanceStates = opening.financeStates;
 
-      final annualWagesByClub = rosterHooks.annualWagesByClub(
-        seasonIndex: seasonIndex,
-        players: seasonPlayers,
-        clubs: squadClubs,
-        leagues: leaguesBeforeSeason,
-        financeStates: currentFinanceStates,
-      );
-      final financeFlows = financeHooks.flowsForSeason(
-        seasonIndex: seasonIndex,
-        clubs: squadClubs,
-        leagues: leaguesBeforeSeason,
-        openingFinanceStates: currentFinanceStates,
-      );
+      final financeInputs = _financeInputs(opening, rosterHooks, financeHooks);
       final clubById = {for (final club in currentClubs) club.id: club};
-      final financeById = {
-        for (final state in currentFinanceStates) state.clubId: state,
-      };
       final leagueResults = <LeagueSeasonSnapshot>[];
       final financeResults = <ClubFinanceSeason>[];
 
       for (final league in leaguesBeforeSeason) {
         final leagueClubs = league.clubIds
             .map((clubId) => clubById[clubId]!)
-            .toList(growable: false);
-        final leagueClubIds = league.clubIds.toSet();
-        final leaguePlayers = seasonPlayers
-            .where((player) => leagueClubIds.contains(player.clubId))
-            .toList(growable: false);
-        final openingStates = league.clubIds
-            .map((clubId) => financeById[clubId]!)
             .toList(growable: false);
         final report = seasonEngine.simulate(
           clubs: leagueClubs,
@@ -520,21 +598,8 @@ class WorldCareerEngine {
         leagueResults.add(
           LeagueSeasonSnapshot(tier: league.tier, report: report),
         );
-        financeResults.addAll(
-          economyEngine.simulateSeason(
-            clubs: leagueClubs,
-            players: leaguePlayers,
-            seasonReport: report,
-            openingStates: openingStates,
-            economicScaleBps: league.tier.economicScaleBps,
-            costScaleBps: league.tier.costScaleBps,
-            annualWagesByClub: annualWagesByClub,
-            transferInstallmentIncomeByClub:
-                financeFlows.transferInstallmentIncomeByClub,
-            transferInstallmentExpenseByClub:
-                financeFlows.transferInstallmentExpenseByClub,
-          ),
-        );
+        financeResults
+            .addAll(_settleLeague(opening, league, report, financeInputs));
       }
 
       financeResults.sort((a, b) => a.clubId.compareTo(b.clubId));
