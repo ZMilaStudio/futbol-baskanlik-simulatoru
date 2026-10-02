@@ -14,9 +14,12 @@ import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
 import '../finance/season_finance_authority_receipt.dart';
 import '../league/club.dart';
+import '../manager/manager_career_controller.dart';
 import '../player/player.dart';
 import '../promise/promise_media_career_engine.dart';
 import '../save/save_checksum.dart';
+import '../save/advanced_runtime_checkpoint.dart';
+import '../save/advanced_runtime_career_engine.dart';
 import '../save/save_load_exception.dart';
 import '../season/season_report.dart';
 import '../sponsor/sponsor_system.dart';
@@ -223,6 +226,54 @@ class PlayerPresidentTicketPricingRuntimeCareerResult {
 /// media, save/resume, and world semantics stay on the existing runtime path.
 /// The player provider remains runtime-only; tenure ownership is persisted in
 /// this checkpoint and refreshed after every completed season.
+/// Owns the actual pricing graph and its nested facility/advanced lease.
+/// Execution yields the advanced result only; no new domain publisher is added.
+final class PreparedTicketRuntimeSeason {
+  PreparedTicketRuntimeSeason._(this._producer, this._context, this._pricing,
+      this._runtime, this._facility);
+  final PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine _producer;
+  final _PricingRuntimeContext _context;
+  final _TicketPricingEconomyEngine _pricing;
+  final FacilitySponsorCrisisRuntimeCareerEngine _runtime;
+  final PreparedFacilitySponsorSeason _facility;
+  Object get owner => _facility.owner;
+  Object get revision => _facility.revision;
+  Object get provenance => _facility.provenance;
+  Object get executionIdentity => _facility.executionIdentity;
+  Object get managerLineage => _facility.managerLineage;
+  Object get transferLineage => _facility.transferLineage;
+  PreparedWorldOpening get opening => _facility.opening;
+  ManagerSeasonAuthority? get managerAuthority => _facility.managerAuthority;
+  PreparedRuntimeOrigin get origin => _facility.origin;
+  PreparedExecutionState get state => _facility.state;
+  PlayerPresidentTenureControlState get tenureControl => _context.tenureControl;
+  FacilityPortfolioRuntimeState get facilities => _facility.facilities;
+  SponsorRuntimeCheckpoint get openingSponsor => _facility.openingSponsor;
+  Map<String, FanState> get sponsorFanStates => _facility.fanStates;
+  Map<String, FanState> get pricingFanStates =>
+      Map.unmodifiable(_context.fanStatesByClub);
+  Map<String, PresidentManagementProfile> get pricingProfiles =>
+      Map.unmodifiable(_context.presidentProfilesByClub);
+  int get openingContractCount => _facility.openingContractCount;
+  int get sponsorProcessedClubCount => _facility.sponsorProcessedClubCount;
+  Money get sponsorSeasonRevenue => _facility.sponsorSeasonRevenue;
+  int get ticketDecisionCount => _pricing._decisions.length;
+
+  PreparedTicketRuntimeSeason move(
+          {required Object expectedOwner,
+          required Object expectedRevision,
+          required Object expectedProvenance}) =>
+      PreparedTicketRuntimeSeason._(
+          _producer,
+          _context,
+          _pricing,
+          _runtime,
+          _facility.move(
+              expectedOwner: expectedOwner,
+              expectedRevision: expectedRevision,
+              expectedProvenance: expectedProvenance));
+}
+
 class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
   const PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine({
     this.financeRecording,
@@ -249,6 +300,83 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
   final SponsorSystemEngine sponsorSystem;
   final CrisisRuntimeIntegrationEngine crisisIntegration;
   final PromiseMediaCareerEngine sourceEngine;
+
+  PreparedTicketRuntimeSeason prepareInitial(
+      {required List<Club> clubs,
+      required List<WorldLeague> leagues,
+      required SimulationConfig config,
+      required String controlledClubId,
+      Object? owner,
+      Object? revision,
+      Object? provenance,
+      bool captureManagerAuthority = false}) {
+    if (!clubs.any((club) => club.id == controlledClubId)) {
+      throw ArgumentError('Unknown controlled club $controlledClubId.');
+    }
+    final context = _initialContext(
+        clubs: clubs, config: config, controlledClubId: controlledClubId);
+    final pricing = _preparePricing(context, context.tenureControl);
+    final runtime = _runtimeFor(pricing).runtime;
+    final facility = runtime.prepareInitial(
+        clubs: clubs,
+        leagues: leagues,
+        config: config,
+        owner: owner,
+        revision: revision,
+        provenance: provenance,
+        captureManagerAuthority: captureManagerAuthority);
+    return PreparedTicketRuntimeSeason._(
+        this, context, pricing, runtime, facility);
+  }
+
+  PreparedTicketRuntimeSeason prepareResume(
+      {required PlayerPresidentTicketPricingRuntimeCheckpoint checkpoint,
+      Object? owner,
+      Object? revision,
+      Object? provenance,
+      bool captureManagerAuthority = false}) {
+    checkpoint.validate();
+    final context =
+        _contextFromCheckpoint(checkpoint.runtime, checkpoint.tenureControl);
+    final pricing = _preparePricing(context, checkpoint.tenureControl);
+    final runtime = _runtimeFor(pricing).runtime;
+    final facility = runtime.prepareResume(
+        checkpoint: checkpoint.runtime,
+        owner: owner,
+        revision: revision,
+        provenance: provenance,
+        captureManagerAuthority: captureManagerAuthority);
+    return PreparedTicketRuntimeSeason._(
+        this, context, pricing, runtime, facility);
+  }
+
+  AdvancedRuntimeSimulationResult executePrepared(PreparedTicketRuntimeSeason p,
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    if (!identical(p._producer, this)) {
+      throw StateError('Foreign ticket prepared producer.');
+    }
+    return p._runtime.executePrepared(p._facility,
+        expectedOwner: expectedOwner,
+        expectedRevision: expectedRevision,
+        expectedProvenance: expectedProvenance);
+  }
+
+  _TicketPricingEconomyEngine _preparePricing(_PricingRuntimeContext context,
+          PlayerPresidentTenureControlState tenure) =>
+      _TicketPricingEconomyEngine(
+          financeRecording: financeRecording,
+          delegate: baseWorldEngine.economyEngine,
+          expectedClubIds: context.clubs.map((club) => club.id),
+          stadiumLevelsByClub: context.stadiumLevelsByClub,
+          fanStatesByClub: context.fanStatesByClub,
+          presidentProfilesByClub: context.presidentProfilesByClub,
+          tenureControl: tenure,
+          playerProvider: playerProvider,
+          aiPolicy: aiPolicy,
+          pricingPolicy: pricingPolicy,
+          stadiumPolicy: stadiumPolicy);
 
   PlayerPresidentTicketPricingRuntimeCareerResult simulateWithCheckpoint({
     required List<Club> clubs,
@@ -280,19 +408,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
       final context = current == null
           ? initialContext
           : _contextFromCheckpoint(current, tenure);
-      final pricingEconomy = _TicketPricingEconomyEngine(
-        financeRecording: financeRecording,
-        delegate: baseWorldEngine.economyEngine,
-        expectedClubIds: context.clubs.map((club) => club.id),
-        stadiumLevelsByClub: context.stadiumLevelsByClub,
-        fanStatesByClub: context.fanStatesByClub,
-        presidentProfilesByClub: context.presidentProfilesByClub,
-        tenureControl: tenure,
-        playerProvider: playerProvider,
-        aiPolicy: aiPolicy,
-        pricingPolicy: pricingPolicy,
-        stadiumPolicy: stadiumPolicy,
-      );
+      final pricingEconomy = _preparePricing(context, tenure);
       final runtime = _runtimeFor(pricingEconomy);
       final PresidentFacilityInvestmentRuntimeCareerResult segment;
       if (current == null) {
@@ -354,19 +470,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     for (var offset = 0; offset < seasonCount; offset++) {
       final hasFuture = offset < seasonCount - 1 || hasFutureSeasonAfterReport;
       final context = _contextFromCheckpoint(current, tenure);
-      final pricingEconomy = _TicketPricingEconomyEngine(
-        financeRecording: financeRecording,
-        delegate: baseWorldEngine.economyEngine,
-        expectedClubIds: context.clubs.map((club) => club.id),
-        stadiumLevelsByClub: context.stadiumLevelsByClub,
-        fanStatesByClub: context.fanStatesByClub,
-        presidentProfilesByClub: context.presidentProfilesByClub,
-        tenureControl: tenure,
-        playerProvider: playerProvider,
-        aiPolicy: aiPolicy,
-        pricingPolicy: pricingPolicy,
-        stadiumPolicy: stadiumPolicy,
-      );
+      final pricingEconomy = _preparePricing(context, tenure);
       final segment = _runtimeFor(pricingEconomy).resume(
         checkpoint: current,
         seasonCount: 1,
@@ -634,16 +738,20 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
       sponsorRevenueByClub: sponsorRevenueByClub,
     );
     financeRecording?.forSeason(seasonReport.seasonIndex)?.observeSettlement(
-      actualSeason: seasonReport.seasonIndex, clubs: clubs,
-      openingStates: openingStates, wages: annualWagesByClub,
-      installmentIncome: transferInstallmentIncomeByClub,
-      installmentExpense: transferInstallmentExpenseByClub,
-      sponsorRevenue: sponsorRevenueByClub,
-      incomingMultipliers: matchdayRevenueMultiplierBpsByClub,
-      finalMultipliers: pricedMultipliers, tickets: _decisions,
-      economicScaleBps: economicScaleBps, costScaleBps: costScaleBps,
-      results: results,
-    );
+          actualSeason: seasonReport.seasonIndex,
+          clubs: clubs,
+          openingStates: openingStates,
+          wages: annualWagesByClub,
+          installmentIncome: transferInstallmentIncomeByClub,
+          installmentExpense: transferInstallmentExpenseByClub,
+          sponsorRevenue: sponsorRevenueByClub,
+          incomingMultipliers: matchdayRevenueMultiplierBpsByClub,
+          finalMultipliers: pricedMultipliers,
+          tickets: _decisions,
+          economicScaleBps: economicScaleBps,
+          costScaleBps: costScaleBps,
+          results: results,
+        );
     return results;
   }
 }
