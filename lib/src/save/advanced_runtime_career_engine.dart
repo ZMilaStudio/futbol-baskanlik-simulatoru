@@ -1,4 +1,6 @@
 import '../core/simulation_config.dart';
+import '../finance/club_finance_season.dart';
+import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
 import '../manager/manager_career_controller.dart';
 import '../manager/manager_fit_model.dart';
@@ -75,6 +77,35 @@ final class PreparedAdvancedRuntimeSeason {
     _state = PreparedExecutionState.moved;
     return successor;
   }
+
+  AdvancedEconomyRecipient moveToEconomy(
+      {required FullM65RuntimeEconomyContinuationAuthority authority,
+      required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    _check(expectedOwner, expectedRevision, expectedProvenance);
+    final result = AdvancedEconomyRecipient._(
+        _transfer,
+        _world.moveToEconomy(
+            authority: authority,
+            expectedOwner: expectedOwner,
+            expectedRevision: expectedRevision,
+            expectedProvenance: expectedProvenance));
+    _state = PreparedExecutionState.moved;
+    return result;
+  }
+}
+
+final class AdvancedEconomyRecipient {
+  AdvancedEconomyRecipient._(this._transfer, this._world);
+  final AdvancedTransferController _transfer;
+  final WorldEconomyRecipient _world;
+  int get contractCount => _transfer.activeContracts.length;
+  List<ClubFinanceSeason> executeCommittedFinance(
+          {required Object expectedExecution,
+          required CommittedSeasonSettlementCapability committed}) =>
+      _world.executeCommittedFinance(
+          expectedExecution: expectedExecution, committed: committed);
 }
 
 class AdvancedRuntimeCareerEngine {

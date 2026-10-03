@@ -24,9 +24,12 @@ import '../save/save_load_exception.dart';
 import '../season/season_report.dart';
 import '../sponsor/sponsor_system.dart';
 import '../world/world_career_engine.dart';
+import '../world/world_career_season.dart';
 import '../world/world_league.dart';
 import 'player_president_tenure_gated_ticket_pricing_control.dart';
 import 'stadium_facility.dart';
+
+part '../finance/full_m65_runtime_economy_continuation_authority.dart';
 
 class PlayerPresidentTicketPricingRuntimeCheckpoint {
   PlayerPresidentTicketPricingRuntimeCheckpoint({
@@ -617,6 +620,9 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
   final BasicEconomyEngine delegate;
   final FullM65SeasonFinancePipeline? financeRecording;
   final Set<String> expectedClubIds;
+  FullM65SeasonFinancePipeline? _claimedRecording;
+  Map<String, PlayerPresidentTicketPricingDecisionContext>? _preparedContexts;
+  PlayerMatchdayTicketPricingDecisionProvider? _strictProvider;
   final Map<String, int> stadiumLevelsByClub;
   final Map<String, FanState> fanStatesByClub;
   final Map<String, PresidentManagementProfile> presidentProfilesByClub;
@@ -627,6 +633,39 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
   final StadiumInvestmentPolicy stadiumPolicy;
 
   final Map<String, PlayerPresidentTicketPricingDecision> _decisions = {};
+
+  PlayerPresidentTicketPricingDecisionContext _prepareContext(
+      Club club, int season, int position,
+      {int? incomingMultiplier}) {
+    final level = stadiumLevelsByClub[club.id] ??
+        (throw StateError('Missing stadium level for ${club.id}.'));
+    final fan = fanStatesByClub[club.id] ??
+        (throw StateError('Missing fan state for ${club.id}.'));
+    final president = presidentProfilesByClub[club.id] ??
+        (throw StateError('Missing president profile for ${club.id}.'));
+    final base = stadiumPolicy.attendanceProfile(
+        level: level,
+        clubStrength: club.strength,
+        leaguePosition: position,
+        fanTrust: fan.overallTrust);
+    // Preserve legacy failure/callback timing: check the incoming attendance
+    // before consulting the AI policy, not after context construction.
+    if (incomingMultiplier != null &&
+        incomingMultiplier != base.revenueMultiplierBps) {
+      throw StateError(
+          'M65 pricing seam mismatch for ${club.id}: $incomingMultiplier != ${base.revenueMultiplierBps}.');
+    }
+    return PlayerPresidentTicketPricingDecisionContext(
+        seasonIndex: season,
+        club: club,
+        president: president,
+        stadiumLevel: level,
+        leaguePosition: position,
+        fanTrust: fan.overallTrust,
+        baseAttendance: base,
+        aiChoice: aiPolicy.choose(
+            profile: president, fanTrust: fan.overallTrust, base: base));
+  }
 
   List<PlayerPresidentTicketPricingDecision> get decisions {
     if (_decisions.length != expectedClubIds.length ||
@@ -668,20 +707,17 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
       if (_decisions.containsKey(club.id)) {
         throw StateError('Ticket-pricing economy processed ${club.id} twice.');
       }
-      final level = stadiumLevelsByClub[club.id] ??
-          (throw StateError('Missing stadium level for ${club.id}.'));
-      final fan = fanStatesByClub[club.id] ??
-          (throw StateError('Missing fan state for ${club.id}.'));
-      final president = presidentProfilesByClub[club.id] ??
-          (throw StateError('Missing president profile for ${club.id}.'));
       final position = positions[club.id] ??
           (throw StateError('Missing league position for ${club.id}.'));
-      final base = stadiumPolicy.attendanceProfile(
-        level: level,
-        clubStrength: club.strength,
-        leaguePosition: position,
-        fanTrust: fan.overallTrust,
-      );
+      final context = _preparedContexts?[club.id] ??
+          _prepareContext(club, seasonReport.seasonIndex, position,
+              incomingMultiplier:
+                  matchdayRevenueMultiplierBpsByClub[club.id] ?? 10000);
+      if (!identical(context.club, club) ||
+          context.seasonIndex != seasonReport.seasonIndex ||
+          context.leaguePosition != position)
+        throw StateError('Changed pricing source.');
+      final base = context.baseAttendance;
       final incomingMultiplier =
           matchdayRevenueMultiplierBpsByClub[club.id] ?? 10000;
       if (incomingMultiplier != base.revenueMultiplierBps) {
@@ -690,26 +726,12 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
           '$incomingMultiplier != ${base.revenueMultiplierBps}.',
         );
       }
-      final aiChoice = aiPolicy.choose(
-        profile: president,
-        fanTrust: fan.overallTrust,
-        base: base,
-      );
-      final context = PlayerPresidentTicketPricingDecisionContext(
-        seasonIndex: seasonReport.seasonIndex,
-        club: club,
-        president: president,
-        stadiumLevel: level,
-        leaguePosition: position,
-        fanTrust: fan.overallTrust,
-        baseAttendance: base,
-        aiChoice: aiChoice,
-      );
+      final provider = _strictProvider ?? playerProvider;
       final canDelegate = club.id == tenureControl.controlledClubId &&
-          playerProvider != null &&
+          provider != null &&
           tenureControl.active &&
-          president.presidentId == tenureControl.playerPresidentId;
-      final choice = canDelegate ? playerProvider!.choose(context) : aiChoice;
+          context.president.presidentId == tenureControl.playerPresidentId;
+      final choice = canDelegate ? provider.choose(context) : context.aiChoice;
       final outcome = pricingPolicy.apply(base: base, tier: choice.tier);
       final decision = PlayerPresidentTicketPricingDecision(
         context: context,
@@ -719,7 +741,7 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
       );
       _decisions[club.id] = decision;
       if (canDelegate) {
-        playerProvider!.onApplied(decision);
+        provider.onApplied(decision);
       }
       pricedMultipliers[club.id] = outcome.revenueMultiplierBps;
     }
@@ -737,7 +759,9 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
       matchdayRevenueMultiplierBpsByClub: pricedMultipliers,
       sponsorRevenueByClub: sponsorRevenueByClub,
     );
-    financeRecording?.forSeason(seasonReport.seasonIndex)?.observeSettlement(
+    (_claimedRecording ?? financeRecording)
+        ?.forSeason(seasonReport.seasonIndex)
+        ?.observeSettlement(
           actualSeason: seasonReport.seasonIndex,
           clubs: clubs,
           openingStates: openingStates,

@@ -6,6 +6,7 @@ import '../election/president_management_profile.dart';
 import '../election/president_reputation_career_report.dart';
 import '../election/president_tenure.dart';
 import '../facility/academy_facility.dart';
+import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../facility/stadium_facility.dart';
 import '../facility/training_ground_facility.dart';
 import '../fan/fan_state.dart';
@@ -454,6 +455,59 @@ final class PreparedFacilitySponsorSeason {
               expectedOwner: expectedOwner,
               expectedRevision: expectedRevision,
               expectedProvenance: expectedProvenance));
+
+  void validateEconomyHandoff() {
+    final economy = _graph.domain.runtimeEngine.worldEngine.economyEngine;
+    if (state != PreparedExecutionState.prepared ||
+        _graph.coordinator.financeRecording != null ||
+        _graph.coordinator._processedClubIds.isNotEmpty ||
+        economy is! _FacilityEconomyEngine ||
+        economy.financeRecording != null) {
+      throw StateError(
+          'Facility graph is not an unattempted recording-free lease.');
+    }
+  }
+
+  FacilityEconomyRecipient moveToEconomy(
+      {required FullM65RuntimeEconomyContinuationAuthority authority,
+      required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance,
+      required FullM65SeasonFinancePipeline recording}) {
+    validateEconomyHandoff();
+    final economy = _graph.domain.runtimeEngine.worldEngine.economyEngine
+        as _FacilityEconomyEngine;
+    final advanced = _advanced.moveToEconomy(
+        authority: authority,
+        expectedOwner: expectedOwner,
+        expectedRevision: expectedRevision,
+        expectedProvenance: expectedProvenance);
+    economy._claimedRecording = recording;
+    _graph.coordinator._claimedRecording = recording;
+    return FacilityEconomyRecipient._(advanced, economy, _graph.coordinator);
+  }
+}
+
+final class FacilityEconomyRecipient {
+  FacilityEconomyRecipient._(this._advanced, this._economy, this._coordinator);
+  final AdvancedEconomyRecipient _advanced;
+  final _FacilityEconomyEngine _economy;
+  final _FacilitySponsorSeasonEconomyEngine _coordinator;
+  int get contractCount => _advanced.contractCount;
+  int get processedSponsorClubCount => _coordinator._processedClubIds.length;
+  FinanceAttendanceEvidence prepareAttendance(Club club, int position) =>
+      _economy._attendance(club, position);
+  void cacheAttendance(Map<String, FinanceAttendanceEvidence> evidence) {
+    if (_economy._preparedAttendance != null)
+      throw StateError('Attendance already admitted.');
+    _economy._preparedAttendance = Map.unmodifiable(evidence);
+  }
+
+  List<ClubFinanceSeason> executeCommittedFinance(
+          {required Object expectedExecution,
+          required CommittedSeasonSettlementCapability committed}) =>
+      _advanced.executeCommittedFinance(
+          expectedExecution: expectedExecution, committed: committed);
 }
 
 class FacilitySponsorCrisisRuntimeCareerEngine {
@@ -883,9 +937,30 @@ class _FacilityEconomyEngine extends BasicEconomyEngine {
 
   final BasicEconomyEngine delegate;
   final FullM65SeasonFinancePipeline? financeRecording;
+  FullM65SeasonFinancePipeline? _claimedRecording;
+  Map<String, FinanceAttendanceEvidence>? _preparedAttendance;
   final Map<String, StadiumFacilityState> stadiumFacilities;
   final Map<String, FanState> fanStatesByClub;
   final StadiumInvestmentPolicy stadiumPolicy = const StadiumInvestmentPolicy();
+
+  FinanceAttendanceEvidence _attendance(Club club, int position) {
+    final stadium = stadiumFacilities[club.id] ??
+        (throw StateError('Missing stadium for ${club.id}.'));
+    final trust = fanStatesByClub[club.id]?.overallTrust ??
+        StadiumInvestmentPolicy.neutralFanTrust;
+    return FinanceAttendanceEvidence(
+        club: club,
+        stadiumLevel: stadium.level,
+        fanTrust: trust,
+        leaguePosition: position,
+        multiplierBps: stadiumPolicy
+            .attendanceProfile(
+                level: stadium.level,
+                clubStrength: club.strength,
+                leaguePosition: position,
+                fanTrust: trust)
+            .revenueMultiplierBps);
+  }
 
   @override
   List<ClubFinanceSeason> simulateSeason({
@@ -907,33 +982,20 @@ class _FacilityEconomyEngine extends BasicEconomyEngine {
     }
     final multipliers = <String, int>{};
     for (final club in clubs) {
-      final stadium = stadiumFacilities[club.id];
-      if (stadium == null) {
-        throw StateError('Missing stadium facility state for ${club.id}.');
-      }
       final position = positions[club.id];
       if (position == null) {
         throw StateError('Missing league position for ${club.id}.');
       }
-      final fanTrust = fanStatesByClub[club.id]?.overallTrust ??
-          StadiumInvestmentPolicy.neutralFanTrust;
-      multipliers[club.id] = stadiumPolicy
-          .attendanceProfile(
-            level: stadium.level,
-            clubStrength: club.strength,
-            leaguePosition: position,
-            fanTrust: fanTrust,
-          )
-          .revenueMultiplierBps;
-      financeRecording
+      final evidence =
+          _preparedAttendance?[club.id] ?? _attendance(club, position);
+      if (!identical(evidence.club, club) ||
+          evidence.leaguePosition != position) {
+        throw StateError('Changed attendance source.');
+      }
+      multipliers[club.id] = evidence.multiplierBps;
+      (_claimedRecording ?? financeRecording)
           ?.forSeason(seasonReport.seasonIndex)
-          ?.observeAttendance(FinanceAttendanceEvidence(
-            club: club,
-            stadiumLevel: stadium.level,
-            fanTrust: fanTrust,
-            leaguePosition: position,
-            multiplierBps: multipliers[club.id]!,
-          ));
+          ?.observeAttendance(evidence);
     }
     return delegate.simulateSeason(
       clubs: clubs,
@@ -969,6 +1031,7 @@ class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
   final BasicEconomyEngine delegate;
   final SponsorSystemEngine sponsorSystem;
   final FullM65SeasonFinancePipeline? financeRecording;
+  FullM65SeasonFinancePipeline? _claimedRecording;
   final SponsorRuntimeCheckpoint openingSponsor;
   final Set<String> expectedClubIds;
   final Map<String, PresidentManagementProfile> presidentProfilesByClub;
@@ -1073,7 +1136,7 @@ class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
     _activeNext.addAll(resolution.checkpoint.activeContracts);
     _revenueByClub.addAll(resolution.revenueByClub);
     _seasonRevenue += resolution.totalRevenue;
-    financeRecording
+    (_claimedRecording ?? financeRecording)
         ?.forSeason(seasonReport.seasonIndex)
         ?.observeSponsor(ids, resolution);
 
