@@ -1,4 +1,5 @@
 import '../core/simulation_config.dart';
+import '../contract/player_contract_controller.dart';
 import '../crisis/crisis_decision_core.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../election/player_president_tenure_control_gate.dart';
@@ -24,6 +25,72 @@ import 'player_president_preseason_weekly_handoff.dart';
 import 'player_president_committed_season_result_projection.dart';
 import 'player_president_accepted_promise_closing_projection.dart';
 import 'player_president_interactive_decision_transcript_snapshot.dart';
+import 'player_president_postseason_runtime_transition.dart';
+
+/// Unforgeable application-local claim. No data constructor or global registry.
+/// Only the application below can issue a token for its exact published B2.
+final class ApplicationPostseasonTransitionToken {
+  ApplicationPostseasonTransitionToken._(this._application, this.source);
+  final PlayerPresidentInteractiveDecisionApplicationSession _application;
+  final PlayerPresidentAcceptedPromiseClosingCandidate source;
+  final Object revision = Object();
+  final Object executionIdentity = Object();
+  Object get owner => _application;
+  Object get provenance => source;
+  bool _x1Claimed = false;
+  bool _managerAppointmentClaimed = false;
+  bool _facilityActivationClaimed = false;
+
+  void claimFacilityActivation() {
+    validate();
+    if (_facilityActivationClaimed) {
+      throw StateError('First facility/sponsor graph already activated.');
+    }
+    _facilityActivationClaimed = true;
+  }
+
+  void claimManagerAppointment() {
+    validate();
+    if (_managerAppointmentClaimed) {
+      throw StateError('Initial manager appointment already consumed.');
+    }
+    _managerAppointmentClaimed = true;
+  }
+
+  void validate() {
+    final state = source.sourceState;
+    if (!identical(_application._postseasonToken, this) ||
+        !identical(_application._acceptedPromiseClosingCandidate, source) ||
+        !identical(_application._committedSeasonResultCandidate,
+            source.sourceResultCandidate) ||
+        !identical(_application._preseasonWeeklyState, state) ||
+        !identical(_application._preseasonPromiseBoundary, state.boundary) ||
+        !identical(state.applied, source.applied) ||
+        state.completedMatchCount != 720 ||
+        state.nextRound != 31) {
+      throw StateError('Foreign or stale postseason application claim.');
+    }
+  }
+
+  /// Used only by the genuine controller adoption path. The application never
+  /// exposes this token, and raw value-equal X1 observations cannot replace it.
+  InitialContractOpeningState claimInitialContracts() {
+    validate();
+    if (_x1Claimed) throw StateError('X1 ownership already adopted.');
+    final proof = source.sourceState.boundary.proof;
+    final opening = source.sourceState.boundary.opening;
+    final x1 = proof.initialContracts;
+    if (!x1.matchesSource(
+      careerSeed: proof.seasonOpening.config.careerSeed,
+      simulationVersion: proof.seasonOpening.config.simulationVersion,
+      seasonIndex: source.seasonIndex,
+      players: opening.players,
+      leagues: opening.leagues,
+    )) throw StateError('Owned X1 lineage mismatch.');
+    _x1Claimed = true;
+    return x1;
+  }
+}
 
 enum PlayerPresidentInteractiveDecisionApplicationSessionOrigin {
   newGame,
@@ -76,8 +143,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     int candidateLimit = 5,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
-    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
-        bootstrapCodec =
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec bootstrapCodec =
         const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     final resumeConfig = PlayerPresidentInteractiveDecisionResumeConfig(
@@ -128,7 +194,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       seasonIndex: config.seasonIndex,
     );
     return PlayerPresidentInteractiveDecisionApplicationSession._(
-      origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
+      origin:
+          PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
       checkpoint: null,
       resumeConfig: resumeConfig,
       newGameElectionInterval: electionInterval,
@@ -146,16 +213,14 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     );
   }
 
-  factory PlayerPresidentInteractiveDecisionApplicationSession
-      .restoreNewGameBootstrap({
+  factory PlayerPresidentInteractiveDecisionApplicationSession.restoreNewGameBootstrap({
     required List<Club> clubs,
     required List<WorldLeague> leagues,
     required PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshot
         snapshot,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
-    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
-        bootstrapCodec =
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec bootstrapCodec =
         const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     snapshot.validateWorld(clubs: clubs, leagues: leagues);
@@ -170,8 +235,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       hasFutureSeasonAfterReport:
           snapshot.resumeConfig.hasFutureSeasonAfterReport,
       aiCrisisEngine: CrisisDecisionEngine(
-        activationThreshold:
-            snapshot.resumeConfig.crisisActivationThreshold,
+        activationThreshold: snapshot.resumeConfig.crisisActivationThreshold,
       ),
       candidateLimit: snapshot.resumeConfig.candidateLimit,
     );
@@ -200,7 +264,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     );
 
     return PlayerPresidentInteractiveDecisionApplicationSession._(
-      origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
+      origin:
+          PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
       checkpoint: null,
       resumeConfig: snapshot.resumeConfig,
       newGameElectionInterval: snapshot.electionInterval,
@@ -219,33 +284,30 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     );
   }
 
-  factory PlayerPresidentInteractiveDecisionApplicationSession
-      .restoreEncodedNewGameBootstrap({
+  factory PlayerPresidentInteractiveDecisionApplicationSession.restoreEncodedNewGameBootstrap({
     required List<Club> clubs,
     required List<WorldLeague> leagues,
     required String encodedBootstrap,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
-    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
-        bootstrapCodec =
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec bootstrapCodec =
         const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) =>
-          PlayerPresidentInteractiveDecisionApplicationSession
-              .restoreNewGameBootstrap(
-            clubs: clubs,
-            leagues: leagues,
-            snapshot: bootstrapCodec.decode(encodedBootstrap),
-            bundleCodec: bundleCodec,
-            bootstrapCodec: bootstrapCodec,
-          );
+      PlayerPresidentInteractiveDecisionApplicationSession
+          .restoreNewGameBootstrap(
+        clubs: clubs,
+        leagues: leagues,
+        snapshot: bootstrapCodec.decode(encodedBootstrap),
+        bundleCodec: bundleCodec,
+        bootstrapCodec: bootstrapCodec,
+      );
 
   factory PlayerPresidentInteractiveDecisionApplicationSession.resume({
     required PlayerPresidentTicketPricingRuntimeCheckpoint checkpoint,
     required PlayerPresidentInteractiveDecisionResumeConfig resumeConfig,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
-    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
-        bootstrapCodec =
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec bootstrapCodec =
         const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     checkpoint.validate();
@@ -259,13 +321,13 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       ),
       candidateLimit: resumeConfig.candidateLimit,
     );
-    final preparedSeasonDashboard =
-        _preparedDashboardForCheckpoint(checkpoint);
+    final preparedSeasonDashboard = _preparedDashboardForCheckpoint(checkpoint);
     final preparedSquad = _preparedSquadForCheckpoint(checkpoint);
     final preparedSeasonFixtures =
         _preparedSeasonFixturesForCheckpoint(checkpoint);
     return PlayerPresidentInteractiveDecisionApplicationSession._(
-      origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
+      origin:
+          PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
       checkpoint: checkpoint,
       resumeConfig: resumeConfig,
       newGameElectionInterval: null,
@@ -285,8 +347,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required PlayerPresidentInteractiveDecisionPersistenceBundle bundle,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
-    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
-        bootstrapCodec =
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec bootstrapCodec =
         const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     bundle.validate();
@@ -297,7 +358,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
         _preparedSeasonFixturesForCheckpoint(bundle.checkpoint);
     final restoredSession = bundle.restoreSession();
     return PlayerPresidentInteractiveDecisionApplicationSession._(
-      origin: PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
+      origin:
+          PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
       checkpoint: bundle.checkpoint,
       resumeConfig: bundle.resumeConfig,
       newGameElectionInterval: null,
@@ -317,8 +379,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required String encodedBundle,
     PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec bundleCodec =
         const PlayerPresidentInteractiveDecisionPersistenceBundleSaveCodec(),
-    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec
-        bootstrapCodec =
+    PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec bootstrapCodec =
         const PlayerPresidentInteractiveDecisionNewGameBootstrapSnapshotSaveCodec(),
   }) {
     final bundle = bundleCodec.decode(encodedBundle);
@@ -331,8 +392,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
 
   final PlayerPresidentInteractiveDecisionApplicationSessionOrigin origin;
   final PlayerPresidentTicketPricingRuntimeCheckpoint? _checkpoint;
-  final PlayerPresidentPreparedSeasonDashboardSnapshot
-      _preparedSeasonDashboard;
+  final PlayerPresidentPreparedSeasonDashboardSnapshot _preparedSeasonDashboard;
   final PlayerPresidentPreparedSquadSnapshot _preparedSquad;
   final PlayerPresidentPreparedSeasonFixturesSnapshot _preparedSeasonFixtures;
   final PlayerPresidentInteractiveDecisionResumeConfig resumeConfig;
@@ -348,8 +408,53 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   // A real boundary reference, not a reservation boolean, is the sole owner.
   PlayerPresidentPreseasonPromiseBoundary? _preseasonPromiseBoundary;
   PlayerPresidentPreseasonWeeklyState? _preseasonWeeklyState;
-  PlayerPresidentCommittedSeasonResultCandidate? _committedSeasonResultCandidate;
-  PlayerPresidentAcceptedPromiseClosingCandidate? _acceptedPromiseClosingCandidate;
+  PlayerPresidentCommittedSeasonResultCandidate?
+      _committedSeasonResultCandidate;
+  PlayerPresidentAcceptedPromiseClosingCandidate?
+      _acceptedPromiseClosingCandidate;
+  ApplicationPostseasonTransitionToken? _postseasonToken;
+  SinglePassPostseasonRuntimeTransition? _postseasonTransition;
+  LosslessPostOffseasonRuntimeGraph? _postseasonContinuation;
+  LosslessPostOffseasonRuntimeGraph? get postseasonContinuation =>
+      _postseasonContinuation;
+
+  LosslessPostOffseasonRuntimeGraph publishPostseasonContinuation({
+    required SinglePassPostseasonRuntimeTransition expectedTransition,
+  }) {
+    if (!identical(expectedTransition, _postseasonTransition)) {
+      throw StateError('Foreign postseason transition publication.');
+    }
+    final previous = _postseasonContinuation;
+    if (previous != null) return previous;
+    final token = _postseasonToken!;
+    token.validate();
+    final result = expectedTransition.preparedPublication(token);
+    // No callback/engine/generator remains in this application-local commit.
+    expectedTransition.commitPublication(token);
+    _postseasonContinuation = result;
+    return result;
+  }
+
+  SinglePassPostseasonRuntimeTransition startPostseasonTransition({
+    required PlayerPresidentAcceptedPromiseClosingCandidate expectedSource,
+  }) {
+    if (!identical(expectedSource, _acceptedPromiseClosingCandidate)) {
+      throw StateError('Postseason requires the exact published B2.');
+    }
+    final existing = _postseasonTransition;
+    if (existing != null) return existing;
+    final token = ApplicationPostseasonTransitionToken._(this, expectedSource);
+    _postseasonToken = token;
+    try {
+      final transition =
+          SinglePassPostseasonRuntimeTransition.fromApplication(token);
+      _postseasonTransition = transition;
+      return transition;
+    } catch (_) {
+      _postseasonToken = null;
+      rethrow;
+    }
+  }
 
   PlayerPresidentPreseasonPromiseBoundary? get preseasonPromiseBoundary =>
       _preseasonPromiseBoundary;
@@ -357,10 +462,10 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       _preseasonPromiseBoundary?.applied;
   PlayerPresidentPreseasonWeeklyState? get preseasonWeeklyState =>
       _preseasonWeeklyState;
-  PlayerPresidentCommittedSeasonResultCandidate? get committedSeasonResultCandidate =>
-      _committedSeasonResultCandidate;
-  PlayerPresidentAcceptedPromiseClosingCandidate? get acceptedPromiseClosingCandidate =>
-      _acceptedPromiseClosingCandidate;
+  PlayerPresidentCommittedSeasonResultCandidate?
+      get committedSeasonResultCandidate => _committedSeasonResultCandidate;
+  PlayerPresidentAcceptedPromiseClosingCandidate?
+      get acceptedPromiseClosingCandidate => _acceptedPromiseClosingCandidate;
 
   /// The primary application-owned opening API. The legacy direct
   /// boundary.start() delegates to exactly the same proof-bound claim.
@@ -415,7 +520,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
         boundary.contexts.length != 48 ||
         boundary.contexts.map((item) => item.controlledClubId).toSet().length !=
             48) {
-      throw StateError('Preseason boundary does not match authoritative source.');
+      throw StateError(
+          'Preseason boundary does not match authoritative source.');
     }
     // This is the only claim publication. All fallible checks precede it.
     _preseasonPromiseBoundary = boundary;
@@ -488,7 +594,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     final boundary = _preseasonPromiseBoundary;
     final previous = _preseasonWeeklyState;
     final applied = boundary?.applied;
-    if (boundary == null || previous == null || applied == null ||
+    if (boundary == null ||
+        previous == null ||
+        applied == null ||
         !identical(previous, expectedState) ||
         !identical(boundary.application, this) ||
         !identical(preseasonPromiseBoundary, boundary) ||
@@ -503,7 +611,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
         applied.seasonIndex != boundary.proof.seasonIndex ||
         applied.controlledClubId != boundary.proof.controlledClubId ||
         applied.controlledPresidentId != boundary.controlledPresidentId ||
-        expectedState.fixtureSnapshot.seasonIndex != boundary.proof.seasonIndex ||
+        expectedState.fixtureSnapshot.seasonIndex !=
+            boundary.proof.seasonIndex ||
         expectedState.fixtureSnapshot.totalRounds != 30 ||
         expectedState.fixtureSnapshot.nextRound != 31 ||
         !expectedState.fixtureSnapshot.isComplete ||
@@ -515,7 +624,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     if (published != null) {
       if (!identical(published.sourceState, expectedState) ||
           !identical(published.applied, applied)) {
-        throw StateError('B1 cannot publish a second or foreign season result.');
+        throw StateError(
+            'B1 cannot publish a second or foreign season result.');
       }
       return published;
     }
@@ -543,7 +653,10 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     final boundary = _preseasonPromiseBoundary;
     final applied = boundary?.applied;
     if (!isNewGame ||
-        result == null || state == null || boundary == null || applied == null ||
+        result == null ||
+        state == null ||
+        boundary == null ||
+        applied == null ||
         !identical(expectedResultCandidate, result) ||
         !identical(result.sourceState, state) ||
         !identical(result.applied, applied) ||
@@ -558,7 +671,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
         !state.fixtureSnapshot.isComplete ||
         result.leagueResults.length != 3 ||
         applied.activePromises.length != 48 ||
-        applied.sourceIdentity != boundary.proof.seasonOpening.originSourceDigest ||
+        applied.sourceIdentity !=
+            boundary.proof.seasonOpening.originSourceDigest ||
         result.sourceIdentity != applied.sourceIdentity ||
         result.acceptedChoice != applied.acceptedChoice ||
         result.acceptedRequestKey != applied.acceptedRequestKey ||
@@ -593,17 +707,19 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   }
 
   bool get isNewGame =>
-      origin == PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame;
+      origin ==
+      PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame;
 
-  PlayerPresidentPreparedSeasonDashboardSnapshot
-      get preparedSeasonDashboard => _preparedSeasonDashboard;
+  PlayerPresidentPreparedSeasonDashboardSnapshot get preparedSeasonDashboard =>
+      _preparedSeasonDashboard;
 
   PlayerPresidentPreparedSquadSnapshot get preparedSquad => _preparedSquad;
 
   PlayerPresidentPreparedSeasonFixturesSnapshot get preparedSeasonFixtures =>
       _preparedSeasonFixtures;
 
-  bool get canPersist => _checkpoint != null && _preseasonPromiseBoundary == null;
+  bool get canPersist =>
+      _checkpoint != null && _preseasonPromiseBoundary == null;
 
   bool get canPersistBootstrap =>
       isNewGame &&
@@ -738,7 +854,6 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
             )
           : _session.submitWithResolution(request: request, choice: choice);
 }
-
 
 PlayerPresidentPreparedSeasonDashboardSnapshot _preparedDashboardForNewGame({
   required List<Club> clubs,
@@ -960,7 +1075,6 @@ PlayerPresidentPreparedSeasonDashboardSnapshot _preparedDashboardForCheckpoint(
   );
 }
 
-
 PlayerPresidentPreparedSquadSnapshot _preparedSquadForCheckpoint(
   PlayerPresidentTicketPricingRuntimeCheckpoint checkpoint,
 ) {
@@ -1019,7 +1133,6 @@ PlayerPresidentPreparedSquadSnapshot _preparedSquadFromPlayers({
     players: selected,
   );
 }
-
 
 PlayerPresidentPreparedSeasonFixturesSnapshot
     _preparedSeasonFixturesForNewGame({
@@ -1168,8 +1281,7 @@ PlayerPresidentPreparedSeasonFixturesSnapshot
       );
     }
 
-    final opponentClubId =
-        isHome ? fixture.awayClubId : fixture.homeClubId;
+    final opponentClubId = isHome ? fixture.awayClubId : fixture.homeClubId;
     if (opponentClubId == controlledClubId ||
         !leagueClubIds.contains(opponentClubId)) {
       throw StateError('Prepared fixture opponent is invalid.');

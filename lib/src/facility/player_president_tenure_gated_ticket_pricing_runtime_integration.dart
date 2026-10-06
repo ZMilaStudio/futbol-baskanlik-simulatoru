@@ -15,8 +15,17 @@ import '../finance/club_finance_state.dart';
 import '../finance/season_finance_authority_receipt.dart';
 import '../league/club.dart';
 import '../manager/manager_career_controller.dart';
+import '../manager/manager_career_season.dart';
 import '../player/player.dart';
 import '../promise/promise_media_career_engine.dart';
+import '../promise/promise_context.dart';
+import '../promise/promise_resolution.dart';
+import '../promise/promise_season_snapshot.dart';
+import '../promise/promise_opening_context_builder.dart';
+import '../promise/president_promise.dart';
+import '../save/president_runtime_checkpoint.dart';
+import '../save/president_domain_resume_engine.dart';
+import '../save/facility_runtime_checkpoint.dart';
 import '../save/save_checksum.dart';
 import '../save/advanced_runtime_checkpoint.dart';
 import '../save/advanced_runtime_career_engine.dart';
@@ -26,6 +35,8 @@ import '../sponsor/sponsor_system.dart';
 import '../world/world_career_engine.dart';
 import '../world/world_career_season.dart';
 import '../world/world_league.dart';
+import '../world/world_checkpoint.dart';
+import '../player_president/player_president_postseason_runtime_transition.dart';
 import 'player_president_tenure_gated_ticket_pricing_control.dart';
 import 'stadium_facility.dart';
 
@@ -231,6 +242,249 @@ class PlayerPresidentTicketPricingRuntimeCareerResult {
 /// this checkpoint and refreshed after every completed season.
 /// Owns the actual pricing graph and its nested facility/advanced lease.
 /// Execution yields the advanced result only; no new domain publisher is added.
+/// Genuine legacy production closing, captured after annual settlement and
+/// before movement, manager completion or offseason. Not an AR-D W30 producer.
+final class OwnedAnnualClosingBoundary {
+  OwnedAnnualClosingBoundary._(this._prepared, this.advanced, this.receipt,
+      this.promiseContexts, this.acceptedPromises, this.hasNextSeason) {
+    validate();
+  }
+  final PreparedTicketRuntimeSeason _prepared;
+  final OwnedAdvancedAnnualClosing advanced;
+  final SeasonFinanceAuthorityReceipt receipt;
+  final List<PresidentPromiseContext> promiseContexts;
+  final List<PresidentPromise> acceptedPromises;
+  final bool hasNextSeason;
+  Object get owner => _prepared.owner;
+  Object get revision => _prepared.revision;
+  Object get provenance => _prepared.provenance;
+  Object get executionIdentity => _prepared.executionIdentity;
+  PlayerPresidentTenureControlState get tenureControl =>
+      _prepared.tenureControl;
+  List<PresidentClubRuntimeState> get presidentStates =>
+      _prepared._context.presidentStates;
+  int get electionInterval => _prepared._context.electionInterval;
+  int get completedElectionTerms => _prepared._context.completedElectionTerms;
+  int get seasonsIntoCurrentTerm => _prepared._context.seasonsIntoCurrentTerm;
+  Map<String, List<int>> get termPromiseScores =>
+      _prepared._context.termPromiseScores;
+  FacilityPortfolioRuntimeState get facilities => _prepared.facilities;
+
+  /// Uses the exact accepted promise and resolver owned by the producer graph.
+  /// It neither regenerates a promise nor replays the annual runtime.
+  PromiseResolution resolveOwnedPromise({
+    required SinglePassPostseasonRuntimeTransition transition,
+    required PresidentPromise promise,
+    required PresidentPromiseOutcome outcome,
+  }) {
+    advanced.validateTransition(transition);
+    if (!acceptedPromises.any((p) => identical(p, promise))) {
+      throw StateError('Foreign annual-closing promise.');
+    }
+    return _prepared._producer.sourceEngine.promiseEngine.resolver
+        .resolve(promise: promise, outcome: outcome);
+  }
+
+  Object? _claim;
+  bool _domainProjected = false;
+  bool _crisisProjected = false;
+  bool _investmentProjected = false;
+  bool _controlRefreshed = false;
+
+  void _requireCalculation(SinglePassPostseasonRuntimeTransition transition,
+      PostseasonRuntimeTransitionPhase phase) {
+    advanced.validateTransition(transition);
+    if (transition.phase != phase) {
+      throw StateError('Wrong owned successor calculation phase.');
+    }
+  }
+
+  PresidentDomainSeasonEffects projectOwnedDomain({
+    required SinglePassPostseasonRuntimeTransition transition,
+    required WorldCareerSeason season,
+    required Iterable<PromiseSeasonSnapshot> acceptedPromises,
+    required ManagerCareerSeason managerSeason,
+  }) {
+    _requireCalculation(
+        transition, PostseasonRuntimeTransitionPhase.transferFollowupComplete);
+    if (_domainProjected)
+      throw StateError('Domain projection already consumed.');
+    _domainProjected = true;
+    return _prepared._facility.projectOwnedDomainSeason(
+        closing: advanced,
+        transition: transition,
+        season: season,
+        priorClubs: presidentStates,
+        acceptedPromises: acceptedPromises,
+        electionInterval: electionInterval,
+        completedElectionTerms: completedElectionTerms,
+        seasonsIntoCurrentTerm: seasonsIntoCurrentTerm,
+        priorTermPromiseScores: termPromiseScores,
+        hasNextSeason: hasNextSeason,
+        managerSeason: managerSeason);
+  }
+
+  CrisisRuntimeEffects projectOwnedCrisis({
+    required SinglePassPostseasonRuntimeTransition transition,
+    required Iterable<PresidentClubRuntimeState> presidentClubs,
+    required Iterable<ClubFinanceState> financeStates,
+  }) {
+    _requireCalculation(
+        transition, PostseasonRuntimeTransitionPhase.domainReady);
+    if (_crisisProjected)
+      throw StateError('Crisis projection already consumed.');
+    _crisisProjected = true;
+    return _prepared._producer.crisisIntegration.projectEffects(
+        seasonIndex: advanced.world.opening.seasonIndex,
+        presidentClubs: presidentClubs,
+        financeStates: financeStates);
+  }
+
+  PresidentFacilityInvestmentEffects projectOwnedInvestment({
+    required SinglePassPostseasonRuntimeTransition transition,
+    required WorldCheckpoint world,
+    required Iterable<PresidentClubRuntimeState> presidentClubs,
+  }) {
+    _requireCalculation(
+        transition, PostseasonRuntimeTransitionPhase.sponsorSuccessorReady);
+    if (_investmentProjected) {
+      throw StateError('Investment projection already consumed.');
+    }
+    _investmentProjected = true;
+    return _prepared._producer.investment.projectRuntimeView(
+        facilities: FacilityRuntimeCheckpoint(
+            world: world,
+            academyFacilities: facilities.academyFacilities,
+            stadiumFacilities: facilities.stadiumFacilities,
+            trainingGroundFacilities: facilities.trainingGroundFacilities,
+            totalInvestmentSpent: facilities.totalInvestmentSpent),
+        profiles: {
+          for (final c in presidentClubs) c.clubId: c.managementProfile
+        });
+  }
+
+  PlayerPresidentTenureControlState refreshOwnedControl({
+    required SinglePassPostseasonRuntimeTransition transition,
+    required PresidentClubRuntimeState incumbent,
+    required int completedSeasons,
+  }) {
+    _requireCalculation(
+        transition, PostseasonRuntimeTransitionPhase.facilityReady);
+    if (_controlRefreshed)
+      throw StateError('Control refresh already consumed.');
+    _controlRefreshed = true;
+    return _prepared._producer.tenureGate.refreshRuntimeView(
+        state: tenureControl,
+        incumbent: incumbent,
+        completedSeasons: completedSeasons);
+  }
+
+  FacilitySponsorPostseasonContinuation? _successor;
+  Map<String, int>? _nextStadiumLevels;
+  Map<String, FanState>? _nextFans;
+  Map<String, PresidentManagementProfile>? _nextProfiles;
+  PlayerPresidentTenureControlState? _nextControl;
+  bool _moved = false;
+  FacilitySponsorPostseasonContinuation stageSuccessor({
+    required SinglePassPostseasonRuntimeTransition transition,
+    required WorldCheckpoint world,
+    required FacilityPortfolioRuntimeState facilities,
+    required List<PresidentClubRuntimeState> domainClubs,
+    required PlayerPresidentTenureControlState control,
+  }) {
+    advanced.validateTransition(transition);
+    if (!transition.permitsOuterSuccessor(
+        this, world, facilities, domainClubs, control)) {
+      throw StateError('Unowned outer successor evidence.');
+    }
+    if (_successor != null || _moved || !hasNextSeason) {
+      throw StateError('Annual runtime successor already staged or terminal.');
+    }
+    control.validate();
+    _nextStadiumLevels = Map.unmodifiable(
+        {for (final s in facilities.stadiumFacilities) s.clubId: s.level});
+    _nextFans = Map.unmodifiable(
+        {for (final c in domainClubs) c.clubId: c.fanReputation});
+    _nextProfiles = Map.unmodifiable(
+        {for (final c in domainClubs) c.clubId: c.managementProfile});
+    _nextControl = control;
+    return _successor = _prepared._runtime.stageOwnedPostseason(
+        prepared: _prepared._facility,
+        closing: advanced,
+        transition: transition,
+        world: world,
+        facilities: facilities,
+        domainClubs: domainClubs);
+  }
+
+  void validateSuccessorMove(Object transition) {
+    advanced.validateTransition(transition);
+    if (_successor == null || _moved)
+      throw StateError('Unprepared annual move.');
+  }
+
+  void commitSuccessorMove(Object transition) {
+    validateSuccessorMove(transition);
+    _successor!.commitOwnedSuccessor();
+    final pricing = _prepared._pricing;
+    pricing.stadiumLevelsByClub = _nextStadiumLevels!;
+    pricing.fanStatesByClub = _nextFans!;
+    pricing.presidentProfilesByClub = _nextProfiles!;
+    pricing.tenureControl = _nextControl!;
+    pricing._claimedRecording = null;
+    pricing._preparedContexts = null;
+    pricing._strictProvider = null;
+    pricing._decisions.clear();
+    _moved = true;
+  }
+
+  void validate() {
+    advanced.world.validate();
+    final opening = advanced.world.opening;
+    final ids = opening.effectiveClubs.map((c) => c.id).toSet();
+    if (ids.length != 48 ||
+        promiseContexts.length != 48 ||
+        acceptedPromises.length != 48 ||
+        promiseContexts.map((c) => c.clubId).toSet().length != 48) {
+      throw StateError('Incomplete owned annual promise coverage.');
+    }
+    for (var i = 0; i < promiseContexts.length; i++) {
+      final context = promiseContexts[i];
+      final promise = acceptedPromises[i];
+      if (!ids.contains(context.clubId) ||
+          context.clubId != promise.clubId ||
+          context.seasonIndex != opening.seasonIndex ||
+          promise.seasonIndex != opening.seasonIndex ||
+          promise.id.isEmpty) {
+        throw StateError('Foreign owned annual promise lineage.');
+      }
+    }
+    receipt.verify(
+      expectedOwner: owner,
+      expectedRevision: revision,
+      expectedProvenance: provenance,
+      expectedSeason: advanced.world.opening.seasonIndex,
+      expectedResults: advanced.world.finances,
+      expectedEffectiveClubSource: advanced.managerOpening,
+    );
+  }
+
+  void claim(
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance,
+      required Object transition}) {
+    validate();
+    if (_claim != null) throw StateError('Annual-closing owner already moved.');
+    advanced.claim(
+        expectedOwner: expectedOwner,
+        expectedRevision: expectedRevision,
+        expectedProvenance: expectedProvenance,
+        transition: transition);
+    _claim = transition;
+  }
+}
+
 final class PreparedTicketRuntimeSeason {
   PreparedTicketRuntimeSeason._(this._producer, this._context, this._pricing,
       this._runtime, this._facility);
@@ -239,6 +493,7 @@ final class PreparedTicketRuntimeSeason {
   final _TicketPricingEconomyEngine _pricing;
   final FacilitySponsorCrisisRuntimeCareerEngine _runtime;
   final PreparedFacilitySponsorSeason _facility;
+  bool _annualCaptureAttempted = false;
   Object get owner => _facility.owner;
   Object get revision => _facility.revision;
   Object get provenance => _facility.provenance;
@@ -263,18 +518,21 @@ final class PreparedTicketRuntimeSeason {
   int get ticketDecisionCount => _pricing._decisions.length;
 
   PreparedTicketRuntimeSeason move(
-          {required Object expectedOwner,
-          required Object expectedRevision,
-          required Object expectedProvenance}) =>
-      PreparedTicketRuntimeSeason._(
-          _producer,
-          _context,
-          _pricing,
-          _runtime,
-          _facility.move(
-              expectedOwner: expectedOwner,
-              expectedRevision: expectedRevision,
-              expectedProvenance: expectedProvenance));
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    if (_annualCaptureAttempted)
+      throw StateError('Annual capture lease cannot move.');
+    return PreparedTicketRuntimeSeason._(
+        _producer,
+        _context,
+        _pricing,
+        _runtime,
+        _facility.move(
+            expectedOwner: expectedOwner,
+            expectedRevision: expectedRevision,
+            expectedProvenance: expectedProvenance));
+  }
 }
 
 class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
@@ -357,13 +615,60 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
       {required Object expectedOwner,
       required Object expectedRevision,
       required Object expectedProvenance}) {
-    if (!identical(p._producer, this)) {
+    if (!identical(p._producer, this) || p._annualCaptureAttempted) {
       throw StateError('Foreign ticket prepared producer.');
     }
     return p._runtime.executePrepared(p._facility,
         expectedOwner: expectedOwner,
         expectedRevision: expectedRevision,
         expectedProvenance: expectedProvenance);
+  }
+
+  /// A new observation/admission seam over the existing annual production
+  /// call, not a completed career replay or an arbitrary report constructor.
+  OwnedAnnualClosingBoundary captureAnnualClosing(PreparedTicketRuntimeSeason p,
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance,
+      required bool hasNextSeason}) {
+    if (!identical(p._producer, this) ||
+        p._annualCaptureAttempted ||
+        p.state != PreparedExecutionState.prepared ||
+        p.managerAuthority == null ||
+        !identical(p.owner, expectedOwner) ||
+        !identical(p.revision, expectedRevision) ||
+        !identical(p.provenance, expectedProvenance) ||
+        p._pricing.financeRecording != null ||
+        p._pricing._claimedRecording != null) {
+      throw StateError('Foreign, consumed or unowned annual-closing graph.');
+    }
+    p._facility.validateEconomyHandoff();
+    p._annualCaptureAttempted = true;
+    final contexts = const PromiseOpeningContextBuilder().build(
+        seasonIndex: p.opening.seasonIndex,
+        effectiveClubs: p.opening.effectiveClubs,
+        leagues: p.opening.leagues,
+        openingFinanceStates: p.opening.financeStates);
+    final promises = List<PresidentPromise>.unmodifiable(contexts.map(
+        (context) => sourceEngine.promiseEngine.generator.generate(
+            context: context,
+            careerSeed: p.opening.config.careerSeed,
+            simulationVersion: p.opening.config.simulationVersion)));
+    final recording = FullM65SeasonFinancePipeline(
+        owner: p.owner,
+        sourceRevision: p.revision,
+        provenance: p.provenance,
+        seasonIndex: p.opening.seasonIndex,
+        effectiveClubSource: p.managerAuthority);
+    p._pricing._claimedRecording = recording;
+    final closing = recording.record(() => p._runtime.captureAnnualClosing(
+        p._facility,
+        expectedOwner: expectedOwner,
+        expectedRevision: expectedRevision,
+        expectedProvenance: expectedProvenance,
+        recording: recording));
+    return OwnedAnnualClosingBoundary._(
+        p, closing, recording.receipt!, contexts, promises, hasNextSeason);
   }
 
   _TicketPricingEconomyEngine _preparePricing(_PricingRuntimeContext context,
@@ -514,12 +819,18 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
     final profiles = <String, PresidentManagementProfile>{};
     final fans = <String, FanState>{};
     final stadiums = <String, int>{};
+    final presidentStates = <PresidentClubRuntimeState>[];
     String? playerPresidentId;
     for (final club in clubs) {
       final state = opening.prepareClub(clubId: club.id, config: config);
       profiles[club.id] = state.managementProfile;
       fans[club.id] = state.fan;
       stadiums[club.id] = 0;
+      presidentStates.add(PresidentClubRuntimeState(
+          tenure: state.tenure,
+          managementProfile: state.managementProfile,
+          fanReputation: state.fan,
+          mediaReputation: state.media));
       if (club.id == controlledClubId) {
         playerPresidentId = state.president.id;
       }
@@ -529,6 +840,11 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
       stadiumLevelsByClub: stadiums,
       fanStatesByClub: fans,
       presidentProfilesByClub: profiles,
+      presidentStates: List.unmodifiable(presidentStates),
+      electionInterval: 4,
+      completedElectionTerms: 0,
+      seasonsIntoCurrentTerm: 0,
+      termPromiseScores: const {},
       tenureControl: PlayerPresidentTenureControlState.initial(
         controlledClubId: controlledClubId,
         playerPresidentId: playerPresidentId!,
@@ -558,6 +874,16 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
           state.clubId: state.managementProfile,
       },
       tenureControl: tenure,
+      presidentStates: domain.presidentRuntime.clubs,
+      electionInterval: domain.presidentRuntime.electionInterval,
+      completedElectionTerms: domain.presidentRuntime.completedElectionTerms,
+      seasonsIntoCurrentTerm: domain.presidentRuntime.seasonsIntoCurrentTerm,
+      termPromiseScores: Map.unmodifiable({
+        for (final club in clubs)
+          club.id: List<int>.unmodifiable(domain.currentTermPromises
+              .where((p) => p.clubId == club.id)
+              .map((p) => p.score))
+      }),
     );
   }
 
@@ -592,6 +918,11 @@ class _PricingRuntimeContext {
     required this.fanStatesByClub,
     required this.presidentProfilesByClub,
     required this.tenureControl,
+    required this.presidentStates,
+    required this.electionInterval,
+    required this.completedElectionTerms,
+    required this.seasonsIntoCurrentTerm,
+    required this.termPromiseScores,
   });
 
   final List<Club> clubs;
@@ -599,6 +930,9 @@ class _PricingRuntimeContext {
   final Map<String, FanState> fanStatesByClub;
   final Map<String, PresidentManagementProfile> presidentProfilesByClub;
   final PlayerPresidentTenureControlState tenureControl;
+  final List<PresidentClubRuntimeState> presidentStates;
+  final int electionInterval, completedElectionTerms, seasonsIntoCurrentTerm;
+  final Map<String, List<int>> termPromiseScores;
 }
 
 class _TicketPricingEconomyEngine extends BasicEconomyEngine {
@@ -623,10 +957,10 @@ class _TicketPricingEconomyEngine extends BasicEconomyEngine {
   FullM65SeasonFinancePipeline? _claimedRecording;
   Map<String, PlayerPresidentTicketPricingDecisionContext>? _preparedContexts;
   PlayerMatchdayTicketPricingDecisionProvider? _strictProvider;
-  final Map<String, int> stadiumLevelsByClub;
-  final Map<String, FanState> fanStatesByClub;
-  final Map<String, PresidentManagementProfile> presidentProfilesByClub;
-  final PlayerPresidentTenureControlState tenureControl;
+  Map<String, int> stadiumLevelsByClub;
+  Map<String, FanState> fanStatesByClub;
+  Map<String, PresidentManagementProfile> presidentProfilesByClub;
+  PlayerPresidentTenureControlState tenureControl;
   final PlayerMatchdayTicketPricingDecisionProvider? playerProvider;
   final PresidentMatchdayTicketPricingPolicy aiPolicy;
   final MatchdayTicketPricingPolicy pricingPolicy;

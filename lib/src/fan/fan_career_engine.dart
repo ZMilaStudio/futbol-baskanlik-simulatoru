@@ -3,6 +3,7 @@ import '../core/simulation_config.dart';
 import '../league/club.dart';
 import '../transfer/advanced_transfer_career_report.dart';
 import '../transfer/advanced_transfer_world_career_engine.dart';
+import '../transfer/loan_agreement.dart';
 import '../world/world_career_hooks.dart';
 import '../world/world_career_season.dart';
 import '../world/world_league.dart';
@@ -28,6 +29,32 @@ class FanCareerEngine {
   final AdvancedTransferWorldCareerEngine advancedEngine;
   final FanExpectationEngine expectationEngine;
   final FanTrustEngine trustEngine;
+
+  FanSeasonSnapshot projectSeason({
+    required FanState priorState,
+    required WorldCareerSeason season,
+    required Iterable<LoanAgreement> loanHistory,
+    required bool hasNextSeason,
+    FanExtraReasonProvider? extraReasonProvider,
+  }) {
+    final context = buildSeasonContext(
+      season: season,
+      clubId: priorState.clubId,
+      loanHistory: loanHistory,
+      hasNextSeason: hasNextSeason,
+    );
+    final expectation = expectationEngine.generate(context);
+    final reasons = <FanTrustReason>[
+      ...trustEngine.evaluate(context: context, expectation: expectation),
+      if (extraReasonProvider != null) ...extraReasonProvider(context),
+    ];
+    return FanSeasonSnapshot(
+      context: context,
+      expectation: expectation,
+      state: priorState.apply(reasons),
+      reasons: reasons,
+    );
+  }
 
   FanCareerReport simulate({
     required List<Club> clubs,
@@ -68,31 +95,19 @@ class FanCareerEngine {
     final lastSeasonIndex = worldReport.seasons.last.seasonIndex;
 
     for (final season in worldReport.seasons) {
-      final seasonClubIds = season.clubs.map((club) => club.id).toList()..sort();
+      final seasonClubIds = season.clubs.map((club) => club.id).toList()
+        ..sort();
       for (final clubId in seasonClubIds) {
-        final context = _buildContext(
-          advancedReport: advancedReport,
+        final snapshot = projectSeason(
+          priorState: states[clubId]!,
           season: season,
-          clubId: clubId,
-          lastSeasonIndex: lastSeasonIndex,
-          hasFutureSeasonAfterReport: hasFutureSeasonAfterReport,
+          loanHistory: advancedReport.loanHistory,
+          hasNextSeason: season.seasonIndex < lastSeasonIndex ||
+              hasFutureSeasonAfterReport,
+          extraReasonProvider: extraReasonProvider,
         );
-        final expectation = expectationEngine.generate(context);
-        final reasons = <FanTrustReason>[
-          ...trustEngine.evaluate(
-            context: context,
-            expectation: expectation,
-          ),
-          if (extraReasonProvider != null) ...extraReasonProvider(context),
-        ];
-        final nextState = states[clubId]!.apply(reasons);
-        states[clubId] = nextState;
-        snapshots.add(FanSeasonSnapshot(
-          context: context,
-          expectation: expectation,
-          state: nextState,
-          reasons: reasons,
-        ));
+        states[clubId] = snapshot.state;
+        snapshots.add(snapshot);
       }
     }
 
@@ -105,12 +120,13 @@ class FanCareerEngine {
     );
   }
 
-  FanSeasonContext _buildContext({
-    required AdvancedTransferCareerReport advancedReport,
+  /// Read-only calculation view: neither this view nor WorldCareerSeason is
+  /// accepted as ownership authority by a runtime transition.
+  FanSeasonContext buildSeasonContext({
     required WorldCareerSeason season,
     required String clubId,
-    required int lastSeasonIndex,
-    required bool hasFutureSeasonAfterReport,
+    required Iterable<LoanAgreement> loanHistory,
+    required bool hasNextSeason,
   }) {
     final league = season.leaguesBeforeSeason.firstWhere(
       (item) => item.clubIds.contains(clubId),
@@ -158,7 +174,7 @@ class FanCareerEngine {
     final nextSeasonIndex = season.seasonIndex + 1;
     var loanIns = 0;
     var loanOuts = 0;
-    for (final loan in advancedReport.loanHistory) {
+    for (final loan in loanHistory) {
       if (loan.startSeasonIndex != nextSeasonIndex) continue;
       if (loan.loanClubId == clubId) loanIns++;
       if (loan.parentClubId == clubId) loanOuts++;
@@ -184,8 +200,7 @@ class FanCareerEngine {
       transferIncome: transferIncome,
       promoted: promoted,
       relegated: relegated,
-      hasTransferWindow:
-          season.seasonIndex < lastSeasonIndex || hasFutureSeasonAfterReport,
+      hasTransferWindow: hasNextSeason,
     );
   }
 }

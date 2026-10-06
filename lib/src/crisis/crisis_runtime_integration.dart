@@ -78,7 +78,61 @@ class CrisisRuntimeIntegrationEngine {
 
   final CrisisDecisionEngine decisionEngine;
 
-  CrisisRuntimeBoundaryResult apply(PresidentDomainMemoryCheckpoint checkpoint) {
+  /// Pure boundary calculation shared by checkpoint and owned-runtime callers.
+  /// A calculation result is evidence, never a checkpoint/source capability.
+  CrisisRuntimeEffects projectEffects({
+    required int seasonIndex,
+    required Iterable<PresidentClubRuntimeState> presidentClubs,
+    required Iterable<ClubFinanceState> financeStates,
+  }) {
+    final financeByClub = <String, ClubFinanceState>{};
+    for (final finance in financeStates) {
+      if (financeByClub.containsKey(finance.clubId)) {
+        throw StateError('Duplicate crisis finance ${finance.clubId}.');
+      }
+      financeByClub[finance.clubId] = finance;
+    }
+    final snapshots = <CrisisRuntimeClubSnapshot>[];
+    final nextFinance = <String, ClubFinanceState>{};
+    final nextClubs = <PresidentClubRuntimeState>[];
+    for (final state in presidentClubs) {
+      final finance = financeByClub[state.clubId];
+      if (finance == null || nextFinance.containsKey(state.clubId)) {
+        throw StateError('Missing or duplicate crisis club ${state.clubId}.');
+      }
+      final context = CrisisContext(
+        clubId: state.clubId,
+        seasonIndex: seasonIndex,
+        finance: finance,
+        fan: state.fanReputation,
+        media: state.mediaReputation,
+        president: state.managementProfile,
+      );
+      final resolution = decisionEngine.evaluate(context);
+      snapshots.add(CrisisRuntimeClubSnapshot(
+        context: context,
+        resolution: resolution,
+      ));
+      nextFinance[state.clubId] = resolution?.finance ?? finance;
+      nextClubs.add(PresidentClubRuntimeState(
+        tenure: state.tenure,
+        managementProfile: state.managementProfile,
+        fanReputation: resolution?.fan ?? state.fanReputation,
+        mediaReputation: resolution?.media ?? state.mediaReputation,
+      ));
+    }
+    if (nextFinance.length != financeByClub.length) {
+      throw StateError('Crisis state coverage mismatch.');
+    }
+    return CrisisRuntimeEffects._(
+      snapshots,
+      nextClubs,
+      [for (final finance in financeStates) nextFinance[finance.clubId]!],
+    );
+  }
+
+  CrisisRuntimeBoundaryResult apply(
+      PresidentDomainMemoryCheckpoint checkpoint) {
     checkpoint.validate();
     if (checkpoint.completedSeasons <= 0) {
       throw ArgumentError(
@@ -91,45 +145,11 @@ class CrisisRuntimeIntegrationEngine {
     final advanced = compact.runtime;
     final world = advanced.world;
     final seasonIndex = checkpoint.nextSeasonIndex - 1;
-    final financeByClub = <String, ClubFinanceState>{
-      for (final item in world.nextSeasonFinanceStates) item.clubId: item,
-    };
-
-    final snapshots = <CrisisRuntimeClubSnapshot>[];
-    final nextFinanceByClub = <String, ClubFinanceState>{};
-    final nextPresidentClubs = <PresidentClubRuntimeState>[];
-
-    for (final state in presidentRuntime.clubs) {
-      final finance = financeByClub[state.clubId];
-      if (finance == null) {
-        throw StateError('Missing finance state for ${state.clubId}.');
-      }
-      final context = CrisisContext(
-        clubId: state.clubId,
-        seasonIndex: seasonIndex,
-        finance: finance,
-        fan: state.fanReputation,
-        media: state.mediaReputation,
-        president: state.managementProfile,
-      );
-      final resolution = decisionEngine.evaluate(context);
-      snapshots.add(
-        CrisisRuntimeClubSnapshot(
-          context: context,
-          resolution: resolution,
-        ),
-      );
-
-      nextFinanceByClub[state.clubId] = resolution?.finance ?? finance;
-      nextPresidentClubs.add(
-        PresidentClubRuntimeState(
-          tenure: state.tenure,
-          managementProfile: state.managementProfile,
-          fanReputation: resolution?.fan ?? state.fanReputation,
-          mediaReputation: resolution?.media ?? state.mediaReputation,
-        ),
-      );
-    }
+    final effects = projectEffects(
+      seasonIndex: seasonIndex,
+      presidentClubs: presidentRuntime.clubs,
+      financeStates: world.nextSeasonFinanceStates,
+    );
 
     final nextWorld = WorldCheckpoint(
       config: world.config,
@@ -137,9 +157,7 @@ class CrisisRuntimeIntegrationEngine {
       baseClubs: world.baseClubs,
       nextSeasonLeagues: world.nextSeasonLeagues,
       nextSeasonPlayers: world.nextSeasonPlayers,
-      nextSeasonFinanceStates: world.nextSeasonFinanceStates
-          .map((item) => nextFinanceByClub[item.clubId]!)
-          .toList(),
+      nextSeasonFinanceStates: effects.financeStates,
     );
     final nextAdvanced = AdvancedRuntimeCheckpoint(
       world: nextWorld,
@@ -156,7 +174,7 @@ class CrisisRuntimeIntegrationEngine {
       electionInterval: presidentRuntime.electionInterval,
       completedElectionTerms: presidentRuntime.completedElectionTerms,
       seasonsIntoCurrentTerm: presidentRuntime.seasonsIntoCurrentTerm,
-      clubs: nextPresidentClubs,
+      clubs: effects.presidentClubs,
     );
     final nextCheckpoint = PresidentDomainMemoryCheckpoint(
       presidentRuntime: nextPresidentRuntime,
@@ -170,9 +188,22 @@ class CrisisRuntimeIntegrationEngine {
     return CrisisRuntimeBoundaryResult(
       seasonIndex: seasonIndex,
       checkpoint: nextCheckpoint,
-      clubs: snapshots,
+      clubs: effects.clubs,
     );
   }
+}
+
+final class CrisisRuntimeEffects {
+  CrisisRuntimeEffects._(
+      Iterable<CrisisRuntimeClubSnapshot> clubs,
+      Iterable<PresidentClubRuntimeState> presidentClubs,
+      Iterable<ClubFinanceState> financeStates)
+      : clubs = List.unmodifiable(clubs),
+        presidentClubs = List.unmodifiable(presidentClubs),
+        financeStates = List.unmodifiable(financeStates);
+  final List<CrisisRuntimeClubSnapshot> clubs;
+  final List<PresidentClubRuntimeState> presidentClubs;
+  final List<ClubFinanceState> financeStates;
 }
 
 class CrisisRuntimeCareerEngine {
@@ -203,8 +234,7 @@ class CrisisRuntimeCareerEngine {
       config: config,
       seasonCount: 1,
       electionInterval: electionInterval,
-      hasFutureSeasonAfterReport:
-          seasonCount > 1 || hasFutureSeasonAfterReport,
+      hasFutureSeasonAfterReport: seasonCount > 1 || hasFutureSeasonAfterReport,
     );
     var boundary = integrationEngine.apply(first.checkpoint);
     boundaries.add(boundary);

@@ -70,8 +70,7 @@ class PlayerTransferStrategyDecisionContext {
   int get seasonIndex => window.seasonIndex;
   int get decisionSeasonIndex => window.decisionSeasonIndex;
 
-  String get signature =>
-      '${window.signature}:controlled=$controlledClubId:'
+  String get signature => '${window.signature}:controlled=$controlledClubId:'
       'ai=${aiProfile.signature}';
 }
 
@@ -108,6 +107,38 @@ class PlayerPresidentTransferStrategyProfileProvider
   final String controlledClubId;
   final PlayerTransferStrategyDecisionProvider? decisionProvider;
 
+  /// Prepares AI profiles and the exact controlled context once. This does not
+  /// choose a player answer, invoke onApplied, or run the transfer market.
+  PreparedPlayerTransferStrategy prepareControlled(
+    PresidentTransferStrategyWindowContext context,
+  ) {
+    final aiProfiles = aiProfileProvider.profilesForWindow(context);
+    return _prepareControlled(context, aiProfiles);
+  }
+
+  PreparedPlayerTransferStrategy _prepareControlled(
+    PresidentTransferStrategyWindowContext context,
+    Map<String, PresidentManagementProfile> aiProfiles,
+  ) {
+    if (controlledClubId.isEmpty ||
+        !context.clubs.any((club) => club.id == controlledClubId)) {
+      throw ArgumentError('Controlled club must participate in the window.');
+    }
+    final profile = aiProfiles[controlledClubId];
+    if (profile == null) {
+      throw ArgumentError(
+          'AI transfer profile must cover the controlled club.');
+    }
+    return PreparedPlayerTransferStrategy._(
+      PlayerTransferStrategyDecisionContext(
+        window: context,
+        controlledClubId: controlledClubId,
+        aiProfile: profile,
+      ),
+      aiProfiles,
+    );
+  }
+
   @override
   Map<String, PresidentManagementProfile> profilesForWindow(
     PresidentTransferStrategyWindowContext context,
@@ -116,36 +147,59 @@ class PlayerPresidentTransferStrategyProfileProvider
     final provider = decisionProvider;
     if (provider == null) return aiProfiles;
 
-    if (controlledClubId.isEmpty) {
-      throw ArgumentError('controlledClubId cannot be empty.');
-    }
-    if (!context.clubs.any((club) => club.id == controlledClubId)) {
-      throw ArgumentError.value(
-        controlledClubId,
-        'controlledClubId',
-        'Controlled club must participate in the transfer window.',
-      );
-    }
-    final aiProfile = aiProfiles[controlledClubId];
-    if (aiProfile == null) {
-      throw ArgumentError(
-        'AI transfer profile must cover the controlled club.',
-      );
-    }
-
-    final decisionContext = PlayerTransferStrategyDecisionContext(
-      window: context,
-      controlledClubId: controlledClubId,
-      aiProfile: aiProfile,
-    );
+    final prepared = _prepareControlled(context, aiProfiles);
+    final decisionContext = prepared.context;
     final choice = provider.chooseTransferStrategy(decisionContext);
-    choice.validate();
+    return prepared.accept(
+      expectedContext: decisionContext,
+      choice: choice,
+      provider: provider,
+    );
+  }
+}
 
-    final effectiveProfile = choice.applyTo(aiProfile);
+/// Single prepared decision attempt, not an authoritative world capability.
+/// Invalid choices leave the exact context available; a callback failure is
+/// terminal because external callbacks cannot be rolled back safely.
+final class PreparedPlayerTransferStrategy {
+  PreparedPlayerTransferStrategy._(
+      this.context, Map<String, PresidentManagementProfile> aiProfiles)
+      : aiProfiles = Map.unmodifiable(aiProfiles);
+  final PlayerTransferStrategyDecisionContext context;
+  final Map<String, PresidentManagementProfile> aiProfiles;
+  PlayerTransferStrategyChoice? _accepted;
+  Map<String, PresidentManagementProfile>? _effective;
+  bool _failed = false;
+
+  Map<String, PresidentManagementProfile> accept({
+    required PlayerTransferStrategyDecisionContext expectedContext,
+    required PlayerTransferStrategyChoice choice,
+    PlayerTransferStrategyDecisionProvider? provider,
+  }) {
+    if (_failed || !identical(context, expectedContext)) {
+      throw StateError('Foreign context or failed transfer decision attempt.');
+    }
+    choice.validate();
+    final previous = _accepted;
+    if (previous != null) {
+      if (previous.signature != choice.signature) {
+        throw StateError('Conflicting duplicate transfer strategy answer.');
+      }
+      return _effective!;
+    }
+    final profile = choice.applyTo(context.aiProfile);
     final effective = Map<String, PresidentManagementProfile>.from(aiProfiles);
-    effective[controlledClubId] = effectiveProfile;
-    provider.onApplied(decisionContext, choice, effectiveProfile);
-    return Map.unmodifiable(effective);
+    effective[context.controlledClubId] = profile;
+    final result =
+        Map<String, PresidentManagementProfile>.unmodifiable(effective);
+    try {
+      provider?.onApplied(context, choice, profile);
+    } catch (_) {
+      _failed = true;
+      rethrow;
+    }
+    _accepted = choice;
+    return _effective = result;
   }
 }
 

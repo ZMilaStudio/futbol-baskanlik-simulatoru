@@ -10,6 +10,7 @@ import '../finance/wage_model.dart';
 import '../league/club.dart';
 import '../player/player.dart';
 import '../player/player_position.dart';
+import '../player_president/player_president_interactive_decision_application_session.dart';
 import '../save/save_checksum.dart';
 import '../transfer/transfer_deal.dart';
 import '../world/league_tier.dart';
@@ -19,6 +20,27 @@ import 'contract_event.dart';
 import 'player_contract.dart';
 
 class PlayerContractController implements WorldRosterHooks {
+  /// Adoption of the application's already-produced pristine X1, not restore,
+  /// regeneration or a raw-list authority constructor.
+  PlayerContractController.adoptApplicationOpening(
+    ApplicationPostseasonTransitionToken token, {
+    this.wageModel = const WageModel(),
+  })  : careerSeed =
+            token.source.sourceState.boundary.proof.initialContracts.careerSeed,
+        simulationVersion = token.source.sourceState.boundary.proof
+            .initialContracts.simulationVersion,
+        initialSeasonIndex = token.source.seasonIndex {
+    final opening = token.claimInitialContracts();
+    for (final contract in opening.activeContracts) {
+      if (_contracts.containsKey(contract.playerId)) {
+        throw StateError('Duplicate owned X1 contract.');
+      }
+      _contracts[contract.playerId] = contract;
+    }
+    _events.addAll(opening.initialEvents);
+    _initialized = true;
+  }
+
   PlayerContractController({
     required this.careerSeed,
     required this.simulationVersion,
@@ -36,7 +58,8 @@ class PlayerContractController implements WorldRosterHooks {
   }) {
     for (final contract in activeContracts) {
       if (_contracts.containsKey(contract.playerId)) {
-        throw ArgumentError('Duplicate restored contract ${contract.playerId}.');
+        throw ArgumentError(
+            'Duplicate restored contract ${contract.playerId}.');
       }
       _contracts[contract.playerId] = contract;
     }
@@ -103,7 +126,8 @@ class PlayerContractController implements WorldRosterHooks {
     required List<ClubFinanceState> financeStates,
   }) {
     if (!_initialized) {
-      throw StateError('Contracts must be initialized before roster transition.');
+      throw StateError(
+          'Contracts must be initialized before roster transition.');
     }
 
     for (final player in retiredPlayers) {
@@ -265,7 +289,8 @@ class PlayerContractController implements WorldRosterHooks {
       final player = playersById[deal.playerId];
       final tier = tierByClub[deal.toClubId];
       if (player == null || tier == null) {
-        throw StateError('Missing transfer contract context for ${deal.playerId}.');
+        throw StateError(
+            'Missing transfer contract context for ${deal.playerId}.');
       }
       final rng = _rng(nextSeasonIndex, player.id, 'transfer-contract');
       final term = 3 + (rng.nextDouble() * 3).floor();
@@ -308,7 +333,8 @@ class PlayerContractController implements WorldRosterHooks {
     }
     // Keep the legacy lazy boundary: install state only when annual wages are
     // first requested. The pure X1 generator owns the shared initial rules.
-    final opening = InitialContractOpeningGenerator(wageModel: wageModel).generate(
+    final opening =
+        InitialContractOpeningGenerator(wageModel: wageModel).generate(
       careerSeed: careerSeed,
       simulationVersion: simulationVersion,
       seasonIndex: seasonIndex,
@@ -329,7 +355,8 @@ class PlayerContractController implements WorldRosterHooks {
     required Map<String, LeagueTier> tierByClub,
     required Map<String, ClubFinanceState> financeByClub,
   }) {
-    final orderedClubs = List<Club>.of(clubs)..sort((a, b) => a.id.compareTo(b.id));
+    final orderedClubs = List<Club>.of(clubs)
+      ..sort((a, b) => a.id.compareTo(b.id));
     for (final club in orderedClubs) {
       var signed = 0;
       while (signed < 3) {
@@ -362,7 +389,8 @@ class PlayerContractController implements WorldRosterHooks {
         final tier = tierByClub[club.id]!;
         final finance = financeByClub[club.id]!;
         for (final candidate in candidates.take(10)) {
-          final rng = _rng(nextSeasonIndex, candidate.id, 'free-agent-${club.id}');
+          final rng =
+              _rng(nextSeasonIndex, candidate.id, 'free-agent-${club.id}');
           final wage = _expectedWage(
             candidate,
             tier,
@@ -380,7 +408,8 @@ class PlayerContractController implements WorldRosterHooks {
         final index = players.indexWhere((player) => player.id == selected!.id);
         final signedPlayer = selected.copyWith(clubId: club.id);
         players[index] = signedPlayer;
-        final rng = _rng(nextSeasonIndex, selected.id, 'free-agent-term-${club.id}');
+        final rng =
+            _rng(nextSeasonIndex, selected.id, 'free-agent-term-${club.id}');
         final term = selected.age >= 31
             ? 1 + (rng.nextDouble() * 2).floor()
             : 2 + (rng.nextDouble() * 3).floor();
@@ -455,7 +484,8 @@ class PlayerContractController implements WorldRosterHooks {
     PlayerPosition? selected;
     var lowestRatio = double.infinity;
     for (final entry in targets.entries) {
-      final count = roster.where((player) => player.position == entry.key).length;
+      final count =
+          roster.where((player) => player.position == entry.key).length;
       final ratio = count / entry.value;
       if (ratio < lowestRatio) {
         lowestRatio = ratio;
@@ -465,7 +495,6 @@ class PlayerContractController implements WorldRosterHooks {
     return selected!;
   }
 }
-
 
 /// Immutable in-memory result of the existing initial-contract rules.
 /// It is neither an M65 checkpoint nor a persisted game-state authority.

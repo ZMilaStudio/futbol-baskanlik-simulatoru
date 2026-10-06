@@ -180,6 +180,7 @@ final class FullM65RuntimeEconomyContinuationAuthority {
       required Object expectedExecution}) {
     final manager = source.managerAuthority;
     if (source.state != PreparedExecutionState.prepared ||
+        source._annualCaptureAttempted ||
         !identical(source.owner, expectedOwner) ||
         !identical(source.revision, expectedRevision) ||
         !identical(source.provenance, expectedProvenance) ||
@@ -234,6 +235,70 @@ final class FullM65RuntimeEconomyContinuationAuthority {
   MatchdayTicketPricingChoice? _answer;
   FullM65CommittedSeasonSettlementResult? _result;
   FullM65CommittedSeasonSettlementResult? get result => _result;
+  bool _releaseAttempted = false;
+  bool _released = false;
+  bool permitsAnnualRelease(PreparedWorldOpening expectedOpening,
+          Object expectedExecution, SeasonFinanceAuthorityReceipt receipt) =>
+      _state == RuntimeEconomyState.settled &&
+      _releaseAttempted &&
+      !_released &&
+      identical(expectedOpening, opening) &&
+      identical(expectedExecution, executionIdentity) &&
+      identical(receipt, _result?.receipt);
+
+  /// Settled-only original-graph handoff. This does not mint an AR-D committed
+  /// capability and never recalculates the annual settlement.
+  OwnedAnnualClosingBoundary releaseSettledAnnualClosing({
+    required FullM65CommittedSeasonSettlementResult expectedResult,
+    required Object expectedOwner,
+    required Object expectedRevision,
+    required Object expectedProvenance,
+    required Object expectedExecution,
+    required SinglePassPostseasonRuntimeTransition recipient,
+    required bool hasNextSeason,
+  }) {
+    if (_state != RuntimeEconomyState.settled ||
+        _releaseAttempted ||
+        _released ||
+        !identical(expectedResult, _result) ||
+        !identical(expectedOwner, owner) ||
+        !identical(expectedRevision, revision) ||
+        !identical(expectedProvenance, provenance) ||
+        !identical(expectedExecution, executionIdentity) ||
+        !recipient.permitsSettledEconomyRelease(this, expectedResult)) {
+      throw StateError('Foreign, unsettled or consumed economy release.');
+    }
+    expectedResult.receipt.verify(
+        expectedOwner: owner,
+        expectedRevision: revision,
+        expectedProvenance: provenance,
+        expectedSeason: opening.seasonIndex,
+        expectedResults: expectedResult.receipt.results,
+        expectedEffectiveClubSource: managerAuthority);
+    _releaseAttempted = true;
+    _source._annualCaptureAttempted = true;
+    final contexts = const PromiseOpeningContextBuilder().build(
+        seasonIndex: opening.seasonIndex,
+        effectiveClubs: opening.effectiveClubs,
+        leagues: opening.leagues,
+        openingFinanceStates: opening.financeStates);
+    final promises = List<PresidentPromise>.unmodifiable(contexts.map(
+        (context) => _source._producer.sourceEngine.promiseEngine.generator
+            .generate(
+                context: context,
+                careerSeed: opening.config.careerSeed,
+                simulationVersion: opening.config.simulationVersion)));
+    final closing = _recipient.releaseSettledAnnualClosing(
+        authority: this,
+        committed: expectedResult.committedSource,
+        receipt: expectedResult.receipt);
+    _source._facility
+        .bindReleasedAnnualClosing(closing, this, expectedResult.receipt);
+    final boundary = OwnedAnnualClosingBoundary._(_source, closing,
+        expectedResult.receipt, contexts, promises, hasNextSeason);
+    _released = true;
+    return boundary;
+  }
 
   /// Read-only cross-library gates. They do not mint or accept caller authority.
   bool ownsPreparedGraph(

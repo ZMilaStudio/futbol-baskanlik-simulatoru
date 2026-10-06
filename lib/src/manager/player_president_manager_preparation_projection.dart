@@ -1,12 +1,71 @@
 import '../core/seeded_rng.dart';
 import '../core/stable_hash.dart';
+import '../core/simulation_config.dart';
+import '../finance/club_finance_state.dart';
+import '../league/club.dart';
+import '../player/player.dart';
 import '../save/advanced_runtime_checkpoint.dart';
 import '../world/league_tier.dart';
-import '../world/world_checkpoint.dart';
+import '../world/world_league.dart';
 import 'manager.dart';
+import 'manager_assignment.dart';
 import 'manager_career_season.dart';
 import 'manager_fit_model.dart';
 import 'player_president_manager_control.dart';
+
+/// Read-only algorithm inputs, NOT a manager/source ownership capability.
+/// The trusted transition separately proves ownership before using this view.
+final class ManagerPreparationRuntimeView {
+  ManagerPreparationRuntimeView({
+    required this.config,
+    required this.targetSeasonIndex,
+    required this.completedSeason,
+    required Iterable<Manager> managers,
+    required Iterable<ManagerAssignment> assignments,
+    required Iterable<Club> baseClubs,
+    required Iterable<Player> players,
+    required Iterable<ClubFinanceState> financeStates,
+    required Iterable<WorldLeague> leagues,
+  })  : managers = List.unmodifiable(managers),
+        assignments = List.unmodifiable(assignments),
+        baseClubs = List.unmodifiable(baseClubs),
+        players = List.unmodifiable(players),
+        financeStates = List.unmodifiable(financeStates),
+        leagues = List.unmodifiable(leagues) {
+    if (targetSeasonIndex != completedSeason.seasonIndex + 1) {
+      throw StateError(
+          'Manager preparation requires the immediate successor season.');
+    }
+  }
+
+  factory ManagerPreparationRuntimeView.fromCheckpoint(
+      AdvancedRuntimeCheckpoint advanced) {
+    if (advanced.manager.seasons.isEmpty) {
+      throw StateError('Manager decision requires a completed manager season.');
+    }
+    return ManagerPreparationRuntimeView(
+      config: advanced.world.config,
+      targetSeasonIndex: advanced.nextSeasonIndex,
+      completedSeason: advanced.manager.seasons.last,
+      managers: advanced.manager.managers,
+      assignments: advanced.manager.assignments,
+      baseClubs: advanced.world.baseClubs,
+      players: advanced.world.nextSeasonPlayers,
+      financeStates: advanced.world.nextSeasonFinanceStates,
+      leagues: advanced.world.nextSeasonLeagues,
+    );
+  }
+
+  final SimulationConfig config;
+  final int targetSeasonIndex;
+  final ManagerCareerSeason completedSeason;
+  final List<Manager> managers;
+  final List<ManagerAssignment> assignments;
+  final List<Club> baseClubs;
+  final List<Player> players;
+  final List<ClubFinanceState> financeStates;
+  final List<WorldLeague> leagues;
+}
 
 /// Read-only M71 preparation calculations, not checkpoint/application authority.
 /// Calling these helpers with a legacy checkpoint does not mint AR-C provenance.
@@ -19,18 +78,79 @@ final class PlayerManagerPreparationProjection {
   final ManagerFitModel fitModel;
   final int candidateLimit;
 
+  ManagerAssignment newAssignmentRuntime({
+    required ManagerPreparationRuntimeView view,
+    required String clubId,
+    required PlayerManagerCandidate candidate,
+  }) {
+    final manager = candidate.manager;
+    final relationship = (52.0 +
+            candidate.fitScore * 0.18 +
+            (manager.boardCooperation - 50) * 0.08 +
+            _jitter(
+              clubId: clubId,
+              managerId: manager.id,
+              seasonIndex: view.targetSeasonIndex,
+              view: view,
+              salt: 29,
+              amplitude: 6,
+            ))
+        .clamp(48.0, 78.0)
+        .toDouble();
+    return ManagerAssignment(
+      clubId: clubId,
+      managerId: manager.id,
+      appointedSeasonIndex: view.targetSeasonIndex,
+      completedSeasons: 0,
+      boardRelationship: relationship,
+    );
+  }
+
+  ManagerAssignment retainedAssignmentRuntime({
+    required ManagerPreparationRuntimeView view,
+    required ManagerClubSeason clubSeason,
+    required List<ManagerCareerSeason> completedHistory,
+  }) {
+    if (completedHistory.isEmpty ||
+        !identical(completedHistory.last, view.completedSeason)) {
+      throw StateError('Retain requires exact completed manager history.');
+    }
+    var completed = 0;
+    for (final season in completedHistory.reversed) {
+      final record =
+          season.clubs.firstWhere((item) => item.clubId == clubSeason.clubId);
+      if (record.managerId != clubSeason.managerId) break;
+      completed++;
+    }
+    return ManagerAssignment(
+      clubId: clubSeason.clubId,
+      managerId: clubSeason.managerId,
+      appointedSeasonIndex: view.targetSeasonIndex - completed,
+      completedSeasons: completed,
+      boardRelationship: clubSeason.relationshipAfter,
+    );
+  }
+
   PlayerManagerReviewContext review({
     required AdvancedRuntimeCheckpoint advanced,
     required String clubId,
     required String presidentId,
+  }) =>
+      reviewRuntime(
+        view: ManagerPreparationRuntimeView.fromCheckpoint(advanced),
+        clubId: clubId,
+        presidentId: presidentId,
+      );
+
+  PlayerManagerReviewContext reviewRuntime({
+    required ManagerPreparationRuntimeView view,
+    required String clubId,
+    required String presidentId,
   }) {
-    if (advanced.manager.seasons.isEmpty) {
-      throw StateError('Manager decision requires a completed manager season.');
-    }
-    final season = advanced.manager.seasons.last;
+    final season = view.completedSeason;
     final clubSeason = season.clubs.firstWhere((s) => s.clubId == clubId);
-    final incumbent = advanced.manager.managers
-        .firstWhere((m) => m.id == clubSeason.managerId);
+    final incumbent =
+        view.managers.firstWhere((m) => m.id == clubSeason.managerId);
     final changes = season.changesAfterSeason
         .where((c) => c.clubId == clubId)
         .toList(growable: false);
@@ -39,10 +159,8 @@ final class PlayerManagerPreparationProjection {
           'Controlled club has multiple manager changes in one season.');
     }
     final change = changes.isEmpty ? null : changes.single;
-    final assignment =
-        advanced.manager.assignments.firstWhere((a) => a.clubId == clubId);
-    final next = advanced.manager.managers
-        .firstWhere((m) => m.id == assignment.managerId);
+    final assignment = view.assignments.firstWhere((a) => a.clubId == clubId);
+    final next = view.managers.firstWhere((m) => m.id == assignment.managerId);
     final forced = change?.reason == ManagerChangeReason.retirement;
     return PlayerManagerReviewContext(
       seasonIndex: season.seasonIndex,
@@ -54,7 +172,7 @@ final class PlayerManagerPreparationProjection {
       aiReason: change?.reason,
       aiNextManager: next,
       canRetain: !forced &&
-          !advanced.manager.assignments
+          !view.assignments
               .any((a) => a.clubId != clubId && a.managerId == incumbent.id),
       forcedRetirement: forced,
     );
@@ -63,9 +181,21 @@ final class PlayerManagerPreparationProjection {
   PlayerManagerReplacementContext replacement({
     required AdvancedRuntimeCheckpoint advanced,
     required PlayerManagerReviewContext review,
+  }) =>
+      replacementRuntime(
+        view: ManagerPreparationRuntimeView.fromCheckpoint(advanced),
+        review: review,
+      );
+
+  PlayerManagerReplacementContext replacementRuntime({
+    required ManagerPreparationRuntimeView view,
+    required PlayerManagerReviewContext review,
   }) {
-    final candidates = replacementCandidates(
-      advanced: advanced,
+    if (view.completedSeason.seasonIndex != review.seasonIndex) {
+      throw StateError('Manager review season mismatch.');
+    }
+    final candidates = replacementCandidatesRuntime(
+      view: view,
       clubId: review.clubId,
       outgoingManager: review.currentManager,
       preferredAiManager: review.aiWouldReplace ? review.aiNextManager : null,
@@ -78,7 +208,7 @@ final class PlayerManagerPreparationProjection {
             orElse: () => candidates.first)
         : candidates.first;
     return PlayerManagerReplacementContext(
-      seasonIndex: advanced.nextSeasonIndex,
+      seasonIndex: view.targetSeasonIndex,
       clubId: review.clubId,
       presidentId: review.presidentId,
       outgoingManager: review.currentManager,
@@ -104,25 +234,40 @@ final class PlayerManagerPreparationProjection {
     required String clubId,
     required Manager outgoingManager,
     Manager? preferredAiManager,
+  }) =>
+      replacementCandidatesRuntime(
+        view: ManagerPreparationRuntimeView.fromCheckpoint(advanced),
+        clubId: clubId,
+        outgoingManager: outgoingManager,
+        preferredAiManager: preferredAiManager,
+      );
+
+  List<PlayerManagerCandidate> replacementCandidatesRuntime({
+    required ManagerPreparationRuntimeView view,
+    required String clubId,
+    required Manager outgoingManager,
+    Manager? preferredAiManager,
   }) {
-    final world = advanced.world;
-    final assignedElsewhere = advanced.manager.assignments
+    final assignedElsewhere = view.assignments
         .where((item) => item.clubId != clubId)
         .map((item) => item.managerId)
         .toSet();
-    final club = world.baseClubs.firstWhere((item) => item.id == clubId);
-    final players = world.nextSeasonPlayers
+    final club = view.baseClubs.firstWhere((item) => item.id == clubId);
+    final players = view.players
         .where((item) => item.clubId == clubId)
         .toList(growable: false);
-    final finance = world.nextSeasonFinanceStates.firstWhere(
+    final finance = view.financeStates.firstWhere(
       (item) => item.clubId == clubId,
     );
-    final tier = _tierFor(world, clubId);
+    final tier =
+        view.leagues.firstWhere((l) => l.clubIds.contains(clubId)).tier;
     final candidates = <PlayerManagerCandidate>[];
-    for (final manager in advanced.manager.managers) {
+    for (final manager in view.managers) {
       if (manager.id == outgoingManager.id ||
           assignedElsewhere.contains(manager.id) ||
-          _ageAt(manager, world) >= manager.retirementAge) {
+          manager.startAge +
+                  (view.targetSeasonIndex - view.config.seasonIndex) >=
+              manager.retirementAge) {
         continue;
       }
       final fit = fitModel.score(
@@ -141,7 +286,7 @@ final class PlayerManagerPreparationProjection {
             fitScore: fit,
             clubId: clubId,
             tier: tier,
-            world: world,
+            view: view,
           ),
         ),
       );
@@ -173,7 +318,7 @@ final class PlayerManagerPreparationProjection {
     required double fitScore,
     required String clubId,
     required LeagueTier tier,
-    required WorldCheckpoint world,
+    required ManagerPreparationRuntimeView view,
   }) {
     final targetReputation = switch (tier) {
       LeagueTier.first => 74,
@@ -188,32 +333,24 @@ final class PlayerManagerPreparationProjection {
         _jitter(
           clubId: clubId,
           managerId: manager.id,
-          seasonIndex: world.nextSeasonIndex,
-          world: world,
+          seasonIndex: view.targetSeasonIndex,
+          view: view,
           salt: 17,
           amplitude: 4,
         );
   }
 
-  int _ageAt(Manager manager, WorldCheckpoint world) =>
-      manager.startAge + (world.nextSeasonIndex - world.config.seasonIndex);
-
-  LeagueTier _tierFor(WorldCheckpoint world, String clubId) =>
-      world.nextSeasonLeagues
-          .firstWhere((league) => league.clubIds.contains(clubId))
-          .tier;
-
   double _jitter({
     required String clubId,
     required String managerId,
     required int seasonIndex,
-    required WorldCheckpoint world,
+    required ManagerPreparationRuntimeView view,
     required int salt,
     required double amplitude,
   }) {
     final seed = StableHash.combine32([
-      world.config.careerSeed,
-      world.config.simulationVersion,
+      view.config.careerSeed,
+      view.config.simulationVersion,
       seasonIndex,
       salt,
       StableHash.string32(clubId),

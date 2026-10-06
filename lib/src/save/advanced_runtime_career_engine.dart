@@ -1,5 +1,6 @@
 import '../core/simulation_config.dart';
 import '../finance/club_finance_season.dart';
+import '../finance/season_finance_authority_receipt.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../league/club.dart';
 import '../manager/manager_career_controller.dart';
@@ -11,9 +12,72 @@ import '../transfer/loan_market_engine.dart';
 import '../world/world_career_engine.dart';
 import '../world/world_checkpoint.dart';
 import '../world/world_league.dart';
+import '../world/world_offseason_projection.dart';
+import '../transfer/loan_agreement.dart';
+import '../transfer/president_transfer_strategy_world_bridge.dart';
 import 'advanced_runtime_checkpoint.dart';
 
 enum PreparedRuntimeOrigin { initial, resumed }
+
+/// Production closing owner captured before movement or any completion hook.
+/// The original transfer controller and detached manager continuation remain
+/// private; a raw report/controller bundle cannot construct this object.
+final class OwnedAdvancedAnnualClosing {
+  OwnedAdvancedAnnualClosing._(this.world, this._transfer, this.managerOpening);
+  final OwnedWorldAnnualClosing world;
+  final AdvancedTransferController _transfer;
+  final ManagerSeasonAuthority managerOpening;
+  Object? _transition;
+  ManagerContinuationAuthority? _managerContinuation;
+  List<LoanAgreement> get loanHistory => _transfer.loanHistory;
+  int get contractCount => _transfer.activeContracts.length;
+  void claim(
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance,
+      required Object transition}) {
+    if (_transition != null)
+      throw StateError('Advanced closing already claimed.');
+    world.claim(
+        expectedOwner: expectedOwner,
+        expectedRevision: expectedRevision,
+        expectedProvenance: expectedProvenance);
+    _transition = transition;
+  }
+
+  void _check(Object transition) {
+    world.validate();
+    if (!identical(_transition, transition)) {
+      throw StateError('Foreign advanced closing transition.');
+    }
+  }
+
+  void validateTransition(Object transition) => _check(transition);
+
+  ManagerContinuationAuthority completeManager(
+      {required Object transition,
+      required bool hasNextSeason,
+      required List<WorldLeague> nextLeagues}) {
+    _check(transition);
+    if (_managerContinuation != null)
+      throw StateError('Manager completion already consumed.');
+    return _managerContinuation = managerOpening.completeOwnedAnnualClosing(
+      closing: world,
+      hasNextSeason: hasNextSeason,
+      nextLeagues: nextLeagues,
+    );
+  }
+
+  WorldOffseasonAttempt beginOffseason(
+      {required Object transition,
+      required List<WorldLeague> nextLeagues,
+      PresidentTransferStrategyProfileProvider? profileProvider}) {
+    _check(transition);
+    if (_managerContinuation == null)
+      throw StateError('Manager completion must precede lifecycle.');
+    return world.beginOffseason(nextLeagues, profileProvider: profileProvider);
+  }
+}
 
 /// Controllers never escape this lease. Moving preserves the actual instances,
 /// rather than restoring another controller from their observable values.
@@ -101,6 +165,21 @@ final class AdvancedEconomyRecipient {
   final AdvancedTransferController _transfer;
   final WorldEconomyRecipient _world;
   int get contractCount => _transfer.activeContracts.length;
+  OwnedAdvancedAnnualClosing releaseSettledAnnualClosing({
+    required FullM65RuntimeEconomyContinuationAuthority authority,
+    required CommittedSeasonSettlementCapability committed,
+    required SeasonFinanceAuthorityReceipt receipt,
+  }) {
+    final world = _world.releaseSettledAnnualClosing(
+        committed: committed, receipt: receipt);
+    if (!identical(authority.managerAuthority.effectiveClubs,
+        world.opening.effectiveClubs)) {
+      throw StateError('Foreign settled manager opening.');
+    }
+    return OwnedAdvancedAnnualClosing._(
+        world, _transfer, authority.managerAuthority);
+  }
+
   List<ClubFinanceSeason> executeCommittedFinance(
           {required Object expectedExecution,
           required CommittedSeasonSettlementCapability committed}) =>
@@ -109,6 +188,32 @@ final class AdvancedEconomyRecipient {
 }
 
 class AdvancedRuntimeCareerEngine {
+  OwnedAdvancedAnnualClosing captureAnnualClosing(
+      PreparedAdvancedRuntimeSeason prepared,
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    prepared._check(expectedOwner, expectedRevision, expectedProvenance);
+    final manager = prepared.managerAuthority;
+    if (!identical(prepared._engine, this) || manager == null) {
+      throw StateError('Closing capture requires original manager authority.');
+    }
+    prepared._state = PreparedExecutionState.executing;
+    try {
+      final world = worldEngine.captureAnnualClosing(prepared._world,
+          expectedOwner: expectedOwner,
+          expectedRevision: expectedRevision,
+          expectedProvenance: expectedProvenance);
+      final boundary =
+          OwnedAdvancedAnnualClosing._(world, prepared._transfer, manager);
+      prepared._state = PreparedExecutionState.moved;
+      return boundary;
+    } catch (_) {
+      prepared._state = PreparedExecutionState.failed;
+      rethrow;
+    }
+  }
+
   const AdvancedRuntimeCareerEngine({
     this.worldEngine = const WorldCareerEngine(),
     this.managerPoolGenerator = const ManagerPoolGenerator(),

@@ -1,6 +1,7 @@
 import '../core/simulation_config.dart';
 import '../fan/fan_career_engine.dart';
 import '../fan/fan_state.dart';
+import '../fan/fan_trust_reason.dart';
 import '../league/club.dart';
 import '../media/media_credibility_engine.dart';
 import '../media/media_season_snapshot.dart';
@@ -9,6 +10,7 @@ import '../promise/promise_fan_impact_engine.dart';
 import '../promise/promise_media_career_engine.dart';
 import '../promise/promise_media_career_report.dart';
 import '../promise/promise_media_impact_engine.dart';
+import '../promise/promise_season_snapshot.dart';
 import '../world/world_league.dart';
 import 'president_election.dart';
 import 'president_election_engine.dart';
@@ -38,6 +40,143 @@ class PresidentReputationCareerEngine {
   final PresidentElectionEngine electionEngine;
   final PresidentProfileGenerator profileGenerator;
   final PresidentReputationHandoverPolicy handoverPolicy;
+
+  PresidentElectionSuccessor projectElection({
+    required SimulationConfig config,
+    required int seasonIndex,
+    required int termNumber,
+    required int electionInterval,
+    required PresidentTenureState tenure,
+    required FanState fan,
+    required MediaState media,
+    required List<int> acceptedPromiseScores,
+  }) {
+    final clubId = tenure.clubId;
+    if (electionInterval <= 0 ||
+        acceptedPromiseScores.length != electionInterval ||
+        fan.clubId != clubId ||
+        media.clubId != clubId) {
+      throw StateError('Invalid president promise term coverage for $clubId.');
+    }
+    final promiseScore = (acceptedPromiseScores.fold<int>(0, (a, b) => a + b) /
+            acceptedPromiseScores.length)
+        .round();
+    final election = electionEngine.evaluate(
+      clubId: clubId,
+      seasonIndex: seasonIndex,
+      termNumber: termNumber,
+      fanOverallTrust: fan.overallTrust,
+      fanIdentityTrust: fan.identityTrust,
+      mediaCredibility: media.credibility,
+      promiseScore: promiseScore,
+      careerSeed: config.careerSeed,
+      simulationVersion: config.simulationVersion,
+    );
+    if (election.outcome == PresidentElectionOutcome.reelected) {
+      return PresidentElectionSuccessor._(
+        election,
+        tenure.recordReelection(),
+        fan,
+        media,
+        null,
+        null,
+      );
+    }
+    final incoming = profileGenerator.generateChallenger(
+      clubId: clubId,
+      seasonIndex: seasonIndex,
+      electionTermNumber: termNumber,
+      careerSeed: config.careerSeed,
+      simulationVersion: config.simulationVersion,
+    );
+    final effectiveSeasonIndex = seasonIndex + 1;
+    final turnover = PresidentTurnoverEvent(
+      clubId: clubId,
+      electionSeasonIndex: seasonIndex,
+      effectiveSeasonIndex: effectiveSeasonIndex,
+      electionTermNumber: termNumber,
+      outgoing: tenure.president,
+      incoming: incoming,
+      outgoingStartedSeasonIndex: tenure.startedSeasonIndex,
+      outgoingTenureSeasons: effectiveSeasonIndex - tenure.startedSeasonIndex,
+      outgoingReelections: tenure.reelectionsWon,
+      electionMargin: election.margin,
+      challengerStrength: election.challengerStrength,
+    );
+    final resetFan = handoverPolicy.resetFan(fan);
+    final resetMedia = handoverPolicy.resetMedia(media);
+    final handover = PresidentReputationHandoverEvent(
+      clubId: clubId,
+      electionSeasonIndex: seasonIndex,
+      effectiveSeasonIndex: effectiveSeasonIndex,
+      outgoingPresidentId: tenure.president.id,
+      incomingPresidentId: incoming.id,
+      fanBefore: fan,
+      fanAfter: resetFan,
+      mediaBefore: media,
+      mediaAfter: resetMedia,
+    );
+    return PresidentElectionSuccessor._(
+      election,
+      tenure.handover(
+          incoming: incoming, effectiveSeasonIndex: effectiveSeasonIndex),
+      resetFan,
+      resetMedia,
+      turnover,
+      handover,
+    );
+  }
+
+  /// One actual accepted-promise/domain update. A missing real manager media
+  /// source means no statement, not a generated/reconstructed manager season.
+  PresidentReputationSeasonSnapshot projectClubSeason({
+    required int seasonIndex,
+    required PresidentTenureState tenure,
+    required FanState priorFan,
+    required MediaState priorMedia,
+    required Iterable<FanTrustReason> fanReasons,
+    required PromiseSeasonSnapshot acceptedPromise,
+    MediaSeasonSnapshot? managerMedia,
+  }) {
+    final clubId = tenure.clubId;
+    if (priorFan.clubId != clubId ||
+        priorMedia.clubId != clubId ||
+        acceptedPromise.promise.clubId != clubId ||
+        acceptedPromise.promise.seasonIndex != seasonIndex ||
+        !identical(
+            acceptedPromise.resolution.promise, acceptedPromise.promise) ||
+        (managerMedia != null &&
+            (managerMedia.clubId != clubId ||
+                managerMedia.seasonIndex != seasonIndex))) {
+      throw StateError('President successor input lineage mismatch.');
+    }
+    final nextFan = priorFan.apply(fanReasons);
+    final statement = managerMedia?.statement;
+    final statementChange = statement == null
+        ? null
+        : mediaCredibilityEngine.evaluate(
+            state: priorMedia,
+            statement: statement,
+            managerChanged: managerMedia!.managerChanged,
+          );
+    final afterStatement = statementChange?.after ?? priorMedia.credibility;
+    final promiseChange = promiseMediaImpactEngine.evaluate(
+      state: MediaState(clubId: clubId, credibility: afterStatement),
+      resolution: acceptedPromise.resolution,
+    );
+    return PresidentReputationSeasonSnapshot(
+      clubId: clubId,
+      seasonIndex: seasonIndex,
+      presidentId: tenure.president.id,
+      fanBefore: priorFan,
+      fanAfter: nextFan,
+      mediaBefore: priorMedia.credibility,
+      mediaAfterStatement: afterStatement,
+      mediaAfterPromise: promiseChange.after,
+      statementChange: statementChange,
+      promiseChange: promiseChange,
+    );
+  }
 
   PresidentReputationCareerReport simulate({
     required List<Club> clubs,
@@ -69,8 +208,9 @@ class PresidentReputationCareerEngine {
   }) {
     final worldReport = sourceReport.advancedTransferReport.worldReport;
     final worldSeasons = worldReport.seasons;
-    final firstSeasonIndex =
-        worldSeasons.isEmpty ? config.seasonIndex : worldSeasons.first.seasonIndex;
+    final firstSeasonIndex = worldSeasons.isEmpty
+        ? config.seasonIndex
+        : worldSeasons.first.seasonIndex;
     final clubIds = worldReport.initialLeagues
         .expand((league) => league.clubIds)
         .toSet()
@@ -113,7 +253,8 @@ class PresidentReputationCareerEngine {
     bool hasFutureSeasonAfterReport = false,
   }) {
     if (completedElectionTerms < 0) {
-      throw ArgumentError.value(completedElectionTerms, 'completedElectionTerms');
+      throw ArgumentError.value(
+          completedElectionTerms, 'completedElectionTerms');
     }
     if (seasonsIntoCurrentTerm < 0 ||
         seasonsIntoCurrentTerm >= electionInterval) {
@@ -174,7 +315,8 @@ class PresidentReputationCareerEngine {
     final mediaTemplateByKey = <String, MediaSeasonSnapshot>{};
     for (final season in sourceReport.baselineMediaReport.seasons) {
       for (final snapshot in season.clubs) {
-        mediaTemplateByKey['${season.seasonIndex}|${snapshot.clubId}'] = snapshot;
+        mediaTemplateByKey['${season.seasonIndex}|${snapshot.clubId}'] =
+            snapshot;
       }
     }
 
@@ -210,10 +352,13 @@ class PresidentReputationCareerEngine {
             .toSet()
             .difference(clubIds.toSet())
             .isNotEmpty) {
-      throw ArgumentError('President resume state must cover every club exactly once.');
+      throw ArgumentError(
+          'President resume state must cover every club exactly once.');
     }
 
-    final tenureStates = {for (final state in initialTenure) state.clubId: state};
+    final tenureStates = {
+      for (final state in initialTenure) state.clubId: state
+    };
     final fanStates = {for (final state in initialFan) state.clubId: state};
     final mediaStates = {for (final state in initialMedia) state.clubId: state};
     final termScores = <String, List<int>>{
@@ -251,44 +396,26 @@ class PresidentReputationCareerEngine {
             tenure == null ||
             currentFan == null ||
             currentMedia == null) {
-          throw StateError('Missing president reputation source state for $key.');
+          throw StateError(
+              'Missing president reputation source state for $key.');
         }
 
         termScores[clubId]!.add(promiseSnapshot.resolution.score);
-        final nextFan = currentFan.apply(fanTemplate.reasons);
-        final statementChange = mediaTemplate.statement == null
-            ? null
-            : mediaCredibilityEngine.evaluate(
-                state: currentMedia,
-                statement: mediaTemplate.statement!,
-                managerChanged: mediaTemplate.managerChanged,
-              );
-        final afterStatement = statementChange?.after ?? currentMedia.credibility;
-        final promiseChange = promiseMediaImpactEngine.evaluate(
-          state: MediaState(clubId: clubId, credibility: afterStatement),
-          resolution: promiseSnapshot.resolution,
+        final snapshot = projectClubSeason(
+          seasonIndex: seasonIndex,
+          tenure: tenure,
+          priorFan: currentFan,
+          priorMedia: currentMedia,
+          fanReasons: fanTemplate.reasons,
+          acceptedPromise: promiseSnapshot,
+          managerMedia: mediaTemplate,
         );
-        final nextMedia = MediaState(
+        fanStates[clubId] = snapshot.fanAfter;
+        mediaStates[clubId] = MediaState(
           clubId: clubId,
-          credibility: promiseChange.after,
+          credibility: snapshot.mediaAfterPromise,
         );
-
-        fanStates[clubId] = nextFan;
-        mediaStates[clubId] = nextMedia;
-        snapshots.add(
-          PresidentReputationSeasonSnapshot(
-            clubId: clubId,
-            seasonIndex: seasonIndex,
-            presidentId: tenure.president.id,
-            fanBefore: currentFan,
-            fanAfter: nextFan,
-            mediaBefore: currentMedia.credibility,
-            mediaAfterStatement: afterStatement,
-            mediaAfterPromise: nextMedia.credibility,
-            statementChange: statementChange,
-            promiseChange: promiseChange,
-          ),
-        );
+        snapshots.add(snapshot);
       }
 
       seasons.add(
@@ -308,77 +435,23 @@ class PresidentReputationCareerEngine {
         final media = mediaStates[clubId]!;
         final currentTenure = tenureStates[clubId]!;
         final scores = termScores[clubId]!;
-        if (scores.length != electionInterval) {
-          throw StateError('Invalid president promise term coverage for $clubId.');
-        }
-        final promiseScore =
-            (scores.fold<int>(0, (sum, score) => sum + score) / scores.length)
-                .round();
-        final election = electionEngine.evaluate(
-          clubId: clubId,
+        final successor = projectElection(
+          config: config,
           seasonIndex: seasonIndex,
           termNumber: termNumber,
-          fanOverallTrust: fan.overallTrust,
-          fanIdentityTrust: fan.identityTrust,
-          mediaCredibility: media.credibility,
-          promiseScore: promiseScore,
-          careerSeed: config.careerSeed,
-          simulationVersion: config.simulationVersion,
+          electionInterval: electionInterval,
+          tenure: currentTenure,
+          fan: fan,
+          media: media,
+          acceptedPromiseScores: scores,
         );
-        elections.add(election);
+        elections.add(successor.election);
         scores.clear();
-
-        if (election.outcome == PresidentElectionOutcome.reelected) {
-          tenureStates[clubId] = currentTenure.recordReelection();
-          continue;
-        }
-
-        final incoming = profileGenerator.generateChallenger(
-          clubId: clubId,
-          seasonIndex: seasonIndex,
-          electionTermNumber: termNumber,
-          careerSeed: config.careerSeed,
-          simulationVersion: config.simulationVersion,
-        );
-        final effectiveSeasonIndex = seasonIndex + 1;
-        turnovers.add(
-          PresidentTurnoverEvent(
-            clubId: clubId,
-            electionSeasonIndex: seasonIndex,
-            effectiveSeasonIndex: effectiveSeasonIndex,
-            electionTermNumber: termNumber,
-            outgoing: currentTenure.president,
-            incoming: incoming,
-            outgoingStartedSeasonIndex: currentTenure.startedSeasonIndex,
-            outgoingTenureSeasons:
-                effectiveSeasonIndex - currentTenure.startedSeasonIndex,
-            outgoingReelections: currentTenure.reelectionsWon,
-            electionMargin: election.margin,
-            challengerStrength: election.challengerStrength,
-          ),
-        );
-
-        final resetFan = handoverPolicy.resetFan(fan);
-        final resetMedia = handoverPolicy.resetMedia(media);
-        handovers.add(
-          PresidentReputationHandoverEvent(
-            clubId: clubId,
-            electionSeasonIndex: seasonIndex,
-            effectiveSeasonIndex: effectiveSeasonIndex,
-            outgoingPresidentId: currentTenure.president.id,
-            incomingPresidentId: incoming.id,
-            fanBefore: fan,
-            fanAfter: resetFan,
-            mediaBefore: media,
-            mediaAfter: resetMedia,
-          ),
-        );
-        fanStates[clubId] = resetFan;
-        mediaStates[clubId] = resetMedia;
-        tenureStates[clubId] = currentTenure.handover(
-          incoming: incoming,
-          effectiveSeasonIndex: effectiveSeasonIndex,
-        );
+        if (successor.turnover != null) turnovers.add(successor.turnover!);
+        if (successor.handover != null) handovers.add(successor.handover!);
+        fanStates[clubId] = successor.fan;
+        mediaStates[clubId] = successor.media;
+        tenureStates[clubId] = successor.tenure;
       }
     }
 
@@ -405,4 +478,16 @@ class PresidentReputationCareerEngine {
       finalMediaStates: finalMediaStates,
     );
   }
+}
+
+/// Immutable calculation evidence. It neither owns nor publishes runtime state.
+final class PresidentElectionSuccessor {
+  PresidentElectionSuccessor._(this.election, this.tenure, this.fan, this.media,
+      this.turnover, this.handover);
+  final PresidentElectionSnapshot election;
+  final PresidentTenureState tenure;
+  final FanState fan;
+  final MediaState media;
+  final PresidentTurnoverEvent? turnover;
+  final PresidentReputationHandoverEvent? handover;
 }
