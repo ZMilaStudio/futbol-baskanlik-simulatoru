@@ -62,6 +62,45 @@ class PresidentTransferStrategyWorldMarketEngine extends TransferMarketEngine {
   final PresidentTransferStrategyProfileProvider profileProvider;
   final TransferMarketEngine delegate;
 
+  PresidentTransferStrategyWindowContext prepareContext({
+    required List<Club> clubs,
+    required List<Player> players,
+    required List<ClubFinanceState> financeStates,
+    required int careerSeed,
+    required int seasonIndex,
+    required int simulationVersion,
+  }) =>
+      PresidentTransferStrategyWindowContext(
+        clubs: clubs,
+        players: players,
+        financeStates: financeStates,
+        careerSeed: careerSeed,
+        seasonIndex: seasonIndex,
+        simulationVersion: simulationVersion,
+      );
+
+  /// Executes the cached window rather than constructing another context or
+  /// asking a player/AI profile provider a second time.
+  TransferMarketResult executeContext({
+    required PresidentTransferStrategyWindowContext context,
+    required Map<String, PresidentManagementProfile> profiles,
+    Map<String, int>? contractYearsRemainingByPlayer,
+    bool enableInstallments = false,
+  }) =>
+      PresidentTransferStrategyRuntimeEngine(marketEngine: delegate)
+          .simulateWindow(
+            clubs: context.clubs,
+            players: context.players,
+            financeStates: context.financeStates,
+            presidentProfilesByClub: profiles,
+            careerSeed: context.careerSeed,
+            seasonIndex: context.seasonIndex,
+            simulationVersion: context.simulationVersion,
+            contractYearsRemainingByPlayer: contractYearsRemainingByPlayer,
+            enableInstallments: enableInstallments,
+          )
+          .market;
+
   @override
   TransferMarketResult simulateWindow({
     required List<Club> clubs,
@@ -98,7 +137,7 @@ class PresidentTransferStrategyWorldMarketEngine extends TransferMarketEngine {
       );
     }
 
-    final context = PresidentTransferStrategyWindowContext(
+    final context = prepareContext(
       clubs: clubs,
       players: players,
       financeStates: financeStates,
@@ -107,19 +146,12 @@ class PresidentTransferStrategyWorldMarketEngine extends TransferMarketEngine {
       simulationVersion: simulationVersion,
     );
     final profiles = profileProvider.profilesForWindow(context);
-    return PresidentTransferStrategyRuntimeEngine(
-      marketEngine: delegate,
-    ).simulateWindow(
-      clubs: clubs,
-      players: players,
-      financeStates: financeStates,
-      presidentProfilesByClub: profiles,
-      careerSeed: careerSeed,
-      seasonIndex: seasonIndex,
-      simulationVersion: simulationVersion,
+    return executeContext(
+      context: context,
+      profiles: profiles,
       contractYearsRemainingByPlayer: contractYearsRemainingByPlayer,
       enableInstallments: enableInstallments,
-    ).market;
+    );
   }
 }
 

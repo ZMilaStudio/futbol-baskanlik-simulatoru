@@ -1,4 +1,12 @@
 import '../election/president_management_profile.dart';
+import '../core/simulation_config.dart';
+import '../fan/fan_season_snapshot.dart';
+import '../media/media_season_snapshot.dart';
+import '../media/media_state.dart';
+import '../manager/manager_career_season.dart';
+import '../promise/promise_season_snapshot.dart';
+import '../transfer/loan_agreement.dart';
+import '../world/world_career_season.dart';
 import '../election/president_reputation_career_engine.dart';
 import '../election/president_reputation_career_report.dart';
 import '../manager/manager_career_report.dart';
@@ -33,6 +41,136 @@ class PresidentDomainResumeEngine {
   final PromiseMediaCareerEngine sourceEngine;
   final PresidentReputationCareerEngine reputationEngine;
   final PresidentManagementProfileGenerator profileGenerator;
+
+  /// Shared single-season calculation. The transition owns and validates the
+  /// inputs; this result is not a checkpoint or a runtime authority capability.
+  PresidentDomainSeasonEffects projectRuntimeSeason({
+    required WorldCareerSeason season,
+    required SimulationConfig config,
+    required Iterable<PresidentClubRuntimeState> priorClubs,
+    required Iterable<PromiseSeasonSnapshot> acceptedPromises,
+    required Iterable<LoanAgreement> loanHistory,
+    required int electionInterval,
+    required int completedElectionTerms,
+    required int seasonsIntoCurrentTerm,
+    required Map<String, List<int>> priorTermPromiseScores,
+    required bool hasNextSeason,
+    ManagerCareerSeason? managerSeason,
+  }) {
+    if (electionInterval <= 0 ||
+        completedElectionTerms < 0 ||
+        seasonsIntoCurrentTerm < 0 ||
+        seasonsIntoCurrentTerm >= electionInterval ||
+        (managerSeason != null &&
+            managerSeason.seasonIndex != season.seasonIndex)) {
+      throw StateError('Invalid owned domain season/cursor.');
+    }
+    final states = priorClubs.toList()
+      ..sort((a, b) => a.clubId.compareTo(b.clubId));
+    final promises = acceptedPromises.toList();
+    final byClub = {for (final p in promises) p.promise.clubId: p};
+    final ids = season.clubs.map((c) => c.id).toSet();
+    if (states.length != ids.length ||
+        states.map((c) => c.clubId).toSet().length != ids.length ||
+        promises.length != ids.length ||
+        byClub.length != ids.length ||
+        !states.every((s) => ids.contains(s.clubId)) ||
+        !ids.every(byClub.containsKey)) {
+      throw StateError(
+          'Domain successor requires exact club/promise coverage.');
+    }
+    final next = <PresidentClubRuntimeState>[];
+    final fanEvidence = <FanSeasonSnapshot>[];
+    final mediaEvidence = <MediaSeasonSnapshot>[];
+    final reputationEvidence = <PresidentReputationSeasonSnapshot>[];
+    final elections = <PresidentElectionSuccessor>[];
+    final scores = <String, List<int>>{};
+    final termProgress = seasonsIntoCurrentTerm + 1;
+    final completesTerm = termProgress == electionInterval;
+    for (final state in states) {
+      state.validate();
+      final promise = byClub[state.clubId]!;
+      final priorScores = priorTermPromiseScores[state.clubId] ?? const <int>[];
+      if (priorScores.length != seasonsIntoCurrentTerm) {
+        throw StateError('Domain promise cursor mismatch for ${state.clubId}.');
+      }
+      final fan = reputationEngine.fanEngine.projectSeason(
+        priorState: state.fanReputation,
+        season: season,
+        loanHistory: loanHistory,
+        hasNextSeason: hasNextSeason,
+        extraReasonProvider: (_) =>
+            reputationEngine.fanImpactEngine.evaluate(promise.resolution),
+      );
+      fanEvidence.add(fan);
+      final media = managerSeason == null
+          ? null
+          : sourceEngine.mediaEngine.projectClubSeason(
+              priorState: state.mediaReputation,
+              clubSeason: managerSeason.clubs
+                  .singleWhere((c) => c.clubId == state.clubId),
+              seasonIndex: season.seasonIndex,
+              managerChanged: managerSeason.changesAfterSeason
+                  .any((c) => c.clubId == state.clubId),
+              config: config,
+            );
+      if (media != null) mediaEvidence.add(media);
+      final reputation = reputationEngine.projectClubSeason(
+        seasonIndex: season.seasonIndex,
+        tenure: state.tenure,
+        priorFan: state.fanReputation,
+        priorMedia: state.mediaReputation,
+        fanReasons: fan.reasons,
+        acceptedPromise: promise,
+        managerMedia: media,
+      );
+      reputationEvidence.add(reputation);
+      final termScores = [...priorScores, promise.resolution.score];
+      var tenure = state.tenure;
+      var nextFan = reputation.fanAfter;
+      var nextMedia = MediaState(
+          clubId: state.clubId, credibility: reputation.mediaAfterPromise);
+      if (completesTerm) {
+        final election = reputationEngine.projectElection(
+          config: config,
+          seasonIndex: season.seasonIndex,
+          termNumber: completedElectionTerms + 1,
+          electionInterval: electionInterval,
+          tenure: tenure,
+          fan: nextFan,
+          media: nextMedia,
+          acceptedPromiseScores: termScores,
+        );
+        elections.add(election);
+        tenure = election.tenure;
+        nextFan = election.fan;
+        nextMedia = election.media;
+        termScores.clear();
+      }
+      scores[state.clubId] = List.unmodifiable(termScores);
+      next.add(PresidentClubRuntimeState(
+        tenure: tenure,
+        managementProfile: identical(tenure.president, state.tenure.president)
+            ? state.managementProfile
+            : profileGenerator.generate(
+                president: tenure.president,
+                careerSeed: config.careerSeed,
+                simulationVersion: config.simulationVersion),
+        fanReputation: nextFan,
+        mediaReputation: nextMedia,
+      ));
+    }
+    return PresidentDomainSeasonEffects._(
+      next,
+      fanEvidence,
+      mediaEvidence,
+      reputationEvidence,
+      elections,
+      scores,
+      completedElectionTerms + (completesTerm ? 1 : 0),
+      completesTerm ? 0 : termProgress,
+    );
+  }
 
   PresidentDomainResumeResult resume({
     required PresidentDomainMemoryCheckpoint checkpoint,
@@ -82,9 +220,8 @@ class PresidentDomainResumeEngine {
     for (final item in checkpoint.currentTermPromises) {
       priorScores.putIfAbsent(item.clubId, () => <int>[]).add(item.score);
     }
-    final initialTenure = checkpoint.presidentRuntime.clubs
-        .map((item) => item.tenure)
-        .toList();
+    final initialTenure =
+        checkpoint.presidentRuntime.clubs.map((item) => item.tenure).toList();
     final initialFan = checkpoint.presidentRuntime.clubs
         .map((item) => item.fanReputation)
         .toList();
@@ -117,7 +254,8 @@ class PresidentDomainResumeEngine {
       final fan = fanByClub[tenure.clubId];
       final media = mediaByClub[tenure.clubId];
       if (fan == null || media == null) {
-        throw StateError('Missing resumed president state for ${tenure.clubId}.');
+        throw StateError(
+            'Missing resumed president state for ${tenure.clubId}.');
       }
       presidentClubs.add(
         PresidentClubRuntimeState(
@@ -145,8 +283,8 @@ class PresidentDomainResumeEngine {
     final nextSummary = PresidentDomainHistorySummary(
       fanSnapshots: checkpoint.summary.fanSnapshots +
           reputation.fanTemplateReport.snapshots.length,
-      fanReasons:
-          checkpoint.summary.fanReasons + reputation.fanTemplateReport.reasonCount,
+      fanReasons: checkpoint.summary.fanReasons +
+          reputation.fanTemplateReport.reasonCount,
       mediaStatements: checkpoint.summary.mediaStatements +
           sourceReport.baselineMediaReport.totalStatements,
       mediaContradictions: checkpoint.summary.mediaContradictions +
@@ -180,7 +318,8 @@ class PresidentDomainResumeEngine {
       });
 
     final recentMedia = <RecentMediaMemory>[
-      ...checkpoint.recentMedia.where((item) => item.seasonIndex >= recentStart),
+      ...checkpoint.recentMedia
+          .where((item) => item.seasonIndex >= recentStart),
     ];
     for (final season in sourceReport.baselineMediaReport.seasons) {
       if (season.seasonIndex < recentStart) continue;
@@ -205,7 +344,8 @@ class PresidentDomainResumeEngine {
     });
 
     final finalTermOffset = presidentRuntime.seasonsIntoCurrentTerm;
-    final termStartSeasonIndex = presidentRuntime.nextSeasonIndex - finalTermOffset;
+    final termStartSeasonIndex =
+        presidentRuntime.nextSeasonIndex - finalTermOffset;
     final currentTermPromises = <CurrentTermPromiseMemory>[
       if (finalTermOffset > 0)
         ...checkpoint.currentTermPromises.where(
@@ -240,4 +380,29 @@ class PresidentDomainResumeEngine {
       ),
     );
   }
+}
+
+final class PresidentDomainSeasonEffects {
+  PresidentDomainSeasonEffects._(
+      Iterable<PresidentClubRuntimeState> clubs,
+      Iterable<FanSeasonSnapshot> fan,
+      Iterable<MediaSeasonSnapshot> media,
+      Iterable<PresidentReputationSeasonSnapshot> reputation,
+      Iterable<PresidentElectionSuccessor> elections,
+      Map<String, List<int>> scores,
+      this.completedElectionTerms,
+      this.seasonsIntoCurrentTerm)
+      : clubs = List.unmodifiable(clubs),
+        fan = List.unmodifiable(fan),
+        media = List.unmodifiable(media),
+        reputation = List.unmodifiable(reputation),
+        elections = List.unmodifiable(elections),
+        termPromiseScores = Map.unmodifiable(scores);
+  final List<PresidentClubRuntimeState> clubs;
+  final List<FanSeasonSnapshot> fan;
+  final List<MediaSeasonSnapshot> media;
+  final List<PresidentReputationSeasonSnapshot> reputation;
+  final List<PresidentElectionSuccessor> elections;
+  final Map<String, List<int>> termPromiseScores;
+  final int completedElectionTerms, seasonsIntoCurrentTerm;
 }

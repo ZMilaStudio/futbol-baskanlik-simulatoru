@@ -1,6 +1,7 @@
 import '../core/simulation_config.dart';
 import '../league/club.dart';
 import '../manager/manager_career_report.dart';
+import '../manager/manager_career_season.dart';
 import '../manager/manager_world_career_engine.dart';
 import '../world/world_league.dart';
 import 'media_career_report.dart';
@@ -19,6 +20,41 @@ class MediaCareerEngine {
   final ManagerWorldCareerEngine managerEngine;
   final MediaStatementEngine statementEngine;
   final MediaCredibilityEngine credibilityEngine;
+
+  MediaSeasonSnapshot projectClubSeason({
+    required MediaState priorState,
+    required ManagerClubSeason clubSeason,
+    required int seasonIndex,
+    required bool managerChanged,
+    required SimulationConfig config,
+  }) {
+    if (priorState.clubId != clubSeason.clubId) {
+      throw StateError('Manager/media club lineage mismatch.');
+    }
+    final statement = statementEngine.generate(
+      clubSeason: clubSeason,
+      seasonIndex: seasonIndex,
+      careerSeed: config.careerSeed,
+      simulationVersion: config.simulationVersion,
+    );
+    final change = statement == null
+        ? null
+        : credibilityEngine.evaluate(
+            state: priorState,
+            statement: statement,
+            managerChanged: managerChanged,
+          );
+    return MediaSeasonSnapshot(
+      clubId: clubSeason.clubId,
+      managerId: clubSeason.managerId,
+      seasonIndex: seasonIndex,
+      managerChanged: managerChanged,
+      credibilityBefore: priorState.credibility,
+      credibilityAfter: change?.after ?? priorState.credibility,
+      statement: statement,
+      change: change,
+    );
+  }
 
   MediaCareerReport simulate({
     required List<Club> clubs,
@@ -63,50 +99,19 @@ class MediaCareerEngine {
         if (current == null) {
           throw StateError('Missing media state for ${clubSeason.clubId}.');
         }
-        final statement = statementEngine.generate(
+        final snapshot = projectClubSeason(
+          priorState: current,
           clubSeason: clubSeason,
           seasonIndex: managerSeason.seasonIndex,
-          careerSeed: config.careerSeed,
-          simulationVersion: config.simulationVersion,
+          managerChanged: changesByClub.containsKey(clubSeason.clubId),
+          config: config,
         );
-        final managerChanged = changesByClub.containsKey(clubSeason.clubId);
-
-        if (statement == null) {
-          snapshots.add(
-            MediaSeasonSnapshot(
-              clubId: clubSeason.clubId,
-              managerId: clubSeason.managerId,
-              seasonIndex: managerSeason.seasonIndex,
-              managerChanged: managerChanged,
-              credibilityBefore: current.credibility,
-              credibilityAfter: current.credibility,
-              statement: null,
-              change: null,
-            ),
+        if (snapshot.change != null) {
+          states[clubSeason.clubId] = current.copyWith(
+            credibility: snapshot.credibilityAfter,
           );
-          continue;
         }
-
-        final change = credibilityEngine.evaluate(
-          state: current,
-          statement: statement,
-          managerChanged: managerChanged,
-        );
-        states[clubSeason.clubId] = current.copyWith(
-          credibility: change.after,
-        );
-        snapshots.add(
-          MediaSeasonSnapshot(
-            clubId: clubSeason.clubId,
-            managerId: clubSeason.managerId,
-            seasonIndex: managerSeason.seasonIndex,
-            managerChanged: managerChanged,
-            credibilityBefore: change.before,
-            credibilityAfter: change.after,
-            statement: statement,
-            change: change,
-          ),
-        );
+        snapshots.add(snapshot);
       }
 
       seasons.add(

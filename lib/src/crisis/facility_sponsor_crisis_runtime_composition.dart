@@ -16,10 +16,15 @@ import '../finance/club_finance_state.dart';
 import '../finance/season_finance_authority_receipt.dart';
 import '../league/club.dart';
 import '../manager/manager_career_controller.dart';
+import '../manager/manager_career_season.dart';
 import '../media/media_state.dart';
 import '../player/player.dart';
+import '../player_president/player_president_interactive_decision_application_session.dart';
+import '../save/president_runtime_checkpoint.dart';
+import '../world/world_checkpoint.dart';
 import '../player/player_lifecycle_engine.dart';
 import '../promise/promise_media_career_engine.dart';
+import '../promise/promise_season_snapshot.dart';
 import '../save/advanced_runtime_career_engine.dart';
 import '../save/advanced_runtime_checkpoint.dart';
 import '../save/president_domain_career_engine.dart';
@@ -30,6 +35,7 @@ import '../season/season_report.dart';
 import '../sponsor/sponsor_runtime_integration.dart';
 import '../sponsor/sponsor_system.dart';
 import '../world/world_career_engine.dart';
+import '../world/world_career_season.dart';
 import '../world/world_league.dart';
 import 'crisis_runtime_integration.dart';
 
@@ -416,12 +422,89 @@ final class _FacilityPreparedGraph {
   final PresidentDomainCareerEngine domain;
 }
 
+/// First activation has no invented sponsor season/payment history. The real
+/// coordinator/delegate graph remains private and unattempted for its recipient.
+final class FacilitySponsorPostseasonContinuation {
+  FacilitySponsorPostseasonContinuation._(
+      this._graph, this.owner, this.revision, this.provenance, this.world);
+  final _FacilityPreparedGraph _graph;
+  final Object owner, revision, provenance;
+  final WorldCheckpoint world;
+  bool _successorCommitted = false;
+  _FacilityEconomyEngine? _successorEconomy;
+  Map<String, StadiumFacilityState>? _successorStadiums;
+  void commitOwnedSuccessor() {
+    if (_successorCommitted)
+      throw StateError('Facility successor already moved.');
+    final economy = _successorEconomy;
+    if (economy != null) {
+      final inputs = _graph.inputs;
+      final coordinator = _graph.coordinator;
+      coordinator.openingSponsor = inputs.sponsor;
+      coordinator.presidentProfilesByClub = inputs.profiles;
+      coordinator.fanStatesByClub = inputs.fans;
+      coordinator.mediaStatesByClub = inputs.media;
+      coordinator._processedClubIds.clear();
+      coordinator._contracts.clear();
+      coordinator._activeNext.clear();
+      coordinator._revenueByClub.clear();
+      coordinator._seasonRevenue = Money.zero;
+      coordinator._claimedRecording = null;
+      economy.stadiumFacilities = _successorStadiums!;
+      economy.fanStatesByClub = inputs.fans;
+      economy._preparedAttendance = null;
+      economy._claimedRecording = null;
+    }
+    _successorCommitted = true;
+  }
+
+  FacilityPortfolioRuntimeState get facilities => _graph.inputs.facilities;
+  SponsorRuntimeCheckpoint get sponsor => _graph.inputs.sponsor;
+  int get processedSponsorClubs => _graph.coordinator._processedClubIds.length;
+}
+
 /// The original graph stays private; the advanced lease is its only executor.
 final class PreparedFacilitySponsorSeason {
   PreparedFacilitySponsorSeason._(this._producer, this._graph, this._advanced);
   final FacilitySponsorCrisisRuntimeCareerEngine _producer;
   final _FacilityPreparedGraph _graph;
   final PreparedAdvancedRuntimeSeason _advanced;
+  OwnedAdvancedAnnualClosing? _annualClosing;
+  bool _domainProjected = false;
+
+  /// Uses the original prepared domain/resume policies, never a rebuilt graph.
+  PresidentDomainSeasonEffects projectOwnedDomainSeason({
+    required OwnedAdvancedAnnualClosing closing,
+    required Object transition,
+    required WorldCareerSeason season,
+    required Iterable<PresidentClubRuntimeState> priorClubs,
+    required Iterable<PromiseSeasonSnapshot> acceptedPromises,
+    required int electionInterval,
+    required int completedElectionTerms,
+    required int seasonsIntoCurrentTerm,
+    required Map<String, List<int>> priorTermPromiseScores,
+    required bool hasNextSeason,
+    required ManagerCareerSeason managerSeason,
+  }) {
+    closing.validateTransition(transition);
+    if (!identical(closing, _annualClosing) || _domainProjected) {
+      throw StateError('Foreign or consumed owned domain projection.');
+    }
+    _domainProjected = true;
+    return _graph.domain.resumeEngine.projectRuntimeSeason(
+        season: season,
+        config: closing.world.opening.config,
+        priorClubs: priorClubs,
+        acceptedPromises: acceptedPromises,
+        loanHistory: closing.loanHistory,
+        electionInterval: electionInterval,
+        completedElectionTerms: completedElectionTerms,
+        seasonsIntoCurrentTerm: seasonsIntoCurrentTerm,
+        priorTermPromiseScores: priorTermPromiseScores,
+        hasNextSeason: hasNextSeason,
+        managerSeason: managerSeason);
+  }
+
   Object get owner => _advanced.owner;
   Object get revision => _advanced.revision;
   Object get provenance => _advanced.provenance;
@@ -468,6 +551,18 @@ final class PreparedFacilitySponsorSeason {
     }
   }
 
+  void bindReleasedAnnualClosing(
+      OwnedAdvancedAnnualClosing closing,
+      FullM65RuntimeEconomyContinuationAuthority authority,
+      SeasonFinanceAuthorityReceipt receipt) {
+    if (_annualClosing != null ||
+        !identical(closing.world.opening, opening) ||
+        !authority.permitsAnnualRelease(opening, executionIdentity, receipt)) {
+      throw StateError('Foreign released facility graph.');
+    }
+    _annualClosing = closing;
+  }
+
   FacilityEconomyRecipient moveToEconomy(
       {required FullM65RuntimeEconomyContinuationAuthority authority,
       required Object expectedOwner,
@@ -495,6 +590,13 @@ final class FacilityEconomyRecipient {
   final _FacilitySponsorSeasonEconomyEngine _coordinator;
   int get contractCount => _advanced.contractCount;
   int get processedSponsorClubCount => _coordinator._processedClubIds.length;
+  OwnedAdvancedAnnualClosing releaseSettledAnnualClosing({
+    required FullM65RuntimeEconomyContinuationAuthority authority,
+    required CommittedSeasonSettlementCapability committed,
+    required SeasonFinanceAuthorityReceipt receipt,
+  }) =>
+      _advanced.releaseSettledAnnualClosing(
+          authority: authority, committed: committed, receipt: receipt);
   FinanceAttendanceEvidence prepareAttendance(Club club, int position) =>
       _economy._attendance(club, position);
   void cacheAttendance(Map<String, FinanceAttendanceEvidence> evidence) {
@@ -511,6 +613,127 @@ final class FacilityEconomyRecipient {
 }
 
 class FacilitySponsorCrisisRuntimeCareerEngine {
+  FacilitySponsorPostseasonContinuation stageOwnedPostseason({
+    required PreparedFacilitySponsorSeason prepared,
+    required OwnedAdvancedAnnualClosing closing,
+    required Object transition,
+    required WorldCheckpoint world,
+    required FacilityPortfolioRuntimeState facilities,
+    required List<PresidentClubRuntimeState> domainClubs,
+  }) {
+    closing.validateTransition(transition);
+    world.validate();
+    final ids = world.baseClubs.map((c) => c.id).toSet();
+    facilities.validateAgainst(ids);
+    if (!identical(prepared._producer, this) ||
+        !identical(prepared._annualClosing, closing) ||
+        world.nextSeasonIndex != closing.world.opening.seasonIndex + 1 ||
+        domainClubs.length != 48 ||
+        domainClubs.map((c) => c.clubId).toSet().length != 48 ||
+        !domainClubs.every((c) => ids.contains(c.clubId))) {
+      throw StateError('Foreign facility annual-closing successor.');
+    }
+    for (final state in domainClubs) {
+      state.validate();
+    }
+    final sponsor = prepared._graph.coordinator.finalCheckpoint;
+    if (sponsor.nextSeasonIndex != world.nextSeasonIndex) {
+      throw StateError('Sponsor annual successor season mismatch.');
+    }
+    final inputs = _FacilitySeasonInputs(
+        world.baseClubs,
+        world.config,
+        facilities,
+        sponsor,
+        Map.unmodifiable(
+            {for (final c in domainClubs) c.clubId: c.managementProfile}),
+        Map.unmodifiable(
+            {for (final c in domainClubs) c.clubId: c.fanReputation}),
+        Map.unmodifiable(
+            {for (final c in domainClubs) c.clubId: c.mediaReputation}));
+    final graph = _FacilityPreparedGraph(
+        inputs, prepared._graph.coordinator, prepared._graph.domain);
+    return FacilitySponsorPostseasonContinuation._(
+        graph, prepared.owner, prepared.revision, prepared.provenance, world)
+      .._successorEconomy = prepared._graph.domain.runtimeEngine.worldEngine
+          .economyEngine as _FacilityEconomyEngine
+      .._successorStadiums = Map.unmodifiable({
+        for (final state in facilities.stadiumFacilities) state.clubId: state
+      });
+  }
+
+  /// Captures the real owned annual call, before movement/completion/offseason.
+  /// Recording is bound to the original wrapper graph, never a rebuilt graph.
+  OwnedAdvancedAnnualClosing captureAnnualClosing(
+    PreparedFacilitySponsorSeason prepared, {
+    required Object expectedOwner,
+    required Object expectedRevision,
+    required Object expectedProvenance,
+    required FullM65SeasonFinancePipeline recording,
+  }) {
+    if (!identical(prepared._producer, this) ||
+        !identical(prepared.owner, expectedOwner) ||
+        !identical(prepared.revision, expectedRevision) ||
+        !identical(prepared.provenance, expectedProvenance) ||
+        !identical(recording.owner, expectedOwner) ||
+        !identical(recording.sourceRevision, expectedRevision) ||
+        !identical(recording.provenance, expectedProvenance) ||
+        !identical(recording.effectiveClubSource, prepared.managerAuthority) ||
+        recording.seasonIndex != prepared.opening.seasonIndex) {
+      throw StateError('Foreign annual-closing recording/producer.');
+    }
+    prepared.validateEconomyHandoff();
+    final economy = prepared._graph.domain.runtimeEngine.worldEngine
+        .economyEngine as _FacilityEconomyEngine;
+    economy._claimedRecording = recording;
+    prepared._graph.coordinator._claimedRecording = recording;
+    return prepared._annualClosing =
+        prepared._graph.domain.runtimeEngine.captureAnnualClosing(
+      prepared._advanced,
+      expectedOwner: expectedOwner,
+      expectedRevision: expectedRevision,
+      expectedProvenance: expectedProvenance,
+    );
+  }
+
+  FacilitySponsorPostseasonContinuation activateFirstPostseason({
+    required ApplicationPostseasonTransitionToken token,
+    required WorldCheckpoint world,
+    required FacilityPortfolioRuntimeState facilities,
+    required List<PresidentClubRuntimeState> domainClubs,
+  }) {
+    token.validate();
+    world.validate();
+    final ids = world.baseClubs.map((club) => club.id).toSet();
+    facilities.validateAgainst(ids);
+    if (world.nextSeasonIndex != token.source.seasonIndex + 1 ||
+        domainClubs.length != ids.length ||
+        domainClubs.map((club) => club.clubId).toSet().length != ids.length ||
+        !domainClubs.every((club) => ids.contains(club.clubId))) {
+      throw StateError('Invalid first facility/sponsor activation successor.');
+    }
+    for (final club in domainClubs) {
+      club.validate();
+    }
+    token.claimFacilityActivation();
+    final graph = _prepareGraph(_FacilitySeasonInputs(
+      world.baseClubs,
+      world.config,
+      facilities,
+      SponsorRuntimeCheckpoint.initial(seasonIndex: world.nextSeasonIndex),
+      {for (final state in domainClubs) state.clubId: state.managementProfile},
+      {for (final state in domainClubs) state.clubId: state.fanReputation},
+      {for (final state in domainClubs) state.clubId: state.mediaReputation},
+    ));
+    return FacilitySponsorPostseasonContinuation._(
+      graph,
+      token.owner,
+      token.revision,
+      token.provenance,
+      world,
+    );
+  }
+
   const FacilitySponsorCrisisRuntimeCareerEngine({
     this.financeRecording,
     this.sponsorSystem = const SponsorSystemEngine(),
@@ -939,8 +1162,8 @@ class _FacilityEconomyEngine extends BasicEconomyEngine {
   final FullM65SeasonFinancePipeline? financeRecording;
   FullM65SeasonFinancePipeline? _claimedRecording;
   Map<String, FinanceAttendanceEvidence>? _preparedAttendance;
-  final Map<String, StadiumFacilityState> stadiumFacilities;
-  final Map<String, FanState> fanStatesByClub;
+  Map<String, StadiumFacilityState> stadiumFacilities;
+  Map<String, FanState> fanStatesByClub;
   final StadiumInvestmentPolicy stadiumPolicy = const StadiumInvestmentPolicy();
 
   FinanceAttendanceEvidence _attendance(Club club, int position) {
@@ -1032,11 +1255,11 @@ class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
   final SponsorSystemEngine sponsorSystem;
   final FullM65SeasonFinancePipeline? financeRecording;
   FullM65SeasonFinancePipeline? _claimedRecording;
-  final SponsorRuntimeCheckpoint openingSponsor;
+  SponsorRuntimeCheckpoint openingSponsor;
   final Set<String> expectedClubIds;
-  final Map<String, PresidentManagementProfile> presidentProfilesByClub;
-  final Map<String, FanState> fanStatesByClub;
-  final Map<String, MediaState> mediaStatesByClub;
+  Map<String, PresidentManagementProfile> presidentProfilesByClub;
+  Map<String, FanState> fanStatesByClub;
+  Map<String, MediaState> mediaStatesByClub;
   final int careerSeed;
   final int simulationVersion;
 

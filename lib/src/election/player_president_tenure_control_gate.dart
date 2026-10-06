@@ -43,23 +43,26 @@ class PlayerPresidentTenureControlState {
     }
     if (active) {
       if (lostAtCompletedSeason != null || successorPresidentId != null) {
-        throw ArgumentError('Active player-president control cannot contain loss metadata.');
+        throw ArgumentError(
+            'Active player-president control cannot contain loss metadata.');
       }
       return;
     }
     if (lostAtCompletedSeason == null || lostAtCompletedSeason! < 0) {
-      throw ArgumentError('Lost player-president control requires a valid loss season.');
+      throw ArgumentError(
+          'Lost player-president control requires a valid loss season.');
     }
     if (successorPresidentId == null || successorPresidentId!.isEmpty) {
-      throw ArgumentError('Lost player-president control requires a successor president.');
+      throw ArgumentError(
+          'Lost player-president control requires a successor president.');
     }
     if (successorPresidentId == playerPresidentId) {
-      throw ArgumentError('Successor president must differ from the player president.');
+      throw ArgumentError(
+          'Successor president must differ from the player president.');
     }
   }
 
-  String get signature =>
-      '$controlledClubId:$playerPresidentId:${status.name}:'
+  String get signature => '$controlledClubId:$playerPresidentId:${status.name}:'
       'lostAt=${lostAtCompletedSeason ?? 'none'}:'
       'successor=${successorPresidentId ?? 'none'}';
 }
@@ -95,6 +98,26 @@ class PlayerPresidentTenureControlGate {
     state.validate();
     presidentRuntime.validate();
     final incumbent = _stateFor(presidentRuntime, state.controlledClubId);
+    return refreshRuntimeView(
+      state: state,
+      incumbent: incumbent,
+      completedSeasons: presidentRuntime.completedSeasons,
+    );
+  }
+
+  /// Shared calculation kernel, not an ownership/source capability. Runtime
+  /// callers must validate their owned successor before projecting control.
+  /// The legacy adapter above still validates its complete checkpoint.
+  PlayerPresidentTenureControlState refreshRuntimeView({
+    required PlayerPresidentTenureControlState state,
+    required PresidentClubRuntimeState incumbent,
+    required int completedSeasons,
+  }) {
+    state.validate();
+    incumbent.validate();
+    if (incumbent.clubId != state.controlledClubId || completedSeasons < 0) {
+      throw ArgumentError('Invalid tenure/control successor view.');
+    }
     if (state.lost) return state;
 
     final currentPresidentId = incumbent.tenure.president.id;
@@ -104,7 +127,7 @@ class PlayerPresidentTenureControlGate {
       controlledClubId: state.controlledClubId,
       playerPresidentId: state.playerPresidentId,
       status: PlayerPresidentTenureControlStatus.lost,
-      lostAtCompletedSeason: presidentRuntime.completedSeasons,
+      lostAtCompletedSeason: completedSeasons,
       successorPresidentId: currentPresidentId,
     );
     next.validate();
@@ -192,10 +215,11 @@ class PlayerPresidentTenureControlSaveCodec {
     final payloadObject = envelope['payload'];
     final checksum = envelope['checksum'];
     if (checksum is! String ||
-        checksum != SaveChecksum.forPayload(
-          saveVersion: version,
-          payload: payloadObject,
-        )) {
+        checksum !=
+            SaveChecksum.forPayload(
+              saveVersion: version,
+              payload: payloadObject,
+            )) {
       throw const SaveLoadException(
         SaveLoadFailure.checksumMismatch,
         'Player-president tenure control save checksum mismatch.',

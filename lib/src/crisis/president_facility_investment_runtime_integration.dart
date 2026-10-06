@@ -1,4 +1,5 @@
 import '../core/money.dart';
+import '../election/president_management_profile.dart';
 import '../facility/president_academy_investment_orchestrator.dart';
 import '../facility/president_facility_portfolio_investment_orchestrator.dart';
 import '../league/club.dart';
@@ -59,8 +60,7 @@ class PresidentFacilityInvestmentRuntimeDecision {
       trainingGroundAppliedUpgrades > 0 ||
       stadiumAppliedUpgrades > 0;
 
-  String get signature =>
-      '$seasonIndex:$clubId:$presidentId:'
+  String get signature => '$seasonIndex:$clubId:$presidentId:'
       'academy=$academyBeforeLevel->$academyAfterLevel/'
       '$academyTargetLevel+$academyAppliedUpgrades:'
       'training=$trainingGroundBeforeLevel->$trainingGroundAfterLevel/'
@@ -92,6 +92,18 @@ class PresidentFacilityInvestmentRuntimeResult {
       'final=${checkpoint.signature}';
 }
 
+/// Read-only calculation evidence. This is not a checkpoint or an ownership
+/// capability; the runtime owner must supply its validated successor view.
+final class PresidentFacilityInvestmentEffects {
+  PresidentFacilityInvestmentEffects._({
+    required this.facilities,
+    required Iterable<PresidentFacilityInvestmentRuntimeDecision> decisions,
+  }) : decisions = List.unmodifiable(decisions);
+
+  final FacilityRuntimeCheckpoint facilities;
+  final List<PresidentFacilityInvestmentRuntimeDecision> decisions;
+}
+
 /// Applies the existing M39 president facility policy to an M47 continuation
 /// checkpoint. The current president profile is read after the completed
 /// season/crisis boundary, so a turnover automatically replans the next
@@ -113,57 +125,21 @@ class PresidentFacilityInvestmentRuntimeEngine {
     final domain = checkpoint.runtime.domain;
     final presidentRuntime = domain.presidentRuntime;
     final world = presidentRuntime.runtime.runtime.world;
-    var facilityCheckpoint = FacilityRuntimeCheckpoint(
-      world: world,
-      academyFacilities: checkpoint.facilities.academyFacilities,
-      stadiumFacilities: checkpoint.facilities.stadiumFacilities,
-      trainingGroundFacilities: checkpoint.facilities.trainingGroundFacilities,
-      totalInvestmentSpent: checkpoint.facilities.totalInvestmentSpent,
+    final effects = projectRuntimeView(
+      facilities: FacilityRuntimeCheckpoint(
+        world: world,
+        academyFacilities: checkpoint.facilities.academyFacilities,
+        stadiumFacilities: checkpoint.facilities.stadiumFacilities,
+        trainingGroundFacilities:
+            checkpoint.facilities.trainingGroundFacilities,
+        totalInvestmentSpent: checkpoint.facilities.totalInvestmentSpent,
+      ),
+      profiles: {
+        for (final state in presidentRuntime.clubs)
+          state.clubId: state.managementProfile,
+      },
     );
-    final states = [...presidentRuntime.clubs]
-      ..sort((a, b) => a.clubId.compareTo(b.clubId));
-    final decisions = <PresidentFacilityInvestmentRuntimeDecision>[];
-
-    for (final state in states) {
-      final profile = state.managementProfile;
-      final academy = academyInvestment.apply(
-        checkpoint: facilityCheckpoint,
-        clubId: state.clubId,
-        profile: profile,
-      );
-      final portfolio = portfolioInvestment.apply(
-        checkpoint: academy.checkpoint,
-        clubId: state.clubId,
-        profile: profile,
-      );
-      decisions.add(
-        PresidentFacilityInvestmentRuntimeDecision(
-          seasonIndex: checkpoint.nextSeasonIndex,
-          clubId: state.clubId,
-          presidentId: profile.presidentId,
-          academyTargetLevel: academy.plan.targetLevel,
-          academyBeforeLevel: academy.beforeLevel,
-          academyAfterLevel: academy.afterLevel,
-          academyAppliedUpgrades: academy.appliedUpgrades,
-          academyCashReserveBasisPoints: academy.plan.cashReserveBasisPoints,
-          trainingGroundTargetLevel:
-              portfolio.plan.trainingGroundTargetLevel,
-          trainingGroundBeforeLevel: portfolio.beforeTrainingGroundLevel,
-          trainingGroundAfterLevel: portfolio.afterTrainingGroundLevel,
-          trainingGroundAppliedUpgrades:
-              portfolio.appliedTrainingGroundUpgrades,
-          stadiumTargetLevel: portfolio.plan.stadiumTargetLevel,
-          stadiumBeforeLevel: portfolio.beforeStadiumLevel,
-          stadiumAfterLevel: portfolio.afterStadiumLevel,
-          stadiumAppliedUpgrades: portfolio.appliedStadiumUpgrades,
-          portfolioCashReserveBasisPoints:
-              portfolio.plan.cashReserveBasisPoints,
-          spend: academy.spend + portfolio.spend,
-        ),
-      );
-      facilityCheckpoint = portfolio.checkpoint;
-    }
-
+    final facilityCheckpoint = effects.facilities;
     final nextDomain = _replaceWorld(domain, facilityCheckpoint.world);
     final nextRuntime = SponsorPresidentRuntimeCheckpoint(
       domain: nextDomain,
@@ -180,6 +156,73 @@ class PresidentFacilityInvestmentRuntimeEngine {
         runtime: nextRuntime,
         facilities: nextFacilities,
       ),
+      decisions: effects.decisions,
+    );
+  }
+
+  /// The same investment kernel used by the validated legacy adapter above.
+  /// It needs no manager history or PresidentRuntimeCheckpoint reconstruction.
+  PresidentFacilityInvestmentEffects projectRuntimeView({
+    required FacilityRuntimeCheckpoint facilities,
+    required Map<String, PresidentManagementProfile> profiles,
+  }) {
+    facilities.validate();
+    final states = profiles.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final ids = <String>{};
+    final clubIds = facilities.world.baseClubs.map((club) => club.id).toSet();
+    for (final entry in states) {
+      if (!ids.add(entry.key) || !clubIds.contains(entry.key)) {
+        throw ArgumentError('Invalid facility successor profile coverage.');
+      }
+    }
+    if (ids.length != clubIds.length) {
+      throw ArgumentError('Incomplete facility successor profile coverage.');
+    }
+    var facilityCheckpoint = facilities;
+    final decisions = <PresidentFacilityInvestmentRuntimeDecision>[];
+
+    for (final entry in states) {
+      final profile = entry.value;
+      final academy = academyInvestment.apply(
+        checkpoint: facilityCheckpoint,
+        clubId: entry.key,
+        profile: profile,
+      );
+      final portfolio = portfolioInvestment.apply(
+        checkpoint: academy.checkpoint,
+        clubId: entry.key,
+        profile: profile,
+      );
+      decisions.add(
+        PresidentFacilityInvestmentRuntimeDecision(
+          seasonIndex: facilities.nextSeasonIndex,
+          clubId: entry.key,
+          presidentId: profile.presidentId,
+          academyTargetLevel: academy.plan.targetLevel,
+          academyBeforeLevel: academy.beforeLevel,
+          academyAfterLevel: academy.afterLevel,
+          academyAppliedUpgrades: academy.appliedUpgrades,
+          academyCashReserveBasisPoints: academy.plan.cashReserveBasisPoints,
+          trainingGroundTargetLevel: portfolio.plan.trainingGroundTargetLevel,
+          trainingGroundBeforeLevel: portfolio.beforeTrainingGroundLevel,
+          trainingGroundAfterLevel: portfolio.afterTrainingGroundLevel,
+          trainingGroundAppliedUpgrades:
+              portfolio.appliedTrainingGroundUpgrades,
+          stadiumTargetLevel: portfolio.plan.stadiumTargetLevel,
+          stadiumBeforeLevel: portfolio.beforeStadiumLevel,
+          stadiumAfterLevel: portfolio.afterStadiumLevel,
+          stadiumAppliedUpgrades: portfolio.appliedStadiumUpgrades,
+          portfolioCashReserveBasisPoints:
+              portfolio.plan.cashReserveBasisPoints,
+          spend: academy.spend + portfolio.spend,
+        ),
+      );
+      facilityCheckpoint = portfolio.checkpoint;
+    }
+
+    return PresidentFacilityInvestmentEffects._(
+      facilities: facilityCheckpoint,
       decisions: decisions,
     );
   }
@@ -239,8 +282,7 @@ class PresidentFacilityInvestmentRuntimeSeasonBoundary {
   List<PresidentFacilityInvestmentRuntimeDecision> get decisions =>
       investment?.decisions ?? const [];
 
-  String get signature =>
-      'season=$seasonIndex:source=${source.signature}:'
+  String get signature => 'season=$seasonIndex:source=${source.signature}:'
       'investment=${investment?.signature ?? 'none'}:'
       'final=${checkpoint.signature}';
 }

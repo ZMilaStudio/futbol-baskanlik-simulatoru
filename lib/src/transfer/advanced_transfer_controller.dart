@@ -5,6 +5,7 @@ import '../core/money.dart';
 import '../finance/club_finance_state.dart';
 import '../league/club.dart';
 import '../player/player.dart';
+import '../player_president/player_president_interactive_decision_application_session.dart';
 import '../world/world_finance_hooks.dart';
 import '../world/world_league.dart';
 import '../world/world_roster_hooks.dart';
@@ -16,6 +17,16 @@ import 'transfer_installment.dart';
 
 class AdvancedTransferController
     implements WorldRosterHooks, WorldFinanceHooks, WorldTransferHooks {
+  AdvancedTransferController.adoptApplicationOpening(
+    ApplicationPostseasonTransitionToken token, {
+    this.loanMarketEngine = const LoanMarketEngine(),
+  })  : careerSeed =
+            token.source.sourceState.boundary.proof.initialContracts.careerSeed,
+        simulationVersion = token.source.sourceState.boundary.proof
+            .initialContracts.simulationVersion,
+        contractController =
+            PlayerContractController.adoptApplicationOpening(token);
+
   AdvancedTransferController({
     required int careerSeed,
     required int simulationVersion,
@@ -67,7 +78,8 @@ class AdvancedTransferController
   final List<LoanAgreement> _loanHistory = [];
   final List<TransferInstallmentObligation> _installmentObligations = [];
 
-  List<PlayerContract> get activeContracts => contractController.activeContracts;
+  List<PlayerContract> get activeContracts =>
+      contractController.activeContracts;
   List<ContractEvent> get contractEvents => contractController.events;
   List<LoanAgreement> get activeLoans {
     final values = _activeLoans.values.toList()
@@ -142,7 +154,8 @@ class AdvancedTransferController
     for (final loan in _activeLoans.values) {
       if (retiredIds.contains(loan.playerId) ||
           loan.endSeasonIndex <= nextSeasonIndex) {
-        final index = returned.indexWhere((player) => player.id == loan.playerId);
+        final index =
+            returned.indexWhere((player) => player.id == loan.playerId);
         if (index >= 0) {
           returned[index] = returned[index].copyWith(clubId: loan.parentClubId);
         }

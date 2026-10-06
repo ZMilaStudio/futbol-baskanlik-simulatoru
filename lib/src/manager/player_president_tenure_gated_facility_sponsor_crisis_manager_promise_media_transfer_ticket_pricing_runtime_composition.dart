@@ -1,6 +1,4 @@
-import '../core/seeded_rng.dart';
 import '../core/simulation_config.dart';
-import '../core/stable_hash.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
 import '../crisis/player_president_tenure_gated_facility_sponsor_crisis_promise_media_transfer_ticket_pricing_runtime_composition.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
@@ -10,7 +8,6 @@ import '../save/advanced_runtime_checkpoint.dart';
 import '../save/president_domain_memory_checkpoint.dart';
 import '../save/president_runtime_checkpoint.dart';
 import '../sponsor/sponsor_runtime_integration.dart';
-import '../world/world_checkpoint.dart';
 import '../world/world_league.dart';
 import 'manager.dart';
 import 'manager_assignment.dart';
@@ -32,8 +29,7 @@ class PlayerPresidentUnifiedManagerRuntimeSeasonBoundary {
 
   int get seasonIndex => source.seasonIndex;
 
-  String get signature =>
-      'season=$seasonIndex:source=${source.signature}:'
+  String get signature => 'season=$seasonIndex:source=${source.signature}:'
       'manager=${managerDecision?.signature ?? 'ai'}:'
       'final=${checkpoint.signature}';
 }
@@ -82,6 +78,9 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
       sourceEngine;
   final ManagerFitModel fitModel;
   final int candidateLimit;
+  PlayerManagerPreparationProjection get preparationProjection =>
+      PlayerManagerPreparationProjection(
+          fitModel: fitModel, candidateLimit: candidateLimit);
 
   PlayerPresidentUnifiedManagerRuntimeCareerResult simulateWithCheckpoint({
     required List<Club> clubs,
@@ -240,7 +239,8 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
         .where((item) => item.clubId == controlledClubId)
         .toList(growable: false);
     if (aiChanges.length > 1) {
-      throw StateError('Controlled club has multiple manager changes in one season.');
+      throw StateError(
+          'Controlled club has multiple manager changes in one season.');
     }
     final aiChange = aiChanges.isEmpty ? null : aiChanges.single;
     final aiAssignment = advanced.manager.assignments.firstWhere(
@@ -250,10 +250,11 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
       (item) => item.id == aiAssignment.managerId,
     );
     final president = _domain(checkpoint).presidentRuntime.clubs.firstWhere(
-      (item) => item.clubId == controlledClubId,
-    );
+          (item) => item.clubId == controlledClubId,
+        );
 
-    if (president.tenure.president.id != checkpoint.tenureControl.playerPresidentId) {
+    if (president.tenure.president.id !=
+        checkpoint.tenureControl.playerPresidentId) {
       return _AppliedUnifiedManagerDecision(
         checkpoint: checkpoint,
         decision: null,
@@ -319,7 +320,8 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
       );
     }
 
-    final replacementReason = aiChange?.reason ?? ManagerChangeReason.boardBreakdown;
+    final replacementReason =
+        aiChange?.reason ?? ManagerChangeReason.boardBreakdown;
     final candidates = _replacementCandidates(
       advanced: advanced,
       clubId: controlledClubId,
@@ -428,27 +430,10 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
     required String clubId,
     required PlayerManagerCandidate candidate,
   }) {
-    final world = advanced.world;
-    final manager = candidate.manager;
-    final relationship = (52.0 +
-            candidate.fitScore * 0.18 +
-            (manager.boardCooperation - 50) * 0.08 +
-            _jitter(
-              clubId: clubId,
-              managerId: manager.id,
-              seasonIndex: world.nextSeasonIndex,
-              world: world,
-              salt: 29,
-              amplitude: 6,
-            ))
-        .clamp(48.0, 78.0)
-        .toDouble();
-    return ManagerAssignment(
+    return preparationProjection.newAssignmentRuntime(
+      view: ManagerPreparationRuntimeView.fromCheckpoint(advanced),
       clubId: clubId,
-      managerId: manager.id,
-      appointedSeasonIndex: world.nextSeasonIndex,
-      completedSeasons: 0,
-      boardRelationship: relationship,
+      candidate: candidate,
     );
   }
 
@@ -456,20 +441,10 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
     required AdvancedRuntimeCheckpoint advanced,
     required ManagerClubSeason clubSeason,
   }) {
-    var completed = 0;
-    for (final season in advanced.manager.seasons.reversed) {
-      final record = season.clubs.firstWhere(
-        (item) => item.clubId == clubSeason.clubId,
-      );
-      if (record.managerId != clubSeason.managerId) break;
-      completed++;
-    }
-    return ManagerAssignment(
-      clubId: clubSeason.clubId,
-      managerId: clubSeason.managerId,
-      appointedSeasonIndex: advanced.nextSeasonIndex - completed,
-      completedSeasons: completed,
-      boardRelationship: clubSeason.relationshipAfter,
+    return preparationProjection.retainedAssignmentRuntime(
+      view: ManagerPreparationRuntimeView.fromCheckpoint(advanced),
+      clubSeason: clubSeason,
+      completedHistory: advanced.manager.seasons,
     );
   }
 
@@ -597,26 +572,6 @@ class PlayerPresidentTenureGatedFacilitySponsorCrisisManagerPromiseMediaTransfer
       managerChangeCount: total,
       managerChangesByReason: counts,
     );
-  }
-
-  double _jitter({
-    required String clubId,
-    required String managerId,
-    required int seasonIndex,
-    required WorldCheckpoint world,
-    required int salt,
-    required double amplitude,
-  }) {
-    final seed = StableHash.combine32([
-      world.config.careerSeed,
-      world.config.simulationVersion,
-      seasonIndex,
-      salt,
-      StableHash.string32(clubId),
-      StableHash.string32(managerId),
-    ]);
-    final rng = SeededRng(seed);
-    return (rng.nextDouble() - 0.5) * amplitude;
   }
 
   AdvancedRuntimeCheckpoint _advanced(

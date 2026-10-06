@@ -4,6 +4,10 @@ import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
 import '../league/club.dart';
 import '../player/player.dart';
+import '../player_president/player_president_interactive_decision_application_session.dart';
+import '../player_president/player_president_postseason_runtime_transition.dart';
+import '../world/world_checkpoint.dart';
+import '../world/world_career_engine.dart';
 import '../world/league_tier.dart';
 import '../world/world_career_hooks.dart';
 import '../world/world_career_season.dart';
@@ -16,6 +20,8 @@ import 'manager_impact_model.dart';
 import 'manager_opening_state_initializer.dart';
 import 'manager_patience_policy.dart';
 import 'manager_pool_generator.dart';
+import 'player_president_manager_preparation_projection.dart';
+import 'player_president_manager_control.dart';
 
 part 'manager_season_authority.dart';
 
@@ -318,9 +324,8 @@ class ManagerCareerController implements WorldCareerHooks {
 
     final changes = <ManagerChange>[];
     if (hasNextSeason && replacements.isNotEmpty) {
-      final retainedManagerIds = retained.values
-          .map((assignment) => assignment.managerId)
-          .toSet();
+      final retainedManagerIds =
+          retained.values.map((assignment) => assignment.managerId).toSet();
       final nextSeasonIndex = seasonIndex + 1;
       final available = _managers
           .where((manager) => !retainedManagerIds.contains(manager.id))
@@ -330,7 +335,8 @@ class ManagerCareerController implements WorldCareerHooks {
       replacements.sort((a, b) => a.clubId.compareTo(b.clubId));
       for (final replacement in replacements) {
         final club = clubById[replacement.clubId]!;
-        final clubPlayers = playersByClub[replacement.clubId] ?? const <Player>[];
+        final clubPlayers =
+            playersByClub[replacement.clubId] ?? const <Player>[];
         final finance = closingFinance[replacement.clubId]!;
         final tier = nextTierByClub[replacement.clubId]!;
         final manager = _selectBestManager(
@@ -461,7 +467,8 @@ class ManagerCareerController implements WorldCareerHooks {
             amplitude: 4,
           );
       if (score > bestScore ||
-          (score == bestScore && (best == null || manager.id.compareTo(best.id) < 0))) {
+          (score == bestScore &&
+              (best == null || manager.id.compareTo(best.id) < 0))) {
         best = manager;
         bestScore = score;
       }

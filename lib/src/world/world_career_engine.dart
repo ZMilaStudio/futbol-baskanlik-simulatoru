@@ -3,6 +3,7 @@ import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integra
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
 import '../finance/club_finance_state.dart';
+import '../finance/season_finance_authority_receipt.dart';
 import '../core/money.dart';
 import '../finance/transfer_cash_movement.dart';
 import '../league/club.dart';
@@ -12,8 +13,10 @@ import '../player/player_pool_generator.dart';
 import '../player/team_strength_calculator.dart';
 import '../season/season_engine.dart';
 import '../season/season_report.dart';
+import '../save/save_checksum.dart';
 import '../transfer/transfer_deal.dart';
 import '../transfer/transfer_market_engine.dart';
+import '../transfer/president_transfer_strategy_world_bridge.dart';
 import 'league_tier.dart';
 import 'world_career_hooks.dart';
 import 'world_career_report.dart';
@@ -108,6 +111,30 @@ final class WorldEconomyRecipient {
   final Object executionIdentity;
   final FullM65RuntimeEconomyContinuationAuthority _authority;
   bool _attempted = false;
+  bool _closingReleased = false;
+  OwnedWorldAnnualClosing releaseSettledAnnualClosing({
+    required CommittedSeasonSettlementCapability committed,
+    required SeasonFinanceAuthorityReceipt receipt,
+  }) {
+    if (!_attempted ||
+        _closingReleased ||
+        !_authority.permitsAnnualRelease(opening, executionIdentity, receipt)) {
+      throw StateError('Economy graph is not releasable to annual closing.');
+    }
+    final closing = OwnedWorldAnnualClosing._(
+        _engine,
+        _graph,
+        opening,
+        _authority.owner,
+        _authority.revision,
+        _authority.provenance,
+        executionIdentity,
+        _WorldAnnualSettlement(committed.reports, receipt.results));
+    closing.validate();
+    _closingReleased = true;
+    return closing;
+  }
+
   List<ClubFinanceSeason> executeCommittedFinance(
       {required Object expectedExecution,
       required CommittedSeasonSettlementCapability committed}) {
@@ -137,6 +164,113 @@ final class _WorldFinanceInputs {
   _WorldFinanceInputs(this.wages, this.flows);
   final Map<String, Money>? wages;
   final WorldFinanceSeasonFlows flows;
+}
+
+/// Real production annual execution captured before movement, manager
+/// completion or offseason. Only this owner library can construct the boundary.
+final class OwnedWorldAnnualClosing {
+  OwnedWorldAnnualClosing._(
+      this._engine,
+      this._graph,
+      this.opening,
+      this.owner,
+      this.revision,
+      this.provenance,
+      this.executionIdentity,
+      _WorldAnnualSettlement annual)
+      : reports = annual.reports,
+        finances = annual.finances,
+        closingFinanceStates = annual.closing,
+        _reportSignatures = List.unmodifiable(annual.reports
+            .map((r) => SaveChecksum.canonicalJson(r.report.toJson()))),
+        _fixtures = List.unmodifiable(annual.reports
+            .map((r) => List<Object>.unmodifiable(r.report.fixtures)));
+  final WorldCareerEngine _engine;
+  final _PreparedWorldGraph _graph;
+  final PreparedWorldOpening opening;
+  final Object owner, revision, provenance, executionIdentity;
+  final List<LeagueSeasonSnapshot> reports;
+  final List<ClubFinanceSeason> finances;
+  final List<ClubFinanceState> closingFinanceStates;
+  final List<String> _reportSignatures;
+  List<Club> get baseClubs => _graph.baseClubs;
+  final List<List<Object>> _fixtures;
+  bool _claimed = false;
+  bool _offseasonStarted = false;
+  void validate() {
+    for (var i = 0; i < reports.length; i++) {
+      final report = reports[i].report;
+      if (SaveChecksum.canonicalJson(report.toJson()) != _reportSignatures[i] ||
+          report.fixtures.length != _fixtures[i].length ||
+          Iterable<int>.generate(_fixtures[i].length)
+              .any((j) => !identical(report.fixtures[j], _fixtures[i][j]))) {
+        throw StateError('Altered owned annual-closing evidence.');
+      }
+    }
+  }
+
+  void claim(
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    validate();
+    if (_claimed ||
+        !identical(owner, expectedOwner) ||
+        !identical(revision, expectedRevision) ||
+        !identical(provenance, expectedProvenance)) {
+      throw StateError('Foreign or consumed annual-closing boundary.');
+    }
+    _claimed = true;
+  }
+
+  WorldOffseasonAttempt beginOffseason(List<WorldLeague> nextLeagues,
+      {PresidentTransferStrategyProfileProvider? profileProvider}) {
+    validate();
+    if (!_claimed || _offseasonStarted) {
+      throw StateError('Unowned or consumed annual-closing offseason.');
+    }
+    final attempt = WorldOffseasonProjection(
+      lifecycleEngine: _engine.lifecycleEngine,
+      strengthCalculator: _engine.strengthCalculator,
+      transferMarketEngine: profileProvider == null
+          ? _engine.transferMarketEngine
+          : PresidentTransferStrategyWorldMarketEngine(
+              profileProvider: profileProvider,
+              delegate: _engine.transferMarketEngine
+                      is PresidentTransferStrategyWorldMarketEngine
+                  ? (_engine.transferMarketEngine
+                          as PresidentTransferStrategyWorldMarketEngine)
+                      .delegate
+                  : _engine.transferMarketEngine),
+    ).beginAttempt(
+      seasonIndex: opening.seasonIndex,
+      config: _graph.config,
+      players: opening.players,
+      baseClubs: _graph.baseClubs,
+      squadClubs: opening.squadClubs,
+      closingFinanceStates: closingFinanceStates,
+      nextLeagues: nextLeagues,
+      rosterHooks: _graph.rosterHooks,
+      transferHooks: _graph.transferHooks,
+      enableTransferInstallments: _graph.enableTransferInstallments,
+    );
+    _offseasonStarted = true;
+    return attempt;
+  }
+}
+
+final class _WorldAnnualSettlement {
+  _WorldAnnualSettlement(Iterable<LeagueSeasonSnapshot> reports,
+      Iterable<ClubFinanceSeason> finances)
+      : reports = List.unmodifiable(reports),
+        finances = List.unmodifiable(finances),
+        closing = List.unmodifiable(finances.map((finance) => ClubFinanceState(
+            clubId: finance.clubId,
+            cash: finance.closingCash,
+            debt: finance.closingDebt)));
+  final List<LeagueSeasonSnapshot> reports;
+  final List<ClubFinanceSeason> finances;
+  final List<ClubFinanceState> closing;
 }
 
 final class _PreparedWorldGraph {
@@ -382,6 +516,56 @@ class WorldCareerEngine {
     }
   }
 
+  OwnedWorldAnnualClosing captureAnnualClosing(PreparedWorldExecution prepared,
+      {required Object expectedOwner,
+      required Object expectedRevision,
+      required Object expectedProvenance}) {
+    prepared._check(expectedOwner, expectedRevision, expectedProvenance);
+    if (!identical(prepared._engine, this) ||
+        prepared._graph.seasonCount != 1) {
+      throw StateError('Annual closing requires one genuine prepared season.');
+    }
+    prepared._state = PreparedExecutionState.executing;
+    try {
+      final graph = prepared._graph;
+      final annual = _executeAnnual(
+          prepared.opening, graph.rosterHooks, graph.financeHooks);
+      final closing = OwnedWorldAnnualClosing._(
+          this,
+          graph,
+          prepared.opening,
+          prepared.owner,
+          prepared.revision,
+          prepared.provenance,
+          prepared.executionIdentity,
+          annual);
+      prepared._state = PreparedExecutionState.moved;
+      return closing;
+    } catch (_) {
+      prepared._state = PreparedExecutionState.failed;
+      rethrow;
+    }
+  }
+
+  _WorldAnnualSettlement _executeAnnual(PreparedWorldOpening opening,
+      WorldRosterHooks rosterHooks, WorldFinanceHooks financeHooks) {
+    final inputs = _financeInputs(opening, rosterHooks, financeHooks);
+    final clubById = {for (final club in opening.effectiveClubs) club.id: club};
+    final reports = <LeagueSeasonSnapshot>[];
+    final finances = <ClubFinanceSeason>[];
+    for (final league in opening.leagues) {
+      final report = seasonEngine.simulate(
+        clubs:
+            league.clubIds.map((id) => clubById[id]!).toList(growable: false),
+        config: opening.config.copyWith(seasonIndex: opening.seasonIndex),
+      );
+      reports.add(LeagueSeasonSnapshot(tier: league.tier, report: report));
+      finances.addAll(_settleLeague(opening, league, report, inputs));
+    }
+    finances.sort((a, b) => a.clubId.compareTo(b.clubId));
+    return _WorldAnnualSettlement(reports, finances);
+  }
+
   /// Existing world simulation semantics are intentionally preserved.
   /// The final requested season does not prepare an offseason unless another
   /// season exists inside this same call.
@@ -582,36 +766,10 @@ class WorldCareerEngine {
       final currentClubs = opening.effectiveClubs;
       currentFinanceStates = opening.financeStates;
 
-      final financeInputs = _financeInputs(opening, rosterHooks, financeHooks);
-      final clubById = {for (final club in currentClubs) club.id: club};
-      final leagueResults = <LeagueSeasonSnapshot>[];
-      final financeResults = <ClubFinanceSeason>[];
-
-      for (final league in leaguesBeforeSeason) {
-        final leagueClubs = league.clubIds
-            .map((clubId) => clubById[clubId]!)
-            .toList(growable: false);
-        final report = seasonEngine.simulate(
-          clubs: leagueClubs,
-          config: config.copyWith(seasonIndex: seasonIndex),
-        );
-        leagueResults.add(
-          LeagueSeasonSnapshot(tier: league.tier, report: report),
-        );
-        financeResults
-            .addAll(_settleLeague(opening, league, report, financeInputs));
-      }
-
-      financeResults.sort((a, b) => a.clubId.compareTo(b.clubId));
-      final closingFinanceStates = financeResults
-          .map(
-            (finance) => ClubFinanceState(
-              clubId: finance.clubId,
-              cash: finance.closingCash,
-              debt: finance.closingDebt,
-            ),
-          )
-          .toList(growable: false);
+      final annual = _executeAnnual(opening, rosterHooks, financeHooks);
+      final leagueResults = annual.reports;
+      final financeResults = annual.finances;
+      final closingFinanceStates = annual.closing;
 
       List<Player> retiredAfterSeason = const [];
       List<Player> youthIntakeAfterSeason = const [];

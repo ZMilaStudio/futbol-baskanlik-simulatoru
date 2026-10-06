@@ -5,6 +5,7 @@ import '../manager/player_president_manager_control.dart';
 import '../manager/player_president_manager_preparation_projection.dart';
 import '../save/advanced_runtime_checkpoint.dart';
 import '../transfer/player_president_transfer_strategy_control.dart';
+import 'player_president_postseason_runtime_transition.dart';
 
 enum PostseasonDecisionPhase {
   transferStrategy,
@@ -49,6 +50,14 @@ sealed class PostseasonSourceCapability {
   PostseasonSourceRequirements get source;
 }
 
+final class _RuntimeTransitionDecisionCapability
+    extends PostseasonSourceCapability {
+  _RuntimeTransitionDecisionCapability(this.transition, this.source);
+  final SinglePassPostseasonRuntimeTransition transition;
+  @override
+  final PostseasonSourceRequirements source;
+}
+
 /// Post-offseason completion provenance is deliberately a separate capability.
 /// A raw checkpoint, a reconstructed manager, or a request key is not proof.
 sealed class ManagerPreparationSourceCapability {
@@ -88,6 +97,13 @@ final class PostseasonAcceptedAnswer {
 /// Incremental decision primitive. It never owns or replays a market, world,
 /// application, M73 session, or settlement. Accepted choices are not publication.
 final class PostseasonDecisionSession {
+  factory PostseasonDecisionSession.fromRuntimeTransition(
+      SinglePassPostseasonRuntimeTransition transition) {
+    final source = transition.decisionSource;
+    transition.validateDecisionSource(source);
+    return PostseasonDecisionSession.fromCapability(
+        _RuntimeTransitionDecisionCapability(transition, source));
+  }
   PostseasonDecisionSession.fromCapability(
       PostseasonSourceCapability capability)
       : _source = capability.source,
@@ -114,6 +130,7 @@ final class PostseasonDecisionSession {
   PostseasonDecisionPhase _phase = PostseasonDecisionPhase.transferStrategy;
   PostseasonDecisionStatus _status = PostseasonDecisionStatus.awaitingContext;
   AdvancedRuntimeCheckpoint? _managerSource;
+  ManagerPreparationRuntimeView? _managerRuntimeSource;
   PlayerManagerReviewContext? _review;
   final PlayerManagerPreparationProjection _projection;
 
@@ -138,6 +155,10 @@ final class PostseasonDecisionSession {
       required Object revision,
       required Object provenance,
       required Object transaction}) {
+    final capability = _capability;
+    if (capability is _RuntimeTransitionDecisionCapability) {
+      capability.transition.validateDecisionSource(_source);
+    }
     if (!identical(owner, _source.owner) ||
         !identical(revision, _source.revision) ||
         !identical(provenance, _source.provenance) ||
@@ -220,8 +241,11 @@ final class PostseasonDecisionSession {
         }
         // Prepare fallible next context BEFORE accepting any answer.
         if (choice == PlayerManagerReviewChoice.replace) {
-          consequence = _projection.replacement(
-              advanced: _managerSource!, review: _review!);
+          final runtime = _managerRuntimeSource;
+          consequence = runtime == null
+              ? _projection.replacement(
+                  advanced: _managerSource!, review: _review!)
+              : _projection.replacementRuntime(view: runtime, review: _review!);
         }
       case PostseasonDecisionPhase.managerReplacement:
         if (choice is! Manager)
@@ -270,6 +294,41 @@ final class PostseasonDecisionSession {
     }
     return _prepareManager(
         source.originalOpening, source.postOffseason, source.presidentId);
+  }
+
+  /// Trusted owned runtime view, without fabricating an advanced/president
+  /// checkpoint. The decision primitive remains separate from world execution.
+  PostseasonPending prepareManagerFromRuntimeTransition(
+      SinglePassPostseasonRuntimeTransition transition) {
+    final capability = _capability;
+    if (capability is! _RuntimeTransitionDecisionCapability ||
+        !identical(capability.transition, transition) ||
+        _phase != PostseasonDecisionPhase.awaitingOffseason) {
+      throw StateError('Foreign or premature runtime manager preparation.');
+    }
+    transition.validateDecisionSource(_source);
+    final opening = transition.originalManagerOpening;
+    final view = transition.managerPreparationView;
+    final pending = transition.managerPending!;
+    if (opening == null ||
+        !identical(opening.owner, _source.owner) ||
+        !identical(opening.sourceRevision, _source.revision) ||
+        opening.seasonIndex != _source.completedSeason ||
+        view.completedSeason.seasonIndex != opening.seasonIndex ||
+        opening.managers
+            .any((m) => !view.managers.any((n) => identical(m, n))) ||
+        opening.assignments[_source.clubId]?.managerId !=
+            pending.review.currentManager.id) {
+      throw StateError(
+          'Runtime review lacks original completed manager authority.');
+    }
+    _managerRuntimeSource = view;
+    _review = pending.review;
+    _phase = pending.replacement == null
+        ? PostseasonDecisionPhase.managerReview
+        : PostseasonDecisionPhase.managerReplacement;
+    _pending = _newPending(_phase, pending.replacement ?? pending.review);
+    return _pending!;
   }
 
   /// TEST FIXTURE / NOT AUTHORITATIVE PRODUCER. No assignment/history published.
