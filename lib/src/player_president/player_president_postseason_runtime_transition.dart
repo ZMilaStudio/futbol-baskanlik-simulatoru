@@ -1,4 +1,14 @@
 import '../election/president_management_profile.dart';
+import '../core/money.dart';
+import '../finance/club_finance_state.dart';
+import '../league/club.dart';
+import '../player/player.dart';
+import '../save/advanced_runtime_checkpoint.dart';
+import '../transfer/transfer_deal.dart';
+import '../world/world_roster_hooks.dart';
+import '../world/world_finance_hooks.dart';
+import '../world/world_transfer_hooks.dart';
+import '../world/world_league.dart';
 import '../election/player_president_tenure_control_gate.dart';
 import '../crisis/crisis_runtime_integration.dart';
 import '../crisis/facility_sponsor_crisis_runtime_composition.dart';
@@ -24,6 +34,7 @@ import 'player_president_postseason_decision_session.dart';
 import 'player_president_interactive_decision_application_session.dart';
 
 part '../save/lossless_postoffseason_runtime_graph.dart';
+part '../save/trusted_future_prepared_runtime_admission.dart';
 
 enum PostseasonRuntimeTransitionPhase {
   closingReady,

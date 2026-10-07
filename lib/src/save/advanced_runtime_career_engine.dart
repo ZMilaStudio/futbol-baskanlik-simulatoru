@@ -1,4 +1,11 @@
 import '../core/simulation_config.dart';
+import '../core/money.dart';
+import '../finance/club_finance_state.dart';
+import '../player/player.dart';
+import '../transfer/transfer_deal.dart';
+import '../world/world_finance_hooks.dart';
+import '../world/world_transfer_hooks.dart';
+import '../player_president/player_president_postseason_runtime_transition.dart';
 import '../finance/club_finance_season.dart';
 import '../finance/season_finance_authority_receipt.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
@@ -17,7 +24,130 @@ import '../transfer/loan_agreement.dart';
 import '../transfer/president_transfer_strategy_world_bridge.dart';
 import 'advanced_runtime_checkpoint.dart';
 
-enum PreparedRuntimeOrigin { initial, resumed }
+enum PreparedRuntimeOrigin { initial, resumed, futureContinuation }
+
+final class _AdvancedFutureTransferRecipient implements FutureTransferRuntime {
+  _AdvancedFutureTransferRecipient._(this._claim, this._controller);
+  final FutureRuntimeClaim _claim;
+  final AdvancedTransferController _controller;
+  void _check() => _claim.validateChild(_claim.source.worldSuccessor);
+  @override
+  Object get lineageIdentity => _claim.source.transferLineageIdentity;
+  @override
+  int get contractCount => _controller.activeContracts.length;
+  @override
+  AdvancedTransferRuntimeState snapshot() {
+    _check();
+    return AdvancedTransferRuntimeState(
+        activeContracts: _controller.activeContracts,
+        contractEvents: _controller.contractEvents,
+        activeLoans: _controller.activeLoans,
+        loanHistory: _controller.loanHistory,
+        installmentObligations: _controller.installmentObligations);
+  }
+
+  @override
+  Map<String, Money>? annualWagesByClub(
+      {required int seasonIndex,
+      required List<Player> players,
+      required List<Club> clubs,
+      required List<WorldLeague> leagues,
+      required List<ClubFinanceState> financeStates}) {
+    _check();
+    return _controller.annualWagesByClub(
+        seasonIndex: seasonIndex,
+        players: players,
+        clubs: clubs,
+        leagues: leagues,
+        financeStates: financeStates);
+  }
+
+  @override
+  WorldFinanceSeasonFlows flowsForSeason(
+      {required int seasonIndex,
+      required List<Club> clubs,
+      required List<WorldLeague> leagues,
+      required List<ClubFinanceState> openingFinanceStates}) {
+    _check();
+    return _controller.flowsForSeason(
+        seasonIndex: seasonIndex,
+        clubs: clubs,
+        leagues: leagues,
+        openingFinanceStates: openingFinanceStates);
+  }
+
+  @override
+  List<Player> prepareNextSeasonPlayers(
+      {required int seasonIndex,
+      required int nextSeasonIndex,
+      required List<Player> activePlayers,
+      required List<Player> retiredPlayers,
+      required List<Player> youthIntake,
+      required List<Club> clubs,
+      required List<WorldLeague> leaguesForNextSeason,
+      required List<ClubFinanceState> financeStates}) {
+    _check();
+    return _controller.prepareNextSeasonPlayers(
+        seasonIndex: seasonIndex,
+        nextSeasonIndex: nextSeasonIndex,
+        activePlayers: activePlayers,
+        retiredPlayers: retiredPlayers,
+        youthIntake: youthIntake,
+        clubs: clubs,
+        leaguesForNextSeason: leaguesForNextSeason,
+        financeStates: financeStates);
+  }
+
+  @override
+  Map<String, int>? contractYearsRemainingForTransfer(
+      {required int nextSeasonIndex, required List<Player> players}) {
+    _check();
+    return _controller.contractYearsRemainingForTransfer(
+        nextSeasonIndex: nextSeasonIndex, players: players);
+  }
+
+  @override
+  void onTransferWindowCompleted(
+      {required int seasonIndex,
+      required int nextSeasonIndex,
+      required List<Player> playersBeforeWindow,
+      required List<Player> playersAfterWindow,
+      required List<TransferDeal> transfers,
+      required List<Club> clubs,
+      required List<WorldLeague> leaguesForNextSeason,
+      required List<ClubFinanceState> financeStates}) {
+    _check();
+    _controller.onTransferWindowCompleted(
+        seasonIndex: seasonIndex,
+        nextSeasonIndex: nextSeasonIndex,
+        playersBeforeWindow: playersBeforeWindow,
+        playersAfterWindow: playersAfterWindow,
+        transfers: transfers,
+        clubs: clubs,
+        leaguesForNextSeason: leaguesForNextSeason,
+        financeStates: financeStates);
+  }
+
+  @override
+  WorldTransferPostProcessResult afterPermanentTransfers(
+      {required int seasonIndex,
+      required int nextSeasonIndex,
+      required List<Player> players,
+      required List<ClubFinanceState> financeStates,
+      required List<TransferDeal> permanentTransfers,
+      required List<Club> clubs,
+      required List<WorldLeague> leaguesForNextSeason}) {
+    _check();
+    return _controller.afterPermanentTransfers(
+        seasonIndex: seasonIndex,
+        nextSeasonIndex: nextSeasonIndex,
+        players: players,
+        financeStates: financeStates,
+        permanentTransfers: permanentTransfers,
+        clubs: clubs,
+        leaguesForNextSeason: leaguesForNextSeason);
+  }
+}
 
 /// Production closing owner captured before movement or any completion hook.
 /// The original transfer controller and detached manager continuation remain
@@ -31,6 +161,18 @@ final class OwnedAdvancedAnnualClosing {
   ManagerContinuationAuthority? _managerContinuation;
   List<LoanAgreement> get loanHistory => _transfer.loanHistory;
   int get contractCount => _transfer.activeContracts.length;
+  AdvancedTransferRuntimeState get transferEvidence =>
+      AdvancedTransferRuntimeState(
+          activeContracts: _transfer.activeContracts,
+          contractEvents: _transfer.contractEvents,
+          activeLoans: _transfer.activeLoans,
+          loanHistory: _transfer.loanHistory,
+          installmentObligations: _transfer.installmentObligations);
+  FutureTransferRuntime stageFutureTransfer(FutureRuntimeClaim claim) {
+    claim.validateChild(this);
+    return _AdvancedFutureTransferRecipient._(claim, _transfer);
+  }
+
   void claim(
       {required Object expectedOwner,
       required Object expectedRevision,
@@ -91,10 +233,28 @@ final class PreparedAdvancedRuntimeSeason {
       this.managerAuthority,
       this.managerLineage,
       this.transferLineage)
-      : _openingContractCount = _transfer.activeContracts.length;
+      : _futureManager = null,
+        _futureTransfer = null,
+        _openingContractCount = _transfer!.activeContracts.length;
+  PreparedAdvancedRuntimeSeason._future(
+      this._engine,
+      this._world,
+      this.managerAuthority,
+      FutureManagerRecipient manager,
+      FutureTransferRuntime transfer)
+      : _manager = null,
+        _transfer = null,
+        _futureManager = manager,
+        _futureTransfer = transfer,
+        origin = PreparedRuntimeOrigin.futureContinuation,
+        managerLineage = manager.evidenceIdentity,
+        transferLineage = transfer.lineageIdentity,
+        _openingContractCount = transfer.contractCount;
   final AdvancedRuntimeCareerEngine _engine;
-  final ManagerCareerController _manager;
-  final AdvancedTransferController _transfer;
+  final ManagerCareerController? _manager;
+  final AdvancedTransferController? _transfer;
+  final FutureManagerRecipient? _futureManager;
+  final FutureTransferRuntime? _futureTransfer;
   final PreparedWorldExecution _world;
   final PreparedRuntimeOrigin origin;
   final ManagerSeasonAuthority? managerAuthority;
@@ -106,6 +266,14 @@ final class PreparedAdvancedRuntimeSeason {
   PreparedWorldOpening get opening => _world.opening;
   // Evidence of the real lazy boundary, not a complete transfer capability.
   int get openingContractCount => _openingContractCount;
+  AdvancedTransferRuntimeState get transferEvidence =>
+      _futureTransfer?.snapshot() ??
+      AdvancedTransferRuntimeState(
+          activeContracts: _transfer!.activeContracts,
+          contractEvents: _transfer.contractEvents,
+          activeLoans: _transfer.activeLoans,
+          loanHistory: _transfer.loanHistory,
+          installmentObligations: _transfer.installmentObligations);
   final int _openingContractCount;
   PreparedExecutionState _state = PreparedExecutionState.prepared;
   PreparedExecutionState get state => _state;
@@ -129,15 +297,11 @@ final class PreparedAdvancedRuntimeSeason {
         expectedOwner: expectedOwner,
         expectedRevision: expectedRevision,
         expectedProvenance: expectedProvenance);
-    final successor = PreparedAdvancedRuntimeSeason._(
-        _engine,
-        _manager,
-        _transfer,
-        moved,
-        origin,
-        managerAuthority,
-        managerLineage,
-        transferLineage);
+    final successor = origin == PreparedRuntimeOrigin.futureContinuation
+        ? PreparedAdvancedRuntimeSeason._future(
+            _engine, moved, managerAuthority, _futureManager!, _futureTransfer!)
+        : PreparedAdvancedRuntimeSeason._(_engine, _manager, _transfer!, moved,
+            origin, managerAuthority, managerLineage, transferLineage);
     _state = PreparedExecutionState.moved;
     return successor;
   }
@@ -154,22 +318,29 @@ final class PreparedAdvancedRuntimeSeason {
             authority: authority,
             expectedOwner: expectedOwner,
             expectedRevision: expectedRevision,
-            expectedProvenance: expectedProvenance));
+            expectedProvenance: expectedProvenance),
+        _futureTransfer);
     _state = PreparedExecutionState.moved;
     return result;
   }
 }
 
 final class AdvancedEconomyRecipient {
-  AdvancedEconomyRecipient._(this._transfer, this._world);
-  final AdvancedTransferController _transfer;
+  AdvancedEconomyRecipient._(this._transfer, this._world, this._futureTransfer);
+  final AdvancedTransferController? _transfer;
+  final FutureTransferRuntime? _futureTransfer;
   final WorldEconomyRecipient _world;
-  int get contractCount => _transfer.activeContracts.length;
+  int get contractCount =>
+      _futureTransfer?.contractCount ?? _transfer!.activeContracts.length;
   OwnedAdvancedAnnualClosing releaseSettledAnnualClosing({
     required FullM65RuntimeEconomyContinuationAuthority authority,
     required CommittedSeasonSettlementCapability committed,
     required SeasonFinanceAuthorityReceipt receipt,
   }) {
+    if (_futureTransfer != null) {
+      throw StateError(
+          'Future active-season closing producer is deferred to AR-D.');
+    }
     final world = _world.releaseSettledAnnualClosing(
         committed: committed, receipt: receipt);
     if (!identical(authority.managerAuthority.effectiveClubs,
@@ -177,7 +348,7 @@ final class AdvancedEconomyRecipient {
       throw StateError('Foreign settled manager opening.');
     }
     return OwnedAdvancedAnnualClosing._(
-        world, _transfer, authority.managerAuthority);
+        world, _transfer!, authority.managerAuthority);
   }
 
   List<ClubFinanceSeason> executeCommittedFinance(
@@ -188,12 +359,27 @@ final class AdvancedEconomyRecipient {
 }
 
 class AdvancedRuntimeCareerEngine {
+  PreparedAdvancedRuntimeSeason prepareFuture(FutureRuntimeClaim claim) {
+    final transfer = claim.transferRecipient;
+    final manager = claim.managerRecipient;
+    claim.validateRecipients(transfer, manager);
+    final world = worldEngine.prepareFuture(
+        claim: claim, transfer: transfer, manager: manager);
+    final authority = manager.capture(world.opening);
+    return PreparedAdvancedRuntimeSeason._future(
+        this, world, authority, manager, transfer);
+  }
+
   OwnedAdvancedAnnualClosing captureAnnualClosing(
       PreparedAdvancedRuntimeSeason prepared,
       {required Object expectedOwner,
       required Object expectedRevision,
       required Object expectedProvenance}) {
     prepared._check(expectedOwner, expectedRevision, expectedProvenance);
+    if (prepared.origin == PreparedRuntimeOrigin.futureContinuation) {
+      throw StateError(
+          'Future active-season closing producer is deferred to AR-D.');
+    }
     final manager = prepared.managerAuthority;
     if (!identical(prepared._engine, this) || manager == null) {
       throw StateError('Closing capture requires original manager authority.');
@@ -205,7 +391,7 @@ class AdvancedRuntimeCareerEngine {
           expectedRevision: expectedRevision,
           expectedProvenance: expectedProvenance);
       final boundary =
-          OwnedAdvancedAnnualClosing._(world, prepared._transfer, manager);
+          OwnedAdvancedAnnualClosing._(world, prepared._transfer!, manager);
       prepared._state = PreparedExecutionState.moved;
       return boundary;
     } catch (_) {
@@ -382,10 +568,18 @@ class AdvancedRuntimeCareerEngine {
           expectedProvenance: expectedProvenance);
       final result = AdvancedRuntimeSimulationResult(
           report: world.report,
-          checkpoint: _checkpoint(
-              world: world.checkpoint,
-              transferController: prepared._transfer,
-              managerController: prepared._manager));
+          checkpoint: prepared._futureTransfer != null
+              ? AdvancedRuntimeCheckpoint(
+                  world: world.checkpoint,
+                  transfer: prepared._futureTransfer.snapshot(),
+                  manager: ManagerRuntimeState(
+                      managers: prepared._futureManager!.managers,
+                      assignments: prepared._futureManager.assignments,
+                      seasons: prepared._futureManager.completedSeasons))
+              : _checkpoint(
+                  world: world.checkpoint,
+                  transferController: prepared._transfer!,
+                  managerController: prepared._manager!));
       prepared._state = PreparedExecutionState.completed;
       return result;
     } catch (_) {

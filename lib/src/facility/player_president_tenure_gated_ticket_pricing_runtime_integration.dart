@@ -385,6 +385,15 @@ final class OwnedAnnualClosingBoundary {
   Map<String, PresidentManagementProfile>? _nextProfiles;
   PlayerPresidentTenureControlState? _nextControl;
   bool _moved = false;
+  FutureTicketPreparationBinding stageFutureTicket(FutureRuntimeClaim claim) {
+    claim.validateChild(advanced);
+    if (!_moved || !identical(claim.source.worldSuccessor, _successor?.world)) {
+      throw StateError('Annual successor has not been published.');
+    }
+    return PreparedTicketRuntimeSeason._stageFuture(
+        claim, _prepared._producer, _prepared._pricing);
+  }
+
   FacilitySponsorPostseasonContinuation stageSuccessor({
     required SinglePassPostseasonRuntimeTransition transition,
     required WorldCheckpoint world,
@@ -486,6 +495,46 @@ final class OwnedAnnualClosingBoundary {
 }
 
 final class PreparedTicketRuntimeSeason {
+  static FutureTicketPreparationBinding stageFirstFuture(
+      FutureRuntimeClaim claim) {
+    if (claim.source.origin !=
+        PostoffseasonRuntimeOrigin.firstFutureBootstrap) {
+      throw StateError('First ticket activation requires genuine bootstrap.');
+    }
+    return _stageFuture(
+        claim,
+        const PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine(),
+        null);
+  }
+
+  static FutureTicketPreparationBinding _stageFuture(
+      FutureRuntimeClaim claim,
+      PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine producer,
+      _TicketPricingEconomyEngine? pricing) {
+    claim.validateChild(claim.facilityRecipient);
+    final graph = claim.source;
+    final presidents = claim.presidentClubs;
+    final context = _PricingRuntimeContext(
+        clubs: graph.worldSuccessor.baseClubs,
+        stadiumLevelsByClub: Map.unmodifiable({
+          for (final state in graph.facilities.stadiumFacilities)
+            state.clubId: state.level
+        }),
+        fanStatesByClub: Map.unmodifiable({
+          for (final state in presidents) state.clubId: state.fanReputation
+        }),
+        presidentProfilesByClub: Map.unmodifiable({
+          for (final state in presidents) state.clubId: state.managementProfile
+        }),
+        tenureControl: graph.control,
+        presidentStates: presidents,
+        electionInterval: claim.electionInterval,
+        completedElectionTerms: claim.completedElectionTerms,
+        seasonsIntoCurrentTerm: claim.seasonsIntoCurrentTerm,
+        termPromiseScores: claim.termPromiseScores);
+    return FutureTicketPreparationBinding._(claim, producer, context, pricing);
+  }
+
   PreparedTicketRuntimeSeason._(this._producer, this._context, this._pricing,
       this._runtime, this._facility);
   final PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine _producer;
@@ -513,6 +562,8 @@ final class PreparedTicketRuntimeSeason {
   Map<String, PresidentManagementProfile> get pricingProfiles =>
       Map.unmodifiable(_context.presidentProfilesByClub);
   int get openingContractCount => _facility.openingContractCount;
+  AdvancedTransferRuntimeState get transferEvidence =>
+      _facility.transferEvidence;
   int get sponsorProcessedClubCount => _facility.sponsorProcessedClubCount;
   Money get sponsorSeasonRevenue => _facility.sponsorSeasonRevenue;
   int get ticketDecisionCount => _pricing._decisions.length;
@@ -532,6 +583,79 @@ final class PreparedTicketRuntimeSeason {
             expectedOwner: expectedOwner,
             expectedRevision: expectedRevision,
             expectedProvenance: expectedProvenance));
+  }
+}
+
+/// Private-minted target binding; the pricing graph itself never escapes.
+final class FutureTicketPreparationBinding {
+  FutureTicketPreparationBinding._(
+      this._claim, this._producer, this._context, this._pricing);
+  final FutureRuntimeClaim _claim;
+  final PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine _producer;
+  final _PricingRuntimeContext _context;
+  _TicketPricingEconomyEngine? _pricing;
+  bool _bound = false;
+  PreparedTicketRuntimeSeason prepare() {
+    _claim.requirePreparationCommit();
+    return _claim.facilityRecipient.prepareFuture(_claim, this);
+  }
+
+  bool _completed = false;
+  PreparedTicketRuntimeSeason complete(PreparedFacilitySponsorSeason facility,
+      FacilitySponsorCrisisRuntimeCareerEngine producer) {
+    _claim.requirePreparationCommit();
+    if (!_bound ||
+        _completed ||
+        !identical(facility.owner, _claim.owner) ||
+        !identical(facility.revision, _claim.revision) ||
+        !identical(facility.provenance, _claim.provenance) ||
+        facility.opening.seasonIndex != _claim.source.targetSeasonIndex) {
+      throw StateError('Foreign or repeated target preparation publication.');
+    }
+    _completed = true;
+    return PreparedTicketRuntimeSeason._(
+        _producer, _context, _pricing!, producer, facility);
+  }
+
+  void validate(FutureRuntimeClaim claim) {
+    if (!identical(claim, _claim) || _bound) {
+      throw StateError('Foreign or consumed future ticket binding.');
+    }
+    claim.validateChild(claim.facilityRecipient);
+  }
+
+  BasicEconomyEngine bindDelegate(BasicEconomyEngine delegate) {
+    validate(_claim);
+    validateDelegate(delegate);
+    final pricing = _pricing;
+    if (pricing != null) {
+      if (!identical(delegate, pricing)) {
+        throw StateError('Later ticket delegate lost its original lineage.');
+      }
+      _bound = true;
+      return pricing;
+    }
+    _pricing = _TicketPricingEconomyEngine(
+        delegate: delegate,
+        expectedClubIds: _context.clubs.map((club) => club.id),
+        stadiumLevelsByClub: _context.stadiumLevelsByClub,
+        fanStatesByClub: _context.fanStatesByClub,
+        presidentProfilesByClub: _context.presidentProfilesByClub,
+        tenureControl: _context.tenureControl,
+        playerProvider: _producer.playerProvider,
+        aiPolicy: _producer.aiPolicy,
+        pricingPolicy: _producer.pricingPolicy,
+        stadiumPolicy: _producer.stadiumPolicy);
+    _bound = true;
+    return _pricing!;
+  }
+
+  void validateDelegate(BasicEconomyEngine delegate) {
+    validate(_claim);
+    if (_pricing != null && !identical(delegate, _pricing)) {
+      throw StateError(
+          'Later pricing lineage does not match its facility child.');
+    }
   }
 }
 

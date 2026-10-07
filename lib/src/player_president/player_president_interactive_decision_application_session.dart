@@ -28,6 +28,30 @@ import 'player_president_interactive_decision_transcript_snapshot.dart';
 import 'player_president_postseason_runtime_transition.dart';
 
 /// Unforgeable application-local claim. No data constructor or global registry.
+final class ApplicationFutureRuntimeEntry {
+  ApplicationFutureRuntimeEntry._(this._application, this.source);
+  final PlayerPresidentInteractiveDecisionApplicationSession _application;
+  final LosslessPostOffseasonRuntimeGraph source;
+  final Object revision = Object();
+  final Object executionIdentity = Object();
+  Object get owner => _application;
+  void validate(LosslessPostOffseasonRuntimeGraph expectedSource) {
+    if (!identical(source, expectedSource) ||
+        !identical(_application._futureRuntimeEntry, this)) {
+      throw StateError('Foreign or stale application future entry.');
+    }
+  }
+
+  void validatePreparationInvocation(LosslessPostOffseasonRuntimeGraph source) {
+    validate(source);
+    if (!_application._futurePreparationInProgress) {
+      throw StateError(
+          'Future admission must be invoked by its application owner.');
+    }
+  }
+}
+
+/// Unforgeable application-local claim. No data constructor or global registry.
 /// Only the application below can issue a token for its exact published B2.
 final class ApplicationPostseasonTransitionToken {
   ApplicationPostseasonTransitionToken._(this._application, this.source);
@@ -415,6 +439,70 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   ApplicationPostseasonTransitionToken? _postseasonToken;
   SinglePassPostseasonRuntimeTransition? _postseasonTransition;
   LosslessPostOffseasonRuntimeGraph? _postseasonContinuation;
+  ApplicationFutureRuntimeEntry? _futureRuntimeEntry;
+  TrustedFuturePreparedRuntimeAdmission? _futureRuntimeAdmission;
+  bool _futurePreparationInProgress = false;
+  TrustedFuturePreparedRuntimeAdmission? get futureRuntimeAdmission =>
+      _futureRuntimeAdmission;
+
+  ApplicationFutureRuntimeEntry claimFutureRuntimeEntry({
+    required LosslessPostOffseasonRuntimeGraph expectedSource,
+    required Object expectedSourceRevision,
+    required PostoffseasonRuntimeOrigin expectedOrigin,
+    required int expectedTargetSeason,
+  }) {
+    final config = _newGameConfig;
+    if (config == null ||
+        expectedSource.control.controlledClubId != _newGameControlledClubId ||
+        (expectedOrigin == PostoffseasonRuntimeOrigin.firstFutureBootstrap &&
+            !identical(expectedSource, _postseasonContinuation))) {
+      throw StateError('Future source has no matching application entry.');
+    }
+    final previous = _futureRuntimeEntry;
+    if (previous != null) {
+      if (!identical(previous.source, expectedSource) ||
+          !identical(expectedSourceRevision, expectedSource.revision) ||
+          expectedOrigin != expectedSource.origin ||
+          expectedTargetSeason != expectedSource.targetSeasonIndex) {
+        throw StateError('Conflicting application future entry.');
+      }
+      return previous;
+    }
+    expectedSource.validateFutureAdmissionSource(
+        expectedOwner: expectedSource.owner,
+        expectedRevision: expectedSourceRevision,
+        expectedProvenance: expectedSource.provenance,
+        expectedExecution: expectedSource.executionIdentity,
+        expectedOrigin: expectedOrigin,
+        expectedTargetSeason: expectedTargetSeason,
+        expectedCareerSeed: config.careerSeed,
+        expectedSimulationVersion: config.simulationVersion);
+    return _futureRuntimeEntry =
+        ApplicationFutureRuntimeEntry._(this, expectedSource);
+  }
+
+  PreparedTicketRuntimeSeason prepareFutureRuntime({
+    required ApplicationFutureRuntimeEntry expectedEntry,
+  }) {
+    expectedEntry.validate(expectedEntry.source);
+    if (!identical(expectedEntry.owner, this)) {
+      throw StateError('Foreign application future preparation.');
+    }
+    final existing = _futureRuntimeAdmission;
+    if (existing != null) return existing.prepared;
+    if (_futurePreparationInProgress) {
+      throw StateError('Future preparation is already in progress.');
+    }
+    _futurePreparationInProgress = true;
+    try {
+      final prepared = expectedEntry.source.admitFutureRuntime(expectedEntry);
+      _futureRuntimeAdmission = prepared;
+      return prepared.prepared;
+    } finally {
+      _futurePreparationInProgress = false;
+    }
+  }
+
   LosslessPostOffseasonRuntimeGraph? get postseasonContinuation =>
       _postseasonContinuation;
 
