@@ -12,6 +12,23 @@ final class ManagerContinuationAuthority {
   List<ManagerAssignment> get assignments => _controller.finalAssignments;
   List<ManagerCareerSeason> get completedSeasons => _controller.seasons;
   bool _preparationApplied = false;
+  FutureManagerRecipient stageFutureRecipient(FutureRuntimeClaim claim) {
+    claim.validateChild(this);
+    if (seasonIndex != claim.source.targetSeasonIndex) {
+      throw StateError('Manager continuation has the wrong target season.');
+    }
+    final world = claim.source.worldSuccessor;
+    final ids = world.baseClubs.map((club) => club.id).toSet();
+    if (!_controller._initialized ||
+        _controller.careerSeed != world.config.careerSeed ||
+        _controller.simulationVersion != world.config.simulationVersion ||
+        _controller._assignments.length != ids.length ||
+        !ids.every(_controller._assignments.containsKey)) {
+      throw StateError('Manager continuation lacks original target lineage.');
+    }
+    return FutureManagerRecipient._(this, claim);
+  }
+
   void applyOwnedPreparation({
     required SinglePassPostseasonRuntimeTransition transition,
     required ManagerPreparationRuntimeView view,
@@ -84,6 +101,82 @@ final class ManagerContinuationAuthority {
     );
     return ManagerContinuationAuthority._(controller, token.owner,
         token.revision, token.provenance, successor.nextSeasonIndex);
+  }
+}
+
+/// Operational facade over the original continuation. No controller escapes.
+final class FutureManagerRecipient implements WorldCareerHooks {
+  FutureManagerRecipient._(this._source, this._claim);
+  final ManagerContinuationAuthority _source;
+  final FutureRuntimeClaim _claim;
+  bool _adjusted = false;
+  bool _captured = false;
+  void _check() => _claim.validateChild(_source);
+  Object get evidenceIdentity => _source;
+  List<Manager> get managers => _source.managers;
+  List<ManagerAssignment> get assignments => _source.assignments;
+  List<ManagerCareerSeason> get completedSeasons => _source.completedSeasons;
+  @override
+  List<Club> adjustClubsForSeason(
+      {required int seasonIndex,
+      required List<Club> squadClubs,
+      required List<Player> players,
+      required List<WorldLeague> leagues,
+      required List<ClubFinanceState> financeStates}) {
+    _check();
+    final world = _claim.source.worldSuccessor;
+    if (_adjusted ||
+        seasonIndex != world.nextSeasonIndex ||
+        !identical(players, world.nextSeasonPlayers) ||
+        !identical(leagues, world.nextSeasonLeagues) ||
+        !identical(financeStates, world.nextSeasonFinanceStates)) {
+      throw StateError('Foreign or repeated future manager adjustment.');
+    }
+    _adjusted = true;
+    return _source._controller.adjustClubsForSeason(
+        seasonIndex: seasonIndex,
+        squadClubs: squadClubs,
+        players: players,
+        leagues: leagues,
+        financeStates: financeStates);
+  }
+
+  ManagerSeasonAuthority capture(PreparedWorldOpening opening) {
+    _check();
+    if (!_adjusted || _captured || opening.seasonIndex != _source.seasonIndex) {
+      throw StateError('Manager capture requires one validated preparation.');
+    }
+    final result = _source._controller.captureSeasonAuthority(
+        owner: _claim.owner,
+        sourceRevision: _claim.revision,
+        seasonIndex: opening.seasonIndex,
+        effectiveClubs: opening.effectiveClubs);
+    _captured = true;
+    return result;
+  }
+
+  @override
+  void onSeasonCompleted(
+      {required int seasonIndex,
+      required bool hasNextSeason,
+      required List<Club> squadClubs,
+      required List<Club> effectiveClubs,
+      required List<Player> players,
+      required List<WorldLeague> leaguesBeforeSeason,
+      required List<WorldLeague> leaguesForNextSeason,
+      required List<LeagueSeasonSnapshot> leagueResults,
+      required List<ClubFinanceSeason> finances}) {
+    _check();
+    _source._controller.onSeasonCompleted(
+        seasonIndex: seasonIndex,
+        hasNextSeason: hasNextSeason,
+        squadClubs: squadClubs,
+        effectiveClubs: effectiveClubs,
+        players: players,
+        leaguesBeforeSeason: leaguesBeforeSeason,
+        leaguesForNextSeason: leaguesForNextSeason,
+        leagueResults: leagueResults,
+        finances: finances);
   }
 }
 

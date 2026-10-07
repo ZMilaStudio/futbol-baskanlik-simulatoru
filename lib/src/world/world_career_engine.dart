@@ -1,4 +1,6 @@
 import '../core/simulation_config.dart';
+import '../player_president/player_president_postseason_runtime_transition.dart';
+import '../manager/manager_career_controller.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../finance/basic_economy_engine.dart';
 import '../finance/club_finance_season.dart';
@@ -446,6 +448,40 @@ class WorldCareerEngine {
         this, owner, revision, provenance, graph, opening, Object());
   }
 
+  PreparedWorldExecution prepareFuture(
+      {required FutureRuntimeClaim claim,
+      required FutureTransferRuntime transfer,
+      required FutureManagerRecipient manager}) {
+    claim.claimWorldPreparation(transfer, manager);
+    final source = claim.source.worldSuccessor;
+    _validateSetup(source.baseClubs, source.nextSeasonLeagues);
+    final graph = _PreparedWorldGraph(
+        source.baseClubs,
+        source.nextSeasonLeagues,
+        source.nextSeasonPlayers,
+        source.nextSeasonFinanceStates,
+        source.config,
+        source.completedSeasons,
+        1,
+        true,
+        manager,
+        transfer,
+        transfer,
+        transfer,
+        true);
+    final opening = _prepareSeason(
+        config: graph.config,
+        seasonIndex: source.nextSeasonIndex,
+        baseClubs: graph.baseClubs,
+        players: graph.players,
+        finance: graph.finance,
+        leagues: graph.leagues,
+        hooks: manager,
+        preserveSuccessorIdentity: true);
+    return PreparedWorldExecution._(this, claim.owner, claim.revision,
+        claim.provenance, graph, opening, claim.executionIdentity);
+  }
+
   PreparedWorldOpening _prepareSeason(
       {required SimulationConfig config,
       required int seasonIndex,
@@ -453,10 +489,17 @@ class WorldCareerEngine {
       required List<Player> players,
       required List<ClubFinanceState> finance,
       required List<WorldLeague> leagues,
-      required WorldCareerHooks hooks}) {
-    final seasonPlayers = List<Player>.unmodifiable(players);
-    final currentFinance = List<ClubFinanceState>.unmodifiable(finance);
-    final currentLeagues = List<WorldLeague>.unmodifiable(leagues);
+      required WorldCareerHooks hooks,
+      bool preserveSuccessorIdentity = false}) {
+    final seasonPlayers = preserveSuccessorIdentity
+        ? players
+        : List<Player>.unmodifiable(players);
+    final currentFinance = preserveSuccessorIdentity
+        ? finance
+        : List<ClubFinanceState>.unmodifiable(finance);
+    final currentLeagues = preserveSuccessorIdentity
+        ? leagues
+        : List<WorldLeague>.unmodifiable(leagues);
     final squadClubs = strengthCalculator.deriveClubs(
         baseClubs: baseClubs, players: seasonPlayers);
     final effectiveClubs = hooks.adjustClubsForSeason(

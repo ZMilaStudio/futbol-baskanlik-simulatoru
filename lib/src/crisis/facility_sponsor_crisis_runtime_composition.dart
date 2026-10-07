@@ -20,6 +20,7 @@ import '../manager/manager_career_season.dart';
 import '../media/media_state.dart';
 import '../player/player.dart';
 import '../player_president/player_president_interactive_decision_application_session.dart';
+import '../player_president/player_president_postseason_runtime_transition.dart';
 import '../save/president_runtime_checkpoint.dart';
 import '../world/world_checkpoint.dart';
 import '../player/player_lifecycle_engine.dart';
@@ -425,14 +426,68 @@ final class _FacilityPreparedGraph {
 /// First activation has no invented sponsor season/payment history. The real
 /// coordinator/delegate graph remains private and unattempted for its recipient.
 final class FacilitySponsorPostseasonContinuation {
-  FacilitySponsorPostseasonContinuation._(
-      this._graph, this.owner, this.revision, this.provenance, this.world);
+  FacilitySponsorPostseasonContinuation._(this._graph, this.owner,
+      this.revision, this.provenance, this.world, this._producer);
+  final FacilitySponsorCrisisRuntimeCareerEngine _producer;
   final _FacilityPreparedGraph _graph;
   final Object owner, revision, provenance;
   final WorldCheckpoint world;
   bool _successorCommitted = false;
   _FacilityEconomyEngine? _successorEconomy;
   Map<String, StadiumFacilityState>? _successorStadiums;
+  void validateFuturePreparation(FutureRuntimeClaim claim) {
+    claim.validateChild(this);
+    if (!identical(claim.source.worldSuccessor, world) ||
+        _graph.inputs.sponsor.nextSeasonIndex != world.nextSeasonIndex ||
+        _graph.coordinator._processedClubIds.isNotEmpty ||
+        _graph.coordinator._claimedRecording != null ||
+        _graph.domain.runtimeEngine.worldEngine.lifecycleEngine
+            is! _FacilityLifecycleEngine ||
+        _graph.domain.runtimeEngine.worldEngine.economyEngine
+            is! _FacilityEconomyEngine) {
+      throw StateError('Facility/sponsor successor is not admission-ready.');
+    }
+    final ids = world.baseClubs.map((club) => club.id).toSet();
+    facilities.validateAgainst(ids);
+    if (_graph.inputs.profiles.length != ids.length ||
+        _graph.inputs.fans.length != ids.length ||
+        _graph.inputs.media.length != ids.length ||
+        !ids.every((id) =>
+            _graph.inputs.profiles.containsKey(id) &&
+            _graph.inputs.fans.containsKey(id) &&
+            _graph.inputs.media.containsKey(id))) {
+      throw StateError('Incomplete facility/domain successor coverage.');
+    }
+  }
+
+  PreparedTicketRuntimeSeason prepareFuture(
+      FutureRuntimeClaim claim, FutureTicketPreparationBinding ticket) {
+    validateFuturePreparation(claim);
+    ticket.validate(claim);
+    final engine = _graph.domain.runtimeEngine.worldEngine;
+    final lifecycle = engine.lifecycleEngine as _FacilityLifecycleEngine;
+    // Rebind target facilities, never replay an investment/lifecycle decision.
+    lifecycle.academyFacilities = Map.unmodifiable({
+      for (final state in facilities.academyFacilities) state.clubId: state
+    });
+    lifecycle.trainingGroundFacilities = Map.unmodifiable({
+      for (final state in facilities.trainingGroundFacilities)
+        state.clubId: state
+    });
+    _graph.coordinator.delegate =
+        ticket.bindDelegate(_graph.coordinator.delegate);
+    final advanced = _graph.domain.runtimeEngine.prepareFuture(claim);
+    final prepared =
+        PreparedFacilitySponsorSeason._(_producer, _graph, advanced);
+    return ticket.complete(prepared, _producer);
+  }
+
+  void validateFutureTicketBinding(
+      FutureRuntimeClaim claim, FutureTicketPreparationBinding ticket) {
+    validateFuturePreparation(claim);
+    ticket.validateDelegate(_graph.coordinator.delegate);
+  }
+
   void commitOwnedSuccessor() {
     if (_successorCommitted)
       throw StateError('Facility successor already moved.');
@@ -516,6 +571,8 @@ final class PreparedFacilitySponsorSeason {
   PreparedRuntimeOrigin get origin => _advanced.origin;
   PreparedExecutionState get state => _advanced.state;
   int get openingContractCount => _advanced.openingContractCount;
+  AdvancedTransferRuntimeState get transferEvidence =>
+      _advanced.transferEvidence;
   FacilityPortfolioRuntimeState get facilities => _graph.inputs.facilities;
   SponsorRuntimeCheckpoint get openingSponsor => _graph.inputs.sponsor;
   Map<String, FanState> get fanStates => Map.unmodifiable(_graph.inputs.fans);
@@ -653,8 +710,8 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
             {for (final c in domainClubs) c.clubId: c.mediaReputation}));
     final graph = _FacilityPreparedGraph(
         inputs, prepared._graph.coordinator, prepared._graph.domain);
-    return FacilitySponsorPostseasonContinuation._(
-        graph, prepared.owner, prepared.revision, prepared.provenance, world)
+    return FacilitySponsorPostseasonContinuation._(graph, prepared.owner,
+        prepared.revision, prepared.provenance, world, this)
       .._successorEconomy = prepared._graph.domain.runtimeEngine.worldEngine
           .economyEngine as _FacilityEconomyEngine
       .._successorStadiums = Map.unmodifiable({
@@ -731,6 +788,7 @@ class FacilitySponsorCrisisRuntimeCareerEngine {
       token.revision,
       token.provenance,
       world,
+      this,
     );
   }
 
@@ -1123,8 +1181,8 @@ class _FacilityLifecycleEngine extends PlayerLifecycleEngine {
   });
 
   final PlayerLifecycleEngine delegate;
-  final Map<String, AcademyFacilityState> academyFacilities;
-  final Map<String, TrainingGroundFacilityState> trainingGroundFacilities;
+  Map<String, AcademyFacilityState> academyFacilities;
+  Map<String, TrainingGroundFacilityState> trainingGroundFacilities;
 
   @override
   PlayerLifecycleResult advance({
@@ -1251,7 +1309,7 @@ class _FacilitySponsorSeasonEconomyEngine extends BasicEconomyEngine {
   })  : expectedClubIds = Set.unmodifiable(expectedClubIds),
         super(wageModel: delegate.wageModel);
 
-  final BasicEconomyEngine delegate;
+  BasicEconomyEngine delegate;
   final SponsorSystemEngine sponsorSystem;
   final FullM65SeasonFinancePipeline? financeRecording;
   FullM65SeasonFinancePipeline? _claimedRecording;
