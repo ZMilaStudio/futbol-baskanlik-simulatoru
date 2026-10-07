@@ -40,6 +40,33 @@ enum PlayerPresidentInteractiveDecisionKind {
 }
 
 class PlayerPresidentInteractiveDecisionRequest {
+  /// Request construction only. No replay, answer store or consequence.
+  static PlayerPresidentInteractiveDecisionPending futurePromisePending({
+    required ApplicationFutureOpeningClaim claim,
+    required PreparedTicketRuntimeSeason prepared,
+    required PlayerPromiseDecisionContext context,
+  }) {
+    claim.validatePreparation(prepared);
+    if (context.controlledClubId != claim.admission.controlledClubId ||
+        context.seasonIndex != claim.admission.targetSeasonIndex) {
+      throw StateError('Foreign future promise context.');
+    }
+    final namespace = 'future-preseason-promise/v1:s${context.seasonIndex}:'
+        '${identityHashCode(claim.application)}:'
+        '${identityHashCode(claim.admission)}:'
+        '${identityHashCode(claim.admission.applicationEntryIdentity)}:'
+        '${identityHashCode(prepared.opening)}';
+    final gateway = _InteractiveReplayGateway(
+        const <_RecordedInteractiveDecision>[],
+        keyNamespace: namespace);
+    try {
+      gateway.choosePromise(context);
+      throw StateError('Future promise did not produce Pending.');
+    } on _PendingInteractiveDecision catch (signal) {
+      return PlayerPresidentInteractiveDecisionPending(signal.request);
+    }
+  }
+
   const PlayerPresidentInteractiveDecisionRequest._({
     required this.sequence,
     required this.kind,
@@ -391,7 +418,8 @@ class PlayerPresidentInteractiveDecisionSession {
   );
 
   int get answeredDecisionCount => _state.answers.length;
-  PlayerPresidentInteractiveDecisionRequest? get pendingDecision => _state.pending;
+  PlayerPresidentInteractiveDecisionRequest? get pendingDecision =>
+      _state.pending;
   PlayerPresidentInteractiveSessionCompleted? get completed => _state.completed;
 
   PlayerPresidentInteractiveSessionStep advance() {
@@ -419,9 +447,8 @@ class PlayerPresidentInteractiveDecisionSession {
       pending: step is PlayerPresidentInteractiveDecisionPending
           ? step.request
           : null,
-      completed: step is PlayerPresidentInteractiveSessionCompleted
-          ? step
-          : null,
+      completed:
+          step is PlayerPresidentInteractiveSessionCompleted ? step : null,
     );
     _state = next;
   }
@@ -553,13 +580,15 @@ class PlayerPresidentInteractiveDecisionSession {
     switch (request.kind) {
       case PlayerPresidentInteractiveDecisionKind.facilityInvestment:
         if (choice is! PlayerFacilityInvestmentChoice) {
-          throw ArgumentError.value(choice, 'choice', 'Expected facility choice.');
+          throw ArgumentError.value(
+              choice, 'choice', 'Expected facility choice.');
         }
         choice.validate();
         return;
       case PlayerPresidentInteractiveDecisionKind.sponsor:
         if (choice is! PlayerSponsorOfferChoice) {
-          throw ArgumentError.value(choice, 'choice', 'Expected sponsor choice.');
+          throw ArgumentError.value(
+              choice, 'choice', 'Expected sponsor choice.');
         }
         choice.validate();
         final context = request.contextAs<PlayerSponsorDecisionContext>();
@@ -573,7 +602,8 @@ class PlayerPresidentInteractiveDecisionSession {
         return;
       case PlayerPresidentInteractiveDecisionKind.crisis:
         if (choice is! PlayerCrisisActionChoice) {
-          throw ArgumentError.value(choice, 'choice', 'Expected crisis choice.');
+          throw ArgumentError.value(
+              choice, 'choice', 'Expected crisis choice.');
         }
         final context = request.contextAs<PlayerCrisisDecisionContext>();
         if (!context.availableDecisions
@@ -830,7 +860,8 @@ class _InteractiveReplayGateway extends PlayerPresidentDecisionGateway {
       );
 
   @override
-  PlayerSponsorOfferChoice chooseSponsor(PlayerSponsorDecisionContext context) =>
+  PlayerSponsorOfferChoice chooseSponsor(
+          PlayerSponsorDecisionContext context) =>
       _resolve<PlayerSponsorOfferChoice>(
         kind: PlayerPresidentInteractiveDecisionKind.sponsor,
         clubId: context.clubId,

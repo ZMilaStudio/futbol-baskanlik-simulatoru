@@ -31,6 +31,8 @@ import '../save/advanced_runtime_checkpoint.dart';
 import '../save/advanced_runtime_career_engine.dart';
 import '../save/save_load_exception.dart';
 import '../season/season_report.dart';
+import '../season/weekly_world_fixture_result_core.dart';
+import '../player_president/player_president_interactive_decision_application_session.dart';
 import '../sponsor/sponsor_system.dart';
 import '../world/world_career_engine.dart';
 import '../world/world_career_season.dart';
@@ -543,6 +545,45 @@ final class PreparedTicketRuntimeSeason {
   final FacilitySponsorCrisisRuntimeCareerEngine _runtime;
   final PreparedFacilitySponsorSeason _facility;
   bool _annualCaptureAttempted = false;
+  ApplicationFutureOpeningClaim? _activeOpeningReservation;
+  void _requireUnreservedOpening() {
+    if (_activeOpeningReservation != null) {
+      throw StateError('Prepared runtime belongs to an active future opening.');
+    }
+  }
+
+  WeeklyWorldFixtureSnapshot prepareFutureOpeningW0(
+      ApplicationFutureOpeningClaim claim) {
+    claim.validatePreparation(this);
+    _requireUnreservedOpening();
+    final plan = WeeklyWorldFixtureResultCore(
+            fixtureGenerator:
+                _runtime.baseWorldEngine.seasonEngine.fixtureGenerator)
+        .prepare(
+            clubs: opening.effectiveClubs,
+            leagues: opening.leagues,
+            config: opening.config.copyWith(seasonIndex: opening.seasonIndex));
+    if (plan.seasonIndex != opening.seasonIndex ||
+        plan.nextRound != 1 ||
+        plan.isComplete ||
+        plan.completedMatchCount != 0 ||
+        plan.fixtures.length != 720 ||
+        plan.fixtures.map((f) => f.globalKey).toSet().length != 720 ||
+        plan.fixtures.any((f) => f.isPlayed) ||
+        plan.tables.length != 3 ||
+        plan.tables.values
+            .any((t) => t.length != 16 || t.any((r) => r.played != 0))) {
+      throw StateError('Future opening requires a pristine canonical W0.');
+    }
+    return plan;
+  }
+
+  void reserveFutureOpening(ApplicationFutureOpeningClaim claim) {
+    claim.validateReservation(this);
+    _requireUnreservedOpening();
+    _activeOpeningReservation = claim;
+  }
+
   Object get owner => _facility.owner;
   Object get revision => _facility.revision;
   Object get provenance => _facility.provenance;
@@ -572,6 +613,7 @@ final class PreparedTicketRuntimeSeason {
       {required Object expectedOwner,
       required Object expectedRevision,
       required Object expectedProvenance}) {
+    _requireUnreservedOpening();
     if (_annualCaptureAttempted)
       throw StateError('Annual capture lease cannot move.');
     return PreparedTicketRuntimeSeason._(
@@ -739,6 +781,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
       {required Object expectedOwner,
       required Object expectedRevision,
       required Object expectedProvenance}) {
+    p._requireUnreservedOpening();
     if (!identical(p._producer, this) || p._annualCaptureAttempted) {
       throw StateError('Foreign ticket prepared producer.');
     }
@@ -755,6 +798,7 @@ class PlayerPresidentTenureGatedTicketPricingRuntimeCareerEngine {
       required Object expectedRevision,
       required Object expectedProvenance,
       required bool hasNextSeason}) {
+    p._requireUnreservedOpening();
     if (!identical(p._producer, this) ||
         p._annualCaptureAttempted ||
         p.state != PreparedExecutionState.prepared ||

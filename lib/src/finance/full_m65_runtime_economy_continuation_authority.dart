@@ -178,6 +178,7 @@ final class FullM65RuntimeEconomyContinuationAuthority {
       required Object expectedRevision,
       required Object expectedProvenance,
       required Object expectedExecution}) {
+    source._requireUnreservedOpening();
     final manager = source.managerAuthority;
     if (source.state != PreparedExecutionState.prepared ||
         source._annualCaptureAttempted ||
