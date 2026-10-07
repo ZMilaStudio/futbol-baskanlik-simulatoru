@@ -26,6 +26,15 @@ import 'player_president_committed_season_result_projection.dart';
 import 'player_president_accepted_promise_closing_projection.dart';
 import 'player_president_interactive_decision_transcript_snapshot.dart';
 import 'player_president_postseason_runtime_transition.dart';
+import '../promise/promise_opening_context_builder.dart';
+import '../promise/promise_context.dart';
+import '../promise/promise_generator.dart';
+import '../promise/player_president_promise_control.dart';
+import '../manager/manager_career_controller.dart';
+import '../world/world_career_engine.dart';
+import '../save/advanced_runtime_career_engine.dart';
+
+part 'player_president_active_future_season_opening.dart';
 
 /// Unforgeable application-local claim. No data constructor or global registry.
 final class ApplicationFutureRuntimeEntry {
@@ -442,6 +451,17 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   ApplicationFutureRuntimeEntry? _futureRuntimeEntry;
   TrustedFuturePreparedRuntimeAdmission? _futureRuntimeAdmission;
   bool _futurePreparationInProgress = false;
+  PlayerPresidentActiveFutureSeasonOpening? _activeFutureSeasonOpening;
+  bool _futureOpeningInProgress = false;
+  PlayerPresidentActiveFutureSeasonOpening? get activeFutureSeasonOpening =>
+      _activeFutureSeasonOpening;
+  PlayerPresidentActiveFutureSeasonOpening openFutureSeason({
+    required TrustedFuturePreparedRuntimeAdmission expectedAdmission,
+    required PreparedTicketRuntimeSeason expectedPrepared,
+  }) =>
+      _openFutureSeason(
+          expectedAdmission: expectedAdmission,
+          expectedPrepared: expectedPrepared);
   TrustedFuturePreparedRuntimeAdmission? get futureRuntimeAdmission =>
       _futureRuntimeAdmission;
 
