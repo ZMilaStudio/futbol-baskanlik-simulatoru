@@ -584,6 +584,79 @@ final class PreparedTicketRuntimeSeason {
     _activeOpeningReservation = claim;
   }
 
+  WeeklyWorldFixtureSnapshot advanceFutureRound({
+    required ApplicationFutureWeeklyClaim claim,
+    required WeeklyWorldFixtureSnapshot snapshot,
+    required int expectedRound,
+  }) {
+    claim.validatePrepared(this);
+    final reservation = _activeOpeningReservation;
+    if (reservation == null ||
+        !identical(reservation.application, claim.application) ||
+        !identical(reservation.admission, claim.opening.admission) ||
+        !identical(claim.opening.prepared, this) ||
+        !identical(snapshot, claim.current.fixtureSnapshot)) {
+      throw StateError(
+          'Future weekly execution requires the exact reservation.');
+    }
+    return WeeklyWorldFixtureResultCore(
+      fixtureGenerator: _runtime.baseWorldEngine.seasonEngine.fixtureGenerator,
+      matchEngine: _runtime.baseWorldEngine.seasonEngine.matchEngine,
+    ).advanceRound(
+      snapshot: snapshot,
+      expectedRound: expectedRound,
+      effectiveClubs: opening.effectiveClubs,
+    );
+  }
+
+  CommittedSeasonSettlementCapability mintFutureCommittedCapability({
+    required ApplicationFutureCommittedClaim claim,
+    required PlayerPresidentFutureCommittedSeasonResult completedSource,
+    required List<LeagueSeasonSnapshot> reports,
+    required List<PresidentPromiseContext> promiseContexts,
+    required List<PresidentPromise> activePromises,
+  }) {
+    claim.validatePrepared(this);
+    final reservation = _activeOpeningReservation;
+    if (reservation == null ||
+        !identical(reservation.application, completedSource.application) ||
+        !identical(reservation.admission, completedSource.opening.admission) ||
+        !identical(completedSource.prepared, this)) {
+      throw StateError('Future commit requires the exact reserved graph.');
+    }
+    return _FutureCommittedSeasonSettlementCapability._(
+      owner: owner,
+      revision: revision,
+      provenance: provenance,
+      executionIdentity: executionIdentity,
+      completedSource: completedSource,
+      opening: opening,
+      reports: reports,
+      managerAuthority: completedSource.managerAuthority,
+      promiseContexts: promiseContexts,
+      activePromises: activePromises,
+      origin: completedSource.origin,
+    );
+  }
+
+  FullM65RuntimeEconomyContinuationAuthority claimFutureEconomy({
+    required ApplicationFutureEconomyClaim claim,
+    required CommittedSeasonSettlementCapability capability,
+  }) {
+    claim.validatePrepared(this);
+    final reservation = _activeOpeningReservation;
+    if (reservation == null ||
+        !identical(reservation.application, claim.application) ||
+        !identical(reservation.admission, claim.committed.opening.admission) ||
+        !identical(capability, claim.committed.capability)) {
+      throw StateError('Future economy requires the exact active reservation.');
+    }
+    return FullM65RuntimeEconomyContinuationAuthority._claimFuture(
+      this,
+      capability,
+    );
+  }
+
   Object get owner => _facility.owner;
   Object get revision => _facility.revision;
   Object get provenance => _facility.provenance;

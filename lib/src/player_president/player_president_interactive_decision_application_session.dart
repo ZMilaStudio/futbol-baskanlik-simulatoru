@@ -13,6 +13,10 @@ import '../player/team_strength_calculator.dart';
 import '../sponsor/sponsor_system.dart';
 import '../season/integrated_new_game_opening_proof.dart';
 import '../season/weekly_world_fixture_result_core.dart';
+import '../season/season_report.dart';
+import '../season/season_validator.dart';
+import '../league/standing_row.dart';
+import '../world/world_career_season.dart';
 import '../world/world_league.dart';
 import '../world/world_opening_state_initializer.dart';
 import 'player_president_interactive_decision_new_game_bootstrap_snapshot.dart';
@@ -29,12 +33,14 @@ import 'player_president_postseason_runtime_transition.dart';
 import '../promise/promise_opening_context_builder.dart';
 import '../promise/promise_context.dart';
 import '../promise/promise_generator.dart';
+import '../promise/president_promise.dart';
 import '../promise/player_president_promise_control.dart';
 import '../manager/manager_career_controller.dart';
 import '../world/world_career_engine.dart';
 import '../save/advanced_runtime_career_engine.dart';
 
 part 'player_president_active_future_season_opening.dart';
+part 'player_president_future_active_season_runtime.dart';
 
 /// Unforgeable application-local claim. No data constructor or global registry.
 final class ApplicationFutureRuntimeEntry {
@@ -452,6 +458,10 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   TrustedFuturePreparedRuntimeAdmission? _futureRuntimeAdmission;
   bool _futurePreparationInProgress = false;
   PlayerPresidentActiveFutureSeasonOpening? _activeFutureSeasonOpening;
+  PlayerPresidentFuturePromiseApplied? _futurePromiseApplied;
+  PlayerPresidentFutureWeeklyState? _futureWeeklyState;
+  PlayerPresidentFutureCommittedSeasonResult? _futureCommittedSeason;
+  FullM65RuntimeEconomyContinuationAuthority? _futureEconomyAuthority;
   bool _futureOpeningInProgress = false;
   PlayerPresidentActiveFutureSeasonOpening? get activeFutureSeasonOpening =>
       _activeFutureSeasonOpening;

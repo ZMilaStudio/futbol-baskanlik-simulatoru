@@ -119,6 +119,10 @@ abstract interface class FutureTransferRuntime
   Object get lineageIdentity;
   int get contractCount;
   AdvancedTransferRuntimeState snapshot();
+
+  /// Rebinds the same private controller to the next genuine application
+  /// claim. No snapshot restore, reconstruction or controller escape occurs.
+  FutureTransferRuntime restage(FutureRuntimeClaim claim);
 }
 
 final class _FirstFutureTransferRecipient implements FutureTransferRuntime {
@@ -139,6 +143,12 @@ final class _FirstFutureTransferRecipient implements FutureTransferRuntime {
         activeLoans: _controller.activeLoans,
         loanHistory: _controller.loanHistory,
         installmentObligations: _controller.installmentObligations);
+  }
+
+  @override
+  FutureTransferRuntime restage(FutureRuntimeClaim claim) {
+    _check();
+    return _FirstFutureTransferRecipient._(claim, _controller);
   }
 
   @override
