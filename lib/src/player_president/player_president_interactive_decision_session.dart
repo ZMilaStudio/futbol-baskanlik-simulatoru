@@ -26,6 +26,7 @@ import 'player_president_interactive_decision_application_session.dart';
 import 'player_president_unified_decision_gateway_runtime.dart';
 
 part 'player_president_preseason_promise_boundary.dart';
+part 'player_president_future_promise_acceptance.dart';
 
 enum PlayerPresidentInteractiveDecisionKind {
   facilityInvestment,

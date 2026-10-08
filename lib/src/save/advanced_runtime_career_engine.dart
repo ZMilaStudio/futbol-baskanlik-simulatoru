@@ -47,6 +47,12 @@ final class _AdvancedFutureTransferRecipient implements FutureTransferRuntime {
   }
 
   @override
+  FutureTransferRuntime restage(FutureRuntimeClaim claim) {
+    _check();
+    return _AdvancedFutureTransferRecipient._(claim, _controller);
+  }
+
+  @override
   Map<String, Money>? annualWagesByClub(
       {required int seasonIndex,
       required List<Player> players,
@@ -153,24 +159,34 @@ final class _AdvancedFutureTransferRecipient implements FutureTransferRuntime {
 /// The original transfer controller and detached manager continuation remain
 /// private; a raw report/controller bundle cannot construct this object.
 final class OwnedAdvancedAnnualClosing {
-  OwnedAdvancedAnnualClosing._(this.world, this._transfer, this.managerOpening);
+  OwnedAdvancedAnnualClosing._(this.world, this._transfer, this.managerOpening)
+      : _futureTransfer = null;
+  OwnedAdvancedAnnualClosing._future(
+      this.world, this._futureTransfer, this.managerOpening)
+      : _transfer = null;
   final OwnedWorldAnnualClosing world;
-  final AdvancedTransferController _transfer;
+  final AdvancedTransferController? _transfer;
+  final FutureTransferRuntime? _futureTransfer;
   final ManagerSeasonAuthority managerOpening;
   Object? _transition;
   ManagerContinuationAuthority? _managerContinuation;
-  List<LoanAgreement> get loanHistory => _transfer.loanHistory;
-  int get contractCount => _transfer.activeContracts.length;
   AdvancedTransferRuntimeState get transferEvidence =>
+      _futureTransfer?.snapshot() ??
       AdvancedTransferRuntimeState(
-          activeContracts: _transfer.activeContracts,
+          activeContracts: _transfer!.activeContracts,
           contractEvents: _transfer.contractEvents,
           activeLoans: _transfer.activeLoans,
           loanHistory: _transfer.loanHistory,
           installmentObligations: _transfer.installmentObligations);
+  List<LoanAgreement> get loanHistory => transferEvidence.loanHistory;
+  int get contractCount =>
+      _futureTransfer?.contractCount ?? _transfer!.activeContracts.length;
   FutureTransferRuntime stageFutureTransfer(FutureRuntimeClaim claim) {
     claim.validateChild(this);
-    return _AdvancedFutureTransferRecipient._(claim, _transfer);
+    final future = _futureTransfer;
+    return future == null
+        ? _AdvancedFutureTransferRecipient._(claim, _transfer!)
+        : future.restage(claim);
   }
 
   void claim(
@@ -337,18 +353,20 @@ final class AdvancedEconomyRecipient {
     required CommittedSeasonSettlementCapability committed,
     required SeasonFinanceAuthorityReceipt receipt,
   }) {
-    if (_futureTransfer != null) {
-      throw StateError(
-          'Future active-season closing producer is deferred to AR-D.');
-    }
-    final world = _world.releaseSettledAnnualClosing(
-        committed: committed, receipt: receipt);
-    if (!identical(authority.managerAuthority.effectiveClubs,
-        world.opening.effectiveClubs)) {
+    final future = _futureTransfer;
+    final manager = authority.managerAuthority;
+    if (!identical(manager.effectiveClubs, _world.opening.effectiveClubs)) {
       throw StateError('Foreign settled manager opening.');
     }
-    return OwnedAdvancedAnnualClosing._(
-        world, _transfer!, authority.managerAuthority);
+    // Validates the old claim and controller lineage before world ownership is
+    // moved. The returned evidence is deliberately discarded: the opaque
+    // recipient, not a reconstructed snapshot, remains authoritative.
+    future?.snapshot();
+    final world = _world.releaseSettledAnnualClosing(
+        committed: committed, receipt: receipt);
+    return future == null
+        ? OwnedAdvancedAnnualClosing._(world, _transfer!, manager)
+        : OwnedAdvancedAnnualClosing._future(world, future, manager);
   }
 
   List<ClubFinanceSeason> executeCommittedFinance(

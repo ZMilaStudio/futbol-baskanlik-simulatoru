@@ -108,6 +108,57 @@ sealed class CommittedSeasonSettlementCapability {
   }
 }
 
+final class _FutureCommittedSeasonSettlementCapability
+    extends CommittedSeasonSettlementCapability {
+  _FutureCommittedSeasonSettlementCapability._({
+    required Object owner,
+    required Object revision,
+    required Object provenance,
+    required Object executionIdentity,
+    required PlayerPresidentFutureCommittedSeasonResult completedSource,
+    required PreparedWorldOpening opening,
+    required List<LeagueSeasonSnapshot> reports,
+    required this.managerAuthority,
+    required List<PresidentPromiseContext> promiseContexts,
+    required List<PresidentPromise> activePromises,
+    required this.origin,
+  })  : promiseContexts = promiseContexts,
+        activePromises = activePromises,
+        super._(
+          owner: owner,
+          revision: revision,
+          provenance: provenance,
+          executionIdentity: executionIdentity,
+          completedSource: completedSource,
+          opening: opening,
+          reports: reports,
+        );
+
+  final ManagerSeasonAuthority managerAuthority;
+  final List<PresidentPromiseContext> promiseContexts;
+  final List<PresidentPromise> activePromises;
+  final PostoffseasonRuntimeOrigin origin;
+
+  void validateFuture(FullM65RuntimeEconomyContinuationAuthority authority) {
+    _validate(authority);
+    final source =
+        completedSource as PlayerPresidentFutureCommittedSeasonResult;
+    if (!identical(source.capability, this) ||
+        !identical(source.managerAuthority, managerAuthority) ||
+        !identical(managerAuthority, authority.managerAuthority) ||
+        source.origin != origin ||
+        promiseContexts.length != 48 ||
+        activePromises.length != 48 ||
+        promiseContexts.map((c) => c.clubId).toSet().length != 48 ||
+        activePromises.map((p) => p.clubId).toSet().length != 48 ||
+        activePromises.map((p) => p.id).toSet().length != 48 ||
+        activePromises.any((p) => p.seasonIndex != seasonIndex) ||
+        !identical(source.applied.activePromises, activePromises)) {
+      throw StateError('Foreign or altered future committed authority.');
+    }
+  }
+}
+
 String _reportSignature(List<LeagueSeasonSnapshot> reports) => jsonEncode([
       for (final r in reports)
         [
@@ -170,7 +221,8 @@ final class FullM65CommittedSeasonSettlementResult {
 /// Runtime-only owner of the original, unattempted full-M65 graph.
 final class FullM65RuntimeEconomyContinuationAuthority {
   FullM65RuntimeEconomyContinuationAuthority._(
-      this._source, this._pipeline, this.managerAuthority);
+      this._source, this._pipeline, this.managerAuthority,
+      [this._futureCommitted]);
 
   factory FullM65RuntimeEconomyContinuationAuthority.claim(
       PreparedTicketRuntimeSeason source,
@@ -179,6 +231,42 @@ final class FullM65RuntimeEconomyContinuationAuthority {
       required Object expectedProvenance,
       required Object expectedExecution}) {
     source._requireUnreservedOpening();
+    return _claimPrepared(
+      source,
+      expectedOwner: expectedOwner,
+      expectedRevision: expectedRevision,
+      expectedProvenance: expectedProvenance,
+      expectedExecution: expectedExecution,
+    );
+  }
+
+  static FullM65RuntimeEconomyContinuationAuthority _claimFuture(
+    PreparedTicketRuntimeSeason source,
+    CommittedSeasonSettlementCapability capability,
+  ) {
+    if (capability is! _FutureCommittedSeasonSettlementCapability) {
+      throw StateError('Future economy requires its genuine W30 capability.');
+    }
+    final authority = _claimPrepared(
+      source,
+      expectedOwner: source.owner,
+      expectedRevision: source.revision,
+      expectedProvenance: source.provenance,
+      expectedExecution: source.executionIdentity,
+      futureCommitted: capability,
+    );
+    capability.validateFuture(authority);
+    return authority;
+  }
+
+  static FullM65RuntimeEconomyContinuationAuthority _claimPrepared(
+    PreparedTicketRuntimeSeason source, {
+    required Object expectedOwner,
+    required Object expectedRevision,
+    required Object expectedProvenance,
+    required Object expectedExecution,
+    _FutureCommittedSeasonSettlementCapability? futureCommitted,
+  }) {
     final manager = source.managerAuthority;
     if (source.state != PreparedExecutionState.prepared ||
         source._annualCaptureAttempted ||
@@ -203,8 +291,12 @@ final class FullM65RuntimeEconomyContinuationAuthority {
         provenance: expectedProvenance,
         seasonIndex: source.opening.seasonIndex,
         effectiveClubSource: manager);
-    final authority =
-        FullM65RuntimeEconomyContinuationAuthority._(source, pipeline, manager);
+    final authority = FullM65RuntimeEconomyContinuationAuthority._(
+      source,
+      pipeline,
+      manager,
+      futureCommitted,
+    );
     final recipient = source._facility.moveToEconomy(
         authority: authority,
         expectedOwner: expectedOwner,
@@ -220,6 +312,7 @@ final class FullM65RuntimeEconomyContinuationAuthority {
   late final FacilityEconomyRecipient _recipient;
   final FullM65SeasonFinancePipeline _pipeline;
   final ManagerSeasonAuthority managerAuthority;
+  final _FutureCommittedSeasonSettlementCapability? _futureCommitted;
   Object get owner => _source.owner;
   Object get revision => _source.revision;
   Object get provenance => _source.provenance;
@@ -238,6 +331,11 @@ final class FullM65RuntimeEconomyContinuationAuthority {
   FullM65CommittedSeasonSettlementResult? get result => _result;
   bool _releaseAttempted = false;
   bool _released = false;
+  List<PresidentPromiseContext>? _releasedPromiseContexts;
+  List<PresidentPromise>? _releasedPromises;
+  List<PresidentPromiseContext>? get releasedPromiseContexts =>
+      _releasedPromiseContexts;
+  List<PresidentPromise>? get releasedPromises => _releasedPromises;
   bool permitsAnnualRelease(PreparedWorldOpening expectedOpening,
           Object expectedExecution, SeasonFinanceAuthorityReceipt receipt) =>
       _state == RuntimeEconomyState.settled &&
@@ -278,17 +376,25 @@ final class FullM65RuntimeEconomyContinuationAuthority {
         expectedEffectiveClubSource: managerAuthority);
     _releaseAttempted = true;
     _source._annualCaptureAttempted = true;
-    final contexts = const PromiseOpeningContextBuilder().build(
-        seasonIndex: opening.seasonIndex,
-        effectiveClubs: opening.effectiveClubs,
-        leagues: opening.leagues,
-        openingFinanceStates: opening.financeStates);
-    final promises = List<PresidentPromise>.unmodifiable(contexts.map(
-        (context) => _source._producer.sourceEngine.promiseEngine.generator
-            .generate(
-                context: context,
-                careerSeed: opening.config.careerSeed,
-                simulationVersion: opening.config.simulationVersion)));
+    final future = _futureCommitted;
+    final List<PresidentPromiseContext> contexts;
+    final List<PresidentPromise> promises;
+    if (future != null) {
+      future.validateFuture(this);
+      contexts = future.promiseContexts;
+      promises = future.activePromises;
+    } else {
+      contexts = const PromiseOpeningContextBuilder().build(
+          seasonIndex: opening.seasonIndex,
+          effectiveClubs: opening.effectiveClubs,
+          leagues: opening.leagues,
+          openingFinanceStates: opening.financeStates);
+      promises = List<PresidentPromise>.unmodifiable(contexts.map((context) =>
+          _source._producer.sourceEngine.promiseEngine.generator.generate(
+              context: context,
+              careerSeed: opening.config.careerSeed,
+              simulationVersion: opening.config.simulationVersion)));
+    }
     final closing = _recipient.releaseSettledAnnualClosing(
         authority: this,
         committed: expectedResult.committedSource,
@@ -297,6 +403,8 @@ final class FullM65RuntimeEconomyContinuationAuthority {
         .bindReleasedAnnualClosing(closing, this, expectedResult.receipt);
     final boundary = OwnedAnnualClosingBoundary._(_source, closing,
         expectedResult.receipt, contexts, promises, hasNextSeason);
+    _releasedPromiseContexts = contexts;
+    _releasedPromises = promises;
     _released = true;
     return boundary;
   }
@@ -329,6 +437,13 @@ final class FullM65RuntimeEconomyContinuationAuthority {
       throw StateError('Committed admission already consumed.');
     }
     source._validate(this);
+    final future = _futureCommitted;
+    if (future != null) {
+      if (!identical(source, future)) {
+        throw StateError('Future economy requires its exact W30 capability.');
+      }
+      future.validateFuture(this);
+    }
     final clubs = {for (final c in opening.effectiveClubs) c.id: c};
     final contexts = <String, PlayerPresidentTicketPricingDecisionContext>{};
     final attendance = <String, FinanceAttendanceEvidence>{};
