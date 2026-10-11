@@ -26,7 +26,18 @@ final class LosslessPostOffseasonRuntimeGraph {
         _crisis = source._crisisSuccessor!,
         _investment = source._facilitySuccessor!,
         control = source._controlSuccessor!,
-        acceptedAnswers = source.acceptedAnswers;
+        acceptedAnswers = source.acceptedAnswers,
+        // Read-only evidence is captured while the producing epoch still owns
+        // its transfer claim. Next-epoch validation must never invoke stale
+        // predecessor hooks or rebuild the underlying controller.
+        _transferEvidence = source._annualClosing?.advanced.transferEvidence ??
+            AdvancedTransferRuntimeState(
+                activeContracts: source._transfer!.activeContracts,
+                contractEvents: source._transfer.contractEvents,
+                activeLoans: source._transfer.activeLoans,
+                loanHistory: source._transfer.loanHistory,
+                installmentObligations:
+                    source._transfer.installmentObligations);
   final ApplicationPostseasonTransitionToken? _token;
   final OwnedAnnualClosingBoundary? _annual;
   final AdvancedTransferController? _transfer;
@@ -37,6 +48,7 @@ final class LosslessPostOffseasonRuntimeGraph {
   final PresidentFacilityInvestmentEffects _investment;
   final PlayerPresidentTenureControlState control;
   final List<PostseasonAcceptedAnswer> acceptedAnswers;
+  final AdvancedTransferRuntimeState _transferEvidence;
   FutureRuntimeAdmissionState _admissionState =
       FutureRuntimeAdmissionState.available;
   FutureRuntimeAdmissionState get admissionState => _admissionState;
@@ -153,12 +165,5 @@ final class LosslessPostOffseasonRuntimeGraph {
   Object get transferLineageIdentity => executionIdentity;
   int get contractCount =>
       _annual?.advanced.contractCount ?? _transfer!.activeContracts.length;
-  AdvancedTransferRuntimeState get transferEvidence =>
-      _annual?.advanced.transferEvidence ??
-      AdvancedTransferRuntimeState(
-          activeContracts: _transfer!.activeContracts,
-          contractEvents: _transfer.contractEvents,
-          activeLoans: _transfer.activeLoans,
-          loanHistory: _transfer.loanHistory,
-          installmentObligations: _transfer.installmentObligations);
+  AdvancedTransferRuntimeState get transferEvidence => _transferEvidence;
 }

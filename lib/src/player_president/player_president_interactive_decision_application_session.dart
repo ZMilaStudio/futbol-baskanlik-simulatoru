@@ -463,6 +463,16 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentFutureCommittedSeasonResult? _futureCommittedSeason;
   FullM65RuntimeEconomyContinuationAuthority? _futureEconomyAuthority;
   bool _futureOpeningInProgress = false;
+  // Annual future-to-future handoff is independent of the legacy B2 owner.
+  FullM65CommittedSeasonSettlementResult? _futurePostseasonSettlement;
+  bool? _futurePostseasonHasNextSeason;
+  SinglePassPostseasonRuntimeTransition? _futurePostseasonTransition;
+  LosslessPostOffseasonRuntimeGraph? _futurePostseasonContinuation;
+  LosslessPostOffseasonRuntimeGraph? _nextFutureSource;
+  SinglePassPostseasonRuntimeTransition? get futurePostseasonTransition =>
+      _futurePostseasonTransition;
+  LosslessPostOffseasonRuntimeGraph? get futurePostseasonContinuation =>
+      _futurePostseasonContinuation;
   PlayerPresidentActiveFutureSeasonOpening? get activeFutureSeasonOpening =>
       _activeFutureSeasonOpening;
   PlayerPresidentActiveFutureSeasonOpening openFutureSeason({
@@ -484,6 +494,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     final config = _newGameConfig;
     if (config == null ||
         expectedSource.control.controlledClubId != _newGameControlledClubId ||
+        (_nextFutureSource != null &&
+            !identical(expectedSource, _nextFutureSource)) ||
         (expectedOrigin == PostoffseasonRuntimeOrigin.firstFutureBootstrap &&
             !identical(expectedSource, _postseasonContinuation))) {
       throw StateError('Future source has no matching application entry.');
@@ -572,6 +584,120 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       _postseasonToken = null;
       rethrow;
     }
+  }
+
+
+  /// The same application owns the genuinely settled future W30-to-annual
+  /// handoff. Unlike the original B2 transition this consumes only full-M65
+  /// settlement evidence and can never manufacture a legacy manager season.
+  SinglePassPostseasonRuntimeTransition startFuturePostseasonTransition({
+    required FullM65CommittedSeasonSettlementResult expectedSettlement,
+    required bool hasNextSeason,
+  }) {
+    final authority = _futureEconomyAuthority;
+    final committed = _futureCommittedSeason;
+    if (!isNewGame ||
+        authority == null ||
+        committed == null ||
+        !identical(committed.application, this) ||
+        !identical(authority.owner, this) ||
+        authority.state != RuntimeEconomyState.settled ||
+        !identical(authority.result, expectedSettlement) ||
+        !identical(expectedSettlement.committedSource, committed.capability) ||
+        !identical(committed.opening, _activeFutureSeasonOpening) ||
+        !identical(committed.weeklyState, _futureWeeklyState)) {
+      throw StateError('Future postseason needs exact owned settled W30.');
+    }
+    final existing = _futurePostseasonTransition;
+    if (existing != null) {
+      if (!identical(_futurePostseasonSettlement, expectedSettlement) ||
+          _futurePostseasonHasNextSeason != hasNextSeason) {
+        throw StateError('Conflicting future postseason transition.');
+      }
+      return existing;
+    }
+    final transition = SinglePassPostseasonRuntimeTransition.fromSettledEconomy(
+      authority: authority,
+      expectedResult: expectedSettlement,
+      expectedOwner: authority.owner,
+      expectedRevision: authority.revision,
+      expectedProvenance: authority.provenance,
+      expectedExecution: authority.executionIdentity,
+      hasNextSeason: hasNextSeason,
+    );
+    // The exclusive annual-release operation above succeeds before commit.
+    _futurePostseasonSettlement = expectedSettlement;
+    _futurePostseasonHasNextSeason = hasNextSeason;
+    _futurePostseasonTransition = transition;
+    return transition;
+  }
+
+  /// Move the original annual graph exactly once after every genuine
+  /// postseason stage and Pending answer has completed.
+  LosslessPostOffseasonRuntimeGraph publishFuturePostseasonContinuation({
+    required SinglePassPostseasonRuntimeTransition expectedTransition,
+  }) {
+    if (!identical(expectedTransition, _futurePostseasonTransition) ||
+        _futurePostseasonHasNextSeason != true) {
+      throw StateError('Foreign or terminal future postseason publication.');
+    }
+    final published = _futurePostseasonContinuation;
+    if (published != null) return published;
+    if (expectedTransition.phase !=
+        PostseasonRuntimeTransitionPhase.continuationReady) {
+      throw StateError('Future postseason continuation is not ready.');
+    }
+    final moved = expectedTransition.moveOwnedAnnualContinuation();
+    _futurePostseasonContinuation = moved;
+    return moved;
+  }
+
+  /// Callback-free activation of the next epoch in this SAME application.
+  /// It retires only season-local pointers, never the original B1/B2, the
+  /// advanced transfer controller, manager history, or settled economy graph.
+  /// All fallible graph checks happen before the pointer switch.
+  void activateNextFutureSeason({
+    required LosslessPostOffseasonRuntimeGraph expectedContinuation,
+  }) {
+    final previous = _activeFutureSeasonOpening;
+    final economy = _futureEconomyAuthority;
+    if (!identical(expectedContinuation, _futurePostseasonContinuation) ||
+        !identical(expectedContinuation.owner, this) ||
+        expectedContinuation.origin !=
+            PostoffseasonRuntimeOrigin.postOffseasonContinuation ||
+        previous == null ||
+        _futureCommittedSeason == null ||
+        economy == null ||
+        economy.state != RuntimeEconomyState.settled ||
+        expectedContinuation.targetSeasonIndex !=
+            previous.targetSeasonIndex + 1 ||
+        _nextFutureSource != null &&
+            !identical(_nextFutureSource, previous.admission.sourceGraph)) {
+      throw StateError('Foreign, premature or duplicate future re-entry.');
+    }
+    expectedContinuation.validateFutureAdmissionSource(
+      expectedOwner: expectedContinuation.owner,
+      expectedRevision: expectedContinuation.revision,
+      expectedProvenance: expectedContinuation.provenance,
+      expectedExecution: expectedContinuation.executionIdentity,
+      expectedOrigin: expectedContinuation.origin,
+      expectedTargetSeason: expectedContinuation.targetSeasonIndex,
+      expectedCareerSeed: _newGameConfig!.careerSeed,
+      expectedSimulationVersion: _newGameConfig.simulationVersion,
+    );
+    // No engine, callback, allocation or persistent mutation after this line.
+    _futureRuntimeEntry = null;
+    _futureRuntimeAdmission = null;
+    _activeFutureSeasonOpening = null;
+    _futurePromiseApplied = null;
+    _futureWeeklyState = null;
+    _futureCommittedSeason = null;
+    _futureEconomyAuthority = null;
+    _futurePostseasonSettlement = null;
+    _futurePostseasonHasNextSeason = null;
+    _futurePostseasonTransition = null;
+    _futurePostseasonContinuation = null;
+    _nextFutureSource = expectedContinuation;
   }
 
   PlayerPresidentPreseasonPromiseBoundary? get preseasonPromiseBoundary =>

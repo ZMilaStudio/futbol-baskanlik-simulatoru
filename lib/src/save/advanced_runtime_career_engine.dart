@@ -48,7 +48,12 @@ final class _AdvancedFutureTransferRecipient implements FutureTransferRuntime {
 
   @override
   FutureTransferRuntime restage(FutureRuntimeClaim claim) {
-    _check();
+    // Re-stage the same private controller after the previous application
+    // entry was retired. Only a live next-epoch claim can authorize this.
+    if (_claim.source.admissionState != FutureRuntimeAdmissionState.prepared) {
+      throw StateError('Unprepared transfer lineage cannot be restaged.');
+    }
+    claim.validateChild(claim.source.worldSuccessor);
     return _AdvancedFutureTransferRecipient._(claim, _controller);
   }
 
