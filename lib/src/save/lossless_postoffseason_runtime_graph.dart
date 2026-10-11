@@ -33,11 +33,11 @@ final class LosslessPostOffseasonRuntimeGraph {
         _transferEvidence = source._annualClosing?.advanced.transferEvidence ??
             AdvancedTransferRuntimeState(
                 activeContracts: source._transfer!.activeContracts,
-                contractEvents: source._transfer!.contractEvents,
-                activeLoans: source._transfer!.activeLoans,
-                loanHistory: source._transfer!.loanHistory,
+                contractEvents: source._transfer.contractEvents,
+                activeLoans: source._transfer.activeLoans,
+                loanHistory: source._transfer.loanHistory,
                 installmentObligations:
-                    source._transfer!.installmentObligations);
+                    source._transfer.installmentObligations);
   final ApplicationPostseasonTransitionToken? _token;
   final OwnedAnnualClosingBoundary? _annual;
   final AdvancedTransferController? _transfer;

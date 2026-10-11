@@ -683,7 +683,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       expectedOrigin: expectedContinuation.origin,
       expectedTargetSeason: expectedContinuation.targetSeasonIndex,
       expectedCareerSeed: _newGameConfig!.careerSeed,
-      expectedSimulationVersion: _newGameConfig!.simulationVersion,
+      expectedSimulationVersion: _newGameConfig.simulationVersion,
     );
     // No engine, callback, allocation or persistent mutation after this line.
     _futureRuntimeEntry = null;
