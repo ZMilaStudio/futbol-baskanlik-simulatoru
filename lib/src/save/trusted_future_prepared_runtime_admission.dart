@@ -147,7 +147,12 @@ final class _FirstFutureTransferRecipient implements FutureTransferRuntime {
 
   @override
   FutureTransferRuntime restage(FutureRuntimeClaim claim) {
-    _check();
+    // The former application entry becomes stale at genuine season re-entry.
+    // The NEW private claim, not that retired entry, authorizes this move.
+    if (_claim.source.admissionState != FutureRuntimeAdmissionState.prepared) {
+      throw StateError('Unprepared transfer lineage cannot be restaged.');
+    }
+    claim.validateChild(claim.source.worldSuccessor);
     return _FirstFutureTransferRecipient._(claim, _controller);
   }
 
