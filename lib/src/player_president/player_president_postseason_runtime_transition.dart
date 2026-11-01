@@ -184,6 +184,7 @@ final class SinglePassPostseasonRuntimeTransition {
   bool _outerAttempted = false;
   WorldOffseasonProjectionResult? _worldSuccessor;
   PresidentDomainSeasonEffects? _domainSuccessor;
+  List<PromiseSeasonSnapshot>? _completedPromiseSnapshots;
   CrisisRuntimeEffects? _crisisSuccessor;
   PresidentFacilityInvestmentEffects? _facilitySuccessor;
   PlayerPresidentTenureControlState? _controlSuccessor;
@@ -249,6 +250,11 @@ final class SinglePassPostseasonRuntimeTransition {
   }
 
   PresidentDomainSeasonEffects? get domainSuccessor => _domainSuccessor;
+
+  /// Exact resolved promises consumed by the successfully published domain
+  /// successor. Null before that stage; observing never invokes a resolver.
+  List<PromiseSeasonSnapshot>? get completedPromiseSnapshots =>
+      _completedPromiseSnapshots;
 
   void prepareOuterSuccessor() {
     _validate();
@@ -837,6 +843,7 @@ final class SinglePassPostseasonRuntimeTransition {
         priorTermPromiseScores: const {},
         hasNextSeason: source.hasNextSeason,
       );
+      _completedPromiseSnapshots = source.promiseSnapshots;
       _phase = PostseasonRuntimeTransitionPhase.domainReady;
     } catch (_) {
       _phase = PostseasonRuntimeTransitionPhase.failed;
@@ -892,11 +899,14 @@ final class SinglePassPostseasonRuntimeTransition {
           movementsAfterSeason: _movement!.movements,
           leaguesAfterTransition: post.nextLeagues,
           cashMovementsAfterWindow: post.cashMovements);
+      final completedPromises =
+          List<PromiseSeasonSnapshot>.unmodifiable(snapshots);
       _domainSuccessor = source.projectOwnedDomain(
           transition: this,
           season: season,
-          acceptedPromises: snapshots,
+          acceptedPromises: completedPromises,
           managerSeason: _managerSuccessor!.completedSeasons.last);
+      _completedPromiseSnapshots = completedPromises;
       _phase = PostseasonRuntimeTransitionPhase.domainReady;
     } catch (_) {
       _phase = PostseasonRuntimeTransitionPhase.failed;

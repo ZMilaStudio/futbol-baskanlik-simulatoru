@@ -166,7 +166,7 @@ final class PlayerPresidentOwnedSeasonTicketPending
 final class PlayerPresidentOwnedSeasonContinuationReady
     extends PlayerPresidentOwnedSeasonStep {
   PlayerPresidentOwnedSeasonContinuationReady._(
-      LosslessPostOffseasonRuntimeGraph graph)
+      LosslessPostOffseasonRuntimeGraph graph, this.completedPromise)
       : nextSeasonIndex = graph.targetSeasonIndex,
         completedSeasonIndex = graph.targetSeasonIndex - 1,
         control = graph.control,
@@ -178,15 +178,19 @@ final class PlayerPresidentOwnedSeasonContinuationReady
   final int completedSeasonIndex;
   final PlayerPresidentTenureControlState control;
   final List<int> managerHistorySeasonIndices;
+
+  /// The real completed-season result, resolved before successor publication.
+  final PromiseSeasonSnapshot completedPromise;
 }
 
 final class PlayerPresidentOwnedCareerEnded
     extends PlayerPresidentOwnedSeasonStep {
   const PlayerPresidentOwnedCareerEnded._(
-      this.completedSeasonIndex, this.control)
+      this.completedSeasonIndex, this.control, this.completedPromise)
       : super._();
   final int completedSeasonIndex;
   final PlayerPresidentTenureControlState control;
+  final PromiseSeasonSnapshot completedPromise;
 }
 
 enum PlayerPresidentOwnedSeasonFailureStage {
@@ -526,12 +530,20 @@ final class PlayerPresidentOwnedSeasonApplication {
               expectedTransition: _transition!)
           : _application.publishFuturePostseasonContinuation(
               expectedTransition: _transition!);
+      final snapshots = _transition!.completedPromiseSnapshots;
+      if (snapshots == null) {
+        throw StateError('Published continuation has no resolved promises.');
+      }
+      final completedPromise = snapshots.singleWhere((snapshot) =>
+          snapshot.context.clubId == graph.control.controlledClubId &&
+          snapshot.context.seasonIndex == graph.targetSeasonIndex - 1);
       _continuation = graph;
       if (graph.control.lost) {
         return _step = PlayerPresidentOwnedCareerEnded._(
-            graph.targetSeasonIndex - 1, graph.control);
+            graph.targetSeasonIndex - 1, graph.control, completedPromise);
       }
-      return _step = PlayerPresidentOwnedSeasonContinuationReady._(graph);
+      return _step = PlayerPresidentOwnedSeasonContinuationReady._(
+          graph, completedPromise);
     } catch (_) {
       _failPostseason();
       rethrow;
