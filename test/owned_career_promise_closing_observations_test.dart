@@ -2,9 +2,10 @@ import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_manager_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_owned_season_application.dart';
 import 'package:futbol_baskanlik_m0/player_president_promise_control.dart';
-import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
 import 'package:test/test.dart';
+
+import 'support/owned_career_driver.dart' show settleOwnedSeason;
 
 PlayerPresidentOwnedSeasonApplication _start({
   String clubId = 't1_01',
@@ -33,20 +34,6 @@ PlayerPresidentOwnedSeasonApplication _start({
     running = app.advanceRound(expected: running);
   }
   return (running, resolved.consequence.promise);
-}
-
-PlayerPresidentOwnedFutureSeasonSettled _settle(
-    PlayerPresidentOwnedSeasonApplication app,
-    PlayerPresidentOwnedSeasonRunning w30) {
-  final step = app.completeFutureSeason(expected: w30);
-  if (step is PlayerPresidentOwnedSeasonTicketPending) {
-    return app.submitTicket(
-      expected: step,
-      choice:
-          const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced),
-    );
-  }
-  return step as PlayerPresidentOwnedFutureSeasonSettled;
 }
 
 PlayerPresidentOwnedSeasonStep _continue(
@@ -104,7 +91,7 @@ void main() {
         as PlayerPresidentOwnedSeasonContinuationReady;
     app.activateNextSeason(expected: initialReady);
     final (w30, accepted) = _play(app, lastChoice: true);
-    final settled = _settle(app, w30);
+    final settled = settleOwnedSeason(app, w30);
     expect(app.currentStep, same(settled));
     final ready =
         _continue(app, settled) as PlayerPresidentOwnedSeasonContinuationReady;
@@ -124,7 +111,7 @@ void main() {
 
     app.activateNextSeason(expected: ready);
     final (nextW30, nextAccepted) = _play(app);
-    final next = _continue(app, _settle(app, nextW30))
+    final next = _continue(app, settleOwnedSeason(app, nextW30))
         as PlayerPresidentOwnedSeasonContinuationReady;
     expect(next.completedPromise.promise, same(nextAccepted));
     expect(next.completedPromise.promise.seasonIndex, 2);
@@ -159,7 +146,7 @@ void main() {
         as PlayerPresidentOwnedSeasonContinuationReady;
     app.activateNextSeason(expected: initialReady);
     final (w30, accepted) = _play(app);
-    final settled = _settle(app, w30);
+    final settled = settleOwnedSeason(app, w30);
     final ended = _continue(app, settled) as PlayerPresidentOwnedCareerEnded;
     expect(ended.control.lost, isTrue);
     expect(ended.completedSeasonIndex, 1);
