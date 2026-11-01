@@ -41,6 +41,7 @@ import '../save/advanced_runtime_career_engine.dart';
 
 part 'player_president_active_future_season_opening.dart';
 part 'player_president_future_active_season_runtime.dart';
+part 'player_president_prepared_season_opening_snapshot.dart';
 
 /// Unforgeable application-local claim. No data constructor or global registry.
 final class ApplicationFutureRuntimeEntry {
@@ -161,7 +162,10 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required PlayerPresidentInteractiveDecisionTranscriptSession session,
     required this.bundleCodec,
     required this.bootstrapCodec,
-  })  : _checkpoint = checkpoint,
+  })  : _mostRecentlyOpenedSeason =
+            PlayerPresidentPreparedSeasonOpeningSnapshot._(
+                preparedSeasonDashboard, preparedSquad, preparedSeasonFixtures),
+        _checkpoint = checkpoint,
         _preparedSeasonDashboard = preparedSeasonDashboard,
         _preparedSquad = preparedSquad,
         _preparedSeasonFixtures = preparedSeasonFixtures,
@@ -586,7 +590,6 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     }
   }
 
-
   /// The same application owns the genuinely settled future W30-to-annual
   /// handoff. Unlike the original B2 transition this consumes only full-M65
   /// settlement evidence and can never manufacture a legacy manager season.
@@ -961,6 +964,15 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
 
   PlayerPresidentPreparedSeasonFixturesSnapshot get preparedSeasonFixtures =>
       _preparedSeasonFixtures;
+
+  PlayerPresidentPreparedSeasonOpeningSnapshot _mostRecentlyOpenedSeason;
+
+  /// Immutable observation of the most recently opened season. It stays at
+  /// that opening through decisions/closing; it is not a live state estimate.
+  /// Owned future opening publication replaces it; legacy sessions retain
+  /// their initial prepared-season observation.
+  PlayerPresidentPreparedSeasonOpeningSnapshot get preparedSeasonOpening =>
+      _mostRecentlyOpenedSeason;
 
   bool get canPersist =>
       _checkpoint != null && _preseasonPromiseBoundary == null;

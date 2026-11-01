@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — SOHBET DEVİR NOTU
 
-Son güncelleme: 26 Eylül 2026
+Son güncelleme: 1 Kasım 2026
 
 Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmasıdır.
 
@@ -10,7 +10,38 @@ Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmas
 
 Kaynak önceliği: **Live GitHub > güncel repo docs > central technical-development compass > eski sohbet bilgisi.**
 
-## 1. Güncel proje durumu
+## 1. Güncel proje durumu — M102 actual-main
+
+Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`.
+Son kapanan milestone: **M102 — CLOSED / MERGED / PASS**.
+
+- [PR #141](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/141): CLOSED / MERGED / Draft=false; SQUASH, 1 Kasım 2026 01:44:50 UTC.
+- Final product HEAD: `d9e715723653e6d76be1d7a6971da7eeb3513562`.
+- Live-main / executable merge SHA: `4b7c5fbe1123feaa1c73a4ba702d010431c9e618`.
+- Main tree: `09826913043c78effe72243a9a016da356bf184d`; final product HEAD ile eşleşir.
+- Tek parent / önceki main: `64d62c48948e489dc41497170c8ddf39ccd906e1`.
+
+[Actual-main Core #756 / run 41262352848](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41262352848), attempt 1, event `push`, exact SHA `4b7c5fbe1123feaa1c73a4ba702d010431c9e618`: **SUCCESS**. Analyze step SUCCESS (dört existing unnecessary-import informational notice, error/warning yok); normal suite **779 passed**, failed/skipped 0; canonical M0–M88 **84/84 physical commands SUCCESS**, failed/skipped 0.
+
+Flutter workflow bu SHA için **NOT TRIGGERED**: M102 diff'i `app/**` veya Flutter workflow'u değiştirmedi. Final product HEAD için local Flutter analyzer temiz / **112 tests passed** kaydı vardır; bu Flutter CI success değildir. Android **NOT VERIFIED — KNOWN ENVIRONMENT DISK LIMIT**; actual-main Android build veya smoke proof yoktur.
+
+### M102 consumer contract
+
+Public entry: `PlayerPresidentOwnedSeasonApplication`. Aynı original application/runtime lineage'ı historical B2 → postseason → future admission/opening → gerçek future W30/economy settlement → annual postseason → sonraki future opening boyunca korunur. Public acceptance future 1 ve future 2'yi tamamlar; **future 3 yalnız W0 re-entry** seviyesinde kanıtlanmıştır, W30 iddiası yoktur.
+
+Historical Basic/X1 B2 authority korunur; full-M65 equivalence kanıtlanmış değildir. Historical manager authority **UNAVAILABLE BY DESIGN** kalır. Public token, settlement capability, raw continuation recipient veya mutable runtime authority yoktur.
+
+Persistence/schema: **UNCHANGED**; M65 sole persisted game-state authority. Owned career persistence desteklenmez. Existing saved mobile/Flutter akışı, default new-game/load, controller ve ekranlar değişmedi; transient mobile entry eklenmedi. M102 prepared getter'ları initial historical observations olarak kaldı.
+
+### Devam ederken
+
+Bu kayıt M103 veya başka bir yeni milestone seçmez/kapatmaz. Live `main`, source ve current docs yeniden doğrulanır; mevcut açık owner talimatları ve kalıcı authority sınırları içinde çalışılır. M102'nin implementation-time local notundaki NOT MERGED / CI DEFERRED ifadeleri tarihsel kayıttır; current closure authority bu bölüm ve `GENEL_PROJE_OZETI.md` içindeki actual-main kanıtıdır.
+
+## Historical M101 handoff snapshot — 26 Eylül 2026 (NOT CURRENT)
+
+Aşağıdaki M101 closure ve next-work bölümleri o tarihin kaydıdır. Eski `M102 not selected/started` veya `aktif milestone YOK` ifadeleri güncel M102 durumunu tanımlamaz.
+
+### M101 snapshot: proje durumu
 
 Repo: `ZMilaStudio/futbol-baskanlik-simulatoru`
 
@@ -32,7 +63,7 @@ Persistence impact: **NONE**. M65 sole persisted game-state authority; M73/M76 P
 
 Aktif milestone: **YOK**. M102 not selected or started.
 
-## 2. M101 essentials
+### M101 snapshot: essentials
 
 Product identity: **Takımı sen yönetmiyorsun. Kulübü sen yönetiyorsun.**
 Opening: president role and decision → result → season cycle explained; existing New Game and Load Save routes preserved.
@@ -41,7 +72,7 @@ President Home: current Pending kind and sequence exactly once before prepared *
 Six-file PR scope: `app/lib/screens/opening_screen.dart`, `app/lib/screens/club_selection_screen.dart`, `app/lib/screens/president_home_screen.dart`, `app/test/widget_test.dart`, `app/test/prepared_season_dashboard_widget_test.dart`, `app/test/next_season_widget_test.dart`.
 Acceptance: 320px/TextScale 2.0, long names, lazy scroll, no overflow, exact choice/club identity, fail-closed, save/load/rebind and next-season/lost-career regression. No new gameplay, AI advice, tutorial-progress state or persisted schema.
 
-## 3. Technical compass / next-work rule
+### M101 snapshot: technical compass / next-work rule
 
 - FBS-01 — KEEP CURRENT SAVE ARCHITECTURE / UNCHANGED.
 - FBS-02 — NOT TRIGGERED.
@@ -52,7 +83,7 @@ Acceptance: 320px/TextScale 2.0, long names, lazy scroll, no overflow, exact cho
 
 ## 4. Historical M100 handoff snapshot — 25 Eylül 2026 (NOT CURRENT)
 
-The M100 closure facts below are historical. Old last-closed and next-work notes describe the M100 checkpoint, not current M101 authority.
+The M100 closure facts below are historical. Old last-closed and next-work notes describe the M100 checkpoint, not current M102 authority.
 
 ### 4.1 M100 kapanış anındaki durum
 

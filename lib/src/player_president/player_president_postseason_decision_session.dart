@@ -217,6 +217,10 @@ final class PostseasonDecisionSession {
         request.phase != _phase) {
       throw StateError('Foreign, stale or completed request.');
     }
+    if (_phase == PostseasonDecisionPhase.transferStrategy &&
+        choice.runtimeType != PlayerTransferStrategyChoice) {
+      throw ArgumentError('Expected a concrete transfer strategy choice.');
+    }
     final prior = _answers.where((a) => identical(a.request, request));
     if (prior.isNotEmpty) {
       if (!_sameChoice(prior.single.choice, choice)) {

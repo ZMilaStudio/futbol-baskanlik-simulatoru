@@ -21,6 +21,8 @@ import 'player_president_prepared_season_dashboard_snapshot.dart';
 import 'player_president_prepared_season_fixtures_snapshot.dart';
 import 'player_president_prepared_squad_snapshot.dart';
 import 'player_president_postseason_runtime_transition.dart';
+import 'player_president_completed_season_league_table_snapshot.dart';
+import 'player_president_completed_season_match_results_snapshot.dart';
 
 /// Consumer observations, never M65 checkpoints or runtime capabilities.
 sealed class PlayerPresidentOwnedSeasonStep {
@@ -96,7 +98,29 @@ final class PlayerPresidentOwnedFutureSeasonSettled
       : managerHistorySeasonIndices = List.unmodifiable(_committed
             .managerAuthority.seasons
             .map((season) => season.seasonIndex)),
-        super._();
+        super._() {
+    final league = _committed.opening.opening.leagues.singleWhere(
+      (league) => league.clubIds.contains(controlledClubId),
+    );
+    final report = _committed.reports
+        .singleWhere((item) => item.tier == league.tier)
+        .report;
+    if (report.seasonIndex != seasonIndex) {
+      throw StateError('Future completed observation has a foreign season.');
+    }
+    leagueTable =
+        PlayerPresidentCompletedSeasonLeagueTableSnapshot.fromSeasonReport(
+      controlledClubId: controlledClubId,
+      completedLeague: league,
+      report: report,
+    );
+    matchResults =
+        PlayerPresidentCompletedSeasonMatchResultsSnapshot.fromSeasonReport(
+      controlledClubId: controlledClubId,
+      completedLeague: league,
+      report: report,
+    );
+  }
 
   final PlayerPresidentFutureCommittedSeasonResult _committed;
   final FullM65CommittedSeasonSettlementResult _settlement;
@@ -106,6 +130,10 @@ final class PlayerPresidentOwnedFutureSeasonSettled
   ClubFinanceSeason get finance => _settlement.receipt.results
       .singleWhere((row) => row.clubId == controlledClubId);
   WeeklyWorldFixtureSnapshot get fixtures => _committed.w30;
+
+  /// Existing M96/M97 immutable projections of the actual completed league.
+  late final PlayerPresidentCompletedSeasonLeagueTableSnapshot leagueTable;
+  late final PlayerPresidentCompletedSeasonMatchResultsSnapshot matchResults;
 }
 
 final class PlayerPresidentOwnedSeasonTransferPending
@@ -138,7 +166,7 @@ final class PlayerPresidentOwnedSeasonTicketPending
 final class PlayerPresidentOwnedSeasonContinuationReady
     extends PlayerPresidentOwnedSeasonStep {
   PlayerPresidentOwnedSeasonContinuationReady._(
-      LosslessPostOffseasonRuntimeGraph graph)
+      LosslessPostOffseasonRuntimeGraph graph, this.completedPromise)
       : nextSeasonIndex = graph.targetSeasonIndex,
         completedSeasonIndex = graph.targetSeasonIndex - 1,
         control = graph.control,
@@ -150,15 +178,19 @@ final class PlayerPresidentOwnedSeasonContinuationReady
   final int completedSeasonIndex;
   final PlayerPresidentTenureControlState control;
   final List<int> managerHistorySeasonIndices;
+
+  /// The real completed-season result, resolved before successor publication.
+  final PromiseSeasonSnapshot completedPromise;
 }
 
 final class PlayerPresidentOwnedCareerEnded
     extends PlayerPresidentOwnedSeasonStep {
   const PlayerPresidentOwnedCareerEnded._(
-      this.completedSeasonIndex, this.control)
+      this.completedSeasonIndex, this.control, this.completedPromise)
       : super._();
   final int completedSeasonIndex;
   final PlayerPresidentTenureControlState control;
+  final PromiseSeasonSnapshot completedPromise;
 }
 
 enum PlayerPresidentOwnedSeasonFailureStage {
@@ -231,6 +263,11 @@ final class PlayerPresidentOwnedSeasonApplication {
   LosslessPostOffseasonRuntimeGraph? _continuation;
 
   PlayerPresidentOwnedSeasonStep get currentStep => _step;
+
+  /// The most recently opened season, captured before its promise acceptance.
+  /// Existing prepared getters below intentionally keep their initial meaning.
+  PlayerPresidentPreparedSeasonOpeningSnapshot get currentSeasonOpening =>
+      _application.preparedSeasonOpening;
 
   /// Initial historical opening observations, never current future-season state.
   PlayerPresidentPreparedSeasonDashboardSnapshot get preparedSeasonDashboard =>
@@ -493,12 +530,20 @@ final class PlayerPresidentOwnedSeasonApplication {
               expectedTransition: _transition!)
           : _application.publishFuturePostseasonContinuation(
               expectedTransition: _transition!);
+      final snapshots = _transition!.completedPromiseSnapshots;
+      if (snapshots == null) {
+        throw StateError('Published continuation has no resolved promises.');
+      }
+      final completedPromise = snapshots.singleWhere((snapshot) =>
+          snapshot.context.clubId == graph.control.controlledClubId &&
+          snapshot.context.seasonIndex == graph.targetSeasonIndex - 1);
       _continuation = graph;
       if (graph.control.lost) {
         return _step = PlayerPresidentOwnedCareerEnded._(
-            graph.targetSeasonIndex - 1, graph.control);
+            graph.targetSeasonIndex - 1, graph.control, completedPromise);
       }
-      return _step = PlayerPresidentOwnedSeasonContinuationReady._(graph);
+      return _step = PlayerPresidentOwnedSeasonContinuationReady._(
+          graph, completedPromise);
     } catch (_) {
       _failPostseason();
       rethrow;

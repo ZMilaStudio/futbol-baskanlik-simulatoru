@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 26 Eylül 2026
+Son güncelleme: 1 Kasım 2026
 
 ## 1. Proje kimliği
 
@@ -40,6 +40,52 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
+# **M102 — CLOSED / MERGED / PASS**
+
+Son kapanan milestone: **M102 — Owned Future Career Application Bridge**.
+[Product PR #141](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/141): CLOSED / MERGED / Draft=false; merge zamanı 1 Kasım 2026, 01:44:50 UTC.
+Final product HEAD: `d9e715723653e6d76be1d7a6971da7eeb3513562`.
+Merge yöntemi: **SQUASH**.
+
+1 Kasım 2026 canlı GitHub kontrolünde actual-main authority:
+
+- HEAD / executable merge SHA: `4b7c5fbe1123feaa1c73a4ba702d010431c9e618`.
+- Tree: `09826913043c78effe72243a9a016da356bf184d` (final product HEAD ile aynı tree).
+- Tek parent / önceki main: `64d62c48948e489dc41497170c8ddf39ccd906e1`.
+
+### M102 product ve authority sonucu
+
+`PlayerPresidentOwnedSeasonApplication` public typed adım ve komutlarla aynı original application/runtime lineage'ını kullanır. Controlled promise, ticket, transfer ve manager kararları gerçek production submit yollarına gider; non-player aşamalar mevcut owner API'lerine delege edilir.
+
+Executable public-consumer proof:
+
+historical owned season → gerçek Basic/X1 B2 → postseason → first future admission/opening → future season 1 W30/settlement/postseason → future season 2 W30/settlement/postseason → **future season 3 W0**.
+
+**Future season 3 W30 tamamlanması kanıtlanmış veya iddia edilmiş değildir.** Historical squad-only manager authority UNAVAILABLE BY DESIGN kalır; season-0 manager history veya full-M65 settlement üretilmez. Historical B2 full-M65 equivalence hâlâ kanıtlanmış değildir. Ownership token, continuation/settlement capability ve mutable runtime recipient public consumer'a açılmaz.
+
+### M102 exact actual-main validation
+
+[Core Simulation Tests #756 / run 41262352848](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41262352848), attempt 1, event `push`, exact executable SHA `4b7c5fbe1123feaa1c73a4ba702d010431c9e618`: **completed / SUCCESS**.
+
+- Analyze step SUCCESS; error/warning yok, unchanged testlerde dört unnecessary-import informational notice var.
+- Normal suite: **779 tests passed**, failed/skipped 0.
+- Canonical M0–M88: **84/84 physical commands SUCCESS**, failed/skipped 0.
+- Bu SHA için Flutter workflow **NOT TRIGGERED**; M102 `app/**` veya Flutter workflow dosyasını değiştirmedi. Actual-main Flutter CI success iddia edilmez.
+- Final product HEAD için kayıtlı local Flutter sonucu: 112 tests passed, failed/skipped 0; Flutter analyzer temiz. Bu local evidence, Flutter CI değildir.
+- Android local build: **NOT VERIFIED — KNOWN ENVIRONMENT DISK LIMIT**. M102 actual-main Android build/smoke sonucu yoktur.
+
+### Korunan sınırlar ve sonraki çalışma
+
+Persistence/schema impact: **NONE**. **M65 SOLE PERSISTED GAME-STATE AUTHORITY** kalır; M74/M75/M77–M88/M80, saveVersion, codec, checksum, migration ve namespace routing değişmedi. Owned career persistence desteklenmez.
+
+Existing saved Flutter/mobile flow değişmedi: default new-game/load route, `GameFlowController` ve ekranlar M102'ye geçirilmedi; transient mobile entry eklenmedi. M102 prepared dashboard/squad/fixture getter'ları initial historical opening observations olarak kaldı.
+
+Bu kayıt yeni bir milestone seçmez veya kapatmaz. Sonraki çalışma live `main`, current source/docs ve yürürlükteki açık owner talimatlarına göre yürütülür. `docs/project-memory/M102_APPLICATION_BRIDGE_LOCAL.md` içindeki local-only/CI-deferred ifadeleri implementation anının tarihsel kaydıdır; kapanış authority'si yukarıdaki actual-main kanıtıdır.
+
+## Historical M101 authority snapshot — 26 Eylül 2026 (NOT CURRENT)
+
+Aşağıdaki M101 kapanışı ve o tarihteki next-work notları tarihsel olarak korunur. `M102 not selected` / `aktif milestone YOK` ifadeleri bu eski snapshot'ın tarihine aittir; güncel M102 sonucu yukarıdadır.
+
 # **M0–M101 — CLOSED / MERGED / PASS**
 
 Son kapanan milestone: **M101 — First Career Orientation I**.
@@ -72,7 +118,7 @@ Aktif milestone: **YOK**. M102 has not been selected; do not start or define a n
 
 On a new authorized request: verify live `main`, current repo docs and central technical-development compass; use a fresh product/authority contract and obtain explicit owner approval before implementation.
 
-## M101 kapanış sonucu
+## M101 kapanış sonucu — tarihsel kayıt
 
 # M101 — First Career Orientation I
 
@@ -131,7 +177,7 @@ Persistence impact: **NONE**. No core simulation, M65 game-state, M73/M76 decisi
 
 Aktif milestone: **YOK**. M102 not selected; no automatic gap scan, branch/PR, CI or implementation.
 
-## M100 kapanış sonucu — tarihsel kayıt (güncel durum M101)
+## M100 kapanış sonucu — tarihsel kayıt (o tarihteki sonraki durum M101)
 
 # M100 — Crisis Decision Terms I
 
