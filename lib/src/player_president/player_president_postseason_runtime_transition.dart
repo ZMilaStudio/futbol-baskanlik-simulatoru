@@ -749,6 +749,9 @@ final class SinglePassPostseasonRuntimeTransition {
         !identical(expectedPending._transition, this)) {
       throw StateError('Foreign or stale transfer request.');
     }
+    if (choice.runtimeType != PlayerTransferStrategyChoice) {
+      throw ArgumentError('Expected a concrete transfer strategy choice.');
+    }
     choice.validate(); // No phase/effect change on invalid answer.
     final accepted = _acceptedTransfer;
     if (accepted != null) {
