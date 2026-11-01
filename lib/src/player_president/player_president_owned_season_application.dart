@@ -21,6 +21,8 @@ import 'player_president_prepared_season_dashboard_snapshot.dart';
 import 'player_president_prepared_season_fixtures_snapshot.dart';
 import 'player_president_prepared_squad_snapshot.dart';
 import 'player_president_postseason_runtime_transition.dart';
+import 'player_president_completed_season_league_table_snapshot.dart';
+import 'player_president_completed_season_match_results_snapshot.dart';
 
 /// Consumer observations, never M65 checkpoints or runtime capabilities.
 sealed class PlayerPresidentOwnedSeasonStep {
@@ -96,7 +98,29 @@ final class PlayerPresidentOwnedFutureSeasonSettled
       : managerHistorySeasonIndices = List.unmodifiable(_committed
             .managerAuthority.seasons
             .map((season) => season.seasonIndex)),
-        super._();
+        super._() {
+    final league = _committed.opening.opening.leagues.singleWhere(
+      (league) => league.clubIds.contains(controlledClubId),
+    );
+    final report = _committed.reports
+        .singleWhere((item) => item.tier == league.tier)
+        .report;
+    if (report.seasonIndex != seasonIndex) {
+      throw StateError('Future completed observation has a foreign season.');
+    }
+    leagueTable =
+        PlayerPresidentCompletedSeasonLeagueTableSnapshot.fromSeasonReport(
+      controlledClubId: controlledClubId,
+      completedLeague: league,
+      report: report,
+    );
+    matchResults =
+        PlayerPresidentCompletedSeasonMatchResultsSnapshot.fromSeasonReport(
+      controlledClubId: controlledClubId,
+      completedLeague: league,
+      report: report,
+    );
+  }
 
   final PlayerPresidentFutureCommittedSeasonResult _committed;
   final FullM65CommittedSeasonSettlementResult _settlement;
@@ -106,6 +130,10 @@ final class PlayerPresidentOwnedFutureSeasonSettled
   ClubFinanceSeason get finance => _settlement.receipt.results
       .singleWhere((row) => row.clubId == controlledClubId);
   WeeklyWorldFixtureSnapshot get fixtures => _committed.w30;
+
+  /// Existing M96/M97 immutable projections of the actual completed league.
+  late final PlayerPresidentCompletedSeasonLeagueTableSnapshot leagueTable;
+  late final PlayerPresidentCompletedSeasonMatchResultsSnapshot matchResults;
 }
 
 final class PlayerPresidentOwnedSeasonTransferPending
