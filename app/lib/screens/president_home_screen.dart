@@ -317,7 +317,11 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                               step: step,
                               submitting: busy,
                               clubNameForId: _clubNameForId,
-                              onSubmit: _controller.submitChoice,
+                              onSubmit: step
+                                      is PlayerPresidentInteractiveDecisionPending
+                                  ? (choice) => _controller.submitPendingChoice(
+                                      step, choice)
+                                  : null,
                               showPendingHeading: false,
                               canContinueToNextSeason:
                                   completedTenureControl?.active ?? true,

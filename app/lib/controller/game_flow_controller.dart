@@ -163,6 +163,16 @@ class GameFlowController extends ChangeNotifier {
     return loaded;
   }
 
+  /// Binds a rendered action to the exact Pending that the player observed.
+  /// A save rebound or session change makes an older callback inert.
+  void submitPendingChoice(
+    PlayerPresidentInteractiveDecisionPending expectedPending,
+    Object choice,
+  ) {
+    if (!identical(_currentStep, expectedPending)) return;
+    submitChoice(choice);
+  }
+
   /// Sends one player choice through the authoritative M76 resolution path.
   ///
   /// Successful submission advances the authoritative M76 session immediately,
