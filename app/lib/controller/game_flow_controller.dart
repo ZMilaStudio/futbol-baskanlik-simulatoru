@@ -334,6 +334,13 @@ class GameFlowController extends ChangeNotifier {
         saved = true;
       } else {
         final slotId = _slotIdFactory();
+        final existing = saveSlots.inspect(
+          source: _expectedSlotSource(session.origin),
+          slotId: slotId,
+        );
+        if (existing != null) {
+          throw StateError('Generated save-slot identity already exists.');
+        }
         final source = saveSlots.save(slotId: slotId, session: session);
         final summary = saveSlots.inspect(source: source, slotId: slotId);
         if (summary == null) {
@@ -388,6 +395,22 @@ class GameFlowController extends ChangeNotifier {
     _currentResolution = null;
     _queuedNextStep = null;
   }
+
+  /// Read-only identity expectation for the first-save collision check.
+  /// M87 remains responsible for all write routing and persistence validation.
+  static PlayerPresidentInteractiveDecisionMixedSaveSlotSource
+      _expectedSlotSource(
+    PlayerPresidentInteractiveDecisionApplicationSessionOrigin origin,
+  ) =>
+          switch (origin) {
+            PlayerPresidentInteractiveDecisionApplicationSessionOrigin
+                  .checkpoint =>
+              PlayerPresidentInteractiveDecisionMixedSaveSlotSource.checkpoint,
+            PlayerPresidentInteractiveDecisionApplicationSessionOrigin
+                  .newGame =>
+              PlayerPresidentInteractiveDecisionMixedSaveSlotSource
+                  .newGameBootstrap,
+          };
 
   Club? _clubById(String id) {
     for (final club in world.clubs) {
