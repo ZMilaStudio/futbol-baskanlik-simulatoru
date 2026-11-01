@@ -335,4 +335,86 @@ void main() {
     expect(find.byKey(const Key('empty-save-list')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('disposed Delete callback preserves a new same-club record',
+      (tester) async {
+    final summary = save(bootstrap(0));
+    await render(tester);
+    final retainedDelete = tester
+        .widget<IconButton>(find.byKey(Key('delete-${summary.identity}')))
+        .onPressed!;
+    await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: Text('Current screen'))));
+    await tester.pumpAndSettle();
+    expect(find.byType(SaveListScreen), findsNothing);
+
+    // A real new career now owns the same typed identity and club. Only the
+    // disposed screen boundary distinguishes this event from a mounted one.
+    expect(composition.saveSlots.deleteSummary(summary), isTrue);
+    final replacement = bootstrap(0);
+    final first =
+        replacement.advance() as PlayerPresidentInteractiveDecisionPending;
+    replacement.submit(
+        request: first.request,
+        choice: canonicalChoiceForRequest(first.request));
+    expect(save(replacement).source, summary.source);
+    final before = bytes();
+    final sessionBefore = replacement.encodeNewGameBootstrapSnapshot();
+    final pendingBefore = replacement.pendingDecision;
+
+    expect(retainedDelete, returnsNormally);
+    await tester.pump();
+
+    expect(bytes(), before);
+    expect(
+        composition.saveSlots
+            .inspect(source: summary.source, slotId: summary.slotId)!
+            .answeredDecisionCount,
+        1);
+    expect(replacement.encodeNewGameBootstrapSnapshot(), sessionBefore);
+    expect(replacement.pendingDecision, same(pendingBefore));
+    expect(find.text('Current screen'), findsOneWidget);
+    expect(find.byType(PresidentHomeScreen), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('disposed Continue callback cannot open a new same-club record',
+      (tester) async {
+    final summary = save(bootstrap(0));
+    await render(tester);
+    final retainedContinue = tester
+        .widget<TextButton>(find.byKey(Key('continue-${summary.identity}')))
+        .onPressed!;
+    await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: Text('Current screen'))));
+    await tester.pumpAndSettle();
+    expect(find.byType(SaveListScreen), findsNothing);
+
+    expect(composition.saveSlots.deleteSummary(summary), isTrue);
+    final replacement = bootstrap(0);
+    final first =
+        replacement.advance() as PlayerPresidentInteractiveDecisionPending;
+    replacement.submit(
+        request: first.request,
+        choice: canonicalChoiceForRequest(first.request));
+    expect(save(replacement).source, summary.source);
+    final before = bytes();
+    final sessionBefore = replacement.encodeNewGameBootstrapSnapshot();
+    final pendingBefore = replacement.pendingDecision;
+
+    expect(retainedContinue, returnsNormally);
+    await tester.pumpAndSettle();
+
+    expect(bytes(), before);
+    expect(
+        composition.saveSlots
+            .inspect(source: summary.source, slotId: summary.slotId)!
+            .answeredDecisionCount,
+        1);
+    expect(replacement.encodeNewGameBootstrapSnapshot(), sessionBefore);
+    expect(replacement.pendingDecision, same(pendingBefore));
+    expect(find.text('Current screen'), findsOneWidget);
+    expect(find.byType(PresidentHomeScreen), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -45,6 +45,8 @@ class _SaveListScreenState extends State<SaveListScreen> {
   void _open(
     PlayerPresidentInteractiveDecisionMixedSaveSlotSummary summary,
   ) {
+    if (!mounted) return;
+
     try {
       final binding =
           PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding
@@ -83,6 +85,8 @@ class _SaveListScreenState extends State<SaveListScreen> {
   void _delete(
     PlayerPresidentInteractiveDecisionMixedSaveSlotSummary summary,
   ) {
+    if (!mounted) return;
+
     try {
       final current = widget.composition.saveSlots.inspect(
         source: summary.source,
