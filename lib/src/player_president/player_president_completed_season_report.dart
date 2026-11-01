@@ -24,7 +24,7 @@ class PlayerPresidentCompletedSeasonReport {
     required this.controlledClubId,
     required this.leagueTier,
     required this.finalPosition,
-    required this.standing,
+    required PlayerPresidentCompletedSeasonLeagueTableRow standing,
     required this.championClubId,
     required this.movement,
     required this.finance,
@@ -33,7 +33,7 @@ class PlayerPresidentCompletedSeasonReport {
     required this.promise,
     required this.leagueTable,
     required this.matchResults,
-  });
+  }) : _standing = standing;
 
   factory PlayerPresidentCompletedSeasonReport.fromCompleted(
     PlayerPresidentInteractiveSessionCompleted completed,
@@ -155,15 +155,8 @@ class PlayerPresidentCompletedSeasonReport {
       );
     }
 
-    final managerState = boundary
-        .checkpoint
-        .runtime
-        .runtime
-        .domain
-        .presidentRuntime
-        .runtime
-        .runtime
-        .manager;
+    final managerState = boundary.checkpoint.runtime.runtime.domain
+        .presidentRuntime.runtime.runtime.manager;
     final managerCareerSeason = _singleWhere(
       managerState.seasons,
       (item) => item.seasonIndex == seasonIndex,
@@ -277,7 +270,18 @@ class PlayerPresidentCompletedSeasonReport {
       controlledClubId: controlledClubId,
       leagueTier: league.tier,
       finalPosition: rowIndex + 1,
-      standing: standing,
+      standing: PlayerPresidentCompletedSeasonLeagueTableRow(
+        position: rowIndex + 1,
+        clubId: standing.clubId,
+        played: standing.played,
+        wins: standing.wins,
+        draws: standing.draws,
+        losses: standing.losses,
+        goalsFor: standing.goalsFor,
+        goalsAgainst: standing.goalsAgainst,
+        goalDifference: standing.goalDifference,
+        points: standing.points,
+      ),
       championClubId: seasonReport.championClubId,
       movement: movement,
       finance: finance,
@@ -299,7 +303,18 @@ class PlayerPresidentCompletedSeasonReport {
   /// 1-based index in the already-authoritative sorted SeasonReport.table.
   final int finalPosition;
 
-  final StandingRow standing;
+  final PlayerPresidentCompletedSeasonLeagueTableRow _standing;
+
+  /// Defensive legacy view of the captured authoritative standing values.
+  /// Mutating this row cannot alter the completed source or this report.
+  StandingRow get standing => StandingRow(clubId: _standing.clubId)
+    ..played = _standing.played
+    ..wins = _standing.wins
+    ..draws = _standing.draws
+    ..losses = _standing.losses
+    ..goalsFor = _standing.goalsFor
+    ..goalsAgainst = _standing.goalsAgainst
+    ..points = _standing.points;
   final String championClubId;
   final LeagueMovement? movement;
   final ClubFinanceSeason finance;

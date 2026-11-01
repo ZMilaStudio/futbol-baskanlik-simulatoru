@@ -1,4 +1,3 @@
-import 'package:futbol_baskanlik_m0/facility_sponsor_crisis_runtime_composition.dart';
 import 'package:futbol_baskanlik_m0/futbol_baskanlik_m0.dart';
 import 'package:futbol_baskanlik_m0/player_president_completed_season_report.dart';
 import 'package:futbol_baskanlik_m0/player_president_crisis_control.dart';
@@ -14,7 +13,6 @@ import 'package:futbol_baskanlik_m0/player_president_tenure_gated_facility_spons
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
 import 'package:futbol_baskanlik_m0/player_president_unified_decision_gateway_runtime.dart';
-import 'package:futbol_baskanlik_m0/president_facility_investment_runtime_integration.dart';
 import 'package:futbol_baskanlik_m0/sponsor_runtime_integration.dart';
 import 'package:test/test.dart';
 
@@ -183,14 +181,16 @@ void main() {
         const PlayerPresidentUnifiedDecisionGatewayRuntimeCareerEngine(
       aiCrisisEngine: CrisisDecisionEngine(activationThreshold: 0),
       candidateLimit: 5,
-    ).simulateWithCheckpoint(
-      clubs: world.clubs,
-      leagues: world.leagues,
-      config: config,
-      controlledClubId: controlledClubId,
-      seasonCount: 1,
-      hasFutureSeasonAfterReport: true,
-    ).checkpoint;
+    )
+            .simulateWithCheckpoint(
+              clubs: world.clubs,
+              leagues: world.leagues,
+              config: config,
+              controlledClubId: controlledClubId,
+              seasonCount: 1,
+              hasFutureSeasonAfterReport: true,
+            )
+            .checkpoint;
     checkpointSession =
         PlayerPresidentInteractiveDecisionApplicationSession.resume(
       checkpoint: openingCheckpoint,
@@ -199,21 +199,13 @@ void main() {
     checkpointCompleted = _drive(checkpointSession);
   });
 
-  test('public projection exposes exact new-game completed-season authority', () {
+  test('public projection exposes exact new-game completed-season authority',
+      () {
     final projection =
         PlayerPresidentCompletedSeasonReport.fromCompleted(newGameCompleted);
     final boundary = newGameCompleted.result.boundaries.single;
-    final worldSeason = boundary
-        .source
-        .source
-        .source
-        .sponsor
-        .report
-        .sourceReport
-        .advancedTransferReport
-        .worldReport
-        .seasons
-        .single;
+    final worldSeason = boundary.source.source.source.sponsor.report
+        .sourceReport.advancedTransferReport.worldReport.seasons.single;
     final league = worldSeason.leaguesBeforeSeason
         .singleWhere((item) => item.clubIds.contains(controlledClubId));
     final leagueResult = worldSeason.leagueResults
@@ -230,7 +222,8 @@ void main() {
     expect(projection.leagueTier, league.tier);
     expect(projection.leagueName, league.tier.displayName);
     expect(projection.finalPosition, rowIndex + 1);
-    expect(identical(projection.standing, row), isTrue);
+    expect(identical(projection.standing, row), isFalse);
+    expect(projection.standing.toJson(), row.toJson());
     expect(projection.standing.played, row.played);
     expect(projection.standing.wins, row.wins);
     expect(projection.standing.draws, row.draws);
@@ -251,15 +244,8 @@ void main() {
         PlayerPresidentCompletedSeasonReport.fromCompleted(newGameCompleted);
     final boundary = newGameCompleted.result.boundaries.single;
     final authoritative = boundary.source.financeFor(controlledClubId);
-    final nextWorld = boundary
-        .checkpoint
-        .runtime
-        .runtime
-        .domain
-        .presidentRuntime
-        .runtime
-        .runtime
-        .world;
+    final nextWorld = boundary.checkpoint.runtime.runtime.domain
+        .presidentRuntime.runtime.runtime.world;
     final nextFinanceState = nextWorld.nextSeasonFinanceStates
         .singleWhere((item) => item.clubId == controlledClubId);
 
@@ -277,7 +263,8 @@ void main() {
     expect(projection.finance, isA<ClubFinanceSeason>());
   });
 
-  test('manager projection keeps completed-season manager after replacement', () {
+  test('manager projection keeps completed-season manager after replacement',
+      () {
     final projection =
         PlayerPresidentCompletedSeasonReport.fromCompleted(newGameCompleted);
     final boundary = newGameCompleted.result.boundaries.single;
@@ -299,15 +286,8 @@ void main() {
       decision.reviewContext.season.actualPosition,
     );
 
-    final managerState = boundary
-        .checkpoint
-        .runtime
-        .runtime
-        .domain
-        .presidentRuntime
-        .runtime
-        .runtime
-        .manager;
+    final managerState = boundary.checkpoint.runtime.runtime.domain
+        .presidentRuntime.runtime.runtime.manager;
     final postSeasonAssignment = managerState.assignments
         .singleWhere((item) => item.clubId == controlledClubId);
     expect(decision.selectedManager, isNotNull);
@@ -315,7 +295,8 @@ void main() {
     expect(projection.manager.id, isNot(postSeasonAssignment.managerId));
   });
 
-  test('promise projection preserves canonical resolution and supports null', () {
+  test('promise projection preserves canonical resolution and supports null',
+      () {
     final projection =
         PlayerPresidentCompletedSeasonReport.fromCompleted(newGameCompleted);
     final promise = projection.promise;
@@ -340,21 +321,13 @@ void main() {
     expect(withoutPromise.promise, isNull);
   });
 
-  test('checkpoint-origin Completed has exact one-season projection parity', () {
+  test('checkpoint-origin Completed has exact one-season projection parity',
+      () {
     final projection =
         PlayerPresidentCompletedSeasonReport.fromCompleted(checkpointCompleted);
     final boundary = checkpointCompleted.result.boundaries.single;
-    final worldSeason = boundary
-        .source
-        .source
-        .source
-        .sponsor
-        .report
-        .sourceReport
-        .advancedTransferReport
-        .worldReport
-        .seasons
-        .single;
+    final worldSeason = boundary.source.source.source.sponsor.report
+        .sourceReport.advancedTransferReport.worldReport.seasons.single;
     final league = worldSeason.leaguesBeforeSeason
         .singleWhere((item) => item.clubIds.contains(controlledClubId));
     final leagueResult = worldSeason.leagueResults
@@ -368,10 +341,13 @@ void main() {
     expect(projection.finalPosition, rowIndex + 1);
     expect(
       identical(projection.standing, leagueResult.report.table[rowIndex]),
-      isTrue,
+      isFalse,
     );
+    expect(projection.standing.toJson(),
+        leagueResult.report.table[rowIndex].toJson());
     expect(
-      identical(projection.finance, boundary.source.financeFor(controlledClubId)),
+      identical(
+          projection.finance, boundary.source.financeFor(controlledClubId)),
       isTrue,
     );
   });
@@ -386,7 +362,8 @@ void main() {
     expect(second.controlledClubId, first.controlledClubId);
     expect(second.leagueTier, first.leagueTier);
     expect(second.finalPosition, first.finalPosition);
-    expect(identical(second.standing, first.standing), isTrue);
+    expect(identical(second.standing, first.standing), isFalse);
+    expect(second.standing.toJson(), first.standing.toJson());
     expect(second.championClubId, first.championClubId);
     expect(identical(second.movement, first.movement), isTrue);
     expect(identical(second.finance, first.finance), isTrue);
@@ -395,7 +372,105 @@ void main() {
     expect(identical(second.promise, first.promise), isTrue);
   });
 
-  test('new-game bootstrap bytes transcript and Completed checkpoint are immutable',
+  for (final origin in ['new-game', 'checkpoint']) {
+    test('$origin standing observation cannot mutate the completed source', () {
+      final completed =
+          origin == 'new-game' ? newGameCompleted : checkpointCompleted;
+      final projection =
+          PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+      final worldSeason = completed
+          .result
+          .boundaries
+          .single
+          .source
+          .source
+          .source
+          .sponsor
+          .report
+          .sourceReport
+          .advancedTransferReport
+          .worldReport
+          .seasons
+          .single;
+      final sourceRow = worldSeason.leagueResults
+          .singleWhere((league) => league.tier == projection.leagueTier)
+          .report
+          .table
+          .singleWhere((row) => row.clubId == controlledClubId);
+      final before = sourceRow.toJson();
+      final checkpointBefore = completed.result.checkpoint.signature;
+      final tableBefore = projection.leagueTable!.signature;
+      final matchesBefore = projection.matchResults!.signature;
+
+      final observation = projection.standing;
+      observation.record(scored: 12, conceded: 0);
+      observation
+        ..played = -1
+        ..wins = -2
+        ..draws = -3
+        ..losses = -4
+        ..goalsFor = -5
+        ..goalsAgainst = -6
+        ..points = -7;
+
+      expect(sourceRow.toJson(), before);
+      expect(projection.standing.toJson(), before);
+      expect(projection.leagueTable!.signature, tableBefore);
+      expect(projection.matchResults!.signature, matchesBefore);
+      expect(completed.result.checkpoint.signature, checkpointBefore);
+      final repeated =
+          PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+      expect(repeated.standing.toJson(), before);
+    });
+  }
+
+  test('captured standing values survive later changes to a mutable source row',
+      () {
+    final session = PlayerPresidentInteractiveDecisionApplicationSession.start(
+      clubs: world.clubs,
+      leagues: world.leagues,
+      config: config,
+      controlledClubId: controlledClubId,
+      seasonCount: 1,
+      hasFutureSeasonAfterReport: true,
+    );
+    final completed = _drive(session);
+    final projection =
+        PlayerPresidentCompletedSeasonReport.fromCompleted(completed);
+    final before = projection.standing.toJson();
+    final worldSeason = completed
+        .result
+        .boundaries
+        .single
+        .source
+        .source
+        .source
+        .sponsor
+        .report
+        .sourceReport
+        .advancedTransferReport
+        .worldReport
+        .seasons
+        .single;
+    final sourceRow = worldSeason.leagueResults
+        .singleWhere((league) => league.tier == projection.leagueTier)
+        .report
+        .table
+        .singleWhere((row) => row.clubId == controlledClubId);
+
+    sourceRow.record(scored: 9, conceded: 0);
+
+    expect(sourceRow.toJson(), isNot(before));
+    expect(projection.standing.toJson(), before);
+    final tableRow = projection.leagueTable!.rows
+        .singleWhere((row) => row.clubId == controlledClubId);
+    expect(projection.standing.points, tableRow.points);
+    expect(projection.standing.played, tableRow.played);
+    expect(projection.standing.goalDifference, tableRow.goalDifference);
+  });
+
+  test(
+      'new-game bootstrap bytes transcript and Completed checkpoint are immutable',
       () {
     final bytesBefore = newGameSession.encodeNewGameBootstrapSnapshot();
     final transcriptBefore =
