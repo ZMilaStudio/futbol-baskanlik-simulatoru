@@ -108,8 +108,8 @@ class GameFlowController extends ChangeNotifier {
 
   /// Adopts the exact typed slot already opened through M88.
   ///
-  /// The controlled club comes from M83/M87 metadata and must resolve to the
-  /// canonical world. The application session itself remains authoritative.
+  /// Refreshed M83/M87 metadata must name the bound session's controlled club
+  /// and resolve to the canonical world. The session remains authoritative.
   bool loadBoundSave(
     PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding binding,
   ) {
@@ -128,6 +128,11 @@ class GameFlowController extends ChangeNotifier {
       if (summary == null) {
         throw StateError('The bound mixed save slot no longer exists.');
       }
+      final session = binding.session;
+      if (summary.controlledClubId !=
+          session.preparedSeasonDashboard.controlledClubId) {
+        throw StateError('Bound save-slot metadata names a different club.');
+      }
       final club = _clubById(summary.controlledClubId);
       if (club == null) {
         throw StateError(
@@ -135,7 +140,6 @@ class GameFlowController extends ChangeNotifier {
         );
       }
 
-      final session = binding.session;
       final step = session.advance();
 
       _selectedClub = club;
