@@ -45,6 +45,8 @@ class _SaveListScreenState extends State<SaveListScreen> {
   void _open(
     PlayerPresidentInteractiveDecisionMixedSaveSlotSummary summary,
   ) {
+    if (!mounted) return;
+
     try {
       final binding =
           PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding
@@ -56,6 +58,10 @@ class _SaveListScreenState extends State<SaveListScreen> {
         _showMessage('Bu kayıt artık mevcut değil.');
         _refresh();
         return;
+      }
+      if (binding.session.preparedSeasonDashboard.controlledClubId !=
+          summary.controlledClubId) {
+        throw StateError('The rendered save row names a different club.');
       }
 
       Navigator.of(context)
@@ -79,7 +85,17 @@ class _SaveListScreenState extends State<SaveListScreen> {
   void _delete(
     PlayerPresidentInteractiveDecisionMixedSaveSlotSummary summary,
   ) {
+    if (!mounted) return;
+
     try {
+      final current = widget.composition.saveSlots.inspect(
+        source: summary.source,
+        slotId: summary.slotId,
+      );
+      if (current == null ||
+          current.controlledClubId != summary.controlledClubId) {
+        throw StateError('The rendered save row no longer names this slot.');
+      }
       final deleted = widget.composition.saveSlots.deleteSummary(summary);
       if (!deleted) {
         _showMessage('Kayıt silinemedi; dosya artık mevcut olmayabilir.');

@@ -108,8 +108,8 @@ class GameFlowController extends ChangeNotifier {
 
   /// Adopts the exact typed slot already opened through M88.
   ///
-  /// The controlled club comes from M83/M87 metadata and must resolve to the
-  /// canonical world. The application session itself remains authoritative.
+  /// Refreshed M83/M87 metadata must name the bound session's controlled club
+  /// and resolve to the canonical world. The session remains authoritative.
   bool loadBoundSave(
     PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding binding,
   ) {
@@ -128,6 +128,11 @@ class GameFlowController extends ChangeNotifier {
       if (summary == null) {
         throw StateError('The bound mixed save slot no longer exists.');
       }
+      final session = binding.session;
+      if (summary.controlledClubId !=
+          session.preparedSeasonDashboard.controlledClubId) {
+        throw StateError('Bound save-slot metadata names a different club.');
+      }
       final club = _clubById(summary.controlledClubId);
       if (club == null) {
         throw StateError(
@@ -135,7 +140,6 @@ class GameFlowController extends ChangeNotifier {
         );
       }
 
-      final session = binding.session;
       final step = session.advance();
 
       _selectedClub = club;
@@ -157,6 +161,16 @@ class GameFlowController extends ChangeNotifier {
       notifyListeners();
     }
     return loaded;
+  }
+
+  /// Binds a rendered action to the exact Pending that the player observed.
+  /// A save rebound or session change makes an older callback inert.
+  void submitPendingChoice(
+    PlayerPresidentInteractiveDecisionPending expectedPending,
+    Object choice,
+  ) {
+    if (!identical(_currentStep, expectedPending)) return;
+    submitChoice(choice);
   }
 
   /// Sends one player choice through the authoritative M76 resolution path.
@@ -202,7 +216,13 @@ class GameFlowController extends ChangeNotifier {
 
   /// Reveals the authoritative boundary already produced by the accepted
   /// submit. This is presentation-only: it never calls core advance/replay.
-  bool continueAfterResolution() {
+  /// A rendered callback can bind its exact result; unbound callers explicitly
+  /// acknowledge the current result.
+  bool continueAfterResolution({
+    PlayerPresidentInteractiveDecisionResolution? expectedResolution,
+  }) {
+    if (expectedResolution != null &&
+        !identical(_currentResolution, expectedResolution)) return false;
     if (_loading || _persistenceBusy) return false;
 
     final resolution = _currentResolution;
@@ -228,7 +248,12 @@ class GameFlowController extends ChangeNotifier {
   /// Any previous M88 binding remains the identity of the old slot and is
   /// deliberately detached after a successful handoff. The old slot stays on
   /// disk; the next checkpoint-origin session will make its first save via M87.
-  bool continueToNextSeason() {
+  /// A supplied Completed binds the command to that exact displayed season.
+  bool continueToNextSeason({
+    PlayerPresidentInteractiveSessionCompleted? expectedCompleted,
+  }) {
+    if (expectedCompleted != null &&
+        !identical(_currentStep, expectedCompleted)) return false;
     if (_loading || _persistenceBusy) return false;
 
     final currentSession = _session;
@@ -330,6 +355,13 @@ class GameFlowController extends ChangeNotifier {
         saved = true;
       } else {
         final slotId = _slotIdFactory();
+        final existing = saveSlots.inspect(
+          source: _expectedSlotSource(session.origin),
+          slotId: slotId,
+        );
+        if (existing != null) {
+          throw StateError('Generated save-slot identity already exists.');
+        }
         final source = saveSlots.save(slotId: slotId, session: session);
         final summary = saveSlots.inspect(source: source, slotId: slotId);
         if (summary == null) {
@@ -384,6 +416,22 @@ class GameFlowController extends ChangeNotifier {
     _currentResolution = null;
     _queuedNextStep = null;
   }
+
+  /// Read-only identity expectation for the first-save collision check.
+  /// M87 remains responsible for all write routing and persistence validation.
+  static PlayerPresidentInteractiveDecisionMixedSaveSlotSource
+      _expectedSlotSource(
+    PlayerPresidentInteractiveDecisionApplicationSessionOrigin origin,
+  ) =>
+          switch (origin) {
+            PlayerPresidentInteractiveDecisionApplicationSessionOrigin
+                  .checkpoint =>
+              PlayerPresidentInteractiveDecisionMixedSaveSlotSource.checkpoint,
+            PlayerPresidentInteractiveDecisionApplicationSessionOrigin
+                  .newGame =>
+              PlayerPresidentInteractiveDecisionMixedSaveSlotSource
+                  .newGameBootstrap,
+          };
 
   Club? _clubById(String id) {
     for (final club in world.clubs) {
