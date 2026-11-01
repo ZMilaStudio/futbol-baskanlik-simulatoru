@@ -56,6 +56,22 @@ final class ApplicationFutureOpeningClaim {
 
 extension _ActiveFutureSeasonApplication
     on PlayerPresidentInteractiveDecisionApplicationSession {
+  void _validateFuturePlayerControl(
+      TrustedFuturePreparedRuntimeAdmission admission) {
+    final source = admission.sourceGraph;
+    final incumbent = source.crisisEvidence.presidentClubs
+        .singleWhere((club) => club.clubId == admission.controlledClubId);
+    final control = const PlayerPresidentTenureControlGate().refreshRuntimeView(
+      state: admission.control,
+      incumbent: incumbent,
+      completedSeasons: source.worldSuccessor.completedSeasons,
+    );
+    if (!control.active) {
+      throw StateError(
+          'Future player decisions require active presidency control.');
+    }
+  }
+
   void _validateFutureOpeningSource(
       TrustedFuturePreparedRuntimeAdmission admission,
       PreparedTicketRuntimeSeason prepared) {
@@ -103,6 +119,7 @@ extension _ActiveFutureSeasonApplication
       throw StateError('Foreign, stale or mismatched future opening source.');
     }
     entry.validate(admission.sourceGraph);
+    _validateFuturePlayerControl(admission);
     final ids = world.effectiveClubs.map((c) => c.id).toSet();
     final members = world.leagues.expand((league) => league.clubIds).toList();
     final financeIds = world.financeStates.map((state) => state.clubId).toSet();

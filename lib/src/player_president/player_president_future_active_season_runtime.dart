@@ -28,6 +28,7 @@ final class ApplicationFuturePromiseAcceptanceClaim {
         )) {
       throw StateError('Foreign or stale future promise Pending.');
     }
+    application._validateFuturePlayerControl(opening.admission);
   }
 }
 
@@ -164,6 +165,7 @@ extension FutureActiveSeasonApplicationRuntime
     required PresidentPromiseType choice,
     PlayerPresidentInteractiveDecisionRequest? expectedRequest,
   }) {
+    _validateFuturePlayerControl(expectedOpening.admission);
     final previous = _futurePromiseApplied;
     if (previous != null) {
       if (!identical(previous.opening, expectedOpening) ||
