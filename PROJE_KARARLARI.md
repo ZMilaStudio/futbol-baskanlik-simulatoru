@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — PROJE KARARLARI
 
-Son güncelleme: 17 Eylül 2026
+Son güncelleme: 1 Kasım 2026 (mevcut source/workflow durumuna ilişkin olgusal düzeltmeler)
 
 Bu dosyanın amacı geçici sohbet durumunu değil, **uzun ömürlü proje kararlarını** tek yerde tutmaktır. Güncel milestone/CI durumu için `GENEL_PROJE_OZETI.md`, sohbet devri için `SOHBET_DEVIR_NOTU.md`, gerçek kaynak durumu için canlı GitHub esas alınır.
 
@@ -28,8 +28,8 @@ Bir karar bu dosyada yazıyor olsa bile canlı kod ve açıkça daha yeni kullan
 - Canonical career seed: `20260903`.
 - Canonical dünya: **48 kulüp, 3 lig × 16 kulüp, 720 lig maçı/sezon, 864 başlangıç oyuncusu**.
 - Seed/replay/save-resume parity yeni geliştirmelerde korunacaktır.
-- Şu anki repo saf Dart core'dur; Flutter/UI katmanı henüz kurulmamıştır.
-- UI katmanı geldiğinde core authority UI/provider state'e taşınmayacaktır.
+- Repo Dart simulation core ve `app/` altında mevcut Flutter application/UI katmanını içerir.
+- Core authority UI/provider state'e taşınmaz.
 
 ## 4. Milestone çalışma modeli
 
@@ -45,10 +45,10 @@ Bir karar bu dosyada yazıyor olsa bile canlı kod ve açıkça daha yeni kullan
 
 - PASS yalnız canlı CI kanıtıyla yazılır.
 - Workflow iki ana paralel job içerir: `test` ve `canonical`.
-- Her job için strict `timeout-minutes: 7` korunur.
+- Güncel `.github/workflows/m0-tests.yml` source değerleri: `test.timeout-minutes: 10`, `canonical.timeout-minutes: 20`.
 - Artifact hedefi **0**.
 - Analyzer/test/canonical hatası görülürse gerçek step ve mümkünse job logu okunmadan patch atılmaz.
-- Canonical hedef milestone'a ulaşmadan 7 dakika nedeniyle kesilirse bu timing-only durum olarak incelenir.
+- Canonical hedef milestone'a ulaşmadan yapılandırılmış timeout nedeniyle kesilirse bu timing-only durum olarak incelenir.
 - Timing-only timeout için source kodu değiştirilmez; aynı exact SHA yeniden çalıştırılır.
 - Hedef milestone step'i ve marker'ı tamamlanmışsa, daha sonra gelen top-level timeout/cancellation ayrıca step/log kanıtıyla değerlendirilir; skipped milestone başarı sayılmaz.
 - Bir önceki SHA'nın başarılı sonucu yeni HEAD için kanıt sayılmaz.
@@ -197,9 +197,9 @@ M88'in bilinçli non-scope'u:
 
 ## 14. UI için ön karar
 
-Flutter/UI henüz kurulmadığı için ekran mimarisi şu an persistence/core authority'yi değiştirecek şekilde tasarlanmayacaktır.
+Flutter/UI `app/` altında mevcuttur. Ekran mimarisi persistence/core authority'yi değiştirmez.
 
-UI geldiğinde temel ilke:
+UI katmanında temel ilke:
 - UI mevcut application/core servislerini tüketir; mixed save-slot lifecycle için M87 façade doğal application entry point'tir,
 - açılmış bir slotla çalışılan ekran akışında M88 transient binding exact typed identity'yi taşımak için kullanılabilir,
 - provider/view-model yeni authoritative game state sahibi olmaz,
