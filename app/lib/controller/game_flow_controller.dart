@@ -216,7 +216,13 @@ class GameFlowController extends ChangeNotifier {
 
   /// Reveals the authoritative boundary already produced by the accepted
   /// submit. This is presentation-only: it never calls core advance/replay.
-  bool continueAfterResolution() {
+  /// A rendered callback can bind its exact result; unbound callers explicitly
+  /// acknowledge the current result.
+  bool continueAfterResolution({
+    PlayerPresidentInteractiveDecisionResolution? expectedResolution,
+  }) {
+    if (expectedResolution != null &&
+        !identical(_currentResolution, expectedResolution)) return false;
     if (_loading || _persistenceBusy) return false;
 
     final resolution = _currentResolution;
@@ -242,7 +248,12 @@ class GameFlowController extends ChangeNotifier {
   /// Any previous M88 binding remains the identity of the old slot and is
   /// deliberately detached after a successful handoff. The old slot stays on
   /// disk; the next checkpoint-origin session will make its first save via M87.
-  bool continueToNextSeason() {
+  /// A supplied Completed binds the command to that exact displayed season.
+  bool continueToNextSeason({
+    PlayerPresidentInteractiveSessionCompleted? expectedCompleted,
+  }) {
+    if (expectedCompleted != null &&
+        !identical(_currentStep, expectedCompleted)) return false;
     if (_loading || _persistenceBusy) return false;
 
     final currentSession = _session;

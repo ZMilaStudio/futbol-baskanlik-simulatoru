@@ -310,7 +310,8 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                               busy: busy,
                               onContinue: busy
                                   ? null
-                                  : _controller.continueAfterResolution,
+                                  : () => _controller.continueAfterResolution(
+                                      expectedResolution: resolution),
                             )
                           else if (step != null) ...[
                             PresidentSessionStateView(
@@ -325,10 +326,14 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                               showPendingHeading: false,
                               canContinueToNextSeason:
                                   completedTenureControl?.active ?? true,
-                              onContinueToNextSeason: busy
+                              onContinueToNextSeason: busy ||
+                                      step
+                                          is! PlayerPresidentInteractiveSessionCompleted
                                   ? null
                                   : () {
-                                      _controller.continueToNextSeason();
+                                      _controller.continueToNextSeason(
+                                        expectedCompleted: step,
+                                      );
                                     },
                             ),
                             if (careerEnded) ...[
