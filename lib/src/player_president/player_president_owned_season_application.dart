@@ -232,6 +232,11 @@ final class PlayerPresidentOwnedSeasonApplication {
 
   PlayerPresidentOwnedSeasonStep get currentStep => _step;
 
+  /// The most recently opened season, captured before its promise acceptance.
+  /// Existing prepared getters below intentionally keep their initial meaning.
+  PlayerPresidentPreparedSeasonOpeningSnapshot get currentSeasonOpening =>
+      _application.preparedSeasonOpening;
+
   /// Initial historical opening observations, never current future-season state.
   PlayerPresidentPreparedSeasonDashboardSnapshot get preparedSeasonDashboard =>
       _application.preparedSeasonDashboard;

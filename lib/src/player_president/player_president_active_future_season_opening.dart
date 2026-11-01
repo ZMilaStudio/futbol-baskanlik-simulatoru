@@ -8,7 +8,8 @@ final class PlayerPresidentActiveFutureSeasonOpening {
       this.w0,
       this.promiseContexts,
       this.controlledPromiseContext,
-      this.promisePending);
+      this.promisePending,
+      this.preparedSeasonOpening);
   final PlayerPresidentInteractiveDecisionApplicationSession application;
   final TrustedFuturePreparedRuntimeAdmission admission;
   PreparedTicketRuntimeSeason get prepared => admission.prepared;
@@ -24,6 +25,7 @@ final class PlayerPresidentActiveFutureSeasonOpening {
   final List<PresidentPromiseContext> promiseContexts;
   final PlayerPromiseDecisionContext controlledPromiseContext;
   final PlayerPresidentInteractiveDecisionPending promisePending;
+  final PlayerPresidentPreparedSeasonOpeningSnapshot preparedSeasonOpening;
 }
 
 /// Private-minted common reservation proof. No controller/engine escapes.
@@ -164,12 +166,18 @@ extension _ActiveFutureSeasonApplication
       final pending =
           PlayerPresidentInteractiveDecisionRequest.futurePromisePending(
               claim: claim, prepared: expectedPrepared, context: decision);
-      final candidate = PlayerPresidentActiveFutureSeasonOpening._(
-          this, expectedAdmission, w0, contexts, decision, pending);
+      final observation = _preparedFutureSeasonOpening(
+        admission: expectedAdmission,
+        prepared: expectedPrepared,
+        w0: w0,
+      );
+      final candidate = PlayerPresidentActiveFutureSeasonOpening._(this,
+          expectedAdmission, w0, contexts, decision, pending, observation);
       claim._candidate = candidate;
       // Both commits are callback-free. All fallible candidate work is above.
       expectedPrepared.reserveFutureOpening(claim);
       _activeFutureSeasonOpening = candidate;
+      _mostRecentlyOpenedSeason = observation;
       return candidate;
     } finally {
       _futureOpeningInProgress = false;
