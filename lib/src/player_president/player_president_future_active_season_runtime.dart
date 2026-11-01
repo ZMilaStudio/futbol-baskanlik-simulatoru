@@ -380,7 +380,7 @@ List<LeagueSeasonSnapshot> _futureReports(
       seasonIndex: state.targetSeasonIndex,
       seed: state.opening.opening.config.careerSeed,
       championClubId: table.first.clubId,
-      table: List.unmodifiable(table),
+      table: List.unmodifiable(table.map(_CommittedFutureStandingRow.new)),
       fixtures: List.unmodifiable(fixtures),
       homeWins: homeWins,
       draws: draws,
@@ -394,4 +394,41 @@ List<LeagueSeasonSnapshot> _futureReports(
     reports.add(LeagueSeasonSnapshot(tier: league.tier, report: report));
   }
   return List.unmodifiable(reports);
+}
+
+/// Completed observations share exact row identities with the settlement
+/// capability. Freeze them at publication so a reader cannot poison the
+/// committed source. Mutable calculation rows above remain private to staging.
+final class _CommittedFutureStandingRow extends StandingRow {
+  _CommittedFutureStandingRow(StandingRow source)
+      : super(clubId: source.clubId) {
+    super.played = source.played;
+    super.wins = source.wins;
+    super.draws = source.draws;
+    super.losses = source.losses;
+    super.goalsFor = source.goalsFor;
+    super.goalsAgainst = source.goalsAgainst;
+    super.points = source.points;
+  }
+
+  @override
+  set played(int value) => _readOnly();
+  @override
+  set wins(int value) => _readOnly();
+  @override
+  set draws(int value) => _readOnly();
+  @override
+  set losses(int value) => _readOnly();
+  @override
+  set goalsFor(int value) => _readOnly();
+  @override
+  set goalsAgainst(int value) => _readOnly();
+  @override
+  set points(int value) => _readOnly();
+
+  @override
+  void record({required int scored, required int conceded}) => _readOnly();
+
+  Never _readOnly() =>
+      throw UnsupportedError('Committed future standing rows are read-only.');
 }
