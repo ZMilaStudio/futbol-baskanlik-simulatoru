@@ -57,6 +57,10 @@ class _SaveListScreenState extends State<SaveListScreen> {
         _refresh();
         return;
       }
+      if (binding.session.preparedSeasonDashboard.controlledClubId !=
+          summary.controlledClubId) {
+        throw StateError('The rendered save row names a different club.');
+      }
 
       Navigator.of(context)
           .push(
@@ -80,6 +84,14 @@ class _SaveListScreenState extends State<SaveListScreen> {
     PlayerPresidentInteractiveDecisionMixedSaveSlotSummary summary,
   ) {
     try {
+      final current = widget.composition.saveSlots.inspect(
+        source: summary.source,
+        slotId: summary.slotId,
+      );
+      if (current == null ||
+          current.controlledClubId != summary.controlledClubId) {
+        throw StateError('The rendered save row no longer names this slot.');
+      }
       final deleted = widget.composition.saveSlots.deleteSummary(summary);
       if (!deleted) {
         _showMessage('Kayıt silinemedi; dosya artık mevcut olmayabilir.');
