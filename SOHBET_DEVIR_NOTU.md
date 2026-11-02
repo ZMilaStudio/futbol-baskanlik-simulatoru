@@ -12,13 +12,33 @@ Kaynak önceliği: **Live GitHub > güncel repo docs > central technical-develop
 
 ## 1. Güncel proje durumu
 
-### CURRENT TECHNICAL CONTINUATION — PR #143
+### CURRENT TECHNICAL CONTINUATION — PR #144
+
+PR #144 teknik kapsamı: **CLOSED / MERGED / ACTUAL-MAIN VALIDATION SUCCESS**. Son adlandırılmış milestone **M102** olarak kalır; bu kayıt `M103` veya başka bir milestone seçmez/kapatmaz.
+
+[PR #144 — Expose completed future manager assessments and verify observation stability](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/144): CLOSED / MERGED / Draft=false; 2 Kasım 2026 10:03:04 UTC, owner'ın exact onay verdiği `d63b6e2ccfd1a5f80874083c292f4a133bb15275` HEAD için guarded **SQUASH**. Scope: 5 commit / 8 dosya.
+
+- Current actual-main / merge SHA: `e9375e5dc3c367e697956682fe00004ab0173e06`.
+- Tree: `f3edfa1af572ab4a509b53f6bad6e11122be2919`; approved source HEAD ile aynıdır.
+- Tek parent / önceki main: `c14858e3fba5e3936a965e97fe141c00dfaac3a5`.
+
+Owned future Ready/Ended observations, gerçek completed-season manager history'den seçilen controlled-club `ManagerClubSeason` değerlendirmesini sunar. Historical Ready/Ended için bu değer null kalır; historical manager authority üretilmez, Basic/X1 B2 full-M65 equivalence retrofit edilmez. Manager algoritması veya yeni state authority eklenmez.
+
+Public multi-season regression, aynı gerçek seçimlerle dense/sparse readback sonuçlarını karşılaştırır; retained opening/finance/table/match/promise/manager observations sonraki sezonlarda değişmez. Future 1 ve 2 tamamlanır, future 3 yalnız **W0** sınırına girer; future 3 W30 iddiası yoktur. Mevcut test-driver reuse seed, election, seçim ve assertion oracles'ını değiştirmez.
+
+[Actual-main Core #762 / run 41425610294](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41425610294), event `push`, branch `main`, attempt 1, exact SHA `e9375e5dc3c367e697956682fe00004ab0173e06`: **completed / SUCCESS**. Analyze, normal test, canonical ve overall SUCCESS; **826 tests passed**, failed/skipped 0/0; canonical M0–M88 **84/84 physical commands SUCCESS**, failed/skipped 0/0.
+
+`app/**` ve workflows PR #144'de değişmedi; exact e937 SHA için Flutter workflow **NOT TRIGGERED**. Bu source/tree/run kanıtı yalnız PR #144 kapsamına aittir; ayrı sonraki application/mobile çalışmalarına CI veya merge kanıtı oluşturmaz. PR #143'ün c148 Flutter/Android launch-smoke kanıtı aşağıda kendi historical SHA'sına bağlı olarak korunur; e937 için yeni Flutter CI veya Android build/smoke proof iddia edilmez.
+
+M65 sole persisted game-state authority, protected persistence/schema ailesi, codec/checksum/migration/namespace contract'ları ve historical squad-only sınırı değişmedi. M102 owned bridge default saved mobile flow'a geçirilmedi; yeni UI, gameplay veya post-loss continuation kuralı eklenmedi.
+
+## Historical technical continuation — PR #143 (NOT CURRENT MAIN HEAD)
 
 PR #143 teknik kapsamı: **CLOSED / MERGED / ACTUAL-MAIN VALIDATION SUCCESS**. Son adlandırılmış milestone **M102** olarak kalır; bu kayıt `M103` veya başka bir milestone seçmez/kapatmaz.
 
 [PR #143 — Guard saved career actions against stale state and slot collisions](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/143): CLOSED / MERGED / Draft=false; 1 Kasım 2026 20:32:01 UTC, owner'ın exact onay verdiği `fc9e396731155929600439db8d0936ffe4ab7ff9` HEAD için guarded **SQUASH**. Scope: 6 commit / 8 `app/**` dosyası.
 
-- Current actual-main / merge SHA: `c14858e3fba5e3936a965e97fe141c00dfaac3a5`.
+- PR #143 actual-main merge SHA (historical): `c14858e3fba5e3936a965e97fe141c00dfaac3a5`.
 - Tree: `b8de68f17e1aff144e7f2c2054960f62991b71f3`; approved source HEAD ile aynıdır.
 - Tek parent / önceki main: `e8961a66f4c0a529c88de5b6358aebc2587ba189`.
 
