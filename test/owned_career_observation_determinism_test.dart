@@ -86,6 +86,12 @@ List<Object?> _careerTrace(PlayerPresidentOwnedSeasonApplication app,
       final closed = app.closeSeason(expected: running);
       retain('historical-finance', () => closed.finance.signature);
       retain('historical-promise', () => closed.promise.signature);
+      retain(
+          'historical-tables',
+          () => jsonEncode([
+                for (final league in closed.leagueResults)
+                  [league.tier.level, league.report.toJson()],
+              ]));
       retain('historical-table', () => closed.leagueTable.signature);
       retain('historical-matches', () => closed.matchResults.signature);
       completed = closed;
