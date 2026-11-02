@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — SOHBET DEVİR NOTU
 
-Son güncelleme: 1 Kasım 2026
+Son güncelleme: 2 Kasım 2026
 
 Bu dosyanın amacı yeni sohbetin projeyi doğru current authority ile devralmasıdır.
 
@@ -12,13 +12,34 @@ Kaynak önceliği: **Live GitHub > güncel repo docs > central technical-develop
 
 ## 1. Güncel proje durumu
 
-### CURRENT TECHNICAL CONTINUATION — PR #142
+### CURRENT TECHNICAL CONTINUATION — PR #143
+
+PR #143 teknik kapsamı: **CLOSED / MERGED / ACTUAL-MAIN VALIDATION SUCCESS**. Son adlandırılmış milestone **M102** olarak kalır; bu kayıt `M103` veya başka bir milestone seçmez/kapatmaz.
+
+[PR #143 — Guard saved career actions against stale state and slot collisions](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/143): CLOSED / MERGED / Draft=false; 1 Kasım 2026 20:32:01 UTC, owner'ın exact onay verdiği `fc9e396731155929600439db8d0936ffe4ab7ff9` HEAD için guarded **SQUASH**. Scope: 6 commit / 8 `app/**` dosyası.
+
+- Current actual-main / merge SHA: `c14858e3fba5e3936a965e97fe141c00dfaac3a5`.
+- Tree: `b8de68f17e1aff144e7f2c2054960f62991b71f3`; approved source HEAD ile aynıdır.
+- Tek parent / önceki main: `e8961a66f4c0a529c88de5b6358aebc2587ba189`.
+
+Rendered Pending/Resolution/Completed komutları gözlenen exact nesneye bağlanır. Save metadata/session club mismatch, yeni kayıtta exact typed-slot collision, stale Save List club mismatch ve disposed Save List callback'leri mevcut owner çağrılarından önce reddedilir. Same-club progress update, farklı namespace'lerde aynı raw slot ID ve M88 saveBack korunur; implicit ID retry yoktur. Missing/corrupt stale Delete fail-closed kalır; generic M86 raw delete contract'ı değişmez.
+
+Exact actual-main SHA için her iki run event `push`, branch `main`, attempt 1 ve **completed / SUCCESS**:
+
+- [Core Simulation Tests #760 / run 41347336566](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41347336566): Analyze, normal test, canonical ve overall SUCCESS; **819 tests passed**, failed/skipped 0/0; canonical M0–M88 **84/84 physical commands SUCCESS**, failed/skipped 0/0.
+- [M89 Flutter App #94 / run 41347336580](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41347336580): Analyze, **151 tests passed** (failed/skipped 0/0), debug APK build, APK identity/SHA-256 verification, artifact upload, Android emulator launch gate ve overall SUCCESS.
+
+Actual Android log'unda 1 Kasım 2026 20:49:22 UTC'de PID kontrolünden sonra `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app` marker'ı vardır. `am start -W` timeout / LaunchState UNKNOWN sonrasında process-presence kontrolü başarılıdır. Bu **PID launch-smoke** kanıtıdır; interactive end-to-end gameplay veya release/signing proof değildir.
+
+PR #143 core algoritmalarını, workflows veya protected persistence/schema ailesini değiştirmez. M65 sole persisted game-state authority, mevcut codec/checksum/migration/namespace contract'ları ve historical squad-only manager sınırı korunur. Default saved mobile flow M102 owned bridge'e geçirilmedi; yeni unsaved entry, gameplay kuralı, ekran veya navigation route eklenmedi. Bu source/tree/run kanıtı PR #143 kapsamına aittir; ayrı sonraki çalışmalar için merge/CI kanıtı oluşturmaz.
+
+## Historical technical continuation — PR #142 (NOT CURRENT MAIN HEAD)
 
 PR #142 teknik kapsamı: **CLOSED / MERGED / ACTUAL-MAIN VALIDATION SUCCESS**. Son adlandırılmış milestone **M102** olarak kalır; bu kayıt yeni bir milestone seçmez veya `M103` kapanışı ilan etmez.
 
 [PR #142 — Expose owned career observations and protect decision boundaries](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/142): **MERGED**, Draft=false; 1 Kasım 2026 18:49:30 UTC, **SQUASH**. Owner'ın exact approval verdiği source HEAD `47860cf9ccc71d02fe8abbb85a76136f11e10149`; PR 8 commit / 20 dosya içerir.
 
-- Current actual-main / merge SHA: `e8961a66f4c0a529c88de5b6358aebc2587ba189`.
+- PR #142 actual-main merge SHA (historical): `e8961a66f4c0a529c88de5b6358aebc2587ba189`.
 - Tree: `29b1b532d2bc7a235e27cb21b9ce1e43e1eeaa7d`; approved source HEAD ile aynıdır.
 - Tek parent / önceki main: `4b7c5fbe1123feaa1c73a4ba702d010431c9e618`.
 
