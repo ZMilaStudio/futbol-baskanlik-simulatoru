@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 1 Kasım 2026
+Son güncelleme: 2 Kasım 2026
 
 ## 1. Proje kimliği
 
@@ -40,6 +40,47 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
+### CURRENT TECHNICAL CONTINUATION — PR #143
+
+PR #143 teknik kapsamı: **CLOSED / MERGED / ACTUAL-MAIN VALIDATION SUCCESS**. Son adlandırılmış milestone **M102** olarak kalır; bu kayıt `M103` veya başka bir milestone seçmez/kapatmaz.
+
+[PR #143 — Guard saved career actions against stale state and slot collisions](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/143): CLOSED / MERGED / Draft=false; 1 Kasım 2026 20:32:01 UTC, owner'ın exact onay verdiği `fc9e396731155929600439db8d0936ffe4ab7ff9` HEAD için guarded **SQUASH**. Scope: 6 commit / 8 `app/**` dosyası.
+
+- Current actual-main / merge SHA: `c14858e3fba5e3936a965e97fe141c00dfaac3a5`.
+- Tree: `b8de68f17e1aff144e7f2c2054960f62991b71f3`; approved source HEAD ile aynıdır.
+- Tek parent / önceki main: `e8961a66f4c0a529c88de5b6358aebc2587ba189`.
+
+Rendered Pending/Resolution/Completed komutları gözlenen exact nesneye bağlanır. Save metadata/session club mismatch, yeni kayıtta exact typed-slot collision, stale Save List club mismatch ve disposed Save List callback'leri mevcut owner çağrılarından önce reddedilir. Same-club progress update, farklı namespace'lerde aynı raw slot ID ve M88 saveBack korunur; implicit ID retry yoktur. Missing/corrupt stale Delete fail-closed kalır; generic M86 raw delete contract'ı değişmez.
+
+Exact actual-main SHA için her iki run event `push`, branch `main`, attempt 1 ve **completed / SUCCESS**:
+
+- [Core Simulation Tests #760 / run 41347336566](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41347336566): Analyze, normal test, canonical ve overall SUCCESS; **819 tests passed**, failed/skipped 0/0; canonical M0–M88 **84/84 physical commands SUCCESS**, failed/skipped 0/0.
+- [M89 Flutter App #94 / run 41347336580](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41347336580): Analyze, **151 tests passed** (failed/skipped 0/0), debug APK build, APK identity/SHA-256 verification, artifact upload, Android emulator launch gate ve overall SUCCESS.
+
+Actual Android log'unda 1 Kasım 2026 20:49:22 UTC'de PID kontrolünden sonra `M89_FLUTTER_ANDROID_LAUNCH_PASS package=com.zmilastudio.futbol_baskanlik_app` marker'ı vardır. `am start -W` timeout / LaunchState UNKNOWN sonrasında process-presence kontrolü başarılıdır. Bu **PID launch-smoke** kanıtıdır; interactive end-to-end gameplay veya release/signing proof değildir.
+
+PR #143 core algoritmalarını, workflows veya protected persistence/schema ailesini değiştirmez. M65 sole persisted game-state authority, mevcut codec/checksum/migration/namespace contract'ları ve historical squad-only manager sınırı korunur. Default saved mobile flow M102 owned bridge'e geçirilmedi; yeni unsaved entry, gameplay kuralı, ekran veya navigation route eklenmedi. Bu source/tree/run kanıtı PR #143 kapsamına aittir; ayrı sonraki çalışmalar için merge/CI kanıtı oluşturmaz.
+
+## Historical technical continuation — PR #142 (NOT CURRENT MAIN HEAD)
+
+PR #142 teknik kapsamı: **CLOSED / MERGED / ACTUAL-MAIN VALIDATION SUCCESS**. Son adlandırılmış milestone **M102** olarak kalır; bu kayıt yeni bir milestone seçmez veya `M103` kapanışı ilan etmez.
+
+[PR #142 — Expose owned career observations and protect decision boundaries](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/142): **MERGED**, Draft=false; 1 Kasım 2026 18:49:30 UTC, **SQUASH**. Owner'ın exact approval verdiği source HEAD `47860cf9ccc71d02fe8abbb85a76136f11e10149`; PR 8 commit / 20 dosya içerir.
+
+- PR #142 actual-main merge SHA (historical): `e8961a66f4c0a529c88de5b6358aebc2587ba189`.
+- Tree: `29b1b532d2bc7a235e27cb21b9ce1e43e1eeaa7d`; approved source HEAD ile aynıdır.
+- Tek parent / önceki main: `4b7c5fbe1123feaa1c73a4ba702d010431c9e618`.
+
+PR #142 actual admitted opening observation, mevcut M96/M97 üzerinden completed future table/match views ve gerçek domain aşamasından sonra annual promise outcome sunar. Committed/legacy report observation isolation, future lost-tenure admission ve exact transfer-command type guard'ları mevcut owner katmanlarında korunur; simulation/settlement algoritması kopyalanmaz.
+
+[Actual-main Core #758 / run 41338584092](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41338584092), event `push`, branch `main`, attempt 1, exact SHA `e8961a66f4c0a529c88de5b6358aebc2587ba189`: **completed / SUCCESS**. Analyze, normal test, canonical ve overall SUCCESS. Analyzer error/warning 0/0; yalnız iki existing unnecessary-import informational notice var. Normal suite **819 tests passed**, failed/skipped 0/0; canonical M0–M88 **84/84 physical commands SUCCESS**, failed/skipped 0/0.
+
+`app/**` ve workflows PR #142'de değişmedi; bu actual-main SHA için Flutter workflow **NOT TRIGGERED**. PR #142 source/tree/run kanıtı yalnız bu paragraftaki scope'u kapsar; ayrı application/mobile çalışmalarına CI veya merge kanıtı oluşturmaz. Android için PR #142'ye ait yeni build/smoke proof iddia edilmez.
+
+M65 sole persisted game-state authority, mevcut save schema/namespace'ler ve historical Basic/X1 squad-only B2 sınırı değişmedi. M102'nin mobile default/save-flow activation sınırı açılmadı; historical manager authority **UNAVAILABLE BY DESIGN** kalır. Son named milestone'un historical closure kanıtı aşağıdaki M102 bölümündedir.
+
+## Historical M102 closure — last named milestone (NOT CURRENT MAIN HEAD)
+
 # **M102 — CLOSED / MERGED / PASS**
 
 Son kapanan milestone: **M102 — Owned Future Career Application Bridge**.
@@ -47,7 +88,7 @@ Son kapanan milestone: **M102 — Owned Future Career Application Bridge**.
 Final product HEAD: `d9e715723653e6d76be1d7a6971da7eeb3513562`.
 Merge yöntemi: **SQUASH**.
 
-1 Kasım 2026 canlı GitHub kontrolünde actual-main authority:
+M102 kapanışındaki actual-main authority (PR #142 sonrası current HEAD değildir):
 
 - HEAD / executable merge SHA: `4b7c5fbe1123feaa1c73a4ba702d010431c9e618`.
 - Tree: `09826913043c78effe72243a9a016da356bf184d` (final product HEAD ile aynı tree).

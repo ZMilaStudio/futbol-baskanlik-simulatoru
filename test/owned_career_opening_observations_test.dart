@@ -7,6 +7,9 @@ import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
 import 'package:test/test.dart';
 
+import 'support/owned_career_driver.dart'
+    show settleOwnedSeason, playOwnedSeason;
+
 import 'p2_ar_d0o_active_future_opening_test.dart'
     show firstPrepared, laterPrepared, open;
 import 'p2_b3b1_postseason_outer_transition_test.dart' show B3B1LegacyClosing;
@@ -31,15 +34,6 @@ PlayerPresidentOwnedSeasonRunning _openWeeks(
       .first;
   final resolved = app.submitPromise(expected: pending, choice: choice);
   return app.continueAfterPromise(expected: resolved);
-}
-
-PlayerPresidentOwnedSeasonRunning _play(
-    PlayerPresidentOwnedSeasonApplication app) {
-  var running = _openWeeks(app);
-  for (var round = 1; round <= 30; round++) {
-    running = app.advanceRound(expected: running);
-  }
-  return running;
 }
 
 PlayerPresidentOwnedSeasonContinuationReady _continue(
@@ -78,23 +72,9 @@ PlayerPresidentOwnedSeasonContinuationReady _continue(
 
 PlayerPresidentOwnedSeasonApplication _firstFuture() {
   final app = _start();
-  final historical = app.closeSeason(expected: _play(app));
+  final historical = app.closeSeason(expected: playOwnedSeason(app));
   app.activateNextSeason(expected: _continue(app, historical));
   return app;
-}
-
-PlayerPresidentOwnedFutureSeasonSettled _settle(
-    PlayerPresidentOwnedSeasonApplication app,
-    PlayerPresidentOwnedSeasonRunning w30) {
-  final step = app.completeFutureSeason(expected: w30);
-  if (step is PlayerPresidentOwnedSeasonTicketPending) {
-    return app.submitTicket(
-      expected: step,
-      choice:
-          const MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced),
-    );
-  }
-  return step as PlayerPresidentOwnedFutureSeasonSettled;
 }
 
 void _expectOracle(PlayerPresidentInteractiveDecisionApplicationSession app) {
@@ -286,7 +266,7 @@ void main() {
     final app = _firstFuture();
     final first = app.currentSeasonOpening;
     final firstSignature = first.signature;
-    final settled = _settle(app, _play(app));
+    final settled = settleOwnedSeason(app, playOwnedSeason(app));
     var step = app.continueToNextSeason(expected: settled);
     if (step is PlayerPresidentOwnedSeasonTransferPending) {
       step = app.submitTransfer(
@@ -331,7 +311,7 @@ void main() {
     final app = _start();
     final initial = app.currentSeasonOpening;
     final signature = initial.signature;
-    final historical = app.closeSeason(expected: _play(app));
+    final historical = app.closeSeason(expected: playOwnedSeason(app));
     expect(app.currentSeasonOpening, same(initial));
     app.activateNextSeason(expected: _continue(app, historical));
     final first = app.currentSeasonOpening;
@@ -339,7 +319,8 @@ void main() {
     expect(first.squad.signature, isNot(initial.squad.signature));
     expect(first.squad.players.map((player) => player.playerId).toList(),
         isNot(initial.squad.players.map((player) => player.playerId).toList()));
-    app.activateNextSeason(expected: _continue(app, _settle(app, _play(app))));
+    app.activateNextSeason(
+        expected: _continue(app, settleOwnedSeason(app, playOwnedSeason(app))));
     expect(app.currentSeasonOpening.seasonIndex, 2);
     expect(app.preparedSeasonDashboard, same(initial.dashboard));
     expect(app.preparedSquad, same(initial.squad));

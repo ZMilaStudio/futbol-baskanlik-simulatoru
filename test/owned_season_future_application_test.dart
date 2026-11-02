@@ -8,6 +8,8 @@ import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing
 import 'package:futbol_baskanlik_m0/player_president_transfer_strategy_control.dart';
 import 'package:test/test.dart';
 
+import 'support/owned_career_driver.dart' show playOwnedSeason;
+
 // A value-compatible caller object is not a production ticket choice.
 class _CallerTicketChoice extends MatchdayTicketPricingChoice {
   const _CallerTicketChoice() : super(MatchdayTicketPriceTier.balanced);
@@ -39,20 +41,10 @@ PlayerPresidentOwnedSeasonRunning _open(
   return app.continueAfterPromise(expected: resolved);
 }
 
-PlayerPresidentOwnedSeasonRunning _play(
-  PlayerPresidentOwnedSeasonApplication app,
-) {
-  var running = _open(app);
-  for (var round = 1; round <= 30; round++) {
-    running = app.advanceRound(expected: running);
-  }
-  return running;
-}
-
 PlayerPresidentOwnedSeasonClosed _historicalClose(
   PlayerPresidentOwnedSeasonApplication app,
 ) =>
-    app.closeSeason(expected: _play(app));
+    app.closeSeason(expected: playOwnedSeason(app));
 
 PlayerPresidentOwnedSeasonStep _answerTransfer(
   PlayerPresidentOwnedSeasonApplication app,
@@ -347,13 +339,13 @@ void main() {
       'future ticket is explicit and consumed ticket rejects duplicate choices',
       () {
     final app = _futureApp();
-    final w30 = _play(app);
+    final w30 = playOwnedSeason(app);
     final pending = app.completeFutureSeason(expected: w30)
         as PlayerPresidentOwnedSeasonTicketPending;
     expect(app.currentStep, same(pending));
     expect(() => app.completeFutureSeason(expected: w30), throwsStateError);
     final other = _futureApp();
-    final foreign = other.completeFutureSeason(expected: _play(other))
+    final foreign = other.completeFutureSeason(expected: playOwnedSeason(other))
         as PlayerPresidentOwnedSeasonTicketPending;
     const choice =
         MatchdayTicketPricingChoice(MatchdayTicketPriceTier.balanced);
@@ -380,7 +372,7 @@ void main() {
       'future settlement and continuation keep immutable completed observations',
       () {
     final app = _futureApp();
-    final settled = _settle(app, _play(app));
+    final settled = _settle(app, playOwnedSeason(app));
     final finance = settled.finance.signature;
     final before = settled.fixtures.fixtures
         .map((fixture) => fixture.fixture.result!.matchSeed)
@@ -407,7 +399,7 @@ void main() {
   test('caller ticket subtype is rejected before consuming the real Pending',
       () {
     final app = _futureApp();
-    final pending = app.completeFutureSeason(expected: _play(app))
+    final pending = app.completeFutureSeason(expected: playOwnedSeason(app))
         as PlayerPresidentOwnedSeasonTicketPending;
     expect(
       () => app.submitTicket(
@@ -429,7 +421,7 @@ void main() {
       'real manager review can retain without fabricating historical manager seasons',
       () {
     final app = _futureApp();
-    final settled = _settle(app, _play(app));
+    final settled = _settle(app, playOwnedSeason(app));
     final review =
         _answerTransfer(app, app.continueToNextSeason(expected: settled))
             as PlayerPresidentOwnedSeasonManagerReviewPending;
@@ -455,7 +447,7 @@ void main() {
       'real manager replacement requires exact offered identity and a single answer',
       () {
     final app = _futureApp();
-    final settled = _settle(app, _play(app));
+    final settled = _settle(app, playOwnedSeason(app));
     final review =
         _answerTransfer(app, app.continueToNextSeason(expected: settled))
             as PlayerPresidentOwnedSeasonManagerReviewPending;
@@ -486,12 +478,12 @@ void main() {
   test('foreign manager reviews and replacements preserve the current owner',
       () {
     final app = _futureApp();
-    final settled = _settle(app, _play(app));
+    final settled = _settle(app, playOwnedSeason(app));
     final review =
         _answerTransfer(app, app.continueToNextSeason(expected: settled))
             as PlayerPresidentOwnedSeasonManagerReviewPending;
     final other = _futureApp();
-    final otherSettled = _settle(other, _play(other));
+    final otherSettled = _settle(other, playOwnedSeason(other));
     final otherReview = _answerTransfer(
             other, other.continueToNextSeason(expected: otherSettled))
         as PlayerPresidentOwnedSeasonManagerReviewPending;
@@ -530,7 +522,7 @@ void main() {
       expect(opening.hasManagerSeasonAuthority, isTrue);
       expect(opening.managerHistorySeasonIndices,
           [for (var i = 1; i < season; i++) i]);
-      final w30 = _play(app);
+      final w30 = playOwnedSeason(app);
       if (oldSeason != null) {
         expect(() => app.advanceRound(expected: oldSeason!), throwsStateError);
         expect(() => app.completeFutureSeason(expected: oldSeason!),
@@ -592,8 +584,8 @@ void main() {
       () {
     final first = _futureApp();
     final second = _futureApp();
-    final firstSettled = _settle(first, _play(first));
-    final secondSettled = _settle(second, _play(second));
+    final firstSettled = _settle(first, playOwnedSeason(first));
+    final secondSettled = _settle(second, playOwnedSeason(second));
     expect(firstSettled.finance.signature, secondSettled.finance.signature);
     expect(firstSettled.managerHistorySeasonIndices,
         secondSettled.managerHistorySeasonIndices);
@@ -635,7 +627,7 @@ void main() {
     final app = _start(clubId: 't3_16', electionInterval: 1);
     final historicalReady = _ready(app, _historicalClose(app));
     final pending = app.activateNextSeason(expected: historicalReady);
-    final w30 = _play(app);
+    final w30 = playOwnedSeason(app);
     final settled = _settle(app, w30);
     final ended = _continue(app, settled) as PlayerPresidentOwnedCareerEnded;
     expect(ended.completedSeasonIndex, 1);
@@ -664,7 +656,7 @@ void main() {
     var ready = _ready(app, _historicalClose(app));
     for (var season = 1; season <= 15; season++) {
       app.activateNextSeason(expected: ready);
-      final settled = _settle(app, _play(app));
+      final settled = _settle(app, playOwnedSeason(app));
       var step =
           _answerTransfer(app, app.continueToNextSeason(expected: settled));
       if (season == 1) {

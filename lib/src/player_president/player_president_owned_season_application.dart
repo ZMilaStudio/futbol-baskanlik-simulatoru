@@ -5,6 +5,7 @@ import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integra
 import '../facility/player_president_tenure_gated_ticket_pricing_control.dart';
 import '../league/club.dart';
 import '../manager/manager.dart';
+import '../manager/manager_career_season.dart';
 import '../manager/player_president_manager_control.dart';
 import '../promise/president_promise.dart';
 import '../promise/player_president_promise_control.dart';
@@ -166,7 +167,9 @@ final class PlayerPresidentOwnedSeasonTicketPending
 final class PlayerPresidentOwnedSeasonContinuationReady
     extends PlayerPresidentOwnedSeasonStep {
   PlayerPresidentOwnedSeasonContinuationReady._(
-      LosslessPostOffseasonRuntimeGraph graph, this.completedPromise)
+      LosslessPostOffseasonRuntimeGraph graph,
+      this.completedPromise,
+      this.completedManager)
       : nextSeasonIndex = graph.targetSeasonIndex,
         completedSeasonIndex = graph.targetSeasonIndex - 1,
         control = graph.control,
@@ -181,16 +184,21 @@ final class PlayerPresidentOwnedSeasonContinuationReady
 
   /// The real completed-season result, resolved before successor publication.
   final PromiseSeasonSnapshot completedPromise;
+
+  /// Actual closed future-season assessment. Historical squad-only seasons
+  /// deliberately have no manager authority and expose null.
+  final ManagerClubSeason? completedManager;
 }
 
 final class PlayerPresidentOwnedCareerEnded
     extends PlayerPresidentOwnedSeasonStep {
-  const PlayerPresidentOwnedCareerEnded._(
-      this.completedSeasonIndex, this.control, this.completedPromise)
+  const PlayerPresidentOwnedCareerEnded._(this.completedSeasonIndex,
+      this.control, this.completedPromise, this.completedManager)
       : super._();
   final int completedSeasonIndex;
   final PlayerPresidentTenureControlState control;
   final PromiseSeasonSnapshot completedPromise;
+  final ManagerClubSeason? completedManager;
 }
 
 enum PlayerPresidentOwnedSeasonFailureStage {
@@ -537,13 +545,24 @@ final class PlayerPresidentOwnedSeasonApplication {
       final completedPromise = snapshots.singleWhere((snapshot) =>
           snapshot.context.clubId == graph.control.controlledClubId &&
           snapshot.context.seasonIndex == graph.targetSeasonIndex - 1);
+      final completedManager = _futureOpening == null
+          ? null
+          : graph.managerEvidence.completedSeasons
+              .singleWhere(
+                  (season) => season.seasonIndex == graph.targetSeasonIndex - 1)
+              .clubs
+              .singleWhere(
+                  (club) => club.clubId == graph.control.controlledClubId);
       _continuation = graph;
       if (graph.control.lost) {
         return _step = PlayerPresidentOwnedCareerEnded._(
-            graph.targetSeasonIndex - 1, graph.control, completedPromise);
+            graph.targetSeasonIndex - 1,
+            graph.control,
+            completedPromise,
+            completedManager);
       }
       return _step = PlayerPresidentOwnedSeasonContinuationReady._(
-          graph, completedPromise);
+          graph, completedPromise, completedManager);
     } catch (_) {
       _failPostseason();
       rethrow;
