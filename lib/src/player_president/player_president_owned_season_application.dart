@@ -79,13 +79,40 @@ sealed class PlayerPresidentOwnedSeasonCompletion
 /// This is deliberately not legacy M73 Completed or full-M65 settlement.
 final class PlayerPresidentOwnedSeasonClosed
     extends PlayerPresidentOwnedSeasonCompletion {
-  PlayerPresidentOwnedSeasonClosed._(this._source) : super._();
+  PlayerPresidentOwnedSeasonClosed._(this._source) : super._() {
+    final league = _source.sourceState.boundary.opening.leagues.singleWhere(
+      (league) => league.clubIds.contains(controlledClubId),
+    );
+    final report = _source.leagueResults
+        .singleWhere((item) => item.tier == league.tier)
+        .report;
+    if (report.seasonIndex != seasonIndex) {
+      throw StateError(
+          'Historical completed observation has a foreign season.');
+    }
+    leagueTable =
+        PlayerPresidentCompletedSeasonLeagueTableSnapshot.fromSeasonReport(
+      controlledClubId: controlledClubId,
+      completedLeague: league,
+      report: report,
+    );
+    matchResults =
+        PlayerPresidentCompletedSeasonMatchResultsSnapshot.fromSeasonReport(
+      controlledClubId: controlledClubId,
+      completedLeague: league,
+      report: report,
+    );
+  }
 
   final PlayerPresidentAcceptedPromiseClosingCandidate _source;
   int get seasonIndex => _source.seasonIndex;
   String get controlledClubId => _source.controlledClubId;
   ClubFinanceSeason get finance => _source.financeFor(controlledClubId);
   PromiseSeasonSnapshot get promise => _source.promiseFor(controlledClubId);
+
+  /// Existing M96/M97 projections of B1 sports results in the as-played league.
+  late final PlayerPresidentCompletedSeasonLeagueTableSnapshot leagueTable;
+  late final PlayerPresidentCompletedSeasonMatchResultsSnapshot matchResults;
 
   /// B1 supplies fresh defensive views of mutable legacy standing rows.
   List<LeagueSeasonSnapshot> get leagueResults => _source.leagueResults;

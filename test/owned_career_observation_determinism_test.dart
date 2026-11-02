@@ -92,6 +92,8 @@ List<Object?> _careerTrace(PlayerPresidentOwnedSeasonApplication app,
                 for (final league in closed.leagueResults)
                   [league.tier.level, league.report.toJson()],
               ]));
+      retain('historical-table', () => closed.leagueTable.signature);
+      retain('historical-matches', () => closed.matchResults.signature);
       completed = closed;
     } else {
       final ticket = app.completeFutureSeason(expected: running)
