@@ -24,6 +24,7 @@ import 'player_president_prepared_squad_snapshot.dart';
 import 'player_president_postseason_runtime_transition.dart';
 import 'player_president_completed_season_league_table_snapshot.dart';
 import 'player_president_completed_season_match_results_snapshot.dart';
+import 'player_president_completed_transfer_window_snapshot.dart';
 
 /// Consumer observations, never M65 checkpoints or runtime capabilities.
 sealed class PlayerPresidentOwnedSeasonStep {
@@ -196,7 +197,8 @@ final class PlayerPresidentOwnedSeasonContinuationReady
   PlayerPresidentOwnedSeasonContinuationReady._(
       LosslessPostOffseasonRuntimeGraph graph,
       this.completedPromise,
-      this.completedManager)
+      this.completedManager,
+      this.completedTransfers)
       : nextSeasonIndex = graph.targetSeasonIndex,
         completedSeasonIndex = graph.targetSeasonIndex - 1,
         control = graph.control,
@@ -215,17 +217,23 @@ final class PlayerPresidentOwnedSeasonContinuationReady
   /// Actual closed future-season assessment. Historical squad-only seasons
   /// deliberately have no manager authority and expose null.
   final ManagerClubSeason? completedManager;
+  final PlayerPresidentCompletedTransferWindowSnapshot completedTransfers;
 }
 
 final class PlayerPresidentOwnedCareerEnded
     extends PlayerPresidentOwnedSeasonStep {
-  const PlayerPresidentOwnedCareerEnded._(this.completedSeasonIndex,
-      this.control, this.completedPromise, this.completedManager)
+  const PlayerPresidentOwnedCareerEnded._(
+      this.completedSeasonIndex,
+      this.control,
+      this.completedPromise,
+      this.completedManager,
+      this.completedTransfers)
       : super._();
   final int completedSeasonIndex;
   final PlayerPresidentTenureControlState control;
   final PromiseSeasonSnapshot completedPromise;
   final ManagerClubSeason? completedManager;
+  final PlayerPresidentCompletedTransferWindowSnapshot completedTransfers;
 }
 
 enum PlayerPresidentOwnedSeasonFailureStage {
@@ -580,16 +588,27 @@ final class PlayerPresidentOwnedSeasonApplication {
               .clubs
               .singleWhere(
                   (club) => club.clubId == graph.control.controlledClubId);
+      final completedTransfers = _transition!.completedTransferWindow;
+      if (completedTransfers == null ||
+          completedTransfers.controlledClubId !=
+              graph.control.controlledClubId ||
+          completedTransfers.targetSeasonIndex != graph.targetSeasonIndex ||
+          completedTransfers.completedSeasonIndex !=
+              graph.targetSeasonIndex - 1) {
+        throw StateError(
+            'Published continuation has no completed transfer window.');
+      }
       _continuation = graph;
       if (graph.control.lost) {
         return _step = PlayerPresidentOwnedCareerEnded._(
             graph.targetSeasonIndex - 1,
             graph.control,
             completedPromise,
-            completedManager);
+            completedManager,
+            completedTransfers);
       }
       return _step = PlayerPresidentOwnedSeasonContinuationReady._(
-          graph, completedPromise, completedManager);
+          graph, completedPromise, completedManager, completedTransfers);
     } catch (_) {
       _failPostseason();
       rethrow;
