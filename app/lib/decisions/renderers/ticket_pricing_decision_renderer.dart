@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:futbol_baskanlik_m0/player_president_tenure_gated_ticket_pricing_control.dart';
 
 class TicketPricingDecisionRenderer extends StatelessWidget {

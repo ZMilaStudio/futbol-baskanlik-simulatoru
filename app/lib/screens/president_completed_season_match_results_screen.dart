@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:futbol_baskanlik_m0/player_president_completed_season_match_results_snapshot.dart';
 
 class PresidentCompletedSeasonMatchResultsScreen extends StatelessWidget {
