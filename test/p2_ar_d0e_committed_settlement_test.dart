@@ -51,11 +51,14 @@ Future<ProcessResult> runD0EContractHarness(String fixture) async {
     ).writeAsString(
       "part of 'player_president_tenure_gated_ticket_pricing_runtime_integration.dart';\n$fixture",
     );
-    return await Process.run(Platform.resolvedExecutable, [
-      'test',
-      '--reporter=expanded',
-      entryPath,
-    ], workingDirectory: temp.absolute.path);
+    return await Process.run(
+        Platform.resolvedExecutable,
+        [
+          'test',
+          '--reporter=expanded',
+          entryPath,
+        ],
+        workingDirectory: temp.absolute.path);
   } finally {
     await temp.delete(recursive: true);
   }
@@ -78,7 +81,9 @@ Future<ProcessResult> _runAndCheckCleanup(String fixture) async {
 }
 
 void main() {
-  test('private contract fixture exercises settlement, NOT future production integration', () async {
+  test(
+      'private contract fixture exercises settlement, NOT future production integration',
+      () async {
     final run = await _runAndCheckCleanup(contractCases);
     // Keep the child test evidence, including its real test count and errors.
     print(run.stdout);
