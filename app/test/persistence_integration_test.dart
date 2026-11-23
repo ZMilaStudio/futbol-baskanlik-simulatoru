@@ -85,6 +85,180 @@ void main() {
     );
   }
 
+  test('saved visible resolutions preserve two-season controller determinism', () {
+    final baselineComposition = composition();
+    GameFlowController controllerFor(AppComposition app) => GameFlowController(
+      world: app.world,
+      config: app.simulationConfig,
+      saveSlots: app.saveSlots,
+      slotIdFactory: () => 'career_resolution_trace',
+    );
+    final baseline = controllerFor(baselineComposition);
+    var interrupted = controllerFor(composition());
+    addTearDown(baseline.dispose);
+    addTearDown(() => interrupted.dispose());
+    baseline.startNewGame(baselineComposition.world.clubs.first);
+    interrupted.startNewGame(baselineComposition.world.clubs.first);
+
+    String sessionBytes(GameFlowController controller) =>
+        controller.session!.origin ==
+            PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame
+        ? controller.session!.encodeNewGameBootstrapSnapshot()
+        : controller.session!.encodePersistenceBundle();
+
+    String? bootstrapSignature;
+    String? bootstrapBytes;
+    var reloadCount = 0;
+    final kinds = <PlayerPresidentInteractiveDecisionKind>{};
+    for (var season = 0; season < 2; season++) {
+      var answered = 0;
+      for (var guard = 0; guard < 100; guard++) {
+        final step = baseline.currentStep;
+        if (step is PlayerPresidentInteractiveSessionCompleted) break;
+        final pending = step as PlayerPresidentInteractiveDecisionPending;
+        final restoredPending =
+            interrupted.currentStep
+                as PlayerPresidentInteractiveDecisionPending;
+        kinds.add(pending.request.kind);
+        expect(restoredPending.request.key, pending.request.key);
+        expect(restoredPending.request.kind, pending.request.kind);
+        expect(restoredPending.request.sequence, pending.request.sequence);
+        expect(
+          restoredPending.request.contextSignature,
+          pending.request.contextSignature,
+        );
+        expect(interrupted.session!.answeredDecisionCount, answered);
+
+        baseline.submitPendingChoice(
+          pending,
+          canonicalChoiceForRequest(pending.request),
+        );
+        interrupted.submitPendingChoice(
+          restoredPending,
+          canonicalChoiceForRequest(restoredPending.request),
+        );
+        final resolution = interrupted.currentResolution!;
+        expect(interrupted.errorMessage, isNull);
+        expect(resolution.requestKey, baseline.currentResolution!.requestKey);
+        expect(resolution.kind, baseline.currentResolution!.kind);
+        expect(
+          resolution.consequence.controlledClubId,
+          baseline.currentResolution!.consequence.controlledClubId,
+        );
+        expect(interrupted.currentStep, isNull);
+        answered++;
+        expect(interrupted.session!.answeredDecisionCount, answered);
+        expect(baseline.session!.answeredDecisionCount, answered);
+        expect(sessionBytes(interrupted), sessionBytes(baseline));
+
+        expect(interrupted.saveCurrent(), isTrue);
+        expect(interrupted.currentResolution, same(resolution));
+        expect(interrupted.currentStep, isNull);
+        expect(interrupted.queuedNextStep, isNotNull);
+        final summary = interrupted.saveSummary!;
+        expect(summary.answeredDecisionCount, answered);
+        expect(summary.isNewGameBootstrap, season == 0);
+        expect(summary.isCheckpoint, season == 1);
+        expect(summary.slotId, 'career_resolution_trace');
+
+        final recreatedComposition = composition();
+        final binding =
+            PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+              service: recreatedComposition.saveSlots,
+              summary: summary,
+            )!;
+        interrupted.dispose();
+        interrupted = controllerFor(recreatedComposition);
+        expect(interrupted.loadBoundSave(binding), isTrue);
+        expect(interrupted.binding!.identity, summary.identity);
+        expect(interrupted.currentResolution, isNull);
+        expect(interrupted.queuedNextStep, isNull);
+        expect(interrupted.session!.answeredDecisionCount, answered);
+        expect(sessionBytes(interrupted), sessionBytes(baseline));
+        expect(
+          baseline.continueAfterResolution(
+            expectedResolution: baseline.currentResolution!,
+          ),
+          isTrue,
+        );
+        reloadCount++;
+      }
+
+      final completed =
+          baseline.currentStep as PlayerPresidentInteractiveSessionCompleted;
+      final restoredCompleted =
+          interrupted.currentStep as PlayerPresidentInteractiveSessionCompleted;
+      expect(answered, 8);
+      expect(completed.decisionCount, answered);
+      expect(restoredCompleted.decisionCount, answered);
+      expect(
+        restoredCompleted.result.checkpoint.signature,
+        completed.result.checkpoint.signature,
+      );
+      final report = PlayerPresidentCompletedSeasonReport.fromCompleted(
+        completed,
+      );
+      final restoredReport = PlayerPresidentCompletedSeasonReport.fromCompleted(
+        restoredCompleted,
+      );
+      expect(report.seasonIndex, season);
+      expectReportParity(restoredReport, report);
+
+      final summaries = composition().saveSlots.list();
+      final bootstrap = summaries.singleWhere(
+        (summary) => summary.isNewGameBootstrap,
+      );
+      if (season == 0) {
+        expect(summaries, hasLength(1));
+        bootstrapSignature = bootstrap.signature;
+        bootstrapBytes = sessionBytes(interrupted);
+        expect(
+          baseline.continueToNextSeason(expectedCompleted: completed),
+          isTrue,
+        );
+        expect(
+          interrupted.continueToNextSeason(
+            expectedCompleted: restoredCompleted,
+          ),
+          isTrue,
+        );
+        expect(
+          interrupted.session!.origin,
+          PlayerPresidentInteractiveDecisionApplicationSessionOrigin.checkpoint,
+        );
+        expect(interrupted.binding, isNull);
+        expect(interrupted.saveSummary, isNull);
+        expect(
+          interrupted.session!.checkpointOrNull!.signature,
+          baseline.session!.checkpointOrNull!.signature,
+        );
+        expect(interrupted.session!.answeredDecisionCount, 0);
+      } else {
+        expect(summaries, hasLength(2));
+        expect(bootstrap.signature, bootstrapSignature);
+        final bootstrapComposition = composition();
+        final originalBootstrap =
+            PlayerPresidentInteractiveDecisionMixedFileSaveSlotBinding.openSummary(
+              service: bootstrapComposition.saveSlots,
+              summary: bootstrap,
+            )!;
+        expect(
+          originalBootstrap.session.encodeNewGameBootstrapSnapshot(),
+          bootstrapBytes,
+        );
+        final checkpoint = summaries.singleWhere(
+          (summary) => summary.isCheckpoint,
+        );
+        expect(checkpoint.slotId, bootstrap.slotId);
+        expect(checkpoint.identity, isNot(bootstrap.identity));
+        expect(interrupted.binding!.identity, checkpoint.identity);
+      }
+    }
+    expect(reloadCount, 16);
+    expect(kinds, PlayerPresidentInteractiveDecisionKind.values.toSet());
+    expect(baseline.binding, isNull);
+  });
+
   test(
       'fresh new-game save survives app recreation with exact pending parity',
       () {
