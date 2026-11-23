@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Exact pair preserves validated input/theme behavior; recheck parity before upgrading.
   material_ui: 1.1.0
   cupertino_ui: 1.0.0
   futbol_baskanlik_m0:
