@@ -1,6 +1,7 @@
 import '../core/simulation_config.dart';
 import '../finance/club_finance_season.dart';
 import '../election/player_president_tenure_control_gate.dart';
+import '../election/president_election_snapshot.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
 import '../facility/player_president_tenure_gated_ticket_pricing_control.dart';
 import '../league/club.dart';
@@ -200,7 +201,8 @@ final class PlayerPresidentOwnedSeasonContinuationReady
       this.completedPromise,
       this.completedManager,
       this.completedTransfers,
-      this.completedRoster)
+      this.completedRoster,
+      this.completedElection)
       : nextSeasonIndex = graph.targetSeasonIndex,
         completedSeasonIndex = graph.targetSeasonIndex - 1,
         control = graph.control,
@@ -221,6 +223,9 @@ final class PlayerPresidentOwnedSeasonContinuationReady
   final ManagerClubSeason? completedManager;
   final PlayerPresidentCompletedTransferWindowSnapshot completedTransfers;
   final PlayerPresidentCompletedRosterLifecycleSnapshot completedRoster;
+
+  /// Exact completed-season election; null when no election occurred.
+  final PresidentElectionSnapshot? completedElection;
 }
 
 final class PlayerPresidentOwnedCareerEnded
@@ -231,7 +236,8 @@ final class PlayerPresidentOwnedCareerEnded
       this.completedPromise,
       this.completedManager,
       this.completedTransfers,
-      this.completedRoster)
+      this.completedRoster,
+      this.completedElection)
       : super._();
   final int completedSeasonIndex;
   final PlayerPresidentTenureControlState control;
@@ -239,6 +245,7 @@ final class PlayerPresidentOwnedCareerEnded
   final ManagerClubSeason? completedManager;
   final PlayerPresidentCompletedTransferWindowSnapshot completedTransfers;
   final PlayerPresidentCompletedRosterLifecycleSnapshot completedRoster;
+  final PresidentElectionSnapshot? completedElection;
 }
 
 enum PlayerPresidentOwnedSeasonFailureStage {
@@ -611,6 +618,17 @@ final class PlayerPresidentOwnedSeasonApplication {
         throw StateError(
             'Published continuation has no completed roster lifecycle.');
       }
+      final elections = graph.domainEvidence.elections
+          .map((successor) => successor.election)
+          .where((election) =>
+              election.clubId == graph.control.controlledClubId &&
+              election.seasonIndex == graph.targetSeasonIndex - 1)
+          .toList(growable: false);
+      if (elections.length > 1) {
+        throw StateError(
+            'Published continuation has duplicate completed elections.');
+      }
+      final completedElection = elections.isEmpty ? null : elections.single;
       _continuation = graph;
       if (graph.control.lost) {
         return _step = PlayerPresidentOwnedCareerEnded._(
@@ -619,14 +637,16 @@ final class PlayerPresidentOwnedSeasonApplication {
             completedPromise,
             completedManager,
             completedTransfers,
-            completedRoster);
+            completedRoster,
+            completedElection);
       }
       return _step = PlayerPresidentOwnedSeasonContinuationReady._(
           graph,
           completedPromise,
           completedManager,
           completedTransfers,
-          completedRoster);
+          completedRoster,
+          completedElection);
     } catch (_) {
       _failPostseason();
       rethrow;
