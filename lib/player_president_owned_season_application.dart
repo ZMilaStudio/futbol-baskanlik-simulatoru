@@ -1,2 +1,3 @@
 export 'src/player_president/player_president_owned_season_application.dart';
 export 'src/player_president/player_president_completed_transfer_window_snapshot.dart';
+export 'src/player_president/player_president_completed_roster_lifecycle_snapshot.dart';

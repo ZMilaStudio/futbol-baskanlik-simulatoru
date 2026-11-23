@@ -149,6 +149,7 @@ List<Object?> _careerTrace(PlayerPresidentOwnedSeasonApplication app,
     expect(ready.control.active, isTrue);
     retain('closing-promise-$season', () => ready.completedPromise.signature);
     retain('closing-control-$season', () => ready.control.signature);
+    retain('closing-roster-$season', () => ready.completedRoster.signature);
     retain(
         'closing-transfers-$season', () => ready.completedTransfers.signature);
     retain('manager-history-$season',
