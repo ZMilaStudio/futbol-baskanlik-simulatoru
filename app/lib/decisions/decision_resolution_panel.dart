@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:futbol_baskanlik_m0/player_president_interactive_decision_session.dart';
 
 /// Presentation-only rendering of an authoritative M90 runtime resolution.
