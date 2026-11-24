@@ -91,6 +91,7 @@ jobs:
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
           api-level: 35
+          emulator-build: '16740729'
           arch: x86_64
           profile: pixel_6
           disable-animations: true

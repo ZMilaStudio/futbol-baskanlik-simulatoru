@@ -1,6 +1,6 @@
 # Futbol Başkanlık Simülatörü — GENEL PROJE ÖZETİ
 
-Son güncelleme: 2 Kasım 2026
+Son güncelleme: 23 Kasım 2026
 
 ## 1. Proje kimliği
 
@@ -40,13 +40,31 @@ Kalıcı çalışma disiplini:
 
 ## 3. CANLI DURUM — buradan devam et
 
-### CURRENT TECHNICAL CONTINUATION — PR #144
+### CURRENT TECHNICAL CONTINUATION — PR #145
+
+PR #145 teknik kapsamı: **CLOSED / MERGED / ACTUAL-MAIN VALIDATION SUCCESS**. Son adlandırılmış milestone **M102** olarak kalır; bu kayıt yeni bir milestone seçmez veya kapatmaz.
+
+[PR #145 — Expose typed historical owned-season table and match observations](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/145): CLOSED / MERGED / Draft=false; 2 Kasım 2026 17:35:38 UTC, owner'ın exact onay verdiği `8913e956e5a5af65d3f9497c82015a650af0386f` HEAD için guarded **SQUASH**. Scope: 3 commit / 5 dosya.
+
+- Current actual-main / merge SHA: `b9f93aff603b30c0464514e50fb9d1db69c15d2b`.
+- Tree: `706be900979abf58c17ce707355e76c279c1baf0`; approved source HEAD ile aynıdır.
+- Tek parent / önceki main: `e9375e5dc3c367e697956682fe00004ab0173e06`.
+
+Historical owned Basic/X1 B2, as-played opening league ve gerçek B1/W30 raporundan mevcut M96/M97 factory'leriyle immutable league table / match results sunar. Moved/next-season membership kullanılmaz; ranking veya maçlar tekrar hesaplanmaz. Defensive raw üç-lig `leagueResults` görünümü ve mevcut determinism oracle korunur. Gerçek promotion/relegation, retained observations ve foreign/stale/repeated close yolları public tests ile kapsanır.
+
+[Actual-main Core #764 / run 41492629514](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/actions/runs/41492629514), event `push`, branch `main`, attempt 1, exact SHA `b9f93aff603b30c0464514e50fb9d1db69c15d2b`: **completed / SUCCESS**. Analyze, normal test, canonical ve overall SUCCESS; **832 tests passed**, canonical M0–M88 **84/84 physical commands SUCCESS**.
+
+`app/**` ve workflows değişmedi; exact b9f93af SHA için Flutter workflow **NOT TRIGGERED**. Bu source/tree/run kanıtı yalnız PR #145 kapsamına aittir; sonraki local/reconstructed HEAD'lerin test veya CI kanıtı değildir. PR #143'ün Flutter/Android kanıtı kendi historical SHA'sına bağlı kalır; PR #145 için yeni Android build/smoke proof iddia edilmez.
+
+M65 sole persisted game-state authority ve protected persistence/schema/codecs/checksum/migration/namespace contract'ları değişmedi. Historical B2 full-M65 equivalence **STILL UNPROVEN**, historical squad-only manager authority **UNAVAILABLE BY DESIGN** kalır. M102 bridge application-only'dir; existing saved mobile flow, GameFlowController ve default entry/load davranışı değiştirilmedi, unsaved/transient mobile entry eklenmedi.
+
+## Historical technical continuation — PR #144 (NOT CURRENT MAIN HEAD)
 
 PR #144 teknik kapsamı: **CLOSED / MERGED / ACTUAL-MAIN VALIDATION SUCCESS**. Son adlandırılmış milestone **M102** olarak kalır; bu kayıt `M103` veya başka bir milestone seçmez/kapatmaz.
 
 [PR #144 — Expose completed future manager assessments and verify observation stability](https://github.com/ZMilaStudio/futbol-baskanlik-simulatoru/pull/144): CLOSED / MERGED / Draft=false; 2 Kasım 2026 10:03:04 UTC, owner'ın exact onay verdiği `d63b6e2ccfd1a5f80874083c292f4a133bb15275` HEAD için guarded **SQUASH**. Scope: 5 commit / 8 dosya.
 
-- Current actual-main / merge SHA: `e9375e5dc3c367e697956682fe00004ab0173e06`.
+- PR #144 actual-main merge SHA (historical): `e9375e5dc3c367e697956682fe00004ab0173e06`.
 - Tree: `f3edfa1af572ab4a509b53f6bad6e11122be2919`; approved source HEAD ile aynıdır.
 - Tek parent / önceki main: `c14858e3fba5e3936a965e97fe141c00dfaac3a5`.
 

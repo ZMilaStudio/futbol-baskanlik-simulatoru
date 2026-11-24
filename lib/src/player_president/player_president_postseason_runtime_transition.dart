@@ -32,6 +32,9 @@ import '../manager/player_president_manager_control.dart';
 import '../manager/manager.dart';
 import 'player_president_postseason_decision_session.dart';
 import 'player_president_interactive_decision_application_session.dart';
+import 'player_president_completed_transfer_window_snapshot.dart';
+import 'player_president_completed_roster_lifecycle_snapshot.dart';
+import 'player_president_prepared_squad_snapshot.dart';
 
 part '../save/lossless_postoffseason_runtime_graph.dart';
 part '../save/trusted_future_prepared_runtime_admission.dart';
@@ -185,6 +188,8 @@ final class SinglePassPostseasonRuntimeTransition {
   WorldOffseasonProjectionResult? _worldSuccessor;
   PresidentDomainSeasonEffects? _domainSuccessor;
   List<PromiseSeasonSnapshot>? _completedPromiseSnapshots;
+  PlayerPresidentCompletedTransferWindowSnapshot? _completedTransferWindow;
+  PlayerPresidentCompletedRosterLifecycleSnapshot? _completedRosterLifecycle;
   CrisisRuntimeEffects? _crisisSuccessor;
   PresidentFacilityInvestmentEffects? _facilitySuccessor;
   PlayerPresidentTenureControlState? _controlSuccessor;
@@ -255,6 +260,87 @@ final class SinglePassPostseasonRuntimeTransition {
   /// successor. Null before that stage; observing never invokes a resolver.
   List<PromiseSeasonSnapshot>? get completedPromiseSnapshots =>
       _completedPromiseSnapshots;
+
+  /// Captured before commit and visible only after genuine publication.
+  /// Retained reads never validate or rebuild a moved controller.
+  PlayerPresidentCompletedTransferWindowSnapshot? get completedTransferWindow =>
+      _phase == PostseasonRuntimeTransitionPhase.moved
+          ? _completedTransferWindow
+          : null;
+
+  void _captureCompletedTransferWindow() {
+    final graph = _preparedPublication!;
+    final clubId = graph.control.controlledClubId;
+    _completedTransferWindow = PlayerPresidentCompletedTransferWindowSnapshot(
+      completedSeasonIndex: graph.targetSeasonIndex - 1,
+      targetSeasonIndex: graph.targetSeasonIndex,
+      controlledClubId: clubId,
+      transfers: [
+        for (final deal in _worldSuccessor!.transfers)
+          if (deal.fromClubId == clubId || deal.toClubId == clubId)
+            PlayerPresidentCompletedTransferDeal(
+              playerId: deal.playerId,
+              playerName: deal.playerName,
+              position: deal.position,
+              fromClubId: deal.fromClubId,
+              toClubId: deal.toClubId,
+              marketValue: Money.fromMinorUnits(deal.marketValue.minorUnits),
+              fee: Money.fromMinorUnits(deal.fee.minorUnits),
+              upfrontFee: Money.fromMinorUnits(deal.upfrontFee.minorUnits),
+              installments: [
+                for (final row in deal.installments)
+                  PlayerPresidentCompletedTransferInstallment(
+                      dueSeasonIndex: row.dueSeasonIndex,
+                      amount: Money.fromMinorUnits(row.amount.minorUnits))
+              ],
+            ),
+      ],
+      loans: [
+        for (final loan in graph.transferEvidence.loanHistory)
+          if (loan.startSeasonIndex == graph.targetSeasonIndex &&
+              (loan.parentClubId == clubId || loan.loanClubId == clubId))
+            PlayerPresidentCompletedTransferLoan(
+                playerId: loan.playerId,
+                parentClubId: loan.parentClubId,
+                loanClubId: loan.loanClubId,
+                startSeasonIndex: loan.startSeasonIndex,
+                endSeasonIndex: loan.endSeasonIndex,
+                loanFee: Money.fromMinorUnits(loan.loanFee.minorUnits),
+                loanClubWageShareBps: loan.loanClubWageShareBps),
+      ],
+    );
+  }
+
+  PlayerPresidentCompletedRosterLifecycleSnapshot?
+      get completedRosterLifecycle =>
+          _phase == PostseasonRuntimeTransitionPhase.moved
+              ? _completedRosterLifecycle
+              : null;
+
+  void _captureCompletedRosterLifecycle() {
+    final graph = _preparedPublication!;
+    final clubId = graph.control.controlledClubId;
+    PlayerPresidentPreparedSquadPlayer copy(Player player) =>
+        PlayerPresidentPreparedSquadPlayer(
+            playerId: player.id,
+            name: player.name,
+            position: player.position,
+            age: player.age,
+            ability: player.ability,
+            potential: player.potential,
+            isAcademyGraduate: player.isAcademyGraduate);
+    _completedRosterLifecycle = PlayerPresidentCompletedRosterLifecycleSnapshot(
+      completedSeasonIndex: graph.targetSeasonIndex - 1,
+      targetSeasonIndex: graph.targetSeasonIndex,
+      controlledClubId: clubId,
+      retiredPlayers: _worldSuccessor!.retired
+          .where((player) => player.clubId == clubId)
+          .map(copy),
+      youthIntake: _worldSuccessor!.youthIntake
+          .where((player) => player.clubId == clubId)
+          .map(copy),
+    );
+  }
 
   void prepareOuterSuccessor() {
     _validate();
@@ -341,6 +427,8 @@ final class SinglePassPostseasonRuntimeTransition {
       );
       // Allocate and validate all immutable recipients BEFORE ownership commit.
       _preparedPublication = LosslessPostOffseasonRuntimeGraph._(this);
+      _captureCompletedTransferWindow();
+      _captureCompletedRosterLifecycle();
       _phase = PostseasonRuntimeTransitionPhase.continuationReady;
     } catch (_) {
       _phase = PostseasonRuntimeTransitionPhase.failed;
@@ -572,6 +660,8 @@ final class SinglePassPostseasonRuntimeTransition {
 
   void _finishAnnualPreparation() {
     _preparedPublication = LosslessPostOffseasonRuntimeGraph._(this);
+    _captureCompletedTransferWindow();
+    _captureCompletedRosterLifecycle();
     _phase = PostseasonRuntimeTransitionPhase.continuationReady;
   }
 
