@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+
 import 'package:test/test.dart';
 
 /// TEST FIXTURE / NOT AUTHORITATIVE PRODUCER.
@@ -7,59 +8,102 @@ import 'package:test/test.dart';
 /// adds a private fixture part/main. No production body changes; no public mint
 /// bypass, fake production source factory or fixture API is added to lib/.
 Future<ProcessResult> runD0EContractHarness(String fixture) async {
-  final directory =
-      await Directory('.ard0e-validation').create(recursive: true);
-  final temp = await directory.createTemp('contract-');
-  await for (final entity
-      in Directory('lib').list(recursive: true, followLinks: false)) {
-    if (entity is File) {
-      final target = File('${temp.path}/${entity.path}');
-      await target.parent.create(recursive: true);
-      await entity.copy(target.path);
+  final temp = await Directory.systemTemp.createTemp('fbs-ard0e-contract-');
+  try {
+    await for (final entity in Directory(
+      'lib',
+    ).list(recursive: true, followLinks: false)) {
+      if (entity is File) {
+        final target = File('${temp.path}/${entity.path}');
+        await target.parent.create(recursive: true);
+        await entity.copy(target.path);
+      }
     }
-  }
-  await File('pubspec.yaml').copy('${temp.path}/pubspec.yaml');
-  if (await File('pubspec.lock').exists())
-    await File('pubspec.lock').copy('${temp.path}/pubspec.lock');
-  final originalConfig = File('.dart_tool/package_config.json').absolute;
-  final config =
-      jsonDecode(await originalConfig.readAsString()) as Map<String, dynamic>;
-  for (final package in config['packages'] as List<dynamic>) {
-    package['rootUri'] = package['name'] == 'futbol_baskanlik_m0'
-        ? temp.absolute.uri.toString()
-        : originalConfig.uri.resolve(package['rootUri'] as String).toString();
-  }
-  final packageConfig = File('${temp.path}/.dart_tool/package_config.json');
-  await packageConfig.parent.create(recursive: true);
-  await packageConfig.writeAsString(jsonEncode(config));
-  var entry = await File(
-          'lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart')
-      .readAsString();
-  entry =
-      "import 'package:test/test.dart';\nimport '../season/season_engine.dart';\nimport '../world/fictional_world_factory.dart';\n$entry";
-  entry = entry.replaceFirst(
+    await File('pubspec.yaml').copy('${temp.path}/pubspec.yaml');
+    if (await File('pubspec.lock').exists())
+      await File('pubspec.lock').copy('${temp.path}/pubspec.lock');
+    final originalConfig = File('.dart_tool/package_config.json').absolute;
+    final config =
+        jsonDecode(await originalConfig.readAsString()) as Map<String, dynamic>;
+    for (final package in config['packages'] as List<dynamic>) {
+      package['rootUri'] = package['name'] == 'futbol_baskanlik_m0'
+          ? temp.absolute.uri.toString()
+          : originalConfig.uri.resolve(package['rootUri'] as String).toString();
+    }
+    final packageConfig = File('${temp.path}/.dart_tool/package_config.json');
+    await packageConfig.parent.create(recursive: true);
+    await packageConfig.writeAsString(jsonEncode(config));
+    var entry = await File(
+      'lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart',
+    ).readAsString();
+    entry =
+        "import 'package:test/test.dart';\nimport '../season/season_engine.dart';\nimport '../world/fictional_world_factory.dart';\n$entry";
+    entry = entry.replaceFirst(
       "part '../finance/full_m65_runtime_economy_continuation_authority.dart';",
-      "part '../finance/full_m65_runtime_economy_continuation_authority.dart';\npart 'contract_fixture.dart';");
-  const entryPath =
-      'lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
-  await File('${temp.path}/$entryPath')
-      .writeAsString('$entry\nvoid main() => runFixtureTests();\n');
-  await File('${temp.path}/lib/src/facility/contract_fixture.dart').writeAsString(
-      "part of 'player_president_tenure_gated_ticket_pricing_runtime_integration.dart';\n$fixture");
-  return Process.run(
-      Platform.resolvedExecutable, ['test', '--reporter=expanded', entryPath],
-      workingDirectory: temp.absolute.path);
+      "part '../finance/full_m65_runtime_economy_continuation_authority.dart';\npart 'contract_fixture.dart';",
+    );
+    const entryPath =
+        'lib/src/facility/player_president_tenure_gated_ticket_pricing_runtime_integration.dart';
+    await File('${temp.path}/$entryPath')
+        .writeAsString('$entry\nvoid main() => runFixtureTests();\n');
+    await File(
+      '${temp.path}/lib/src/facility/contract_fixture.dart',
+    ).writeAsString(
+      "part of 'player_president_tenure_gated_ticket_pricing_runtime_integration.dart';\n$fixture",
+    );
+    return await Process.run(
+        Platform.resolvedExecutable,
+        [
+          'test',
+          '--reporter=expanded',
+          entryPath,
+        ],
+        workingDirectory: temp.absolute.path);
+  } finally {
+    await temp.delete(recursive: true);
+  }
+}
+
+Future<ProcessResult> _runAndCheckCleanup(String fixture) async {
+  final root = await Directory.systemTemp.createTemp(
+    'fbs-ard0e-cleanup-check-',
+  );
+  try {
+    final result = await IOOverrides.runZoned(
+      () => runD0EContractHarness(fixture),
+      getSystemTempDirectory: () => root,
+    );
+    expect(await root.list().toList(), isEmpty);
+    return result;
+  } finally {
+    await root.delete(recursive: true);
+  }
 }
 
 void main() {
   test(
       'private contract fixture exercises settlement, NOT future production integration',
       () async {
-    final run = await runD0EContractHarness(contractCases);
+    final run = await _runAndCheckCleanup(contractCases);
     // Keep the child test evidence, including its real test count and errors.
     print(run.stdout);
     expect(run.exitCode, 0, reason: '${run.stdout}\n${run.stderr}');
   }, timeout: const Timeout(Duration(minutes: 5)));
+
+  test(
+    'a failed child compilation also removes its isolated contract copy',
+    () async {
+      final run = await _runAndCheckCleanup(
+        'void runFixtureTests() { cleanupCompileFailureMarker; }',
+      );
+      expect(run.exitCode, isNot(0));
+      expect(
+        '${run.stdout}\n${run.stderr}',
+        contains('cleanupCompileFailureMarker'),
+      );
+    },
+    timeout: const Timeout(Duration(minutes: 5)),
+  );
 }
 
 const contractCases = r'''
