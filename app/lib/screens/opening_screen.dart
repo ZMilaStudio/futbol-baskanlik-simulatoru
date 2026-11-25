@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../composition/app_composition.dart';
 import 'club_selection_screen.dart';
