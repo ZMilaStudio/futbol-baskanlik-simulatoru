@@ -167,6 +167,33 @@ void main() {
     });
   }
 
+  test('manager age, relationship and unique assignment boundaries reject', () {
+    final mutations = <void Function(Map<String, dynamic>)>[
+      (p) =>
+          _map((_map(p['manager'])['managers'] as List).first)['startAge'] = -1,
+      (p) {
+        final m = _map((_map(p['manager'])['managers'] as List).first);
+        m['retirementAge'] = m['startAge'];
+      },
+      (p) => _map((_map(p['manager'])['assignments'] as List).first)[
+          'boardRelationship'] = -0.5,
+      (p) => _map((_map(p['manager'])['assignments'] as List).first)[
+          'boardRelationship'] = 100.5,
+      (p) {
+        final a = _map(p['manager'])['assignments'] as List;
+        _map(a[1])['clubId'] = _map(a[0])['clubId'];
+      },
+      (p) {
+        final a = _map(p['manager'])['assignments'] as List;
+        _map(a[1])['managerId'] = _map(a[0])['managerId'];
+      },
+    ];
+    for (final mutate in mutations) {
+      expect(() => _codec.decodeOwnedOpening(_change(genuine, mutate)),
+          throwsA(_failure(SaveLoadFailure.invalidPayload)));
+    }
+  });
+
   test('owned fields reject null, numeric coercion and unknown enum tags', () {
     final changes = <void Function(Map<String, dynamic>)>[
       (p) => p['worldSave'] = null,
@@ -258,10 +285,16 @@ void main() {
 
   test('completed-world counter cannot be reset to invent manager equivalence',
       () {
-    expect(
-        () => _codec.decodeOwnedOpening(_changeNested(
-            genuine, 'worldSave', (world) => world['completedSeasons'] = 0)),
-        throwsA(_failure(SaveLoadFailure.invalidPayload)));
+    for (final mutate in <void Function(Map<String, dynamic>)>[
+      (world) => world['completedSeasons'] = 0,
+      (world) => world['completedSeasons'] = 2,
+      (world) => _map(world['config'])['initialSeasonIndex'] = 1,
+    ]) {
+      expect(
+          () => _codec
+              .decodeOwnedOpening(_changeNested(genuine, 'worldSave', mutate)),
+          throwsA(_failure(SaveLoadFailure.invalidPayload)));
+    }
   });
 
   test('tenure must bind the actual incumbent president', () {
@@ -302,6 +335,19 @@ void main() {
     final wrongFormat = _map(jsonDecode(genuine))..['format'] = 'foreign';
     expect(() => _codec.decodeOwnedOpening(jsonEncode(wrongFormat)),
         throwsA(_failure(SaveLoadFailure.invalidEnvelope)));
+  });
+
+  test('nested checksum corruption is rejected with a valid outer checksum',
+      () {
+    for (final key in ['worldSave', 'tenureControlSave']) {
+      final corrupted = _change(genuine, (p) {
+        final nested = _map(jsonDecode(p[key] as String));
+        nested['checksum'] = '00000000';
+        p[key] = jsonEncode(nested);
+      });
+      expect(() => _codec.decodeOwnedOpening(corrupted),
+          throwsA(_failure(SaveLoadFailure.checksumMismatch)));
+    }
   });
 
   test('unsupported nested world versions cannot enter owned v2', () {
@@ -369,6 +415,19 @@ void main() {
             expectedClubId: club ?? state.controlledClubId,
             expectedPlayerPresidentId: president ?? state.playerPresidentId);
 
+    test('invalid prepared witness fails before any file publication',
+        () async {
+      final sentinel = File('${temporary.path}/unrelated.txt')
+        ..writeAsStringSync('preserve me');
+      final bad = _codec.decodeOwnedOpening(
+          _change(genuine, (p) => p['preparedOpeningDigest'] = '0' * 64));
+      await expectLater(store.save(target, bad),
+          throwsA(_failure(SaveLoadFailure.invalidPayload)));
+      expect(target.existsSync(), isFalse);
+      expect(sentinel.readAsStringSync(), 'preserve me');
+      expect(temporary.listSync().map((f) => f.path).toList(), [sentinel.path]);
+    });
+
     test('manual save/load preserves the exact genuine unanswered checkpoint',
         () async {
       await store.save(target, state);
@@ -424,6 +483,22 @@ void main() {
       target.writeAsStringSync(foreign);
       await expectLater(store.save(target, state), throwsA(anything));
       expect(target.readAsStringSync(), foreign);
+    });
+
+    test(
+        'same career with different validated value bytes is refused unchanged',
+        () async {
+      // A tampered NEGATIVE wire fixture, not a second genuine producer.
+      final different = _change(genuine, (p) {
+        final manager = _map((_map(p['manager'])['managers'] as List).first);
+        manager['name'] = '${manager['name']} alternate value';
+      });
+      expect(_codec.decodeOwnedOpening(different).careerInstanceId,
+          state.careerInstanceId);
+      target.writeAsStringSync(different);
+      await expectLater(store.save(target, state),
+          throwsA(_failure(SaveLoadFailure.invalidPayload)));
+      expect(target.readAsStringSync(), different);
     });
 
     test('same career with different unsupported bytes cannot be overwritten',

@@ -64,6 +64,18 @@ void main() {
         throwsStateError);
   });
 
+  test('genuine later future Pending cannot be captured as first future', () {
+    final app = worker.createGenuineOpeningApplication();
+    final w30 = playOwnedSeason(app);
+    final settled = settleOwnedSeason(app, w30);
+    enterNextOwnedSeason(app, settled);
+    final pending = app.currentStep as PlayerPresidentOwnedSeasonPromisePending;
+    expect(pending.seasonIndex, 2);
+    expect(() => app.captureFirstFutureOpening(expectedPending: pending),
+        throwsStateError);
+    expect(app.currentStep, same(pending));
+  });
+
   test('same genuine producer and restored owner match complete W0/W1 facts',
       () {
     final original = worker.createGenuineOpeningApplication();
