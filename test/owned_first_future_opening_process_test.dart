@@ -101,7 +101,7 @@ void main() {
           await _run([published ? 'restore-only' : 'load-absent', save.path]);
       _success(result);
       expect(result.stdout,
-          contains(published ? 'FULL PRIMITIVE PARITY' : 'ABSENT:'));
+          contains(published ? 'RESTORED_PENDING_AND_W1' : 'ABSENT:'));
       if (cut == 'during-write' || cut == 'after-flush') {
         expect(
             await root.list().where((f) => f.path.contains('.tmp-')).length, 1);

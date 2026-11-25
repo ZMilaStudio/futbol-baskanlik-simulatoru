@@ -258,7 +258,9 @@ Future<void> main(List<String> args) async {
       'career': state.careerInstanceId,
       'decision': state.decisionId,
       'matches': w1.fixtures.completedMatchCount,
-      'parity': 'FULL PRIMITIVE PARITY'
+      'status': mode == 'restore'
+          ? 'FULL PRIMITIVE PARITY'
+          : 'RESTORED_PENDING_AND_W1'
     }));
     return;
   }
