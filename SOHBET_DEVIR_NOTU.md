@@ -434,3 +434,16 @@ Kullanıcı yeni geliştirme istemeden:
 
 # DUR
 
+
+
+## Yerel M102 Slice 1 implementation devam noktası — 25 Kasım 2026
+
+Production base main `13748f010db5a0dfcc809a6b75347cf5703083fe`, tree `ef1895fdafe39a8d62b06878b4a6f7739e808366`. Ayrı branch `feat/m102-durable-first-future-opening-20261125`; tasarım branch/HEAD'i değişmeden korunur. Owner exact M65 v2 contract ve G1a implementation yetkisini açıkça verdi. İlk slice dışında ek persistence/mobile yetkisi yoktur.
+
+Yeni public ingress'ler: owned genuine firstfuture capture; typed M65 encodeOwnedOpening/decodeOwnedOpening; dar restoreEncoded facade; G1a explicit manual file store. Eski M65 v1, M74/M75/M77–M88/M80 ve saved mobile flow unchanged. Sadece unanswered promise durable; restore sonrası Pending/Resolved/W0/W1 transient command zinciri vardır, W2/closing/settlement yoktur.
+
+Genuine OS worker A historical→B2→postseason→firstfuture Pending üretir/kaydeder, kayıtsız choice+ack/W1 oracle'ı çıkarır ve ölür. B aynı save'den bağımsız süreçte restore olup aynı explicit choice+ack/W1 ile tam primitive state'i karşılaştırır; oracle runtime authority değildir. Test worker actual SIGKILL ile write/flush/rename ve unsaved choice/ack kesintilerini de sınar. Final başarı yalnız gerçek process exit kodları ve exact tested HEAD üzerinden raporlanır.
+
+Kapsam incelemesinde mevcut geniş public barrel export'larının yeni internal type adlarını görünür kılması ayrıca kaydedildi. Exact8 dosyalık liste dışındaki public export dosyaları owner'ın ek açık scope kararı olmadan değiştirilmez. Bu ad görünürlüğü bir capability forgery kanıtı değildir; private constructor/actual live-handle kontrolleri korunur. Review-ready kararı bu export/scope sınırının çözümünü bekler.
+
+Eski dört erişilemeyen local-only commit UNAVAILABLE — NOT DELETED kalır; yeni implementation recovered-original diye sunulmaz. Yeni checkpoint'te git bundle verify/bare restore/fsck, SHA256 ve retrievable ZIP ile koruma gerekir. Manual Actions rerun/dispatch ve onaysız Ready/merge yoktur.

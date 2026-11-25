@@ -201,3 +201,87 @@ extension _ActiveFutureSeasonApplication
     }
   }
 }
+
+/// The sole genuine export ingress. No caller identity or raw roots are accepted.
+extension OwnedFirstFutureOpeningExport
+    on PlayerPresidentInteractiveDecisionApplicationSession {
+  OwnedFirstFutureOpeningCapture captureOwnedFirstFutureOpening({
+    required PlayerPresidentActiveFutureSeasonOpening opening,
+    required PlayerPresidentInteractiveDecisionPending pending,
+  }) {
+    if (!_canonicalOwnedProducer ||
+        !identical(_activeFutureSeasonOpening, opening) ||
+        !identical(opening.promisePending, pending) ||
+        _futurePromiseApplied != null ||
+        _futureWeeklyState != null ||
+        _futureCommittedSeason != null ||
+        _futureEconomyAuthority != null ||
+        opening.targetSeasonIndex != 1 ||
+        opening.origin != PostoffseasonRuntimeOrigin.firstFutureBootstrap ||
+        !opening.prepared.isCanonicalFirstFuturePreparation ||
+        !opening.managerAuthority.isCanonicalFirstFuturePreparation ||
+        !identical(pending.request.context, opening.controlledPromiseContext)) {
+      throw StateError(
+          'Only a genuine unanswered canonical first-future opening can be captured.');
+    }
+    _validateFutureOpeningSource(opening.admission, opening.prepared);
+    final sponsor = opening.prepared.openingSponsor;
+    if (sponsor.nextSeasonIndex != 1 ||
+        sponsor.activeContracts.isNotEmpty ||
+        !sponsor.totalRevenuePaid.isZero) {
+      throw StateError('First-future sponsor is not pristine.');
+    }
+    final source = opening.admission.sourceGraph;
+    final projection = _durablePreparedProjection(
+        opening.opening,
+        opening.managerAuthority,
+        opening.promiseContexts,
+        opening.controlledPromiseContext,
+        opening.w0);
+    final careerId = _ownedCareerInstanceId ??
+        (() {
+          final random = Random.secure();
+          return List.generate(16,
+                  (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'))
+              .join();
+        })();
+    final capture = OwnedFirstFutureOpeningCapture._(
+      world: source.worldSuccessor,
+      tenureControl: opening.control,
+      managers: source.managerEvidence.managers,
+      assignments: source.managerEvidence.assignments,
+      transfers: source.transferEvidence,
+      facilities: source.facilities,
+      presidentClubs: source.crisisEvidence.presidentClubs,
+      electionInterval: newGameElectionInterval!,
+      termPromiseScores: source.domainEvidence.termPromiseScores,
+      careerInstanceId: careerId,
+      contextSignature: opening.controlledPromiseContext.signature,
+      decisionId: _durableDecisionId(careerId, opening.control,
+          opening.controlledPromiseContext.signature),
+      preparedOpeningDigest: _durableSha(projection),
+    );
+    M65OwnedFirstFutureOpeningState.fromGenuineCapture(capture).validate();
+    // Bind identity only after detached validation. Failed IO later retains it.
+    _ownedCareerInstanceId = careerId;
+    return capture;
+  }
+
+  Map<String, Object?> ownedFirstFutureOpeningObservation() {
+    final opening = _activeFutureSeasonOpening;
+    if (!_canonicalOwnedProducer ||
+        opening == null ||
+        opening.targetSeasonIndex != 1 ||
+        opening.origin != PostoffseasonRuntimeOrigin.firstFutureBootstrap) {
+      throw StateError('No genuine first-future opening observation.');
+    }
+    return _immutableObservation(
+        _durablePreparedProjection(
+            opening.opening,
+            opening.managerAuthority,
+            opening.promiseContexts,
+            opening.controlledPromiseContext,
+            opening.w0),
+        _futurePromiseApplied?.activePromises ?? const []);
+  }
+}

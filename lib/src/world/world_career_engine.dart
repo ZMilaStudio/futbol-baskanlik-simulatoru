@@ -1,3 +1,4 @@
+import '../player_president/player_president_interactive_decision_application_session.dart';
 import '../core/simulation_config.dart';
 import '../player_president/player_president_postseason_runtime_transition.dart';
 import '../manager/manager_career_controller.dart';
@@ -480,6 +481,43 @@ class WorldCareerEngine {
         preserveSuccessorIdentity: true);
     return PreparedWorldExecution._(this, claim.owner, claim.revision,
         claim.provenance, graph, opening, claim.executionIdentity);
+  }
+
+  /// Rebuilds only the approved pure first-future preparation, never a closing graph.
+  DurablePreparedFirstFutureOpening prepareDurableFirstFutureOpening(
+      DurableFirstFuturePreparationClaim claim) {
+    claim.claimPreparation();
+    final state = claim.state;
+    state.validate();
+    final source = state.world;
+    final manager = ManagerCareerController.restore(
+      careerSeed: source.config.careerSeed,
+      simulationVersion: source.config.simulationVersion,
+      initialSeasonIndex: 1,
+      managers: state.managers,
+      assignments: state.assignments,
+      seasons: const [],
+    );
+    final opening = _prepareSeason(
+      config: source.config,
+      seasonIndex: 1,
+      baseClubs: source.baseClubs,
+      players: source.nextSeasonPlayers,
+      finance: source.nextSeasonFinanceStates,
+      leagues: source.nextSeasonLeagues,
+      hooks: manager,
+      preserveSuccessorIdentity: true,
+    );
+    final authority = manager.captureSeasonAuthority(
+      owner: claim.owner,
+      sourceRevision: claim.revision,
+      seasonIndex: 1,
+      effectiveClubs: opening.effectiveClubs,
+    );
+    if (!authority.isCanonicalFirstFuturePreparation) {
+      throw StateError('Unsupported durable manager preparation profile.');
+    }
+    return DurablePreparedFirstFutureOpening._(opening, authority);
   }
 
   PreparedWorldOpening _prepareSeason(
@@ -1021,4 +1059,11 @@ class _LeagueTransition {
 
   final List<WorldLeague> leagues;
   final List<LeagueMovement> movements;
+}
+
+/// Narrow prepared result; has no execute, settlement, or continuation capability.
+final class DurablePreparedFirstFutureOpening {
+  DurablePreparedFirstFutureOpening._(this.opening, this.managerAuthority);
+  final PreparedWorldOpening opening;
+  final ManagerSeasonAuthority managerAuthority;
 }

@@ -22,6 +22,48 @@ final class PlayerPresidentFuturePromiseAcceptance {
     required PresidentPromiseType choice,
   }) {
     claim.validate(pending: pending, request: request);
+    final opening = claim.opening;
+    return _acceptValidated(
+      pending: pending,
+      request: request,
+      choice: choice,
+      controlledClubId: opening.controlledClubId,
+      promiseContexts: opening.promiseContexts,
+      config: opening.opening.config,
+      controlledPromiseContext: opening.controlledPromiseContext,
+      targetSeasonIndex: opening.targetSeasonIndex,
+    );
+  }
+
+  static PlayerPresidentFuturePromiseAcceptance acceptDurable({
+    required DurableFuturePromiseAcceptanceClaim claim,
+    required PlayerPresidentInteractiveDecisionPending pending,
+    required PlayerPresidentInteractiveDecisionRequest request,
+    required PresidentPromiseType choice,
+  }) {
+    claim.validate(pending: pending, request: request);
+    return _acceptValidated(
+      pending: pending,
+      request: request,
+      choice: choice,
+      controlledClubId: claim.controlledClubId,
+      promiseContexts: claim.promiseContexts,
+      config: claim.config,
+      controlledPromiseContext: claim.controlledPromiseContext,
+      targetSeasonIndex: 1,
+    );
+  }
+
+  static PlayerPresidentFuturePromiseAcceptance _acceptValidated({
+    required PlayerPresidentInteractiveDecisionPending pending,
+    required PlayerPresidentInteractiveDecisionRequest request,
+    required PresidentPromiseType choice,
+    required String controlledClubId,
+    required List<PresidentPromiseContext> promiseContexts,
+    required SimulationConfig config,
+    required PlayerPromiseDecisionContext controlledPromiseContext,
+    required int targetSeasonIndex,
+  }) {
     PlayerPresidentInteractiveDecisionSession._validateChoice(request, choice);
     final answers = List<_RecordedInteractiveDecision>.unmodifiable([
       _RecordedInteractiveDecision(requestKey: request.key, choice: choice),
@@ -31,17 +73,16 @@ final class PlayerPresidentFuturePromiseAcceptance {
       captureSequence: request.sequence,
       keyNamespace: request.keyNamespace,
     );
-    final opening = claim.opening;
     final generator = PlayerPresidentPromiseGenerator(
-      controlledClubId: opening.controlledClubId,
+      controlledClubId: controlledClubId,
       decisionProvider: _FuturePromiseGatewayProvider(gateway),
     );
     final promises = <PresidentPromise>[];
-    for (final context in opening.promiseContexts) {
+    for (final context in promiseContexts) {
       promises.add(generator.generate(
         context: context,
-        careerSeed: opening.opening.config.careerSeed,
-        simulationVersion: opening.opening.config.simulationVersion,
+        careerSeed: config.careerSeed,
+        simulationVersion: config.simulationVersion,
       ));
     }
     if (gateway.consumedDecisionCount != 1) {
@@ -52,16 +93,15 @@ final class PlayerPresidentFuturePromiseAcceptance {
       gateway.capturedConsequence,
     );
     if (captured is! PlayerPresidentPromiseConsequence ||
-        captured.context.signature !=
-            opening.controlledPromiseContext.signature ||
+        captured.context.signature != controlledPromiseContext.signature ||
         captured.promise.type != choice ||
         promises.length != 48 ||
         promises.map((p) => p.clubId).toSet().length != 48 ||
         promises.map((p) => p.id).toSet().length != 48 ||
-        promises.any((p) => p.seasonIndex != opening.targetSeasonIndex) ||
+        promises.any((p) => p.seasonIndex != targetSeasonIndex) ||
         !identical(
           captured.promise,
-          promises.singleWhere((p) => p.clubId == opening.controlledClubId),
+          promises.singleWhere((p) => p.clubId == controlledClubId),
         )) {
       throw StateError('Future promise authority failed canonical validation.');
     }

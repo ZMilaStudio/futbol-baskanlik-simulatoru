@@ -1,3 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
+import '../save/save_checksum.dart';
+import '../save/save_load_exception.dart';
+import '../save/advanced_runtime_checkpoint.dart';
+import '../save/president_runtime_checkpoint.dart';
+import '../world/world_checkpoint.dart';
+import '../manager/manager.dart';
+import '../manager/manager_assignment.dart';
 import '../core/simulation_config.dart';
 import '../contract/player_contract_controller.dart';
 import '../crisis/crisis_decision_core.dart';
@@ -40,6 +51,8 @@ import '../world/world_career_engine.dart';
 import '../save/advanced_runtime_career_engine.dart';
 
 part 'player_president_active_future_season_opening.dart';
+part 'player_president_durable_first_future_opening_application.dart';
+part '../save/m65_owned_first_future_opening_file_store.dart';
 part 'player_president_future_active_season_runtime.dart';
 part 'player_president_prepared_season_opening_snapshot.dart';
 
@@ -148,6 +161,7 @@ enum PlayerPresidentInteractiveDecisionApplicationSessionOrigin {
 class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentInteractiveDecisionApplicationSession._({
     required this.origin,
+    bool canonicalOwnedProducer = false,
     required PlayerPresidentTicketPricingRuntimeCheckpoint? checkpoint,
     required this.resumeConfig,
     required this.newGameElectionInterval,
@@ -162,7 +176,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required PlayerPresidentInteractiveDecisionTranscriptSession session,
     required this.bundleCodec,
     required this.bootstrapCodec,
-  })  : _mostRecentlyOpenedSeason =
+  })  : _canonicalOwnedProducer = canonicalOwnedProducer,
+        _mostRecentlyOpenedSeason =
             PlayerPresidentPreparedSeasonOpeningSnapshot._(
                 preparedSeasonDashboard, preparedSquad, preparedSeasonFixtures),
         _checkpoint = checkpoint,
@@ -173,6 +188,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
         _newGameControlledClubId = newGameControlledClubId,
         _newGameWorldFingerprint = newGameWorldFingerprint,
         _session = session;
+
+  final bool _canonicalOwnedProducer;
+  String? _ownedCareerInstanceId;
 
   factory PlayerPresidentInteractiveDecisionApplicationSession.start({
     required List<Club> clubs,
@@ -237,6 +255,7 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
       seasonIndex: config.seasonIndex,
     );
     return PlayerPresidentInteractiveDecisionApplicationSession._(
+      canonicalOwnedProducer: true,
       origin:
           PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
       checkpoint: null,

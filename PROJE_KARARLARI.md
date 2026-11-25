@@ -224,3 +224,14 @@ Bu dosyaya yalnız şu tip kararlar eklenir:
 - henüz onaylanmamış fikirler.
 
 Bir karar değişirse eski karar sessizce bırakılmaz; ilgili bölüm yeni kararla güncellenir ve gerekiyorsa neden değiştiği kısa notla belirtilir.
+
+
+## 25 Kasım 2026 — M102 Slice 1 exact implementation yetkisi
+
+Owner, `7fe4cc577662185f1d74394edac78b5f2dff4eda` tasarım HEAD'i / `ff38fce6980cae68c5a1d7e7aa5be3faed4992bb` tree'siyle korunan exact contract paketini ve **G1a** sınırını production implementation için onayladı. ZIP SHA256 `e318d16ed25608378d7c1cfcc7af5d51253e4593199260cb47b3f67198ad0f30`. Bu yetki yalnız genuine first-future unanswered promise Pending içindir.
+
+M65 legacy `currentSaveVersion=1` ve nested codec/validator davranışları korunur; ayrı typed owned `ownedOpeningSaveVersion=2` eklenir. Origin `historicalBasicX1ToFirstFuture`, phase `firstFuturePromisePending`, profile `canonicalFirstFutureV1`. World completedSeasons1, initial future manager assignments48/season1, historical manager history boş kalır. Historical FULL-M65 eşdeğerlik kanıtlanmış sayılmaz.
+
+G1a yalnız isolated single-writer / çakışmayan live-owner önkoşuludur; global lease, fencing, no-clobber, anti-fork veya anti-replay garantisi değildir. Manuel aynı checkpoint kaydı idempotent; legacy/foreign/corrupt/farklı hedef korunarak reddedilir. Orphan tmp restore edilmez. Autosave, mobile slot/catalog/binding ve GameFlowController değişmez.
+
+Yeni dar restored application yalnız Pending → Resolved → W0 → W1 çalıştırır; W0/W1 veya başka phase kaydı, W2, settlement ve sonraki publication yetkisi yoktur. Exact phase dışındaki capture/save fail closed olur. Separate OS-process parity ve gerçek interruption testleri kabul şartıdır; local sonuç remote CI PASS değildir. Later slices, mobile wiring, workflow, signing/release/Play ve merge bu yetkiye dahil değildir.

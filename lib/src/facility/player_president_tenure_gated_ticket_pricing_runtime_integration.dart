@@ -1,5 +1,23 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+import '../contract/player_contract.dart';
+import '../contract/contract_event.dart';
+import '../transfer/loan_agreement.dart';
+import '../transfer/transfer_installment.dart';
+import '../manager/manager.dart';
+import '../manager/manager_assignment.dart';
+import '../manager/manager_profile.dart';
+import '../election/president_tenure.dart';
+import '../media/media_state.dart';
+import '../save/world_save_codec.dart';
+import '../season/season_engine.dart';
+import '../league/fixture_generator.dart';
+import '../match/match_engine.dart';
+import '../player/team_strength_calculator.dart';
+import 'academy_facility.dart';
+import 'training_ground_facility.dart';
+
 import '../core/money.dart';
 import '../core/simulation_config.dart';
 import '../crisis/crisis_runtime_integration.dart';
@@ -43,6 +61,8 @@ import 'player_president_tenure_gated_ticket_pricing_control.dart';
 import 'stadium_facility.dart';
 
 part '../finance/full_m65_runtime_economy_continuation_authority.dart';
+part '../save/m65_owned_first_future_opening_state.dart';
+part '../save/m65_owned_first_future_opening_codec.dart';
 
 class PlayerPresidentTicketPricingRuntimeCheckpoint {
   PlayerPresidentTicketPricingRuntimeCheckpoint({
@@ -87,6 +107,13 @@ class PlayerPresidentTicketPricingRuntimeSaveCodec {
   static const String format =
       'zmila-fbs-player-president-ticket-pricing-runtime';
   static const int currentSaveVersion = 1;
+  static const int ownedOpeningSaveVersion = 2;
+
+  String encodeOwnedOpening(M65OwnedFirstFutureOpeningState state) =>
+      const _OwnedOpeningCodec().encode(state);
+
+  M65OwnedFirstFutureOpeningState decodeOwnedOpening(String encoded) =>
+      const _OwnedOpeningCodec().decode(encoded);
 
   final FacilitySponsorCrisisRuntimeSaveCodec runtimeCodec;
   final PlayerPresidentTenureControlSaveCodec tenureCodec;
@@ -544,6 +571,15 @@ final class PreparedTicketRuntimeSeason {
   final _TicketPricingEconomyEngine _pricing;
   final FacilitySponsorCrisisRuntimeCareerEngine _runtime;
   final PreparedFacilitySponsorSeason _facility;
+  bool get isCanonicalFirstFuturePreparation =>
+      identical(_runtime.baseWorldEngine.strengthCalculator,
+          const TeamStrengthCalculator()) &&
+      identical(_runtime.baseWorldEngine.seasonEngine, const SeasonEngine()) &&
+      identical(_runtime.baseWorldEngine.seasonEngine.fixtureGenerator,
+          const FixtureGenerator()) &&
+      identical(_runtime.baseWorldEngine.seasonEngine.matchEngine,
+          const MatchEngine());
+
   bool _annualCaptureAttempted = false;
   ApplicationFutureOpeningClaim? _activeOpeningReservation;
   void _requireUnreservedOpening() {
