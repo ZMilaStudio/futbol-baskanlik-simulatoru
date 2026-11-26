@@ -2722,3 +2722,14 @@ M95 kapanışında:
 
 M95 closure sırasında M96 henüz başlamamıştı. Güncel authority bu belgenin üstteki
 **CANLI DURUM** bölümündeki M96 closure state'idir.
+
+
+## M102 Slice 1 — owned first-future durable boundary (yerel implementation)
+
+Yeni `PlayerPresidentOwnedSeasonApplication.captureFirstFutureOpening(expectedPending: ...)` yalnız genuine current first-future yanıtsız presidency promise Pending'ini M65 typed v2 olarak kaydeder. Legacy v1 / nested persistence davranışı ve existing saved Flutter akışı korunur. Bu özellik yeni mobile entry değildir.
+
+`PlayerPresidentDurableFirstFutureOpeningApplication.restoreEncoded` validated M65 değerlerinden detached pure preparation kurar, gerçek Pending/context/prepared digest'i doğrular ve yeni process-local owner yayımlar. Aynı explicit choice, consequence acknowledgement ve bir round ile genuine W0/W1 üretir. Raw capability/controller serialize edilmez; historical/postseason/finance replay yoktur. Full prepared primitive observation ve48 accepted promise readonly'dir.
+
+M65 sole persisted authority. Historical Basic/X1 count1 ve boş manager history dürüstçe korunur; manager authority firstfuture season1'den başlar. G1a manual store concurrent-writer güvenliği iddia etmez. İlk slice yalnız unanswered opening save'ini destekler; Running/Resolved/W0/W1 save veya later career continuation restore'u yoktur.
+
+Bu kayıt implementation kapsamını açıklar; release/mobile readiness veya yeni actual-main PASS iddiası değildir. Final exact-HEAD validation, Draft/merge ve CI durumu ayrı evidence checkpoint'inde tutulur. PR147'nin process/PID launch sınırı değişmez: fully displayed activity, interactive gameplay ve physical-device kabulü NOT PROVEN.

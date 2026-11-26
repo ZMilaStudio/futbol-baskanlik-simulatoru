@@ -268,9 +268,9 @@ final class PlayerPresidentOwnedSeasonFailed
 /// Commands consume the exact currently published observation, so a stale UI
 /// event cannot answer another career or advance an extra round.
 ///
-/// Persistence is intentionally unavailable: the underlying owned preseason
-/// already rejects M75 and M80. This API must not replace the mobile save/load
-/// route without an explicit product decision. B3-B continuation retains the
+/// Historical preseason still rejects M75/M80. Only the genuine unanswered
+/// first-future opening has an explicit M65 v2 capture; no other durable phase
+/// or mobile save/load integration is provided. B3-B continuation retains the
 /// same application and original runtime graph. No historical manager authority
 /// is synthesized, and no raw capability or ownership recipient is exposed.
 final class PlayerPresidentOwnedSeasonApplication {
@@ -318,6 +318,30 @@ final class PlayerPresidentOwnedSeasonApplication {
   LosslessPostOffseasonRuntimeGraph? _continuation;
 
   PlayerPresidentOwnedSeasonStep get currentStep => _step;
+
+  /// Only the unanswered genuine first-future opening is durably supported.
+  String captureFirstFutureOpening({
+    required PlayerPresidentOwnedSeasonPromisePending expectedPending,
+  }) {
+    _requireCurrent(expectedPending);
+    final opening = _futureOpening;
+    if (opening == null ||
+        _futureWeekly != null ||
+        _committed != null ||
+        _economy != null ||
+        !identical(expectedPending.request, opening.promisePending.request)) {
+      throw StateError('Only an unanswered first-future opening can be saved.');
+    }
+    final capture = _application.captureOwnedFirstFutureOpening(
+        opening: opening, pending: opening.promisePending);
+    return const PlayerPresidentTicketPricingRuntimeSaveCodec()
+        .encodeOwnedOpening(
+            M65OwnedFirstFutureOpeningState.fromGenuineCapture(capture));
+  }
+
+  /// Read-only primitive diagnostic facts, never runtime ownership.
+  Map<String, Object?> get firstFutureOpeningObservation =>
+      _application.ownedFirstFutureOpeningObservation();
 
   /// The most recently opened season, captured before its promise acceptance.
   /// Existing prepared getters below intentionally keep their initial meaning.

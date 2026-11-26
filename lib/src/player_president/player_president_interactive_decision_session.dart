@@ -1,3 +1,4 @@
+import '../promise/promise_context.dart';
 import '../core/simulation_config.dart';
 import '../election/president_management_profile.dart';
 import '../crisis/crisis_decision_core.dart';
@@ -63,6 +64,25 @@ class PlayerPresidentInteractiveDecisionRequest {
     try {
       gateway.choosePromise(context);
       throw StateError('Future promise did not produce Pending.');
+    } on _PendingInteractiveDecision catch (signal) {
+      return PlayerPresidentInteractiveDecisionPending(signal.request);
+    }
+  }
+
+  /// Only a privately minted durable owner may request this process-local Pending.
+  static PlayerPresidentInteractiveDecisionPending durableFuturePromisePending({
+    required DurableFirstFuturePreparationClaim claim,
+    required PlayerPromiseDecisionContext context,
+  }) {
+    claim.validatePendingContext(context);
+    final gateway = _InteractiveReplayGateway(
+      const <_RecordedInteractiveDecision>[],
+      keyNamespace:
+          'durable-first-future-promise/v1:${identityHashCode(claim.owner)}:${identityHashCode(claim.revision)}',
+    );
+    try {
+      gateway.choosePromise(context);
+      throw StateError('Durable promise did not produce Pending.');
     } on _PendingInteractiveDecision catch (signal) {
       return PlayerPresidentInteractiveDecisionPending(signal.request);
     }

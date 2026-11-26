@@ -190,7 +190,8 @@ export 'src/transfer/transfer_negotiation_policy.dart';
 export 'src/transfer/transfer_youth_preference_policy.dart';
 export 'src/world/fictional_world_factory.dart';
 export 'src/world/league_tier.dart';
-export 'src/world/world_career_engine.dart';
+export 'src/world/world_career_engine.dart'
+    hide DurablePreparedFirstFutureOpening;
 export 'src/world/world_career_hooks.dart';
 export 'src/world/world_career_report.dart';
 export 'src/world/world_career_season.dart';

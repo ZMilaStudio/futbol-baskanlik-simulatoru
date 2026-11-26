@@ -213,6 +213,23 @@ final class ManagerSeasonAuthority {
   final ManagerPatienceProvider? _patienceProvider;
   final ManagerDismissalPolicy _dismissalPolicy;
 
+  /// Exact setup facts; this observation grants no controller rights.
+  List<ManagerPreparationSnapshot> get preparationSnapshot =>
+      List.unmodifiable([
+        for (final club in effectiveClubs)
+          ManagerPreparationSnapshot._(_pending[club.id]!),
+      ]);
+
+  bool get isCanonicalFirstFuturePreparation =>
+      seasonIndex == 1 &&
+      initialSeasonIndex == 1 &&
+      seasons.isEmpty &&
+      identical(_poolGenerator, const ManagerPoolGenerator()) &&
+      identical(_fitModel, const ManagerFitModel()) &&
+      identical(_impactModel, const ManagerImpactModel()) &&
+      _patienceProvider == null &&
+      identical(_dismissalPolicy, const ManagerDismissalPolicy());
+
   ManagerCareerController forkDetached({
     required Object expectedOwner,
     required Object expectedRevision,
@@ -280,4 +297,28 @@ final class ManagerSeasonAuthority {
     // A fork is not the original capture source and cannot mint that authority.
     return fork;
   }
+}
+
+/// Immutable numerical observation of a genuine manager preparation.
+final class ManagerPreparationSnapshot {
+  ManagerPreparationSnapshot._(_PendingManagerClubSeason value)
+      : clubId = value.clubId,
+        managerId = value.managerId,
+        managerAge = value.managerAge,
+        fitScore = value.fitScore,
+        strengthImpact = value.strengthImpact,
+        relationshipBefore = value.relationshipBefore,
+        expectedPosition = value.expectedPosition;
+  final String clubId, managerId;
+  final int managerAge, expectedPosition;
+  final double fitScore, strengthImpact, relationshipBefore;
+  Map<String, Object> toJson() => Map.unmodifiable({
+        'clubId': clubId,
+        'managerId': managerId,
+        'managerAge': managerAge,
+        'fitScore': fitScore,
+        'strengthImpact': strengthImpact,
+        'relationshipBefore': relationshipBefore,
+        'expectedPosition': expectedPosition,
+      });
 }
