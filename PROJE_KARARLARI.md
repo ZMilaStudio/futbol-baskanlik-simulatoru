@@ -235,3 +235,12 @@ M65 legacy `currentSaveVersion=1` ve nested codec/validator davranışları koru
 G1a yalnız isolated single-writer / çakışmayan live-owner önkoşuludur; global lease, fencing, no-clobber, anti-fork veya anti-replay garantisi değildir. Manuel aynı checkpoint kaydı idempotent; legacy/foreign/corrupt/farklı hedef korunarak reddedilir. Orphan tmp restore edilmez. Autosave, mobile slot/catalog/binding ve GameFlowController değişmez.
 
 Yeni dar restored application yalnız Pending → Resolved → W0 → W1 çalıştırır; W0/W1 veya başka phase kaydı, W2, settlement ve sonraki publication yetkisi yoktur. Exact phase dışındaki capture/save fail closed olur. Separate OS-process parity ve gerçek interruption testleri kabul şartıdır; local sonuç remote CI PASS değildir. Later slices, mobile wiring, workflow, signing/release/Play ve merge bu yetkiye dahil değildir.
+
+
+## 26 Kasım 2026 — M102 ilk historical opening implementation yetkisi
+
+Owner, `98ed8f96a2d5b038029d0ffc565ce5e7664cd171` tasarım HEAD'i / `3d32724cd896ca152d011da6ff42bc4e6cc3b182` tree'sindeki exact contract ile S2-1–S2-6 kararlarını production implementation için onayladı. Tasarım ZIP SHA256 `e7e4f2461e6d819afb96eb07143b0f2452d945ec5e4c0a080a861976f80e215f`. Kapsam yalnız genuine unanswered historical season0 preseason Promise Pending'in typed M65 v3 kaydı ve fresh-process restore'udur.
+
+Legacy `currentSaveVersion=1` ve firstfuture `ownedOpeningSaveVersion=2` unchanged; ayrı `historicalOpeningSaveVersion=3`. Origin `historicalBasicX1`, phase `historicalPromisePending`, profile `canonicalHistoricalOpeningV1`. Complete original input blueprint ve prepared digest kullanılır; generated world ikinci persisted root olarak kaydedilmez. Historical manager authority unavailable ve FULL-M65 equivalence unproven kalır.
+
+G1a isolated single-writer / non-overlapping live-owner sınırı korunur. Yeni typed manual file store, canonical-identical no-op ve incompatible target refusal uygular; existing saved-mobile/catalog/namespace unchanged. Global lease/fencing/anti-fork/anti-replay/concurrent no-clobber/power-loss garantisi yoktur. Restored facade Pending→Resolved→ack→W0→W1 ile sınırlıdır; yalnız Pending kaydedilir. W2+, diğer historical cuts, Slice3, mobile wiring, autosave, G1b, signing/release/Play yetkili değildir. Draft PR/natural CI yetkilidir; Ready/merge ayrı exact-HEAD owner onayı ister.

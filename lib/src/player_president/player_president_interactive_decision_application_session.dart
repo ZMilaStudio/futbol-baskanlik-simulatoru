@@ -52,7 +52,9 @@ import '../save/advanced_runtime_career_engine.dart';
 
 part 'player_president_active_future_season_opening.dart';
 part 'player_president_durable_first_future_opening_application.dart';
+part 'player_president_durable_historical_opening_application.dart';
 part '../save/m65_owned_first_future_opening_file_store.dart';
+part '../save/m65_owned_historical_opening_file_store.dart';
 part 'player_president_future_active_season_runtime.dart';
 part 'player_president_prepared_season_opening_snapshot.dart';
 
@@ -162,6 +164,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentInteractiveDecisionApplicationSession._({
     required this.origin,
     bool canonicalOwnedProducer = false,
+    List<Club>? ownedInitialSourceClubs,
+    List<WorldLeague>? ownedInitialSourceLeagues,
     required PlayerPresidentTicketPricingRuntimeCheckpoint? checkpoint,
     required this.resumeConfig,
     required this.newGameElectionInterval,
@@ -177,6 +181,8 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     required this.bundleCodec,
     required this.bootstrapCodec,
   })  : _canonicalOwnedProducer = canonicalOwnedProducer,
+        _ownedInitialSourceClubs = ownedInitialSourceClubs,
+        _ownedInitialSourceLeagues = ownedInitialSourceLeagues,
         _mostRecentlyOpenedSeason =
             PlayerPresidentPreparedSeasonOpeningSnapshot._(
                 preparedSeasonDashboard, preparedSquad, preparedSeasonFixtures),
@@ -191,6 +197,9 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
 
   final bool _canonicalOwnedProducer;
   String? _ownedCareerInstanceId;
+  final List<Club>? _ownedInitialSourceClubs;
+  final List<WorldLeague>? _ownedInitialSourceLeagues;
+  _HistoricalOpeningProducerProvenance? _historicalOpeningProducerProvenance;
 
   factory PlayerPresidentInteractiveDecisionApplicationSession.start({
     required List<Club> clubs,
@@ -256,6 +265,14 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
     );
     return PlayerPresidentInteractiveDecisionApplicationSession._(
       canonicalOwnedProducer: true,
+      ownedInitialSourceClubs: List<Club>.unmodifiable([
+        for (final club in clubs)
+          Club(id: club.id, name: club.name, strength: club.strength),
+      ]),
+      ownedInitialSourceLeagues: List<WorldLeague>.unmodifiable([
+        for (final league in leagues)
+          WorldLeague(tier: league.tier, clubIds: league.clubIds),
+      ]),
       origin:
           PlayerPresidentInteractiveDecisionApplicationSessionOrigin.newGame,
       checkpoint: null,
@@ -738,12 +755,30 @@ class PlayerPresidentInteractiveDecisionApplicationSession {
   PlayerPresidentPreseasonPromiseBoundary startPreseasonPromise({
     required List<Club> sourceClubs,
     required List<WorldLeague> sourceLeagues,
+  }) {
+    final boundary = PlayerPresidentPreseasonPromiseBoundary.start(
+      application: this,
+      sourceClubs: sourceClubs,
+      sourceLeagues: sourceLeagues,
+    );
+    if (_canonicalOwnedProducer &&
+        _ownedInitialSourceClubs != null &&
+        _ownedInitialSourceLeagues != null) {
+      _historicalOpeningProducerProvenance =
+          _HistoricalOpeningProducerProvenance._(this, boundary);
+    }
+    return boundary;
+  }
+
+  OwnedHistoricalOpeningCapture captureOwnedHistoricalOpening({
+    required PlayerPresidentPreseasonPromiseBoundary boundary,
+    required PlayerPresidentPreseasonPromisePending pending,
   }) =>
-      PlayerPresidentPreseasonPromiseBoundary.start(
-        application: this,
-        sourceClubs: sourceClubs,
-        sourceLeagues: sourceLeagues,
-      );
+      _captureOwnedHistoricalOpening(this, boundary, pending);
+
+  /// Immutable initial historical preparation and genuine accepted promises.
+  Map<String, Object?> ownedHistoricalOpeningObservation() =>
+      _observeOwnedHistoricalOpening(this);
 
   /// A caller cannot reserve an application without supplying an actual,
   /// fully prepared boundary with its private M73-constructed Pending.

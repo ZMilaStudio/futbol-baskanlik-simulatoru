@@ -1,5 +1,6 @@
 export 'src/player_president/player_president_interactive_decision_application_session.dart'
     hide
+        OwnedHistoricalOpeningCapture,
         OwnedFirstFutureOpeningCapture,
         DurableFirstFuturePreparationClaim,
         DurableFuturePromiseAcceptanceClaim,

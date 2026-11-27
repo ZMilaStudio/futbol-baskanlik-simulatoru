@@ -447,3 +447,14 @@ Genuine OS worker A historical→B2→postseason→firstfuture Pending üretir/k
 Kapsam incelemesinde mevcut geniş public barrel export'larının yeni internal type adlarını görünür kılması ayrıca kaydedildi. Exact8 dosyalık liste dışındaki public export dosyaları owner'ın ek açık scope kararı olmadan değiştirilmez. Bu ad görünürlüğü bir capability forgery kanıtı değildir; private constructor/actual live-handle kontrolleri korunur. Review-ready kararı bu export/scope sınırının çözümünü bekler.
 
 Eski dört erişilemeyen local-only commit UNAVAILABLE — NOT DELETED kalır; yeni implementation recovered-original diye sunulmaz. Yeni checkpoint'te git bundle verify/bare restore/fsck, SHA256 ve retrievable ZIP ile koruma gerekir. Manual Actions rerun/dispatch ve onaysız Ready/merge yoktur.
+
+
+## 26 Kasım 2026 — M102 first historical opening devam noktası
+
+Verified base main `c41f07f41e39d913432c4456c7a49f7d230078ee`, source tree `e0b5541fab97dd2b0f1f6071519d00dcc8d1d805`. Owner exact design98ed ve tüm S2-1–S2-6 kararlarını onayladı. Branch `feat/m102-durable-historical-opening-20261126`; preserved design branch ve önceki Slice1 source/ref/backup'ları değiştirilmez.
+
+Yeni historical public API: original Owned.captureHistoricalOpening + historicalOpeningObservation; typed M65 encodeHistoricalOpening/decodeHistoricalOpening; PlayerPresidentDurableHistoricalOpeningApplication.restoreEncoded; M65OwnedHistoricalOpeningFileStore. Yalnız unanswered season0 Promise Pending durable. Restored owner explicit choice→Resolved→ack→W0→W1 dışında ilerlemez; readback answer/ack sonrası da immutable kalır. Original live Owned career'ın full historical/future yürütmesi korunur, aynı career nonce firstfuturev2 capture'a taşınır.
+
+Actual original source club/league order private defensive copies olarak tutulur; prepared sorted leagues'ten geçmiş input sırası çıkarılmaz. Trusted wrapper private-final producer record mint eder. Raw direct factory/claim yeni capture authority yaratmaz; eski raw submission davranışı korunur. Reserved owner'a verifyNewGame çağrısı/M80 pointer clear yok; ayrı pristine comparison source kullanılır.
+
+H01–H22/I01–I07 acceptance genuine fixtures, independent A/B/C OS processes, full primitive W0/W1 parity, strict schema/identity/provenance/foreign-stale-duplicate guards ve gerçek process-kill cuts gerektirir. Oracle runtime restore authority değildir. Validation sürüyor; exact sonuçlar final evidence paketindedir. Android fresh build bu core-only scope'ta yenilenmedi: KNOWN ENVIRONMENT DISK LIMIT. Historical PR147 process/PID proof'u full displayed activity, interactive gameplay veya physical device proof değildir.

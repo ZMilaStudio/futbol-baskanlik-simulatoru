@@ -319,6 +319,45 @@ final class PlayerPresidentOwnedSeasonApplication {
 
   PlayerPresidentOwnedSeasonStep get currentStep => _step;
 
+  /// The genuine unanswered season-zero opening is the only historical save.
+  String captureHistoricalOpening({
+    required PlayerPresidentOwnedSeasonPromisePending expectedPending,
+  }) {
+    _requireCurrent(expectedPending);
+    final pending = _boundary.pending;
+    if (_futureOpening != null ||
+        _weekly != null ||
+        _futureWeekly != null ||
+        _committed != null ||
+        _economy != null ||
+        _transition != null ||
+        _continuation != null ||
+        pending == null ||
+        _boundary.applied != null ||
+        expectedPending.seasonIndex != 0 ||
+        !identical(expectedPending.request, pending.request) ||
+        _application.committedSeasonResultCandidate != null ||
+        _application.acceptedPromiseClosingCandidate != null) {
+      throw StateError('Only an unanswered historical opening can be saved.');
+    }
+    final capture = _application.captureOwnedHistoricalOpening(
+        boundary: _boundary, pending: pending);
+    return const PlayerPresidentTicketPricingRuntimeSaveCodec()
+        .encodeHistoricalOpening(
+            M65OwnedHistoricalOpeningState.fromGenuineCapture(capture));
+  }
+
+  /// Readback stays available after choice/ack, independently of save eligibility.
+  Map<String, Object?> get historicalOpeningObservation {
+    if (_futureOpening != null ||
+        !(_step is PlayerPresidentOwnedSeasonPromisePending ||
+            _step is PlayerPresidentOwnedSeasonPromiseResolved ||
+            _step is PlayerPresidentOwnedSeasonRunning)) {
+      throw StateError('No active historical opening observation.');
+    }
+    return _application.ownedHistoricalOpeningObservation();
+  }
+
   /// Only the unanswered genuine first-future opening is durably supported.
   String captureFirstFutureOpening({
     required PlayerPresidentOwnedSeasonPromisePending expectedPending,
