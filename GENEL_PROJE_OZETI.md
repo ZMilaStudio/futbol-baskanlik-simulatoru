@@ -2733,3 +2733,12 @@ Yeni `PlayerPresidentOwnedSeasonApplication.captureFirstFutureOpening(expectedPe
 M65 sole persisted authority. Historical Basic/X1 count1 ve boş manager history dürüstçe korunur; manager authority firstfuture season1'den başlar. G1a manual store concurrent-writer güvenliği iddia etmez. İlk slice yalnız unanswered opening save'ini destekler; Running/Resolved/W0/W1 save veya later career continuation restore'u yoktur.
 
 Bu kayıt implementation kapsamını açıklar; release/mobile readiness veya yeni actual-main PASS iddiası değildir. Final exact-HEAD validation, Draft/merge ve CI durumu ayrı evidence checkpoint'inde tutulur. PR147'nin process/PID launch sınırı değişmez: fully displayed activity, interactive gameplay ve physical-device kabulü NOT PROVEN.
+
+
+## M102 ilk historical durable opening — yerel implementation, 26 Kasım 2026
+
+Production base `c41f07f41e39d913432c4456c7a49f7d230078ee`, tree `e0b5541fab97dd2b0f1f6071519d00dcc8d1d805`; PR149 Slice1 closure actual-main run45795790317 Core906/canonical84 PASS kanıtıdır. Yeni feature branch `feat/m102-durable-historical-opening-20261126`, approved design98ed tabanlıdır. Bu kayıt bütün Slice2 historical roadmap'inin tamamlandığını söylemez.
+
+Genuine current historical Promise Pending capture; separate typed M65 historicalv3 blueprint/codec; private original-input order ve genuine wrapper producer provenance; detached canonical initial preparation ve context/digest match sonrası fresh narrow owner; explicit choice/ack/W0/W1; isolated G1a manual store uygulanıyor. Reserved original üzerinde M80 guard bypass edilmez; proof verification ayrı PRISTINE comparison source üzerinde yapılır. Actual Pending/M56/weekly kernels reuse edilir, annual/historical replay yapılmaz.
+
+M65 sole persisted authority; v1/v2 nested semantics unchanged; historical manager0/history/receipt yok, FULL-M65 historical equivalence UNPROVEN. Saved-mobile flow unchanged; new mobile entry yok. Yeni schema/phase özellikleri yalnız bu historical unopened decision cut'ı içindir. Validation henüz devam ediyor; final implementation kanıtı exact HEAD/tree ve ayrı validation loglarıyla raporlanır, önceki Slice1 sonuçları yeni source'a taşınmaz.

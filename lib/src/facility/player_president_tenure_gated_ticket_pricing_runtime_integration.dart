@@ -55,6 +55,7 @@ import '../sponsor/sponsor_system.dart';
 import '../world/world_career_engine.dart';
 import '../world/world_career_season.dart';
 import '../world/world_league.dart';
+import '../world/league_tier.dart';
 import '../world/world_checkpoint.dart';
 import '../player_president/player_president_postseason_runtime_transition.dart';
 import 'player_president_tenure_gated_ticket_pricing_control.dart';
@@ -63,6 +64,8 @@ import 'stadium_facility.dart';
 part '../finance/full_m65_runtime_economy_continuation_authority.dart';
 part '../save/m65_owned_first_future_opening_state.dart';
 part '../save/m65_owned_first_future_opening_codec.dart';
+part '../save/m65_owned_historical_opening_state.dart';
+part '../save/m65_owned_historical_opening_codec.dart';
 
 class PlayerPresidentTicketPricingRuntimeCheckpoint {
   PlayerPresidentTicketPricingRuntimeCheckpoint({
@@ -108,6 +111,13 @@ class PlayerPresidentTicketPricingRuntimeSaveCodec {
       'zmila-fbs-player-president-ticket-pricing-runtime';
   static const int currentSaveVersion = 1;
   static const int ownedOpeningSaveVersion = 2;
+  static const int historicalOpeningSaveVersion = 3;
+
+  String encodeHistoricalOpening(M65OwnedHistoricalOpeningState state) =>
+      const _HistoricalOpeningCodec().encode(state);
+
+  M65OwnedHistoricalOpeningState decodeHistoricalOpening(String encoded) =>
+      const _HistoricalOpeningCodec().decode(encoded);
 
   String encodeOwnedOpening(M65OwnedFirstFutureOpeningState state) =>
       const _OwnedOpeningCodec().encode(state);
